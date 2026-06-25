@@ -3,8 +3,9 @@ import type {
   OverviewMetrics,
   ProductProfitability,
 } from "@/types/database";
+import { buildProfitabilityV2 } from "@/lib/profitability-v2";
 
-export const SAMPLE_OVERVIEW: OverviewMetrics = {
+const SAMPLE_BREAKDOWN_BASE = {
   revenue: 2_847_500,
   productCost: 1_124_000,
   commission: 341_700,
@@ -18,6 +19,10 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
   returnRate: 4.2,
   unitsSold: 3840,
   unitsReturned: 168,
+};
+
+export const SAMPLE_OVERVIEW: OverviewMetrics = {
+  ...SAMPLE_BREAKDOWN_BASE,
   dailyRevenue: [
     { date: "2026-05-25", revenue: 92000, profit: 28400 },
     { date: "2026-05-26", revenue: 105000, profit: 32100 },
@@ -37,14 +42,41 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
   ],
   costBreakdown: [
     { name: "Product Cost", value: 1_124_000, color: "#ef4444" },
-    { name: "Commission", value: 341_700, color: "#f59e0b" },
+    { name: "Marketplace Fees", value: 354_100, color: "#f59e0b" },
     { name: "Logistics", value: 198_400, color: "#6366f1" },
     { name: "Return Logistics", value: 42_300, color: "#8b5cf6" },
     { name: "Storage", value: 67_800, color: "#06b6d4" },
     { name: "Advertising", value: 156_200, color: "#ec4899" },
     { name: "Penalties", value: 8_500, color: "#dc2626" },
-    { name: "Other", value: 12_400, color: "#71717a" },
   ],
+  ordersPurchases: {
+    ordersCount: 3840,
+    ordersAmount: 3_120_000,
+    cancelledOrdersCount: 280,
+    cancelledOrdersAmount: 228_000,
+    purchasesCount: 3840,
+    purchasesAmount: 2_847_500,
+    conversionRate: 100,
+    returnRate: 4.2,
+    dailyOrdersPurchases: [
+      { date: "2026-05-25", ordersCount: 280, ordersAmount: 210000, purchasesCount: 260, purchasesAmount: 92000 },
+      { date: "2026-05-26", ordersCount: 310, ordersAmount: 232000, purchasesCount: 295, purchasesAmount: 105000 },
+      { date: "2026-05-27", ordersCount: 265, ordersAmount: 198000, purchasesCount: 248, purchasesAmount: 88000 },
+      { date: "2026-05-28", ordersCount: 325, ordersAmount: 245000, purchasesCount: 302, purchasesAmount: 112000 },
+      { date: "2026-05-29", ordersCount: 290, ordersAmount: 218000, purchasesCount: 271, purchasesAmount: 98000 },
+      { date: "2026-05-30", ordersCount: 340, ordersAmount: 256000, purchasesCount: 318, purchasesAmount: 124000 },
+      { date: "2026-05-31", ordersCount: 315, ordersAmount: 237000, purchasesCount: 296, purchasesAmount: 118000 },
+      { date: "2026-06-01", ordersCount: 275, ordersAmount: 206000, purchasesCount: 258, purchasesAmount: 96000 },
+      { date: "2026-06-02", ordersCount: 295, ordersAmount: 221000, purchasesCount: 277, purchasesAmount: 102000 },
+      { date: "2026-06-03", ordersCount: 255, ordersAmount: 191000, purchasesCount: 239, purchasesAmount: 89000 },
+      { date: "2026-06-04", ordersCount: 330, ordersAmount: 248000, purchasesCount: 308, purchasesAmount: 115000 },
+      { date: "2026-06-05", ordersCount: 305, ordersAmount: 229000, purchasesCount: 285, purchasesAmount: 108000 },
+      { date: "2026-06-06", ordersCount: 350, ordersAmount: 263000, purchasesCount: 327, purchasesAmount: 121000 },
+      { date: "2026-06-07", ordersCount: 285, ordersAmount: 214000, purchasesCount: 266, purchasesAmount: 99000 },
+      { date: "2026-06-08", ordersCount: 300, ordersAmount: 225000, purchasesCount: 280, purchasesAmount: 104000 },
+    ],
+  },
+  profitabilityV2: buildProfitabilityV2(SAMPLE_BREAKDOWN_BASE),
 };
 
 export const SAMPLE_PRODUCTS: ProductProfitability[] = [
@@ -67,6 +99,15 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     returnRate: 3.1,
     unitsSold: 620,
     unitsReturned: 20,
+    orders: 680,
+    purchases: 620,
+    conversionPercent: (620 / 680) * 100,
+    cancelled: 60,
+    cancellationPercent: (60 / 680) * 100,
+    purchaseLogistics: 34_100,
+    excludedLogistics: 0,
+    purchaseLogisticsRows: 620,
+    excludedLogisticsRows: 0,
   },
   {
     productId: "sample-2",
@@ -87,6 +128,15 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     returnRate: 5.8,
     unitsSold: 480,
     unitsReturned: 30,
+    orders: 520,
+    purchases: 480,
+    conversionPercent: (480 / 520) * 100,
+    cancelled: 40,
+    cancellationPercent: (40 / 520) * 100,
+    purchaseLogistics: 28_600,
+    excludedLogistics: 0,
+    purchaseLogisticsRows: 480,
+    excludedLogisticsRows: 0,
   },
   {
     productId: "sample-3",
@@ -107,6 +157,15 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     returnRate: 2.4,
     unitsSold: 710,
     unitsReturned: 17,
+    orders: 740,
+    purchases: 710,
+    conversionPercent: (710 / 740) * 100,
+    cancelled: 30,
+    cancellationPercent: (30 / 740) * 100,
+    purchaseLogistics: 24_800,
+    excludedLogistics: 0,
+    purchaseLogisticsRows: 710,
+    excludedLogisticsRows: 0,
   },
   {
     productId: "sample-4",
@@ -127,6 +186,15 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     returnRate: 6.2,
     unitsSold: 380,
     unitsReturned: 25,
+    orders: 410,
+    purchases: 380,
+    conversionPercent: (380 / 410) * 100,
+    cancelled: 30,
+    cancellationPercent: (30 / 410) * 100,
+    purchaseLogistics: 21_200,
+    excludedLogistics: 0,
+    purchaseLogisticsRows: 380,
+    excludedLogisticsRows: 0,
   },
   {
     productId: "sample-5",
@@ -147,6 +215,15 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     returnRate: 3.8,
     unitsSold: 445,
     unitsReturned: 17,
+    orders: 470,
+    purchases: 445,
+    conversionPercent: (445 / 470) * 100,
+    cancelled: 25,
+    cancellationPercent: (25 / 470) * 100,
+    purchaseLogistics: 19_400,
+    excludedLogistics: 0,
+    purchaseLogisticsRows: 445,
+    excludedLogisticsRows: 0,
   },
 ];
 

@@ -1,19 +1,30 @@
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
+import { fetchAllInDateRange, fetchAllRows } from "@/lib/supabase/paginate";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import {
   buildCostBreakdown,
+  buildLatestCostByProductId,
   buildProfitBreakdown,
   groupSalesByDate,
 } from "@/lib/profit-calculator";
+import { buildOrdersPurchasesKpis } from "@/lib/orders-purchases-metrics";
+import {
+  attributeProductFinance,
+  buildPurchaseSridSet,
+} from "@/lib/product-logistics-attribution";
+import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
+import { buildProfitabilityV2 } from "@/lib/profitability-v2";
 import { getSampleDashboard, type DashboardPayload } from "@/lib/sample-data";
 import type {
   CategoryProfitability,
   DateRange,
   OverviewMetrics,
+  ProductCostHistory,
   ProductProfitability,
   ProductWithRelations,
   WbAd,
   WbFinance,
+  WbOrder,
   WbSale,
 } from "@/types/database";
 
@@ -48,20 +59,28 @@ export async function fetchProductsWithRelations(
   return (data ?? []) as ProductWithRelations[];
 }
 
+export async function fetchOrdersInRange(
+  range: DateRange,
+  client?: SupabaseClient
+): Promise<WbOrder[]> {
+  const supabase = getClient(client);
+  return fetchAllInDateRange<WbOrder>(supabase, "wb_orders", {
+    column: "order_date",
+    from: range.from,
+    to: range.to,
+  });
+}
+
 export async function fetchSalesInRange(
   range: DateRange,
   client?: SupabaseClient
 ): Promise<WbSale[]> {
   const supabase = getClient(client);
-
-  const { data, error } = await supabase
-    .from("wb_sales")
-    .select("*")
-    .gte("sale_date", range.from)
-    .lte("sale_date", range.to);
-
-  if (error) throw new Error(`Failed to fetch sales: ${error.message}`);
-  return data ?? [];
+  return fetchAllInDateRange<WbSale>(supabase, "wb_sales", {
+    column: "sale_date",
+    from: range.from,
+    to: range.to,
+  });
 }
 
 export async function fetchFinanceInRange(
@@ -69,15 +88,11 @@ export async function fetchFinanceInRange(
   client?: SupabaseClient
 ): Promise<WbFinance[]> {
   const supabase = getClient(client);
-
-  const { data, error } = await supabase
-    .from("wb_finance")
-    .select("*")
-    .gte("operation_date", range.from)
-    .lte("operation_date", range.to);
-
-  if (error) throw new Error(`Failed to fetch finance records: ${error.message}`);
-  return data ?? [];
+  return fetchAllInDateRange<WbFinance>(supabase, "wb_finance", {
+    column: "operation_date",
+    from: range.from,
+    to: range.to,
+  });
 }
 
 export async function fetchAdsInRange(
@@ -85,48 +100,54 @@ export async function fetchAdsInRange(
   client?: SupabaseClient
 ): Promise<WbAd[]> {
   const supabase = getClient(client);
-
-  const { data, error } = await supabase
-    .from("wb_ads")
-    .select("*")
-    .gte("campaign_date", range.from)
-    .lte("campaign_date", range.to);
-
-  if (error) throw new Error(`Failed to fetch ads: ${error.message}`);
-  return data ?? [];
+  return fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
+    column: "campaign_date",
+    from: range.from,
+    to: range.to,
+  });
 }
 
 export async function fetchCostHistory(client?: SupabaseClient) {
   const supabase = getClient(client);
-
-  const { data, error } = await supabase
-    .from("product_cost_history")
-    .select("*")
-    .order("effective_from", { ascending: false });
-
-  if (error) throw new Error(`Failed to fetch cost history: ${error.message}`);
-  return data ?? [];
+  return fetchAllRows<ProductCostHistory>(supabase, "product_cost_history", {
+    column: "effective_from",
+    ascending: false,
+  });
 }
 
 export async function getOverviewMetrics(
   range: DateRange,
   client?: SupabaseClient
 ): Promise<OverviewMetrics> {
-  const [sales, finance, ads, costHistory] = await Promise.all([
+  const [sales, finance, ads, costHistory, products, orders] = await Promise.all([
     fetchSalesInRange(range, client),
     fetchFinanceInRange(range, client),
     fetchAdsInRange(range, client),
     fetchCostHistory(client),
+    fetchProductsWithRelations(client),
+    fetchOrdersInRange(range, client),
   ]);
 
-  const breakdown = buildProfitBreakdown({ sales, finance, ads, costHistory });
-  const dailyRevenue = groupSalesByDate(sales, costHistory, finance);
+  const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
+  const breakdown = buildProfitBreakdown({
+    sales,
+    finance,
+    ads,
+    costHistory,
+    latestCostByProductId,
+    auditRange: range,
+  });
+  const dailyRevenue = groupSalesByDate(sales, costHistory, finance, latestCostByProductId);
   const costBreakdown = buildCostBreakdown(breakdown);
+  const ordersPurchases = buildOrdersPurchasesKpis(orders, sales);
+  const profitabilityV2 = buildProfitabilityV2(breakdown);
 
   return {
     ...breakdown,
     dailyRevenue,
     costBreakdown,
+    ordersPurchases,
+    profitabilityV2,
   };
 }
 
@@ -134,48 +155,70 @@ export async function getProductProfitability(
   range: DateRange,
   client?: SupabaseClient
 ): Promise<ProductProfitability[]> {
-  const [products, sales, finance, ads, costHistory] = await Promise.all([
+  const [products, orders, sales, finance, ads, costHistory] = await Promise.all([
     fetchProductsWithRelations(client),
+    fetchOrdersInRange(range, client),
     fetchSalesInRange(range, client),
     fetchFinanceInRange(range, client),
     fetchAdsInRange(range, client),
     fetchCostHistory(client),
   ]);
 
-  const productCostHistory = new Map<string, typeof costHistory>();
-  for (const entry of costHistory) {
-    const existing = productCostHistory.get(entry.product_id) ?? [];
-    existing.push(entry);
-    productCostHistory.set(entry.product_id, existing);
-  }
+  const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
 
   return products
     .map((product) => {
-      const productSales = sales.filter((s) => s.product_id === product.id);
-      const productFinance = finance.filter((f) => f.product_id === product.id);
+      const productOrders = orders.filter((o) => String(o.product_id) === String(product.id));
+      const productSales = sales.filter((s) => String(s.product_id) === String(product.id));
+      const productFinance = finance.filter((f) => String(f.product_id) === String(product.id));
       const productAds = ads.filter(
         (a) =>
-          a.product_id === product.id || a.supplier_article === product.supplier_article
+          String(a.product_id) === String(product.id) ||
+          a.supplier_article === product.supplier_article
       );
-      const productCosts = productCostHistory.get(product.id) ?? [];
+
+      const funnel = buildProductFunnelMetrics(productOrders, productSales);
+      const purchaseSrids = buildPurchaseSridSet(productSales);
+      const {
+        financeForBreakdown,
+        purchaseLogisticsRows,
+        excludedLogisticsRows,
+        excludedLogistics,
+      } = attributeProductFinance(productFinance, purchaseSrids);
 
       const breakdown = buildProfitBreakdown({
         sales: productSales,
-        finance: productFinance,
+        finance: financeForBreakdown,
         ads: productAds,
-        costHistory: productCosts,
+        costHistory: [],
+        latestCostByProductId,
       });
 
       return {
         ...breakdown,
-        productId: product.id,
+        productId: String(product.id),
         modelCode: product.supplier_article,
         productName: product.name,
         categoryName: product.category?.name ?? "Uncategorized",
         brandName: product.brand?.name ?? "Unknown",
+        orders: funnel.orders,
+        purchases: funnel.purchases,
+        conversionPercent: funnel.conversionPercent,
+        cancelled: funnel.cancelled,
+        cancellationPercent: funnel.cancellationPercent,
+        purchaseLogistics: breakdown.logistics,
+        excludedLogistics,
+        purchaseLogisticsRows,
+        excludedLogisticsRows,
       };
     })
-    .filter((p) => p.revenue > 0 || p.advertising > 0)
+    .filter(
+      (p) =>
+        p.orders > 0 ||
+        p.purchases > 0 ||
+        p.revenue > 0 ||
+        p.advertising > 0
+    )
     .sort((a, b) => b.netProfit - a.netProfit);
 }
 

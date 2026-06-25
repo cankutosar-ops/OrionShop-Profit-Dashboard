@@ -39,7 +39,9 @@ CREATE TABLE IF NOT EXISTS wb_orders (
   price NUMERIC(12, 2) NOT NULL DEFAULT 0,
   quantity INT NOT NULL DEFAULT 1,
   status TEXT NOT NULL DEFAULT 'new',
-  warehouse TEXT
+  warehouse TEXT,
+  tech_size TEXT,
+  barcode TEXT
 );
 
 -- Wildberries Sales
@@ -52,7 +54,9 @@ CREATE TABLE IF NOT EXISTS wb_sales (
   revenue NUMERIC(12, 2) NOT NULL DEFAULT 0,
   quantity INT NOT NULL DEFAULT 1,
   is_return BOOLEAN NOT NULL DEFAULT false,
-  return_date DATE
+  return_date DATE,
+  tech_size TEXT,
+  barcode TEXT
 );
 
 -- Wildberries Finance (commissions, logistics, storage, penalties)
@@ -65,8 +69,14 @@ CREATE TABLE IF NOT EXISTS wb_finance (
     operation_type IN ('commission', 'logistics', 'return_logistics', 'storage', 'penalty', 'other')
   ),
   amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  description TEXT
+  source_key TEXT,
+  description TEXT,
+  srid TEXT
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wb_finance_source_key_unique
+  ON wb_finance (source_key)
+  WHERE source_key IS NOT NULL;
 
 -- Wildberries Advertising
 CREATE TABLE IF NOT EXISTS wb_ads (
@@ -99,3 +109,22 @@ CREATE INDEX IF NOT EXISTS idx_wb_ads_date ON wb_ads(campaign_date);
 CREATE INDEX IF NOT EXISTS idx_wb_orders_date ON wb_orders(order_date);
 CREATE INDEX IF NOT EXISTS idx_products_supplier_article ON products(supplier_article);
 CREATE INDEX IF NOT EXISTS idx_cost_history_product ON product_cost_history(product_id);
+
+CREATE TABLE IF NOT EXISTS product_variants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  tech_size TEXT NOT NULL DEFAULT '',
+  barcode TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (product_id, tech_size, barcode)
+);
+
+CREATE TABLE IF NOT EXISTS wb_stock (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  tech_size TEXT NOT NULL DEFAULT '',
+  barcode TEXT,
+  quantity INT NOT NULL DEFAULT 0,
+  synced_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (product_id, tech_size, barcode)
+);

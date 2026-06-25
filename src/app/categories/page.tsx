@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { cn, formatCurrency, parseDateRange } from "@/lib/utils";
 import { getDashboardData } from "@/services/dashboard-service";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<{ from?: string; to?: string }>;
 };

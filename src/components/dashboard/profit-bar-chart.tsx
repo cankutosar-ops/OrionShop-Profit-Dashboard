@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatPercent } from "@/lib/utils";
 
 type BarChartData = {
   label: string;
@@ -17,14 +17,20 @@ type BarChartData = {
   secondary?: number;
 };
 
+type ValueFormat = "currency" | "percent";
+
 type ProfitBarChartProps = {
   data: BarChartData[];
   valueLabel?: string;
   secondaryLabel?: string;
   color?: string;
   secondaryColor?: string;
-  formatValue?: (value: number) => string;
+  valueFormat?: ValueFormat;
 };
+
+function getValueFormatter(format: ValueFormat): (value: number) => string {
+  return format === "percent" ? formatPercent : formatCurrency;
+}
 
 function CustomTooltip({
   active,
@@ -62,8 +68,9 @@ export function ProfitBarChart({
   secondaryLabel,
   color = "#8b5cf6",
   secondaryColor = "#6366f1",
-  formatValue = formatCurrency,
+  valueFormat = "currency",
 }: ProfitBarChartProps) {
+  const formatValue = getValueFormatter(valueFormat);
   if (!data.length) {
     return (
       <div className="flex h-[320px] items-center justify-center text-muted-foreground">

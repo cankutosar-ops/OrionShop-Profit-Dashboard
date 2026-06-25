@@ -3,8 +3,10 @@ import { DataBanner } from "@/components/dashboard/data-banner";
 import { ProductProfitabilityTable } from "@/components/dashboard/product-profitability-table";
 import { ProfitBarChart } from "@/components/dashboard/profit-bar-chart";
 import { PageHeader } from "@/components/layout/page-header";
-import { formatPercent, parseDateRange } from "@/lib/utils";
+import { parseDateRange } from "@/lib/utils";
 import { getDashboardData } from "@/services/dashboard-service";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   searchParams: Promise<{ from?: string; to?: string }>;
@@ -74,7 +76,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
             data={returnRateChartData}
             valueLabel="Return Rate"
             color="#ef4444"
-            formatValue={(v) => formatPercent(v)}
+            valueFormat="percent"
           />
         </ChartCard>
 

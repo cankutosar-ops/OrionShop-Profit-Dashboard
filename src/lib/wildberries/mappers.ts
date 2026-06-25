@@ -1,56 +1,169 @@
-/**
- * Mappers for transforming Wildberries API responses into database records.
- * Implement each mapper when the corresponding API endpoint is connected.
- */
+import type { FinanceOperationType, WbFinance, WbOrder, WbSale } from "@/types/database";
+import type { WbApiFinanceRow, WbApiOrder, WbApiProductCard, WbApiSale } from "./types";
 
-import type { WbAd, WbFinance, WbOrder, WbSale } from "@/types/database";
-
-export type WbApiOrder = Record<string, unknown>;
-export type WbApiSale = Record<string, unknown>;
-export type WbApiFinanceRecord = Record<string, unknown>;
-export type WbApiAdCampaign = Record<string, unknown>;
-export type WbApiProductCard = Record<string, unknown>;
-
-export function mapApiOrderToDb(_apiOrder: WbApiOrder, _productId: string): Omit<WbOrder, "id"> {
-  throw new Error("mapApiOrderToDb not implemented");
+export function toDateString(iso: string): string {
+  return iso.slice(0, 10);
 }
 
-export function mapApiSaleToDb(_apiSale: WbApiSale, _productId: string): Omit<WbSale, "id"> {
-  throw new Error("mapApiSaleToDb not implemented");
-}
+export function mapApiProductToDb(card: WbApiProductCard) {
+  const barcode = card.sizes?.flatMap((s) => s.skus ?? []).find(Boolean) ?? null;
 
-export function mapApiFinanceToDb(
-  _apiRecord: WbApiFinanceRecord,
-  _productId: string | null
-): Omit<WbFinance, "id"> {
-  throw new Error("mapApiFinanceToDb not implemented");
-}
-
-export function mapApiAdToDb(
-  _apiAd: WbApiAdCampaign,
-  _productId: string | null,
-  _supplierArticle: string | null
-): Omit<WbAd, "id"> {
-  throw new Error("mapApiAdToDb not implemented");
-}
-
-export function mapApiProductToDb(_apiProduct: WbApiProductCard): {
-  supplier_article: string;
-  nm_id: number;
-  name: string;
-  barcode: string | null;
-} {
-  throw new Error("mapApiProductToDb not implemented");
-}
-
-export function mapFinanceOperationType(_apiType: string): WbFinance["operation_type"] {
-  const typeMap: Record<string, WbFinance["operation_type"]> = {
-    commission: "commission",
-    logistics: "logistics",
-    return_logistics: "return_logistics",
-    storage: "storage",
-    penalty: "penalty",
-    other: "other",
+  return {
+    supplier_article: card.vendorCode,
+    nm_id: card.nmID,
+    name: card.title,
+    barcode,
+    brand_name: card.brand ?? "Unknown",
+    category_name: card.subjectName ?? "Uncategorized",
   };
-  return typeMap[_apiType] ?? "other";
 }
+
+export function mapApiProductVariants(
+  card: WbApiProductCard,
+  productId: string
+): Array<{ product_id: string; tech_size: string; barcode: string | null }> {
+  const sizes = card.sizes ?? [];
+  if (!sizes.length) {
+    return [{ product_id: productId, tech_size: "", barcode: card.sizes?.[0]?.skus?.[0] ?? null }];
+  }
+
+  const variants: Array<{ product_id: string; tech_size: string; barcode: string | null }> = [];
+  for (const size of sizes) {
+    const techSize = size.techSize ?? "";
+    const skus = size.skus ?? [];
+    if (!skus.length) {
+      variants.push({ product_id: productId, tech_size: techSize, barcode: null });
+      continue;
+    }
+    for (const sku of skus) {
+      variants.push({ product_id: productId, tech_size: techSize, barcode: sku || null });
+    }
+  }
+  return variants;
+}
+
+export function mapApiOrderToDb(
+  order: WbApiOrder,
+  productId: string
+): Omit<WbOrder, "id"> {
+  const srid = order.srid ?? order.gNumber ?? `${order.nmId}-${order.date}`;
+
+  return {
+    srid,
+    nm_id: order.nmId,
+    product_id: productId,
+    order_date: toDateString(order.date),
+    sale_date: null,
+    price: order.totalPrice ?? 0,
+    quantity: 1,
+    status: order.isCancel ? "cancelled" : "active",
+    warehouse: order.warehouseName ?? null,
+    tech_size: order.techSize ?? null,
+    barcode: order.barcode ?? null,
+  };
+}
+
+export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale, "id"> {
+  const isReturn = sale.saleID.startsWith("R");
+  const srid = sale.srid ?? sale.saleID;
+
+  return {
+    srid,
+    nm_id: sale.nmId,
+    product_id: productId,
+    sale_date: toDateString(sale.date),
+    revenue: Math.abs(sale.finishedPrice ?? sale.forPay ?? 0),
+    quantity: 1,
+    is_return: isReturn,
+    return_date: isReturn ? toDateString(sale.date) : null,
+    tech_size: sale.techSize ?? null,
+    barcode: sale.barcode ?? null,
+  };
+}
+
+type FinanceLineInput = {
+  row: WbApiFinanceRow;
+  productId: string | null;
+  operationType: FinanceOperationType;
+  amount: number;
+  suffix: string;
+};
+
+/** Wildberries unique finance line id: one rrd_id row → multiple lines by fee suffix. */
+export function buildFinanceSourceKey(rrdId: number, suffix: string): string {
+  return `rrd:${rrdId}:${suffix}`;
+}
+
+function buildFinanceLine(input: FinanceLineInput): Omit<WbFinance, "id"> {
+  const { row, productId, operationType, amount, suffix } = input;
+  const operationDate = row.rr_dt ?? (row.sale_dt ? toDateString(row.sale_dt) : null) ?? toDateString(new Date().toISOString());
+  const sourceKey = buildFinanceSourceKey(row.rrd_id, suffix);
+
+  return {
+    product_id: productId,
+    nm_id: row.nm_id ?? null,
+    operation_date: operationDate,
+    operation_type: operationType,
+    amount: Math.abs(amount),
+    source_key: sourceKey,
+    description: sourceKey,
+    srid: row.srid ?? null,
+  };
+}
+
+export function mapFinanceRowsFromReport(
+  row: WbApiFinanceRow,
+  productId: string | null
+): Omit<WbFinance, "id">[] {
+  const lines: Omit<WbFinance, "id">[] = [];
+
+  const add = (operationType: FinanceOperationType, amount: number | undefined, suffix: string) => {
+    if (amount && Math.abs(amount) > 0) {
+      lines.push(buildFinanceLine({ row, productId, operationType, amount, suffix }));
+    }
+  };
+
+  add("commission", row.ppvz_sales_commission, "commission");
+  add("logistics", row.delivery_rub, "logistics");
+  add("storage", row.storage_fee, "storage");
+  add("penalty", row.penalty, "penalty");
+  add("return_logistics", row.rebill_logistic_cost, "return_logistics");
+  add("other", row.deduction, "deduction");
+  add("other", row.acceptance, "acceptance");
+  add("other", row.acquiring_fee, "acquiring_fee");
+  add("other", row.ppvz_reward, "ppvz_reward");
+  add("other", row.additional_payment, "additional_payment");
+  add("other", row.ppvz_vw, "ppvz_vw");
+
+  const operName = (row.supplier_oper_name ?? "").toLowerCase();
+  if (!lines.length && operName) {
+    if (operName.includes("логист") && operName.includes("обрат")) {
+      add("return_logistics", row.delivery_rub, "oper_return_logistics");
+    } else if (operName.includes("логист")) {
+      add("logistics", row.delivery_rub, "oper_logistics");
+    } else if (operName.includes("хранен")) {
+      add("storage", row.storage_fee ?? row.delivery_rub, "oper_storage");
+    } else if (operName.includes("штраф")) {
+      add("penalty", row.penalty ?? row.delivery_rub, "oper_penalty");
+    }
+  }
+
+  return lines;
+}
+
+export function isWithinDateRange(dateStr: string, from: string, to: string): boolean {
+  return dateStr >= from && dateStr <= to;
+}
+
+export function mapFinanceOperationType(apiType: string): FinanceOperationType {
+  const normalized = apiType.toLowerCase();
+  if (normalized.includes("commission") || normalized.includes("комисс")) return "commission";
+  if (normalized.includes("return") || normalized.includes("обратн")) return "return_logistics";
+  if (normalized.includes("logist") || normalized.includes("логист")) return "logistics";
+  if (normalized.includes("storage") || normalized.includes("хранен")) return "storage";
+  if (normalized.includes("penalty") || normalized.includes("штраф")) return "penalty";
+  return "other";
+}
+
+// Re-export types used by legacy imports
+export type { WbApiOrder, WbApiSale, WbApiFinanceRow as WbApiFinanceRecord, WbApiProductCard };

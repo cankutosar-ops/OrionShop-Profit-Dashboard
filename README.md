@@ -18,6 +18,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+**Full Wildberries sync setup:** see [SETUP.md](./SETUP.md)
+
+**Database migration (schema alignment):** see [supabase/MIGRATION_GUIDE.md](./supabase/MIGRATION_GUIDE.md)
+
 If Supabase is not configured or tables are empty, the dashboard shows **sample placeholder data** so you can preview the UI immediately.
 
 ## Supabase Setup

@@ -33,6 +33,8 @@ export type WbOrder = {
   quantity: number;
   status: string;
   warehouse: string | null;
+  tech_size: string | null;
+  barcode: string | null;
 };
 
 export type WbSale = {
@@ -45,6 +47,8 @@ export type WbSale = {
   quantity: number;
   is_return: boolean;
   return_date: string | null;
+  tech_size: string | null;
+  barcode: string | null;
 };
 
 export type FinanceOperationType =
@@ -55,6 +59,16 @@ export type FinanceOperationType =
   | "penalty"
   | "other";
 
+/** All wb_finance operation types included in net profit. */
+export const FINANCE_OPERATION_TYPES: FinanceOperationType[] = [
+  "commission",
+  "logistics",
+  "return_logistics",
+  "storage",
+  "penalty",
+  "other",
+];
+
 export type WbFinance = {
   id: string;
   product_id: string | null;
@@ -62,7 +76,11 @@ export type WbFinance = {
   operation_date: string;
   operation_type: FinanceOperationType;
   amount: number;
+  /** Wildberries line id: rrd:{rrd_id}:{suffix} — unique per report line. */
+  source_key: string | null;
   description: string | null;
+  /** Shipment/order id from WB reportDetailByPeriod — used for purchase logistics attribution. */
+  srid: string | null;
 };
 
 export type WbAd = {
@@ -83,6 +101,23 @@ export type ProductCostHistory = {
   effective_from: string;
   effective_to: string | null;
   created_at: string;
+};
+
+/** Latest active cost per product for the Costs page. */
+export type CostRecord = {
+  id: string;
+  product_id: string;
+  supplier_article: string;
+  product_name: string;
+  cost: number;
+  last_updated: string;
+  effective_from: string;
+};
+
+export type ProductOption = {
+  id: string;
+  supplier_article: string;
+  name: string;
 };
 
 export type ProductWithRelations = Product & {
@@ -111,12 +146,177 @@ export type ProfitBreakdown = {
   unitsReturned: number;
 };
 
+export type ProfitabilityV2BreakdownLine = {
+  key: string;
+  label: string;
+  amount: number;
+  isDeduction?: boolean;
+  isTotal?: boolean;
+  detail?: string;
+};
+
+export type ProfitabilityV2Metrics = {
+  productCost: number;
+  grossProfit: number;
+  marketplaceFees: number;
+  marginPercent: number;
+  advertising: number;
+  breakdown: ProfitabilityV2BreakdownLine[];
+};
+
 export type ProductProfitability = ProfitBreakdown & {
   productId: string;
   modelCode: string;
   productName: string;
   categoryName: string;
   brandName: string;
+  /** All wb_orders quantity in period. */
+  orders: number;
+  /** Completed purchase quantity (non-return wb_sales) in period. */
+  purchases: number;
+  /** Purchases ÷ orders × 100. */
+  conversionPercent: number;
+  /** Cancelled wb_orders quantity in period. */
+  cancelled: number;
+  /** Cancelled ÷ orders × 100. */
+  cancellationPercent: number;
+  /** Outbound logistics matched to a completed purchase SRID (same as `logistics`). */
+  purchaseLogistics: number;
+  /** Outbound logistics excluded from net profit (cancelled / unknown / missing SRID). */
+  excludedLogistics: number;
+  /** Logistics rows matched to a completed purchase SRID. */
+  purchaseLogisticsRows: number;
+  /** Logistics rows excluded (cancelled / unknown / missing SRID). */
+  excludedLogisticsRows: number;
+};
+
+/** Top-N product audit row for /audit/product-profitability. */
+export type ProductProfitabilityAuditRow = {
+  productId: string;
+  supplierArticle: string;
+  productName: string;
+  revenue: number;
+  quantitySold: number;
+  commission: number;
+  logistics: number;
+  returnLogistics: number;
+  deductions: number;
+  productCost: number;
+  grossProfit: number;
+  netProfit: number;
+  marginPercent: number;
+};
+
+/** Product analytics row for /analytics/products. */
+export type ProductAnalyticsRow = {
+  productId: string;
+  supplierArticle: string;
+  productName: string;
+  revenue: number;
+  quantitySold: number;
+  productCost: number;
+  marketplaceFees: number;
+  netProfit: number;
+  marginPercent: number;
+};
+
+/** Product Analytics V3 row — one SKU in period. */
+export type ProductAnalyticsV3Row = {
+  productId: string;
+  supplierArticle: string;
+  productName: string;
+  orders: number;
+  purchases: number;
+  conversionPercent: number;
+  cancelled: number;
+  cancellationPercent: number;
+  revenue: number;
+  commission: number;
+  /** All outbound logistics (purchase + excluded). */
+  totalLogistics: number;
+  purchaseLogistics: number;
+  excludedLogistics: number;
+  returnLogistics: number;
+  otherMarketplaceCosts: number;
+  productCost: number;
+  operationalProfit: number;
+  /** Operational profit ÷ revenue × 100. */
+  operationalMarginPercent: number;
+  /** Financial net profit (buildProfitBreakdown) — for reconciliation only. */
+  financialNetProfit: number;
+};
+
+export type InventoryRecommendation =
+  | "Healthy"
+  | "Stop Purchasing"
+  | "Overstock"
+  | "Produce / Purchase";
+
+/** Lazy-loaded SKU row under a model (parent) in Product Analytics. */
+export type ProductAnalyticsSkuRow = {
+  variantKey: string;
+  size: string;
+  barcode: string | null;
+  currentStock: number;
+  orders: number;
+  purchases: number;
+};
+
+export type ProductSkuAnalyticsResponse = {
+  productId: string;
+  supplierArticle: string;
+  skus: ProductAnalyticsSkuRow[];
+  loadTimeMs: number;
+};
+
+/** Sum of all product rows in period — validation totals. */
+export type ProductAnalyticsTotals = {
+  productCount: number;
+  revenue: number;
+  productCost: number;
+  marketplaceFees: number;
+  /** Purchase-only outbound logistics included in net profit. */
+  purchaseLogistics: number;
+  /** Excluded outbound logistics (not in net profit). */
+  excludedLogistics: number;
+  returnLogistics: number;
+  /** Financial net profit (dashboard engine). */
+  netProfit: number;
+  purchaseLogisticsRows: number;
+  excludedLogisticsRows: number;
+  /** Operational rollups (V3 row set). */
+  totalLogistics: number;
+  otherMarketplaceCosts: number;
+  operationalProfit: number;
+  operationalMarginPercent: number;
+  /** V3 funnel rollups (V3 row set). */
+  orders: number;
+  purchases: number;
+  conversionPercent: number;
+  cancelled: number;
+  cancellationPercent: number;
+  /** Orders − purchases. */
+  lostOrders: number;
+  commission: number;
+  marketing: number;
+  marginPercent: number;
+};
+
+export type ProductVariant = {
+  id: string;
+  product_id: string;
+  tech_size: string;
+  barcode: string | null;
+  created_at: string;
+};
+
+export type WbStock = {
+  id: string;
+  product_id: string;
+  tech_size: string;
+  barcode: string | null;
+  quantity: number;
+  synced_at: string;
 };
 
 export type CategoryProfitability = {
@@ -128,57 +328,118 @@ export type CategoryProfitability = {
   returnRate: number;
 };
 
+export type DailyOrdersPurchasesPoint = {
+  date: string;
+  ordersCount: number;
+  ordersAmount: number;
+  purchasesCount: number;
+  purchasesAmount: number;
+};
+
+export type OrdersPurchasesKpis = {
+  ordersCount: number;
+  ordersAmount: number;
+  cancelledOrdersCount: number;
+  cancelledOrdersAmount: number;
+  purchasesCount: number;
+  purchasesAmount: number;
+  conversionRate: number;
+  returnRate: number;
+  dailyOrdersPurchases: DailyOrdersPurchasesPoint[];
+};
+
 export type OverviewMetrics = ProfitBreakdown & {
   dailyRevenue: { date: string; revenue: number; profit: number }[];
   costBreakdown: { name: string; value: number; color: string }[];
+  ordersPurchases: OrdersPurchasesKpis;
+  profitabilityV2: ProfitabilityV2Metrics;
 };
+
+/** Minimal Supabase relationship entry (no FK metadata required for typed client). */
+type NoRelationships = [];
+
+type PublicTables = {
+  brands: {
+    Row: Brand;
+    Insert: Omit<Brand, "id" | "created_at"> & { id?: string; created_at?: string };
+    Update: Partial<Brand>;
+    Relationships: NoRelationships;
+  };
+  categories: {
+    Row: Category;
+    Insert: Omit<Category, "id" | "created_at"> & { id?: string; created_at?: string };
+    Update: Partial<Category>;
+    Relationships: NoRelationships;
+  };
+  products: {
+    Row: Product;
+    Insert: Omit<Product, "id" | "created_at"> & { id?: string; created_at?: string };
+    Update: Partial<Product>;
+    Relationships: NoRelationships;
+  };
+  wb_orders: {
+    Row: WbOrder;
+    Insert: Omit<WbOrder, "id"> & { id?: string };
+    Update: Partial<WbOrder>;
+    Relationships: NoRelationships;
+  };
+  wb_sales: {
+    Row: WbSale;
+    Insert: Omit<WbSale, "id"> & { id?: string };
+    Update: Partial<WbSale>;
+    Relationships: NoRelationships;
+  };
+  wb_finance: {
+    Row: WbFinance;
+    Insert: Omit<WbFinance, "id"> & { id?: string };
+    Update: Partial<WbFinance>;
+    Relationships: NoRelationships;
+  };
+  wb_ads: {
+    Row: WbAd;
+    Insert: Omit<WbAd, "id"> & { id?: string };
+    Update: Partial<WbAd>;
+    Relationships: NoRelationships;
+  };
+  product_cost_history: {
+    Row: ProductCostHistory;
+    Insert: Omit<ProductCostHistory, "id" | "created_at" | "effective_to"> & {
+      id?: string;
+      created_at?: string;
+      effective_to?: string | null;
+    };
+    Update: Partial<ProductCostHistory>;
+    Relationships: NoRelationships;
+  };
+  product_variants: {
+    Row: ProductVariant;
+    Insert: Omit<ProductVariant, "id" | "created_at"> & { id?: string; created_at?: string };
+    Update: Partial<ProductVariant>;
+    Relationships: NoRelationships;
+  };
+  wb_stock: {
+    Row: WbStock;
+    Insert: Omit<WbStock, "id"> & { id?: string };
+    Update: Partial<WbStock>;
+    Relationships: NoRelationships;
+  };
+};
+
+/** Row type for a public schema table. */
+export type TableRow<T extends keyof PublicTables> = PublicTables[T]["Row"];
+
+/** Partial row pick for typed `.select("col")` results. */
+export type TableRowPick<T extends keyof PublicTables, K extends keyof TableRow<T>> = Pick<
+  TableRow<T>,
+  K
+>;
 
 export type Database = {
   public: {
-    Tables: {
-      brands: {
-        Row: Brand;
-        Insert: Omit<Brand, "id" | "created_at"> & { id?: string; created_at?: string };
-        Update: Partial<Brand>;
-      };
-      categories: {
-        Row: Category;
-        Insert: Omit<Category, "id" | "created_at"> & { id?: string; created_at?: string };
-        Update: Partial<Category>;
-      };
-      products: {
-        Row: Product;
-        Insert: Omit<Product, "id" | "created_at"> & { id?: string; created_at?: string };
-        Update: Partial<Product>;
-      };
-      wb_orders: {
-        Row: WbOrder;
-        Insert: Omit<WbOrder, "id"> & { id?: string };
-        Update: Partial<WbOrder>;
-      };
-      wb_sales: {
-        Row: WbSale;
-        Insert: Omit<WbSale, "id"> & { id?: string };
-        Update: Partial<WbSale>;
-      };
-      wb_finance: {
-        Row: WbFinance;
-        Insert: Omit<WbFinance, "id"> & { id?: string };
-        Update: Partial<WbFinance>;
-      };
-      wb_ads: {
-        Row: WbAd;
-        Insert: Omit<WbAd, "id"> & { id?: string };
-        Update: Partial<WbAd>;
-      };
-      product_cost_history: {
-        Row: ProductCostHistory;
-        Insert: Omit<ProductCostHistory, "id" | "created_at"> & {
-          id?: string;
-          created_at?: string;
-        };
-        Update: Partial<ProductCostHistory>;
-      };
-    };
+    Tables: PublicTables;
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };

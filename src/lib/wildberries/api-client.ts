@@ -1,15 +1,16 @@
-/**
- * Wildberries API integration scaffold.
- *
- * This module defines the client interface and sync orchestration
- * for future Wildberries API integration. No API calls are made yet.
- *
- * @see https://dev.wildberries.ru/openapi/api-information
- */
+import { WB_CONTENT_API, WB_RATE_LIMIT_MS, WB_STATISTICS_API } from "./constants";
+import { syncLog } from "./sync-log";
+import type {
+  WbApiCardsResponse,
+  WbApiFinanceRow,
+  WbApiOrder,
+  WbApiProductCard,
+  WbApiSale,
+  WbApiStockRow,
+} from "./types";
 
 export type WbApiConfig = {
   token: string;
-  baseUrl: string;
 };
 
 export type WbSyncResult = {
@@ -27,13 +28,7 @@ export type WbSyncOptions = {
   entities?: WbSyncEntity[];
 };
 
-export type WbSyncEntity =
-  | "orders"
-  | "sales"
-  | "finance"
-  | "ads"
-  | "products"
-  | "stocks";
+export type WbSyncEntity = "orders" | "sales" | "finance" | "products";
 
 export class WbApiError extends Error {
   constructor(
@@ -46,106 +41,221 @@ export class WbApiError extends Error {
   }
 }
 
-export function getWbApiConfig(): WbApiConfig {
+export function getWbApiToken(): string {
   const token = process.env.WB_API_TOKEN;
-  const baseUrl = process.env.WB_API_BASE_URL ?? "https://suppliers-api.wildberries.ru";
-
-  if (!token) {
-    throw new WbApiError("WB_API_TOKEN is not configured");
+  if (!token || token.trim() === "") {
+    throw new WbApiError("WB_API_TOKEN is not configured in .env.local");
   }
-
-  return { token, baseUrl };
+  return token.trim();
 }
 
-/**
- * Base HTTP client for Wildberries API requests.
- * Will be implemented when API integration begins.
- */
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class WbApiClient {
-  private config: WbApiConfig;
+  private token: string;
+  private lastRequestAt = 0;
 
-  constructor(config?: WbApiConfig) {
-    this.config = config ?? getWbApiConfig();
+  constructor(token?: string) {
+    this.token = token ?? getWbApiToken();
   }
 
-  async request<T>(_endpoint: string, _options?: RequestInit): Promise<T> {
-    throw new WbApiError(
-      "Wildberries API integration is not yet implemented. Configure WB_API_TOKEN and implement request()."
+  private async request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+    const elapsed = Date.now() - this.lastRequestAt;
+    if (elapsed < WB_RATE_LIMIT_MS) {
+      await sleep(WB_RATE_LIMIT_MS - elapsed);
+    }
+
+    const url = `${baseUrl}${path}`;
+    syncLog("wb-api", "Request START", { method: init?.method ?? "GET", url });
+
+    const startedAt = Date.now();
+    const response = await fetch(url, {
+      ...init,
+      headers: {
+        Authorization: this.token,
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+
+    this.lastRequestAt = Date.now();
+    const durationMs = Date.now() - startedAt;
+
+    syncLog("wb-api", "Request END", {
+      method: init?.method ?? "GET",
+      url,
+      status: response.status,
+      durationMs,
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new WbApiError(
+        `WB API error ${response.status}: ${body.slice(0, 300)}`,
+        response.status,
+        path
+      );
+    }
+
+    if (response.status === 204) {
+      return [] as T;
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  /** Paginated fetch for orders/sales statistics endpoints */
+  async fetchPaginatedStatistics<T extends { lastChangeDate: string }>(
+    path: string,
+    dateFrom: string
+  ): Promise<T[]> {
+    const all: T[] = [];
+    let cursor = dateFrom;
+    let page = 0;
+
+    syncLog("wb-api", "Paginated statistics START", { path, dateFrom });
+
+    while (true) {
+      page += 1;
+      const params = new URLSearchParams({ dateFrom: cursor, flag: "0" });
+      syncLog("wb-api", "Paginated statistics page START", { path, page, cursor });
+
+      const batch = await this.request<T[]>(
+        WB_STATISTICS_API,
+        `${path}?${params.toString()}`
+      );
+
+      syncLog("wb-api", "Paginated statistics page END", {
+        path,
+        page,
+        batchSize: batch.length,
+      });
+
+      if (!batch.length) break;
+
+      all.push(...batch);
+      cursor = batch[batch.length - 1].lastChangeDate;
+
+      if (batch.length < 80000) break;
+    }
+
+    syncLog("wb-api", "Paginated statistics END", { path, totalRows: all.length, pages: page });
+    return all;
+  }
+
+  async fetchOrders(dateFrom: string): Promise<WbApiOrder[]> {
+    return this.fetchPaginatedStatistics<WbApiOrder>("/api/v1/supplier/orders", dateFrom);
+  }
+
+  async fetchSales(dateFrom: string): Promise<WbApiSale[]> {
+    return this.fetchPaginatedStatistics<WbApiSale>("/api/v1/supplier/sales", dateFrom);
+  }
+
+  /** Current warehouse stock snapshot from WB Statistics API. */
+  async fetchStocks(dateFrom = "2019-01-01"): Promise<WbApiStockRow[]> {
+    return this.fetchPaginatedStatistics<WbApiStockRow>("/api/v1/supplier/stocks", dateFrom);
+  }
+
+  async fetchFinanceReport(dateFrom: string, dateTo: string): Promise<WbApiFinanceRow[]> {
+    const all: WbApiFinanceRow[] = [];
+    let rrdid = 0;
+    let page = 0;
+
+    syncLog("wb-api", "Finance report START", { dateFrom, dateTo });
+
+    while (true) {
+      page += 1;
+      const params = new URLSearchParams({
+        dateFrom,
+        dateTo,
+        limit: "100000",
+        rrdid: String(rrdid),
+      });
+
+      syncLog("wb-api", "Finance report page START", { page, rrdid });
+
+      const batch = await this.request<WbApiFinanceRow[]>(
+        WB_STATISTICS_API,
+        `/api/v5/supplier/reportDetailByPeriod?${params.toString()}`
+      );
+
+      syncLog("wb-api", "Finance report page END", { page, batchSize: batch.length });
+
+      if (!batch.length) break;
+
+      all.push(...batch);
+      const lastRrd = batch[batch.length - 1].rrd_id;
+      if (lastRrd === rrdid) break;
+      rrdid = lastRrd;
+    }
+
+    syncLog("wb-api", "Finance report END", { totalRows: all.length, pages: page });
+    return all;
+  }
+
+  async fetchAllProductCards(): Promise<WbApiCardsResponse["cards"]> {
+    const all: WbApiCardsResponse["cards"] = [];
+    let cursor: { limit: number; nmID?: number; updatedAt?: string } = { limit: 100 };
+    let page = 0;
+
+    syncLog("wb-api", "Product cards START");
+
+    while (true) {
+      page += 1;
+      const body = {
+        settings: {
+          cursor,
+          filter: { withPhoto: -1 },
+        },
+      };
+
+      syncLog("wb-api", "Product cards page START", { page, cursor });
+
+      const response = await this.request<WbApiCardsResponse>(
+        WB_CONTENT_API,
+        "/content/v2/get/cards/list",
+        { method: "POST", body: JSON.stringify(body) }
+      );
+
+      syncLog("wb-api", "Product cards page END", {
+        page,
+        batchSize: response.cards?.length ?? 0,
+      });
+
+      if (!response.cards?.length) break;
+
+      all.push(...response.cards);
+
+      const nextNmID = response.cursor?.nmID;
+      const nextUpdatedAt = response.cursor?.updatedAt;
+      if (!nextNmID || !nextUpdatedAt) break;
+
+      cursor = { limit: 100, nmID: nextNmID, updatedAt: nextUpdatedAt };
+    }
+
+    syncLog("wb-api", "Product cards END", { totalCards: all.length, pages: page });
+    return all;
+  }
+
+  /** Fetch a single product card by supplier article (vendor code). */
+  async fetchProductCardByVendorCode(vendorCode: string): Promise<WbApiProductCard | null> {
+    const response = await this.request<WbApiCardsResponse>(
+      WB_CONTENT_API,
+      "/content/v2/get/cards/list",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          settings: {
+            cursor: { limit: 100 },
+            filter: { textSearch: vendorCode, withPhoto: -1 },
+          },
+        }),
+      }
     );
-  }
 
-  // --- Orders API ---
-  async fetchOrders(_dateFrom: string, _dateTo: string): Promise<unknown[]> {
-    throw new WbApiError("fetchOrders not implemented");
-  }
-
-  // --- Sales API ---
-  async fetchSales(_dateFrom: string, _dateTo: string): Promise<unknown[]> {
-    throw new WbApiError("fetchSales not implemented");
-  }
-
-  // --- Finance API ---
-  async fetchFinanceReport(_dateFrom: string, _dateTo: string): Promise<unknown[]> {
-    throw new WbApiError("fetchFinanceReport not implemented");
-  }
-
-  // --- Advertising API ---
-  async fetchAdCampaigns(_dateFrom: string, _dateTo: string): Promise<unknown[]> {
-    throw new WbApiError("fetchAdCampaigns not implemented");
-  }
-
-  // --- Content API (products) ---
-  async fetchProductCards(_limit?: number, _offset?: number): Promise<unknown[]> {
-    throw new WbApiError("fetchProductCards not implemented");
+    const cards = response.cards ?? [];
+    return cards.find((card) => card.vendorCode === vendorCode) ?? cards[0] ?? null;
   }
 }
-
-/**
- * Orchestrates data sync from Wildberries API to Supabase.
- * Each entity sync method will map API responses to database records.
- */
-export class WbSyncService {
-  private client: WbApiClient;
-
-  constructor(client?: WbApiClient) {
-    this.client = client ?? new WbApiClient();
-  }
-
-  async syncAll(_options: WbSyncOptions): Promise<WbSyncResult[]> {
-    throw new WbApiError("Full sync not yet implemented");
-  }
-
-  async syncOrders(_dateFrom: string, _dateTo: string): Promise<WbSyncResult> {
-    return this.createPendingResult("orders");
-  }
-
-  async syncSales(_dateFrom: string, _dateTo: string): Promise<WbSyncResult> {
-    return this.createPendingResult("sales");
-  }
-
-  async syncFinance(_dateFrom: string, _dateTo: string): Promise<WbSyncResult> {
-    return this.createPendingResult("finance");
-  }
-
-  async syncAds(_dateFrom: string, _dateTo: string): Promise<WbSyncResult> {
-    return this.createPendingResult("ads");
-  }
-
-  async syncProducts(): Promise<WbSyncResult> {
-    return this.createPendingResult("products");
-  }
-
-  private createPendingResult(entity: string): WbSyncResult {
-    return {
-      entity,
-      recordsProcessed: 0,
-      recordsInserted: 0,
-      recordsUpdated: 0,
-      errors: [`${entity} sync not yet implemented`],
-      syncedAt: new Date().toISOString(),
-    };
-  }
-}
-
-export const wbApiClient = new WbApiClient();
-export const wbSyncService = new WbSyncService();

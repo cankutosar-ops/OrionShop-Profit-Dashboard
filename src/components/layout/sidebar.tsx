@@ -1,25 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3,
+  ClipboardCheck,
+  Coins,
   LayoutDashboard,
+  LineChart,
   Package,
   Settings,
   ShoppingBag,
+  Tag,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Product Analytics", href: "/analytics/products", icon: LineChart },
+  { name: "Smart Pricing", href: "/analytics/pricing", icon: Tag },
+  { name: "Decision Simulator", href: "/analytics/simulator", icon: Zap },
   { name: "Products", href: "/products", icon: Package },
+  { name: "Costs", href: "/costs", icon: Coins },
   { name: "Categories", href: "/categories", icon: BarChart3 },
+  { name: "Product Audit", href: "/audit/product-profitability", icon: ClipboardCheck },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  function hrefWithDateRange(base: string) {
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    if (!from && !to) return base;
+
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    return `${base}?${params.toString()}`;
+  }
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-card">
@@ -43,7 +65,7 @@ export function Sidebar() {
           return (
             <Link
               key={item.name}
-              href={item.href}
+              href={hrefWithDateRange(item.href)}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                 isActive
@@ -65,7 +87,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1">
             <p className="text-xs font-medium">Wildberries</p>
-            <p className="text-[10px] text-muted-foreground">API sync pending</p>
+            <p className="text-[10px] text-muted-foreground">Single-store sync</p>
           </div>
           <Settings className="h-4 w-4 text-muted-foreground" />
         </div>
