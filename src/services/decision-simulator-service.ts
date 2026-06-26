@@ -11,17 +11,17 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { getProductProfitability } from "@/services/dashboard-service";
-import type { DateRange } from "@/types/database";
+import type { ScopedDateRange } from "@/types/database";
 
 export type DecisionSimulatorPageData = {
-  range: DateRange;
+  range: ScopedDateRange;
   sku: string;
   availableSkus: string[];
   report: DecisionSimulatorReport | null;
 };
 
 export async function getDecisionSimulatorPageData(
-  range: DateRange,
+  scope: ScopedDateRange,
   sku: string,
   targetMarginPercent = DEFAULT_TARGET_MARGIN_PERCENT,
   marketingPercent = DEFAULT_MARKETING_PERCENT
@@ -30,7 +30,7 @@ export async function getDecisionSimulatorPageData(
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const products = await getProductProfitability(range, client);
+  const products = await getProductProfitability(scope, client);
   const candidates = products.filter(isProductAnalyticsV3Candidate);
   const availableSkus = candidates
     .filter((product) => product.unitsSold > 0 && product.revenue > 0)
@@ -50,7 +50,7 @@ export async function getDecisionSimulatorPageData(
   const report = product ? buildDecisionSimulatorReport(product, cohortMaxOrders, params) : null;
 
   return {
-    range,
+    range: scope,
     sku: normalizedSku || availableSkus[0] || "",
     availableSkus,
     report,

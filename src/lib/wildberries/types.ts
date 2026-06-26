@@ -90,6 +90,7 @@ export type WbApiStockRow = {
   quantity?: number;
   quantityFull?: number;
   nmId?: number;
+  warehouseName?: string;
 };
 
 export type WbApiCardsResponse = {

@@ -40,7 +40,9 @@ export function toProductVariantsFromApi(
   const now = new Date().toISOString();
   return mapApiProductVariants(card, productId).map((variant, index) => ({
     id: `api-${productId}-${index}`,
+    marketplace_account_id: "",
     product_id: productId,
+    nm_id: variant.nm_id,
     tech_size: variant.tech_size,
     barcode: variant.barcode,
     created_at: now,

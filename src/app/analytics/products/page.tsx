@@ -2,19 +2,20 @@ import { ProductAnalyticsTotalsSection } from "@/components/analytics/product-an
 import { ProductAnalyticsV8Table } from "@/components/analytics/product-analytics-v8-table";
 import { ProductAnalyticsV3Table } from "@/components/analytics/product-analytics-v3-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { formatDate, parseDateRange } from "@/lib/utils";
+import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import { formatDate } from "@/lib/utils";
 import { getProductAnalytics } from "@/services/product-analytics-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
 };
 
 export default async function ProductAnalyticsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range = parseDateRange(params.from, params.to);
-  const report = await getProductAnalytics(range);
+  const scope = await resolveScopedDateRange(params);
+  const report = await getProductAnalytics(scope);
 
   return (
     <>
@@ -33,7 +34,7 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
             <p>
               Period:{" "}
               <span className="font-medium text-foreground">
-                {formatDate(range.from)} → {formatDate(range.to)}
+                {formatDate(scope.from)} → {formatDate(scope.to)}
               </span>
               {" · "}
               {report.v3All.length} SKUs with activity
@@ -51,8 +52,8 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
             title="All Products"
             description={`${report.v3All.length} models sorted by operational profit · click to expand SKU rows`}
             rows={report.v3All}
-            rangeFrom={range.from}
-            rangeTo={range.to}
+            rangeFrom={scope.from}
+            rangeTo={scope.to}
           />
 
           <ProductAnalyticsV3Table

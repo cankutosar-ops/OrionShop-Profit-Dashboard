@@ -1,3 +1,62 @@
+export type MarketplaceType = "wildberries" | "ozon" | "lamoda";
+
+export const MARKETPLACE_TYPES: MarketplaceType[] = ["wildberries", "ozon", "lamoda"];
+
+export type SyncStatus = "idle" | "running" | "success" | "partial" | "failed";
+
+export const SYNC_STATUSES: SyncStatus[] = ["idle", "running", "success", "partial", "failed"];
+
+export type Company = {
+  id: string;
+  name: string;
+  country: string | null;
+  currency: string;
+  timezone: string;
+  language: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MarketplaceAccount = {
+  id: string;
+  company_id: string;
+  marketplace: MarketplaceType;
+  account_name: string;
+  seller_id: string | null;
+  api_key_encrypted: string;
+  is_active: boolean;
+  is_default: boolean;
+  sync_enabled: boolean;
+  last_sync_at: string | null;
+  last_successful_sync_at: string | null;
+  last_sync_status: SyncStatus | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Safe for client UI — no encrypted key exposed. */
+export type MarketplaceAccountPublic = {
+  id: string;
+  company_id: string;
+  marketplace: MarketplaceType;
+  account_name: string;
+  seller_id: string | null;
+  is_active: boolean;
+  is_default: boolean;
+  sync_enabled: boolean;
+  last_sync_at: string | null;
+  last_successful_sync_at: string | null;
+  last_sync_status: SyncStatus | null;
+  has_api_key: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompanyWithAccounts = Company & {
+  accounts: MarketplaceAccountPublic[];
+};
+
 export type Brand = {
   id: string;
   name: string;
@@ -13,6 +72,7 @@ export type Category = {
 
 export type Product = {
   id: string;
+  marketplace_account_id: string;
   supplier_article: string;
   nm_id: number;
   name: string;
@@ -24,6 +84,7 @@ export type Product = {
 
 export type WbOrder = {
   id: string;
+  marketplace_account_id: string;
   srid: string;
   nm_id: number;
   product_id: string;
@@ -39,6 +100,7 @@ export type WbOrder = {
 
 export type WbSale = {
   id: string;
+  marketplace_account_id: string;
   srid: string;
   nm_id: number;
   product_id: string;
@@ -71,6 +133,7 @@ export const FINANCE_OPERATION_TYPES: FinanceOperationType[] = [
 
 export type WbFinance = {
   id: string;
+  marketplace_account_id: string;
   product_id: string | null;
   nm_id: number | null;
   operation_date: string;
@@ -129,6 +192,14 @@ export type DateRange = {
   from: string;
   to: string;
 };
+
+/** Active marketplace account scope for queries. */
+export type AccountScope = {
+  marketplaceAccountId: string;
+  companyId: string;
+};
+
+export type ScopedDateRange = DateRange & AccountScope;
 
 export type ProfitBreakdown = {
   revenue: number;
@@ -304,7 +375,9 @@ export type ProductAnalyticsTotals = {
 
 export type ProductVariant = {
   id: string;
+  marketplace_account_id: string;
   product_id: string;
+  nm_id: number | null;
   tech_size: string;
   barcode: string | null;
   created_at: string;
@@ -312,9 +385,11 @@ export type ProductVariant = {
 
 export type WbStock = {
   id: string;
+  marketplace_account_id: string;
   product_id: string;
   tech_size: string;
   barcode: string | null;
+  warehouse: string | null;
   quantity: number;
   synced_at: string;
 };
@@ -359,6 +434,43 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  companies: {
+    Row: Company;
+    Insert: {
+      name: string;
+      country?: string | null;
+      currency?: string;
+      timezone?: string;
+      language?: string;
+      is_default?: boolean;
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Omit<Company, "id">>;
+    Relationships: NoRelationships;
+  };
+  marketplace_accounts: {
+    Row: MarketplaceAccount;
+    Insert: {
+      company_id: string;
+      marketplace: MarketplaceType;
+      account_name: string;
+      seller_id?: string | null;
+      api_key_encrypted?: string;
+      is_active?: boolean;
+      is_default?: boolean;
+      sync_enabled?: boolean;
+      last_sync_at?: string | null;
+      last_successful_sync_at?: string | null;
+      last_sync_status?: SyncStatus | null;
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Omit<MarketplaceAccount, "id">>;
+    Relationships: NoRelationships;
+  };
   brands: {
     Row: Brand;
     Insert: Omit<Brand, "id" | "created_at"> & { id?: string; created_at?: string };

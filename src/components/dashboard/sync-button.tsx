@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { getDefaultDateRange } from "@/lib/utils";
@@ -15,6 +15,7 @@ type SyncResult = {
 
 export function SyncButton() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,12 +26,14 @@ export function SyncButton() {
     setError(null);
 
     const range = getDefaultDateRange();
+    const marketplaceAccountId = searchParams.get("account");
 
     try {
       const response = await fetch("/api/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          marketplaceAccountId,
           dateFrom: range.from,
           dateTo: range.to,
           entities: ["products", "orders", "sales", "finance"],

@@ -1,18 +1,19 @@
 import { ProductProfitabilityAuditTable } from "@/components/audit/product-profitability-audit-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { formatDate, parseDateRange } from "@/lib/utils";
+import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import { formatDate } from "@/lib/utils";
 import { getProductProfitabilityAudit } from "@/services/product-profitability-audit-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
 };
 
 export default async function ProductProfitabilityAuditPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range = parseDateRange(params.from, params.to);
-  const report = await getProductProfitabilityAudit(range, 20);
+  const scope = await resolveScopedDateRange(params);
+  const report = await getProductProfitabilityAudit(scope, 20);
 
   return (
     <>
@@ -31,7 +32,7 @@ export default async function ProductProfitabilityAuditPage({ searchParams }: Pa
             <p>
               Period:{" "}
               <span className="font-medium text-foreground">
-                {formatDate(range.from)} → {formatDate(range.to)}
+                {formatDate(scope.from)} → {formatDate(scope.to)}
               </span>
               {" · "}
               {report.productCount} products with revenue · top 20 shown

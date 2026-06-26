@@ -52,13 +52,22 @@ function getReadClient(client?: SupabaseClient): SupabaseClient {
   return client ?? createServerClient();
 }
 
-export async function fetchCostRecords(client?: SupabaseClient): Promise<CostRecord[]> {
+export async function fetchCostRecords(
+  marketplaceAccountId?: string,
+  client?: SupabaseClient
+): Promise<CostRecord[]> {
   const supabase = getReadClient(client);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("product_cost_history")
-    .select("*, product:products(supplier_article, name)")
+    .select("*, product:products!inner(supplier_article, name, marketplace_account_id)")
     .order("effective_from", { ascending: false });
+
+  if (marketplaceAccountId) {
+    query = query.eq("product.marketplace_account_id", marketplaceAccountId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw new Error(`Failed to fetch costs: ${error.message}`);
 
@@ -69,13 +78,22 @@ export async function fetchCostRecords(client?: SupabaseClient): Promise<CostRec
     .sort((a, b) => a.supplier_article.localeCompare(b.supplier_article));
 }
 
-export async function fetchProductOptions(client?: SupabaseClient): Promise<ProductOption[]> {
+export async function fetchProductOptions(
+  marketplaceAccountId?: string,
+  client?: SupabaseClient
+): Promise<ProductOption[]> {
   const supabase = getReadClient(client);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("products")
     .select("id, supplier_article, name")
     .order("supplier_article");
+
+  if (marketplaceAccountId) {
+    query = query.eq("marketplace_account_id", marketplaceAccountId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw new Error(`Failed to fetch products: ${error.message}`);
 

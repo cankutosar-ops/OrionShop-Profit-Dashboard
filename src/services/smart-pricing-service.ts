@@ -15,10 +15,10 @@ import {
   type ProductPricingHistoricalInputs,
 } from "@/lib/smart-pricing";
 import { getProductProfitability } from "@/services/dashboard-service";
-import type { DateRange } from "@/types/database";
+import type { ScopedDateRange } from "@/types/database";
 
 export type SmartPricingReport = {
-  range: DateRange;
+  range: ScopedDateRange;
   targetMarginPercent: number;
   marketingPercent: number;
   /** Raw historical inputs — client can recompute prices without refetch. */
@@ -28,13 +28,13 @@ export type SmartPricingReport = {
 };
 
 export async function getSmartPricingInputs(
-  range: DateRange
+  scope: ScopedDateRange
 ): Promise<ProductPricingHistoricalInputs[] | null> {
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const products = await getProductProfitability(range, client);
+  const products = await getProductProfitability(scope, client);
 
   return products
     .filter(isProductAnalyticsV3Candidate)
@@ -44,7 +44,7 @@ export async function getSmartPricingInputs(
 
 /** @deprecated Use getSmartPricingInputs — health/scenario data removed in V3 */
 export async function getSmartPricingReport(
-  range: DateRange,
+  scope: ScopedDateRange,
   targetMarginPercent = DEFAULT_TARGET_MARGIN_PERCENT,
   marketingPercent = DEFAULT_MARKETING_PERCENT
 ): Promise<SmartPricingReport | null> {
@@ -52,12 +52,12 @@ export async function getSmartPricingReport(
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const products = await getProductProfitability(range, client);
+  const products = await getProductProfitability(scope, client);
   const rows = buildProductPricingHealthRows(products, targetMarginPercent, marketingPercent);
   const inputs = rows.map(toPricingHistoricalInputs);
 
   return {
-    range,
+    range: scope,
     targetMarginPercent,
     marketingPercent,
     inputs,

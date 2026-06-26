@@ -13,12 +13,14 @@ function loadEnv() {
 
 loadEnv();
 
-const { WbSyncService } = await import("../src/lib/wildberries/sync-service.ts");
+const { createWbSyncService } = await import("../src/lib/wildberries/sync-service.ts");
+const { resolveMarketplaceAccountId } = await import("../src/services/marketplace-account-service.ts");
 
 const from = process.env.AUDIT_FROM || "2026-05-24";
 const to = process.env.AUDIT_TO || "2026-06-23";
 
-console.log(`Syncing finance ${from} → ${to}...`);
-const service = new WbSyncService();
+const { marketplaceAccountId } = await resolveMarketplaceAccountId(null, null);
+console.log(`Syncing finance ${from} → ${to} for account ${marketplaceAccountId}...`);
+const service = await createWbSyncService(marketplaceAccountId);
 const result = await service.syncFinance(from, to);
 console.log(JSON.stringify(result, null, 2));

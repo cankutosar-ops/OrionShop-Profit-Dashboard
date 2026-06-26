@@ -17,11 +17,11 @@ import { buildProfitabilityV2 } from "@/lib/profitability-v2";
 import { getSampleDashboard, type DashboardPayload } from "@/lib/sample-data";
 import type {
   CategoryProfitability,
-  DateRange,
   OverviewMetrics,
   ProductCostHistory,
   ProductProfitability,
   ProductWithRelations,
+  ScopedDateRange,
   WbAd,
   WbFinance,
   WbOrder,
@@ -32,12 +32,21 @@ function getClient(client?: SupabaseClient): SupabaseClient {
   return client ?? createServerClient();
 }
 
-async function isDatabaseEmpty(client: SupabaseClient): Promise<boolean> {
+async function isDatabaseEmpty(client: SupabaseClient, marketplaceAccountId: string): Promise<boolean> {
   const [sales, finance, ads, products] = await Promise.all([
-    client.from("wb_sales").select("id", { count: "exact", head: true }),
-    client.from("wb_finance").select("id", { count: "exact", head: true }),
+    client
+      .from("wb_sales")
+      .select("id", { count: "exact", head: true })
+      .eq("marketplace_account_id", marketplaceAccountId),
+    client
+      .from("wb_finance")
+      .select("id", { count: "exact", head: true })
+      .eq("marketplace_account_id", marketplaceAccountId),
     client.from("wb_ads").select("id", { count: "exact", head: true }),
-    client.from("products").select("id", { count: "exact", head: true }),
+    client
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("marketplace_account_id", marketplaceAccountId),
   ]);
 
   const total =
@@ -47,85 +56,106 @@ async function isDatabaseEmpty(client: SupabaseClient): Promise<boolean> {
 }
 
 export async function fetchProductsWithRelations(
+  marketplaceAccountId: string,
   client?: SupabaseClient
 ): Promise<ProductWithRelations[]> {
   const supabase = getClient(client);
 
   const { data, error } = await supabase
     .from("products")
-    .select("*, brand:brands(*), category:categories(*)");
+    .select("*, brand:brands(*), category:categories(*)")
+    .eq("marketplace_account_id", marketplaceAccountId);
 
   if (error) throw new Error(`Failed to fetch products: ${error.message}`);
   return (data ?? []) as ProductWithRelations[];
 }
 
 export async function fetchOrdersInRange(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<WbOrder[]> {
   const supabase = getClient(client);
   return fetchAllInDateRange<WbOrder>(supabase, "wb_orders", {
     column: "order_date",
-    from: range.from,
-    to: range.to,
+    from: scope.from,
+    to: scope.to,
+    marketplaceAccountId: scope.marketplaceAccountId,
   });
 }
 
 export async function fetchSalesInRange(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<WbSale[]> {
   const supabase = getClient(client);
   return fetchAllInDateRange<WbSale>(supabase, "wb_sales", {
     column: "sale_date",
-    from: range.from,
-    to: range.to,
+    from: scope.from,
+    to: scope.to,
+    marketplaceAccountId: scope.marketplaceAccountId,
   });
 }
 
 export async function fetchFinanceInRange(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<WbFinance[]> {
   const supabase = getClient(client);
   return fetchAllInDateRange<WbFinance>(supabase, "wb_finance", {
     column: "operation_date",
-    from: range.from,
-    to: range.to,
+    from: scope.from,
+    to: scope.to,
+    marketplaceAccountId: scope.marketplaceAccountId,
   });
 }
 
 export async function fetchAdsInRange(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<WbAd[]> {
   const supabase = getClient(client);
-  return fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
-    column: "campaign_date",
-    from: range.from,
-    to: range.to,
-  });
+  const [ads, products] = await Promise.all([
+    fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
+      column: "campaign_date",
+      from: scope.from,
+      to: scope.to,
+    }),
+    fetchProductsWithRelations(scope.marketplaceAccountId, client),
+  ]);
+
+  const productIds = new Set(products.map((p) => String(p.id)));
+  const articles = new Set(products.map((p) => p.supplier_article));
+
+  return ads.filter(
+    (ad) =>
+      (ad.product_id && productIds.has(String(ad.product_id))) ||
+      (ad.supplier_article && articles.has(ad.supplier_article))
+  );
 }
 
-export async function fetchCostHistory(client?: SupabaseClient) {
+export async function fetchCostHistory(marketplaceAccountId: string, client?: SupabaseClient) {
   const supabase = getClient(client);
-  return fetchAllRows<ProductCostHistory>(supabase, "product_cost_history", {
-    column: "effective_from",
-    ascending: false,
+  const products = await fetchProductsWithRelations(marketplaceAccountId, client);
+  const productIds = new Set(products.map((p) => String(p.id)));
+
+  const rows = await fetchAllRows<ProductCostHistory>(supabase, "product_cost_history", {
+    orderBy: { column: "effective_from", ascending: false },
   });
+
+  return rows.filter((row) => productIds.has(String(row.product_id)));
 }
 
 export async function getOverviewMetrics(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<OverviewMetrics> {
   const [sales, finance, ads, costHistory, products, orders] = await Promise.all([
-    fetchSalesInRange(range, client),
-    fetchFinanceInRange(range, client),
-    fetchAdsInRange(range, client),
-    fetchCostHistory(client),
-    fetchProductsWithRelations(client),
-    fetchOrdersInRange(range, client),
+    fetchSalesInRange(scope, client),
+    fetchFinanceInRange(scope, client),
+    fetchAdsInRange(scope, client),
+    fetchCostHistory(scope.marketplaceAccountId, client),
+    fetchProductsWithRelations(scope.marketplaceAccountId, client),
+    fetchOrdersInRange(scope, client),
   ]);
 
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
@@ -135,7 +165,7 @@ export async function getOverviewMetrics(
     ads,
     costHistory,
     latestCostByProductId,
-    auditRange: range,
+    auditRange: scope,
   });
   const dailyRevenue = groupSalesByDate(sales, costHistory, finance, latestCostByProductId);
   const costBreakdown = buildCostBreakdown(breakdown);
@@ -152,16 +182,16 @@ export async function getOverviewMetrics(
 }
 
 export async function getProductProfitability(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<ProductProfitability[]> {
   const [products, orders, sales, finance, ads, costHistory] = await Promise.all([
-    fetchProductsWithRelations(client),
-    fetchOrdersInRange(range, client),
-    fetchSalesInRange(range, client),
-    fetchFinanceInRange(range, client),
-    fetchAdsInRange(range, client),
-    fetchCostHistory(client),
+    fetchProductsWithRelations(scope.marketplaceAccountId, client),
+    fetchOrdersInRange(scope, client),
+    fetchSalesInRange(scope, client),
+    fetchFinanceInRange(scope, client),
+    fetchAdsInRange(scope, client),
+    fetchCostHistory(scope.marketplaceAccountId, client),
   ]);
 
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
@@ -223,10 +253,10 @@ export async function getProductProfitability(
 }
 
 export async function getCategoryProfitability(
-  range: DateRange,
+  scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<CategoryProfitability[]> {
-  const productMetrics = await getProductProfitability(range, client);
+  const productMetrics = await getProductProfitability(scope, client);
 
   const categoryMap = new Map<
     string,
@@ -267,7 +297,7 @@ export async function getCategoryProfitability(
  * Loads all dashboard data from Supabase.
  * Falls back to sample placeholders when Supabase is not configured or tables are empty.
  */
-export async function getDashboardData(range: DateRange): Promise<DashboardPayload> {
+export async function getDashboardData(scope: ScopedDateRange): Promise<DashboardPayload> {
   const env = getSupabaseEnv();
 
   if (!env.isConfigured) {
@@ -278,7 +308,7 @@ export async function getDashboardData(range: DateRange): Promise<DashboardPaylo
 
   try {
     const client = createServerClient();
-    const empty = await isDatabaseEmpty(client);
+    const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
 
     if (empty) {
       return getSampleDashboard(
@@ -287,9 +317,9 @@ export async function getDashboardData(range: DateRange): Promise<DashboardPaylo
     }
 
     const [overview, products, categories] = await Promise.all([
-      getOverviewMetrics(range, client),
-      getProductProfitability(range, client),
-      getCategoryProfitability(range, client),
+      getOverviewMetrics(scope, client),
+      getProductProfitability(scope, client),
+      getCategoryProfitability(scope, client),
     ]);
 
     const hasActivity =

@@ -4,7 +4,8 @@ import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
 } from "@/lib/smart-pricing";
-import { formatDate, parseDateRange } from "@/lib/utils";
+import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import { formatDate } from "@/lib/utils";
 import { getDecisionSimulatorPageData } from "@/services/decision-simulator-service";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,8 @@ type PageProps = {
   searchParams: Promise<{
     from?: string;
     to?: string;
+    company?: string;
+    account?: string;
     sku?: string;
     margin?: string;
     marketing?: string;
@@ -27,12 +30,12 @@ function parsePercent(value: string | undefined, fallback: number): number {
 
 export default async function DecisionSimulatorPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range = parseDateRange(params.from, params.to);
+  const scope = await resolveScopedDateRange(params);
   const targetMargin = parsePercent(params.margin, DEFAULT_TARGET_MARGIN_PERCENT);
   const marketing = parsePercent(params.marketing, DEFAULT_MARKETING_PERCENT);
   const sku = params.sku?.trim().toUpperCase() || "ALEXASIYAH01";
 
-  const data = await getDecisionSimulatorPageData(range, sku, targetMargin, marketing);
+  const data = await getDecisionSimulatorPageData(scope, sku, targetMargin, marketing);
 
   return (
     <>
@@ -56,7 +59,7 @@ export default async function DecisionSimulatorPage({ searchParams }: PageProps)
             <p>
               Period:{" "}
               <span className="font-medium text-foreground">
-                {formatDate(range.from)} → {formatDate(range.to)}
+                {formatDate(scope.from)} → {formatDate(scope.to)}
               </span>
               {" · "}
               SKU:{" "}
@@ -69,8 +72,8 @@ export default async function DecisionSimulatorPage({ searchParams }: PageProps)
             initialReport={data.report}
             availableSkus={data.availableSkus}
             currentSku={data.sku}
-            rangeFrom={range.from}
-            rangeTo={range.to}
+            rangeFrom={scope.from}
+            rangeTo={scope.to}
           />
         </div>
       )}

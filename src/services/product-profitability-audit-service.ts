@@ -5,31 +5,31 @@ import {
   sumProductProfitabilityAuditRows,
 } from "@/lib/product-profitability-audit";
 import { getProductProfitability } from "@/services/dashboard-service";
-import type { DateRange, ProductProfitabilityAuditRow } from "@/types/database";
+import type { ProductProfitabilityAuditRow, ScopedDateRange } from "@/types/database";
 
 export type ProductProfitabilityAuditReport = {
   rows: ProductProfitabilityAuditRow[];
   totals: ProductProfitabilityAuditRow;
-  range: DateRange;
+  range: ScopedDateRange;
   productCount: number;
 };
 
 export async function getProductProfitabilityAudit(
-  range: DateRange,
+  scope: ScopedDateRange,
   limit = 20
 ): Promise<ProductProfitabilityAuditReport | null> {
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const products = await getProductProfitability(range, client);
+  const products = await getProductProfitability(scope, client);
   const rows = buildProductProfitabilityAuditRows(products, limit);
   const totals = sumProductProfitabilityAuditRows(rows);
 
   return {
     rows,
     totals,
-    range,
+    range: scope,
     productCount: products.filter((product) => product.revenue > 0).length,
   };
 }

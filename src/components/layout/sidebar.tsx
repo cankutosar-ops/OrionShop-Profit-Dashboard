@@ -26,20 +26,25 @@ const navigation = [
   { name: "Costs", href: "/costs", icon: Coins },
   { name: "Categories", href: "/categories", icon: BarChart3 },
   { name: "Product Audit", href: "/audit/product-profitability", icon: ClipboardCheck },
+  { name: "Settings", href: "/settings/companies", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  function hrefWithDateRange(base: string) {
+  function hrefWithQueryParams(base: string) {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
-    if (!from && !to) return base;
+    const company = searchParams.get("company");
+    const account = searchParams.get("account");
+    if (!from && !to && !company && !account) return base;
 
     const params = new URLSearchParams();
     if (from) params.set("from", from);
     if (to) params.set("to", to);
+    if (company) params.set("company", company);
+    if (account) params.set("account", account);
     return `${base}?${params.toString()}`;
   }
 
@@ -60,12 +65,16 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
           const isActive =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            item.href === "/"
+              ? pathname === "/"
+              : item.href === "/settings/companies"
+                ? pathname.startsWith("/settings")
+                : pathname.startsWith(item.href);
 
           return (
             <Link
               key={item.name}
-              href={hrefWithDateRange(item.href)}
+              href={hrefWithQueryParams(item.href)}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                 isActive
@@ -81,16 +90,19 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border p-4">
-        <div className="flex items-center gap-3 rounded-xl bg-card-hover px-3 py-2.5">
+        <Link
+          href={hrefWithQueryParams("/settings/companies")}
+          className="flex items-center gap-3 rounded-xl bg-card-hover px-3 py-2.5 transition-colors hover:bg-card-hover/80"
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10">
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
           <div className="flex-1">
-            <p className="text-xs font-medium">Wildberries</p>
-            <p className="text-[10px] text-muted-foreground">Single-store sync</p>
+            <p className="text-xs font-medium">Marketplaces</p>
+            <p className="text-[10px] text-muted-foreground">Company & account sync</p>
           </div>
           <Settings className="h-4 w-4 text-muted-foreground" />
-        </div>
+        </Link>
       </div>
     </aside>
   );

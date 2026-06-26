@@ -1,33 +1,36 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import type { ProductSkuAnalyticsResponse } from "@/types/database";
 
 async function fetchProductSkuAnalytics(
   productId: string,
   from: string,
-  to: string
+  to: string,
+  company: string,
+  account: string
 ): Promise<ProductSkuAnalyticsResponse> {
-  const params = new URLSearchParams({ from, to });
+  const params = new URLSearchParams({ from, to, company, account });
   const response = await fetch(`/api/analytics/products/${productId}/skus?${params.toString()}`);
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? "Failed to load SKU analytics");
-  }
-
-  return response.json();
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? "Failed to load SKU analytics");
+  return data;
 }
 
 export function useProductSkuAnalytics(
-  productId: string | null,
+  productId: string | null | undefined,
   from: string,
   to: string,
-  enabled: boolean
+  enabled = true
 ) {
+  const searchParams = useSearchParams();
+  const company = searchParams.get("company") ?? "";
+  const account = searchParams.get("account") ?? "";
+
   return useQuery({
-    queryKey: ["product-sku-analytics", productId, from, to],
-    queryFn: () => fetchProductSkuAnalytics(productId!, from, to),
-    enabled: Boolean(productId && enabled),
+    queryKey: ["product-sku-analytics", productId, from, to, company, account],
+    queryFn: () => fetchProductSkuAnalytics(productId!, from, to, company, account),
+    enabled: Boolean(productId && account && enabled),
   });
 }

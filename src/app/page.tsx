@@ -20,13 +20,14 @@ import { OrdersPurchasesChart } from "@/components/dashboard/orders-purchases-ch
 import { ProfitabilityBreakdown } from "@/components/dashboard/profitability-breakdown";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
 import { PageHeader } from "@/components/layout/page-header";
-import { formatCurrency, formatNumber, formatPercent, parseDateRange } from "@/lib/utils";
+import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 import { getDashboardData } from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
 };
 
 function KpiSection({
@@ -51,8 +52,8 @@ function KpiSection({
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range = parseDateRange(params.from, params.to);
-  const { overview, categories, isSampleData, message } = await getDashboardData(range);
+  const scope = await resolveScopedDateRange(params);
+  const { overview, categories, isSampleData, message } = await getDashboardData(scope);
   const kpis = overview.ordersPurchases;
   const profitV2 = overview.profitabilityV2;
   const totalOrdersCount = kpis.ordersCount + kpis.cancelledOrdersCount;

@@ -4,13 +4,13 @@ import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
 } from "@/lib/smart-pricing";
+import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { getSmartPricingInputs } from "@/services/smart-pricing-service";
-import { parseDateRange } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; margin?: string; marketing?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string; margin?: string; marketing?: string }>;
 };
 
 function parsePercent(value: string | undefined, fallback: number): number {
@@ -21,10 +21,10 @@ function parsePercent(value: string | undefined, fallback: number): number {
 
 export default async function SmartPricingPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range = parseDateRange(params.from, params.to);
+  const scope = await resolveScopedDateRange(params);
   const targetMargin = parsePercent(params.margin, DEFAULT_TARGET_MARGIN_PERCENT);
   const marketing = parsePercent(params.marketing, DEFAULT_MARKETING_PERCENT);
-  const inputs = await getSmartPricingInputs(range);
+  const inputs = await getSmartPricingInputs(scope);
 
   return (
     <>

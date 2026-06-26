@@ -3,19 +3,19 @@ import { DataBanner } from "@/components/dashboard/data-banner";
 import { ProductProfitabilityTable } from "@/components/dashboard/product-profitability-table";
 import { ProfitBarChart } from "@/components/dashboard/profit-bar-chart";
 import { PageHeader } from "@/components/layout/page-header";
-import { parseDateRange } from "@/lib/utils";
+import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { getDashboardData } from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
 };
 
 export default async function ProductsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range = parseDateRange(params.from, params.to);
-  const { products, isSampleData, message } = await getDashboardData(range);
+  const scope = await resolveScopedDateRange(params);
+  const { products, isSampleData, message } = await getDashboardData(scope);
 
   const profitChartData = products.slice(0, 15).map((p) => ({
     label: p.modelCode,

@@ -23,12 +23,13 @@ export type WbSyncResult = {
 };
 
 export type WbSyncOptions = {
+  marketplaceAccountId: string;
   dateFrom: string;
   dateTo: string;
   entities?: WbSyncEntity[];
 };
 
-export type WbSyncEntity = "orders" | "sales" | "finance" | "products";
+export type WbSyncEntity = "orders" | "sales" | "finance" | "products" | "stock";
 
 export class WbApiError extends Error {
   constructor(

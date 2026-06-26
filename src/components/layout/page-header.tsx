@@ -1,5 +1,6 @@
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { SyncButton } from "@/components/dashboard/sync-button";
+import { TenantSelectors } from "@/components/layout/tenant-selectors";
 import { Suspense } from "react";
 
 type PageHeaderProps = {
@@ -17,10 +18,15 @@ export function PageHeader({ title, description, showFilters = true }: PageHeade
       </div>
       {showFilters && (
         <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
+          <Suspense fallback={<div className="h-10 w-44 animate-pulse rounded-xl bg-card" />}>
+            <TenantSelectors />
+          </Suspense>
           <Suspense fallback={<div className="h-10 w-64 animate-pulse rounded-xl bg-card" />}>
             <DateRangePicker />
           </Suspense>
-          <SyncButton />
+          <Suspense fallback={<div className="h-10 w-36 animate-pulse rounded-xl bg-card" />}>
+            <SyncButton />
+          </Suspense>
         </div>
       )}
     </div>

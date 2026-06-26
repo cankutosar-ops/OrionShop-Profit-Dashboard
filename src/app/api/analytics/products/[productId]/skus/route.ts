@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { resolveMarketplaceAccountId } from "@/services/marketplace-account-service";
 import {
   getCohortMaxOrders,
   getProductSkuAnalytics,
 } from "@/services/product-sku-analytics-service";
-import type { DateRange } from "@/types/database";
 
 type RouteParams = { params: Promise<{ productId: string }> };
 
@@ -12,16 +12,21 @@ export async function GET(request: Request, { params }: RouteParams) {
   const url = new URL(request.url);
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
+  const accountParam = url.searchParams.get("account");
+  const companyParam = url.searchParams.get("company");
 
   if (!from || !to) {
     return NextResponse.json({ error: "from and to query params are required" }, { status: 400 });
   }
 
-  const range: DateRange = { from, to };
-
   try {
-    const cohortMaxOrders = await getCohortMaxOrders(range);
-    const report = await getProductSkuAnalytics(productId, range, cohortMaxOrders);
+    const { marketplaceAccountId, companyId } = await resolveMarketplaceAccountId(
+      accountParam,
+      companyParam
+    );
+    const scope = { from, to, marketplaceAccountId, companyId };
+    const cohortMaxOrders = await getCohortMaxOrders(scope);
+    const report = await getProductSkuAnalytics(productId, scope, cohortMaxOrders);
 
     if (!report) {
       return NextResponse.json({ error: "Product not found or Supabase not configured" }, { status: 404 });

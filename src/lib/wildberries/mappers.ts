@@ -1,5 +1,11 @@
-import type { FinanceOperationType, WbFinance, WbOrder, WbSale } from "@/types/database";
-import type { WbApiFinanceRow, WbApiOrder, WbApiProductCard, WbApiSale } from "./types";
+import type { FinanceOperationType, WbFinance, WbOrder, WbSale, WbStock } from "@/types/database";
+import type {
+  WbApiFinanceRow,
+  WbApiOrder,
+  WbApiProductCard,
+  WbApiSale,
+  WbApiStockRow,
+} from "./types";
 
 export function toDateString(iso: string): string {
   return iso.slice(0, 10);
@@ -21,22 +27,40 @@ export function mapApiProductToDb(card: WbApiProductCard) {
 export function mapApiProductVariants(
   card: WbApiProductCard,
   productId: string
-): Array<{ product_id: string; tech_size: string; barcode: string | null }> {
+): Array<{ product_id: string; nm_id: number; tech_size: string; barcode: string | null }> {
   const sizes = card.sizes ?? [];
+  const nmId = card.nmID;
   if (!sizes.length) {
-    return [{ product_id: productId, tech_size: "", barcode: card.sizes?.[0]?.skus?.[0] ?? null }];
+    return [
+      {
+        product_id: productId,
+        nm_id: nmId,
+        tech_size: "",
+        barcode: card.sizes?.[0]?.skus?.[0] ?? null,
+      },
+    ];
   }
 
-  const variants: Array<{ product_id: string; tech_size: string; barcode: string | null }> = [];
+  const variants: Array<{
+    product_id: string;
+    nm_id: number;
+    tech_size: string;
+    barcode: string | null;
+  }> = [];
   for (const size of sizes) {
     const techSize = size.techSize ?? "";
     const skus = size.skus ?? [];
     if (!skus.length) {
-      variants.push({ product_id: productId, tech_size: techSize, barcode: null });
+      variants.push({ product_id: productId, nm_id: nmId, tech_size: techSize, barcode: null });
       continue;
     }
     for (const sku of skus) {
-      variants.push({ product_id: productId, tech_size: techSize, barcode: sku || null });
+      variants.push({
+        product_id: productId,
+        nm_id: nmId,
+        tech_size: techSize,
+        barcode: sku || null,
+      });
     }
   }
   return variants;
@@ -45,7 +69,7 @@ export function mapApiProductVariants(
 export function mapApiOrderToDb(
   order: WbApiOrder,
   productId: string
-): Omit<WbOrder, "id"> {
+): Omit<WbOrder, "id" | "marketplace_account_id"> {
   const srid = order.srid ?? order.gNumber ?? `${order.nmId}-${order.date}`;
 
   return {
@@ -63,7 +87,7 @@ export function mapApiOrderToDb(
   };
 }
 
-export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale, "id"> {
+export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale, "id" | "marketplace_account_id"> {
   const isReturn = sale.saleID.startsWith("R");
   const srid = sale.srid ?? sale.saleID;
 
@@ -94,7 +118,7 @@ export function buildFinanceSourceKey(rrdId: number, suffix: string): string {
   return `rrd:${rrdId}:${suffix}`;
 }
 
-function buildFinanceLine(input: FinanceLineInput): Omit<WbFinance, "id"> {
+function buildFinanceLine(input: FinanceLineInput): Omit<WbFinance, "id" | "marketplace_account_id"> {
   const { row, productId, operationType, amount, suffix } = input;
   const operationDate = row.rr_dt ?? (row.sale_dt ? toDateString(row.sale_dt) : null) ?? toDateString(new Date().toISOString());
   const sourceKey = buildFinanceSourceKey(row.rrd_id, suffix);
@@ -114,8 +138,8 @@ function buildFinanceLine(input: FinanceLineInput): Omit<WbFinance, "id"> {
 export function mapFinanceRowsFromReport(
   row: WbApiFinanceRow,
   productId: string | null
-): Omit<WbFinance, "id">[] {
-  const lines: Omit<WbFinance, "id">[] = [];
+): Omit<WbFinance, "id" | "marketplace_account_id">[] {
+  const lines: Omit<WbFinance, "id" | "marketplace_account_id">[] = [];
 
   const add = (operationType: FinanceOperationType, amount: number | undefined, suffix: string) => {
     if (amount && Math.abs(amount) > 0) {
@@ -149,6 +173,21 @@ export function mapFinanceRowsFromReport(
   }
 
   return lines;
+}
+
+export function mapApiStockRowToDb(
+  row: WbApiStockRow,
+  productId: string,
+  syncedAt: string
+): Omit<WbStock, "id" | "marketplace_account_id"> {
+  return {
+    product_id: productId,
+    tech_size: row.techSize ?? "",
+    barcode: row.barcode ?? null,
+    warehouse: row.warehouseName ?? "",
+    quantity: row.quantity ?? row.quantityFull ?? 0,
+    synced_at: syncedAt,
+  };
 }
 
 export function isWithinDateRange(dateStr: string, from: string, to: string): boolean {
