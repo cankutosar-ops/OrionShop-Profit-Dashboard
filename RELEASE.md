@@ -6,7 +6,7 @@
 | **Sprint** | Sprint 3 — Company & Marketplace Foundation |
 | **Release Date** | 2026-06-26 |
 | **Git Branch** | `feature/sprint-3-company-marketplace` |
-| **Git Commit** | _(see below — filled at tag time)_ |
+| **Git Commit** | `e0c5d44cd79c3fa8bfc97ff6c4a922057bd948df` |
 | **Git Tag** | `v0.3.0` |
 
 ## Summary
@@ -49,7 +49,7 @@ Legacy `WB_API_TOKEN` is migrated into the default Wildberries account on first 
 ```bash
 git checkout 02f0866
 # or
-git revert <sprint-3-commit-sha>
+git revert e0c5d44
 ```
 
 ## Production Ready
