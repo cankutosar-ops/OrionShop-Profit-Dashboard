@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { getAppLanguage } from "@/lib/app-locale";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={inter.variable}>
+    <html lang={getAppLanguage()} className={inter.variable}>
       <body className={`${inter.className} bg-background text-foreground antialiased`}>
         <DashboardLayout>{children}</DashboardLayout>
       </body>

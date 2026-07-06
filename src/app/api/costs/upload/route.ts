@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { parseCostExcel } from "@/lib/cost-excel";
-import { bulkCreateCostRecords } from "@/services/cost-service";
+import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
+import { bulkImportCostRecords } from "@/services/cost-service";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    const scope = await resolveScopedDateRangeFromUrl(new URL(request.url));
+
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -17,7 +22,7 @@ export async function POST(request: Request) {
 
     const buffer = await file.arrayBuffer();
     const rows = parseCostExcel(buffer);
-    const result = await bulkCreateCostRecords(rows);
+    const result = await bulkImportCostRecords(rows, scope.marketplaceAccountId);
 
     return NextResponse.json(result);
   } catch (error) {

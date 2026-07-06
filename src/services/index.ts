@@ -5,6 +5,8 @@ export {
   getDashboardData,
 } from "./dashboard-service";
 
+export { getBrandsForMarketplaceAccount } from "./brand-service";
+
 export {
   brandsService,
   categoriesService,

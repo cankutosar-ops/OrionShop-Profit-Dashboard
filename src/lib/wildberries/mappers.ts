@@ -185,8 +185,11 @@ export function mapApiStockRowToDb(
     tech_size: row.techSize ?? "",
     barcode: row.barcode ?? null,
     warehouse: row.warehouseName ?? "",
-    quantity: row.quantity ?? row.quantityFull ?? 0,
-    synced_at: syncedAt,
+    quantity: Number(row.quantity ?? 0),
+    quantity_full: Number(row.quantityFull ?? row.quantity ?? 0),
+    in_way_to_client: Number(row.inWayToClient ?? 0),
+    in_way_from_client: Number(row.inWayFromClient ?? 0),
+    last_synced_at: syncedAt,
   };
 }
 

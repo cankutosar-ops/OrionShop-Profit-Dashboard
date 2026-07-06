@@ -19,6 +19,11 @@ function operationalVariant(marginPercent: number): "success" | "warning" | "dan
   return "danger";
 }
 
+const stickySkuHeader =
+  "sticky left-0 z-20 min-w-[6.5rem] bg-card border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]";
+const stickySkuCell =
+  "sticky left-0 z-20 min-w-[6.5rem] bg-card group-hover:bg-card-hover border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]";
+
 export function ProductAnalyticsV3Table({
   title,
   description,
@@ -39,10 +44,10 @@ export function ProductAnalyticsV3Table({
         )}
       </div>
       <div className="overflow-x-auto">
-        <table className={cn("w-full text-sm", isFull && "min-w-full table-fixed")}>
+        <table className={cn("w-full text-sm", isFull && "min-w-full table-fixed", !isFull && "min-w-[960px]")}>
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className={cn(headPad, "w-[9%] font-medium")}>SKU</th>
+              <th className={cn(headPad, "font-medium", stickySkuHeader)}>SKU</th>
               {isFull && (
                 <th className={cn(headPad, "w-[16%] font-medium")}>Product</th>
               )}
@@ -75,13 +80,14 @@ export function ProductAnalyticsV3Table({
                 return (
                   <tr
                     key={row.productId}
-                    className="border-b border-border/50 transition-colors hover:bg-card-hover"
+                    className="group border-b border-border/50 transition-colors hover:bg-card-hover"
                   >
                     <td
                       className={cn(
                         cellPad,
                         "font-mono text-xs font-medium text-primary",
-                        !isFull && "whitespace-nowrap"
+                        !isFull && "whitespace-nowrap",
+                        stickySkuCell
                       )}
                       title={row.productName}
                     >

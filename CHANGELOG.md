@@ -28,6 +28,48 @@ Format for each sprint:
 
 ---
 
+---
+
+## Sprint 5.3.1 — Validation hardening (2026-06-30)
+
+### Changed
+
+- Production validation requires **both** `VALIDATION_ALLOW_PRODUCTION=1` and `VALIDATION_CONFIRM=YES`
+- Shared guard: `assertProductionValidationAllowed()` in `scripts/lib/validation-isolation.mjs`
+- `getValidationAccountId()` returns the script argument (centralized for future dedicated validation account)
+
+### Validation
+
+- `npx tsx scripts/verify-validation-guard.mjs` — PASS
+
+---
+
+Production-safe validation — scripts no longer leave data in live marketplace accounts.
+
+### Added
+
+- `scripts/lib/validation-isolation.mjs` — snapshot row IDs before validation, delete new rows in `finally`
+- `scripts/cleanup-cost-template-validation.mjs` — one-time removal of legacy validate-cost-template batch
+- `scripts/run-production-safe-validation.mjs` — run validation suite and verify cleanup
+
+### Changed
+
+- Write-capable validation scripts wrap runs in `createValidationSession()` with automatic cleanup
+- Production accounts (default: account 2) require `VALIDATION_ALLOW_PRODUCTION=1` **and** `VALIDATION_CONFIRM=YES`
+- `getValidationAccountId()` centralizes account selection (returns script argument today)
+
+### Fixed
+
+- Removed validate-cost-template.mjs placeholder batch from production account 2 (2026-06-28 insert window)
+
+### Validation
+
+- Session cleanup removes all rows created during validation runs
+- Product Analytics calculations unchanged
+- No schema changes to Cost Management or Purchases
+
+---
+
 ## Sprint 3 — v0.3.0 (2026-06-26)
 
 Company & marketplace account architecture. Replaces the abandoned single-store (`stores`) model.

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatAppDate } from "@/lib/app-locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,11 +23,7 @@ export function formatPercent(value: number, decimals = 1): string {
 }
 
 export function formatDate(date: string): string {
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatAppDate(date);
 }
 
 export function getDefaultDateRange(): { from: string; to: string } {

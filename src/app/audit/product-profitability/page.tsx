@@ -1,13 +1,14 @@
 import { ProductProfitabilityAuditTable } from "@/components/audit/product-profitability-audit-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { formatDate } from "@/lib/utils";
 import { getProductProfitabilityAudit } from "@/services/product-profitability-audit-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
+  searchParams: Promise<PageScopeSearchParamsInput>;
 };
 
 export default async function ProductProfitabilityAuditPage({ searchParams }: PageProps) {

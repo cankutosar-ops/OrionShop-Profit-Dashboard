@@ -10,6 +10,7 @@ import {
   pickTopV3ByOperationalProfit,
 } from "@/lib/product-analytics";
 import { getProductProfitability } from "@/services/dashboard-service";
+import { getCurrentStockByProductId } from "@/services/inventory-report-service";
 import type {
   ProductAnalyticsRow,
   ProductAnalyticsTotals,
@@ -37,9 +38,15 @@ export async function getProductAnalytics(
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const products = await getProductProfitability(scope, client);
+  const [products, stockByProductId] = await Promise.all([
+    getProductProfitability(scope, client),
+    getCurrentStockByProductId(scope.marketplaceAccountId),
+  ]);
   const all = buildProductAnalyticsRows(products);
-  const v3All = buildProductAnalyticsV3Rows(products);
+  const v3All = buildProductAnalyticsV3Rows(products).map((row) => ({
+    ...row,
+    currentStock: stockByProductId.get(String(row.productId)) ?? 0,
+  }));
   const totals = buildProductAnalyticsTotals(products);
 
   return {

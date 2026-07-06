@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveMarketplaceAccountId } from "@/services/marketplace-account-service";
+import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
 import {
   getCohortMaxOrders,
   getProductSkuAnalytics,
@@ -12,19 +12,13 @@ export async function GET(request: Request, { params }: RouteParams) {
   const url = new URL(request.url);
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
-  const accountParam = url.searchParams.get("account");
-  const companyParam = url.searchParams.get("company");
 
   if (!from || !to) {
     return NextResponse.json({ error: "from and to query params are required" }, { status: 400 });
   }
 
   try {
-    const { marketplaceAccountId, companyId } = await resolveMarketplaceAccountId(
-      accountParam,
-      companyParam
-    );
-    const scope = { from, to, marketplaceAccountId, companyId };
+    const scope = await resolveScopedDateRangeFromUrl(url);
     const cohortMaxOrders = await getCohortMaxOrders(scope);
     const report = await getProductSkuAnalytics(productId, scope, cohortMaxOrders);
 

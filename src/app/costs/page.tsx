@@ -1,24 +1,25 @@
-import { CostsManager } from "@/components/costs/costs-manager";
+import { CostManagementManager } from "@/components/costs/cost-management-manager";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { fetchCostRecords, fetchProductOptions } from "@/services/cost-service";
+import { fetchCostManagementRows } from "@/services/cost-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
+  searchParams: Promise<PageScopeSearchParamsInput>;
 };
 
-export default async function CostsPage({ searchParams }: PageProps) {
+export default async function CostManagementPage({ searchParams }: PageProps) {
   const env = getSupabaseEnv();
 
   if (!env.isConfigured) {
     return (
       <>
         <PageHeader
-          title="Costs"
-          description="Active product costs from cost history (latest row per product)"
+          title="Cost Management"
+          description="Edit purchase prices inline or bulk update via Excel"
           showFilters={false}
         />
         <div className="rounded-2xl border border-border bg-card px-6 py-12 text-center text-muted-foreground">
@@ -30,19 +31,16 @@ export default async function CostsPage({ searchParams }: PageProps) {
 
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
-  const [costs, products] = await Promise.all([
-    fetchCostRecords(scope.marketplaceAccountId),
-    fetchProductOptions(scope.marketplaceAccountId),
-  ]);
+  const rows = await fetchCostManagementRows(scope);
 
   return (
     <>
       <PageHeader
-        title="Costs"
-        description="Active product costs from cost history (latest row per product)"
+        title="Cost Management"
+        description="Edit purchase prices inline — updates cost history only"
         showFilters={true}
       />
-      <CostsManager costs={costs} products={products} />
+      <CostManagementManager initialRows={rows} />
     </>
   );
 }

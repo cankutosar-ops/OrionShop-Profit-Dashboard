@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
+import { BrandSelector } from "@/components/layout/brand-selector";
 import { SyncButton } from "@/components/dashboard/sync-button";
 import { TenantSelectors } from "@/components/layout/tenant-selectors";
 import { Suspense } from "react";
@@ -7,9 +9,16 @@ type PageHeaderProps = {
   title: string;
   description?: string;
   showFilters?: boolean;
+  /** Optional slot rendered beside marketplace selectors (Dashboard-only extras). */
+  headerExtras?: ReactNode;
 };
 
-export function PageHeader({ title, description, showFilters = true }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  showFilters = true,
+  headerExtras,
+}: PageHeaderProps) {
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -18,9 +27,15 @@ export function PageHeader({ title, description, showFilters = true }: PageHeade
       </div>
       {showFilters && (
         <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
-          <Suspense fallback={<div className="h-10 w-44 animate-pulse rounded-xl bg-card" />}>
-            <TenantSelectors />
-          </Suspense>
+          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+            <Suspense fallback={<div className="h-10 w-44 animate-pulse rounded-xl bg-card" />}>
+              <TenantSelectors />
+            </Suspense>
+            <Suspense fallback={<div className="h-10 w-40 animate-pulse rounded-xl bg-card" />}>
+              <BrandSelector />
+            </Suspense>
+            {headerExtras}
+          </div>
           <Suspense fallback={<div className="h-10 w-64 animate-pulse rounded-xl bg-card" />}>
             <DateRangePicker />
           </Suspense>

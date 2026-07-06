@@ -20,6 +20,13 @@ import {
   subMonths,
 } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  formatCalendarMonth,
+  getAppLanguage,
+  getCalendarWeekdayLabels,
+} from "@/lib/app-locale";
+import { SYNC_DATE_PARAM } from "@/lib/marketplace-sync-date";
+import { replaceUrlIfChanged } from "@/lib/dashboard-lifecycle";
 import { cn, formatDate, getDefaultDateRange } from "@/lib/utils";
 
 type ActiveField = "from" | "to";
@@ -56,6 +63,8 @@ function MonthCalendar({
   onSelect,
   onMonthChange,
 }: MonthCalendarProps) {
+  const language = getAppLanguage();
+  const weekdayLabels = getCalendarWeekdayLabels(language);
   const fromDate = parseISO(from);
   const toDate = parseISO(to);
   const monthStart = startOfMonth(month);
@@ -75,7 +84,7 @@ function MonthCalendar({
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="text-sm font-semibold">{format(month, "LLLL yyyy")}</span>
+        <span className="text-sm font-semibold">{formatCalendarMonth(month, language)}</span>
         <button
           type="button"
           onClick={() => onMonthChange(addMonths(month, 1))}
@@ -87,7 +96,7 @@ function MonthCalendar({
       </div>
 
       <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-        {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((day) => (
+        {weekdayLabels.map((day) => (
           <span key={day} className="py-1">
             {day}
           </span>
@@ -133,9 +142,11 @@ export function DateRangePicker() {
   const searchParams = useSearchParams();
   const defaults = getDefaultDateRange();
   const containerRef = useRef<HTMLDivElement>(null);
+  const defaultDatesSeededRef = useRef(false);
 
   const from = searchParams.get("from") ?? defaults.from;
   const to = searchParams.get("to") ?? defaults.to;
+  const currentQuery = searchParams.toString();
 
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
@@ -153,13 +164,19 @@ export function DateRangePicker() {
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
 
-    if (!fromParam || !toParam) {
-      const params = new URLSearchParams(searchParams.toString());
+    if (fromParam && toParam) {
+      defaultDatesSeededRef.current = false;
+      return;
+    }
+
+    if (defaultDatesSeededRef.current) return;
+    defaultDatesSeededRef.current = true;
+
+    replaceUrlIfChanged(router, pathname, currentQuery, (params) => {
       if (!fromParam) params.set("from", defaults.from);
       if (!toParam) params.set("to", defaults.to);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [defaults.from, defaults.to, pathname, router, searchParams]);
+    });
+  }, [currentQuery, defaults.from, defaults.to, pathname, router]);
 
   useEffect(() => {
     if (!open) return;
@@ -187,6 +204,9 @@ export function DateRangePicker() {
     const params = new URLSearchParams(searchParams.toString());
     params.set("from", normalized.from);
     params.set("to", normalized.to);
+    params.set(SYNC_DATE_PARAM.manual, "1");
+    params.delete(SYNC_DATE_PARAM.adjusted);
+    params.delete(SYNC_DATE_PARAM.accountSwitched);
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
     setOpen(false);
   }

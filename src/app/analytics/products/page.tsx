@@ -3,13 +3,14 @@ import { ProductAnalyticsV8Table } from "@/components/analytics/product-analytic
 import { ProductAnalyticsV3Table } from "@/components/analytics/product-analytics-v3-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { formatDate } from "@/lib/utils";
 import { getProductAnalytics } from "@/services/product-analytics-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
+  searchParams: Promise<PageScopeSearchParamsInput>;
 };
 
 export default async function ProductAnalyticsPage({ searchParams }: PageProps) {
@@ -50,7 +51,7 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
 
           <ProductAnalyticsV8Table
             title="All Products"
-            description={`${report.v3All.length} models sorted by operational profit · click to expand SKU rows`}
+            description={`${report.v3All.length} models sorted by operational profit · expand for SKU funnel · stock opens Inventory`}
             rows={report.v3All}
             rangeFrom={scope.from}
             rangeTo={scope.to}

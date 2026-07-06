@@ -1,36 +1,68 @@
-import { calculateNetMarginPercent } from "@/lib/profitability-v2";
 import {
-  buildProductOperationalMetrics,
-  calculateOtherMarketplaceCosts,
-  calculateTotalLogistics,
-} from "@/lib/product-operational-metrics";
-import type { ProductProfitability } from "@/types/database";
+  DEFAULT_MARKETING_PERCENT,
+  DEFAULT_TARGET_MARGIN_PERCENT,
+  SMART_PRICING_MARGIN_PRESETS,
+} from "@/lib/smart-pricing-constants";
+import type { SmartPricingCommissionSource } from "@/lib/smart-pricing-commission";
+import type { SmartPricingLogisticsSource } from "@/lib/smart-pricing-logistics";
+import type { SmartPricingCommissionReplay } from "@/lib/smart-pricing-settings";
+import type { SmartPricingRiskLevel } from "@/lib/smart-pricing-risk";
+import { computeSmartPricingRisk } from "@/lib/smart-pricing-risk";
 
-/** Historical unit economics derived from ProductProfitability — no duplicate P&L. */
-export type ProductPricingHistoricalInputs = {
+export {
+  DEFAULT_MARKETING_PERCENT,
+  DEFAULT_TARGET_MARGIN_PERCENT,
+  SMART_PRICING_MARGIN_PRESETS,
+};
+
+/** Forward-looking inputs for the next-unit Smart Pricing engine. */
+export type ProductSmartPricingInputs = {
   productId: string;
   supplierArticle: string;
   productName: string;
-  unitsSold: number;
-  orders: number;
-  currentAvgPrice: number;
-  /** Financial net margin (dashboard engine). */
-  currentNetMarginPercent: number;
-  /** Operational margin (Product Analytics V7). */
-  currentOperationalMarginPercent: number;
-  /** Commission as a fraction of revenue (0–1). */
-  commissionRate: number;
-  unitProductCost: number;
-  /** Purchase-only logistics per unit — financial solver. */
+  /** Latest row from product_cost_history — null when missing. */
+  purchaseCost: number | null;
+  /** Average purchase-matched outbound logistics per completed sale. */
   unitPurchaseLogistics: number;
-  /** Purchase + excluded logistics per unit — operational solver. */
-  unitTotalLogistics: number;
-  unitReturnLogistics: number;
-  unitOtherDeductions: number;
+  /** Average excluded outbound logistics per completed sale (cancelled / unmatched). */
+  unitExcludedLogistics: number;
+  /** Resolved logistics per unit — used in the pricing formula. */
+  effectiveLogistics: number;
+  logisticsSource: SmartPricingLogisticsSource;
+  /** Completed units in the bucket used for the logistics decision. */
+  logisticsCompletedUnits: number;
+  /** Product-level (purchase + excluded) / units — null when no completed sales. */
+  productHistoricalEffectiveLogistics: number | null;
+  /** Category-level weighted effective logistics — null when no category sales. */
+  categoryHistoricalEffectiveLogistics: number | null;
+  /** Account-level weighted effective logistics — null when no account sales. */
+  accountHistoricalEffectiveLogistics: number | null;
+  /** Adaptive commission % used in the pricing formula. */
+  commissionPercent: number;
+  commissionSource: SmartPricingCommissionSource;
+  completedSales: number;
+  /** SUM(commission)/SUM(revenue) for this product — null when no revenue. */
+  productHistoricalCommissionPercent: number | null;
+  /** SUM(commission)/SUM(revenue) for the category — null when no category revenue. */
+  categoryHistoricalCommissionPercent: number | null;
+  marketplaceCommissionPercent: number;
+  /** Historical average selling price for comparison — display only. */
+  currentAvgPrice: number | null;
   hasSalesHistory: boolean;
+  /** Order volume in period — table filters only. */
+  orders: number;
+  /** Period return rate — completed vs returned units. */
+  returnRatePercent: number;
+  /** Excluded logistics as % of outbound (purchase + excluded). */
+  excludedLogisticsPercent: number;
+  /** Return logistics as % of total logistics (purchase + excluded + return). */
+  returnLogisticsPercent: number;
+  /** Precomputed commission totals per history window for client settings replay. */
+  commissionReplay: SmartPricingCommissionReplay;
 };
 
 export type SmartPricingStatus =
+  | "missing-cost"
   | "profitable"
   | "small-increase"
   | "difficult"
@@ -38,16 +70,8 @@ export type SmartPricingStatus =
   | "no-data"
   | "infeasible";
 
-/** @deprecated V2 recovery labels — use PRICING_V3_STATUS_LABEL */
-export type SmartPricingLegacyStatus =
-  | "easy"
-  | "possible"
-  | "difficult"
-  | "unrealistic"
-  | "no-data"
-  | "infeasible";
-
 export const PRICING_V3_STATUS_LABEL: Record<SmartPricingStatus, string> = {
+  "missing-cost": "⚪ Missing Cost",
   profitable: "🟢 Already profitable",
   "small-increase": "🟡 Small increase",
   difficult: "🟠 Difficult",
@@ -56,164 +80,90 @@ export const PRICING_V3_STATUS_LABEL: Record<SmartPricingStatus, string> = {
   infeasible: "🔴 Unrealistic",
 };
 
-/** @deprecated Use PRICING_V3_STATUS_LABEL */
-export const RECOVERY_STATUS_LABEL: Record<SmartPricingLegacyStatus, string> = {
-  easy: "🟢 Easy",
-  possible: "🟡 Possible",
-  difficult: "🟠 Difficult",
-  unrealistic: "🔴 Unrealistic",
-  "no-data": "⚪ No Data",
-  infeasible: "🔴 Infeasible",
+export type SmartPricingSolverInputs = {
+  purchaseCost: number;
+  effectiveLogistics: number;
+  commissionPercent: number;
 };
-
-type PricingSolverInputs = Pick<
-  ProductPricingHistoricalInputs,
-  | "unitProductCost"
-  | "unitReturnLogistics"
-  | "unitOtherDeductions"
-  | "commissionRate"
-> & {
-  unitLogistics: number;
-};
-
-export function deriveProductPricingInputs(
-  product: ProductProfitability
-): ProductPricingHistoricalInputs {
-  const unitsSold = product.unitsSold;
-  const hasSalesHistory = unitsSold > 0 && product.revenue > 0;
-
-  if (!hasSalesHistory) {
-    return {
-      productId: product.productId,
-      supplierArticle: product.modelCode,
-      productName: product.productName,
-      unitsSold: 0,
-      orders: 0,
-      currentAvgPrice: 0,
-      currentNetMarginPercent: 0,
-      currentOperationalMarginPercent: 0,
-      commissionRate: 0,
-      unitProductCost: 0,
-      unitPurchaseLogistics: 0,
-      unitTotalLogistics: 0,
-      unitReturnLogistics: 0,
-      unitOtherDeductions: 0,
-      hasSalesHistory: false,
-    };
-  }
-
-  const q = unitsSold;
-  const revenue = product.revenue;
-  const ops = buildProductOperationalMetrics(product);
-  const totalLogistics = calculateTotalLogistics(product);
-  const otherMarketplace = calculateOtherMarketplaceCosts(product);
-
-  return {
-    productId: product.productId,
-    supplierArticle: product.modelCode,
-    productName: product.productName,
-    unitsSold: q,
-    orders: product.orders,
-    currentAvgPrice: revenue / q,
-    currentNetMarginPercent: calculateNetMarginPercent(revenue, product.netProfit),
-    currentOperationalMarginPercent: ops.operationalMarginPercent,
-    commissionRate: product.commission / revenue,
-    unitProductCost: product.productCost / q,
-    unitPurchaseLogistics: product.purchaseLogistics / q,
-    unitTotalLogistics: totalLogistics / q,
-    unitReturnLogistics: product.returnLogistics / q,
-    unitOtherDeductions: otherMarketplace / q,
-    hasSalesHistory: true,
-  };
-}
 
 /**
- * Inverse pricing: P = (C + L + Lr + D) / (1 − α − β − m)
- * Operational: L = total logistics · Financial: L = purchase logistics only.
+ * Next-unit target price:
+ * P = (PurchaseCost + EffectiveLogistics) / (1 - Commission% - Marketing% - TargetMargin%)
+ *
+ * EffectiveLogistics = (purchase logistics + excluded logistics) / completed purchases.
  */
-export function solveTargetPrice(
-  inputs: PricingSolverInputs,
+export function solveRecommendedPrice(
+  inputs: SmartPricingSolverInputs,
   targetMarginPercent: number,
   marketingPercent: number
 ): number | null {
-  const m = targetMarginPercent / 100;
+  const alpha = inputs.commissionPercent / 100;
   const beta = marketingPercent / 100;
-  const alpha = inputs.commissionRate;
+  const m = targetMarginPercent / 100;
 
-  const fixedCosts =
-    inputs.unitProductCost +
-    inputs.unitLogistics +
-    inputs.unitReturnLogistics +
-    inputs.unitOtherDeductions;
-
+  const numerator = inputs.purchaseCost + inputs.effectiveLogistics;
   const denominator = 1 - alpha - beta - m;
+
   if (denominator <= 0) return null;
 
-  const price = fixedCosts / denominator;
+  const price = numerator / denominator;
   if (!Number.isFinite(price) || price <= 0) return null;
 
   return price;
 }
 
-/** Financial target price — purchase logistics only, financial net margin target. */
-export function solveFinancialTargetPrice(
-  inputs: Pick<
-    ProductPricingHistoricalInputs,
-    | "unitProductCost"
-    | "unitPurchaseLogistics"
-    | "unitReturnLogistics"
-    | "unitOtherDeductions"
-    | "commissionRate"
-  >,
+export function verifyRecommendedPrice(
+  inputs: SmartPricingSolverInputs,
   targetMarginPercent: number,
-  marketingPercent: number
-): number | null {
-  return solveTargetPrice(
-    { ...inputs, unitLogistics: inputs.unitPurchaseLogistics },
-    targetMarginPercent,
-    marketingPercent
-  );
+  marketingPercent: number,
+  price: number
+): { profit: number; marginPercent: number } {
+  const alpha = inputs.commissionPercent / 100;
+  const beta = marketingPercent / 100;
+
+  const profit =
+    price -
+    inputs.purchaseCost -
+    inputs.effectiveLogistics -
+    alpha * price -
+    beta * price;
+
+  return {
+    profit,
+    marginPercent: price > 0 ? (profit / price) * 100 : 0,
+  };
 }
 
-/**
- * Operational target price — total logistics, operational margin target.
- * Matches Product Analytics V7: revenue − product cost − commission − total logistics
- * − return logistics − marketing − other marketplace → target operational margin.
- */
-export function solveOperationalTargetPrice(
-  inputs: Pick<
-    ProductPricingHistoricalInputs,
-    | "unitProductCost"
-    | "unitTotalLogistics"
-    | "unitReturnLogistics"
-    | "unitOtherDeductions"
-    | "commissionRate"
-  >,
+export function formatRecommendedPriceFormula(
+  inputs: SmartPricingSolverInputs,
   targetMarginPercent: number,
   marketingPercent: number
-): number | null {
-  return solveTargetPrice(
-    { ...inputs, unitLogistics: inputs.unitTotalLogistics },
-    targetMarginPercent,
-    marketingPercent
-  );
+): string {
+  const price = solveRecommendedPrice(inputs, targetMarginPercent, marketingPercent);
+  const numerator = inputs.purchaseCost + inputs.effectiveLogistics;
+  const denominator =
+    1 -
+    inputs.commissionPercent / 100 -
+    marketingPercent / 100 -
+    targetMarginPercent / 100;
+
+  return [
+    "Recommended Price = (PurchaseCost + EffectiveLogistics) / (1 - Commission% - Marketing% - TargetMargin%)",
+    `= (${inputs.purchaseCost.toFixed(2)} + ${inputs.effectiveLogistics.toFixed(2)}) / (1 - ${inputs.commissionPercent}% - ${marketingPercent}% - ${targetMarginPercent}%)`,
+    `= ${numerator.toFixed(2)} / ${denominator.toFixed(4)}`,
+    price !== null ? `= ${price.toFixed(2)} ₽` : "= —",
+  ].join("\n");
 }
 
-/** @deprecated Use solveOperationalTargetPrice — V2 default recommendation. */
-export const solveRecommendedPrice = solveOperationalTargetPrice;
-
-export const SMART_PRICING_MARGIN_PRESETS = [20, 25, 30, 35] as const;
-
-export const DEFAULT_TARGET_MARGIN_PERCENT = 30;
-export const DEFAULT_MARKETING_PERCENT = 15;
-
-export function classifyPricingStatus(
-  differencePercent: number,
+export function classifySmartPricingStatus(
+  differencePercent: number | null,
+  hasPurchaseCost: boolean,
   hasSalesHistory: boolean,
   targetPrice: number | null
 ): SmartPricingStatus {
-  if (!hasSalesHistory) return "no-data";
+  if (!hasPurchaseCost) return "missing-cost";
   if (targetPrice === null) return "infeasible";
+  if (!hasSalesHistory || differencePercent === null) return "no-data";
   if (differencePercent <= 0) return "profitable";
   if (differencePercent < 10) return "small-increase";
   if (differencePercent < 20) return "difficult";
@@ -221,33 +171,33 @@ export function classifyPricingStatus(
 }
 
 function buildPriceDiff(
-  currentAvgPrice: number,
+  currentAvgPrice: number | null,
   targetPrice: number | null
 ): { differenceRub: number | null; differencePercent: number | null } {
-  if (targetPrice === null) {
+  if (targetPrice === null || currentAvgPrice === null || currentAvgPrice <= 0) {
     return { differenceRub: null, differencePercent: null };
   }
 
   const differenceRub = targetPrice - currentAvgPrice;
-  const differencePercent =
-    currentAvgPrice > 0 ? (differenceRub / currentAvgPrice) * 100 : null;
-
-  return { differenceRub, differencePercent };
+  return {
+    differenceRub,
+    differencePercent: (differenceRub / currentAvgPrice) * 100,
+  };
 }
 
-export type SmartPricingComputedRow = ProductPricingHistoricalInputs & {
-  /** Operational margin presets (primary). */
-  operationalPriceFor20: number | null;
-  operationalPriceFor25: number | null;
-  operationalPriceFor30: number | null;
-  operationalPriceFor35: number | null;
-  operationalTargetPrice: number | null;
-  operationalDifferenceRub: number | null;
-  operationalDifferencePercent: number | null;
-  operationalStatus: SmartPricingStatus;
-  /** Financial net margin target (secondary reference). */
-  financialTargetPrice: number | null;
-  /** @deprecated Primary outputs — alias operational fields for compatibility. */
+function solverInputsFromProduct(
+  inputs: ProductSmartPricingInputs
+): SmartPricingSolverInputs | null {
+  if (inputs.purchaseCost === null) return null;
+
+  return {
+    purchaseCost: inputs.purchaseCost,
+    effectiveLogistics: inputs.effectiveLogistics,
+    commissionPercent: inputs.commissionPercent,
+  };
+}
+
+export type SmartPricingComputedRow = ProductSmartPricingInputs & {
   priceFor20: number | null;
   priceFor25: number | null;
   priceFor30: number | null;
@@ -256,123 +206,78 @@ export type SmartPricingComputedRow = ProductPricingHistoricalInputs & {
   differenceRub: number | null;
   differencePercent: number | null;
   status: SmartPricingStatus;
+  riskLevel: SmartPricingRiskLevel;
+  riskLabel: string;
+  riskTooltip: string;
 };
 
 export function buildSmartPricingRow(
-  inputs: ProductPricingHistoricalInputs,
+  inputs: ProductSmartPricingInputs,
   targetMarginPercent: number,
   marketingPercent: number
 ): SmartPricingComputedRow {
-  const operationalPriceFor = (margin: number) =>
-    inputs.hasSalesHistory
-      ? solveOperationalTargetPrice(inputs, margin, marketingPercent)
-      : null;
+  const solver = solverInputsFromProduct(inputs);
+  const hasPurchaseCost = solver !== null;
 
-  const operationalPriceFor20 = operationalPriceFor(20);
-  const operationalPriceFor25 = operationalPriceFor(25);
-  const operationalPriceFor30 = operationalPriceFor(30);
-  const operationalPriceFor35 = operationalPriceFor(35);
-  const operationalTargetPrice = operationalPriceFor(targetMarginPercent);
+  const priceFor = (margin: number) =>
+    solver ? solveRecommendedPrice(solver, margin, marketingPercent) : null;
 
-  const financialTargetPrice = inputs.hasSalesHistory
-    ? solveFinancialTargetPrice(inputs, targetMarginPercent, marketingPercent)
+  const priceFor20 = priceFor(20);
+  const priceFor25 = priceFor(25);
+  const priceFor30 = priceFor(30);
+  const priceFor35 = priceFor(35);
+  const targetPrice = hasPurchaseCost
+    ? solveRecommendedPrice(solver, targetMarginPercent, marketingPercent)
     : null;
 
-  const { differenceRub: operationalDifferenceRub, differencePercent: operationalDifferencePercent } =
-    buildPriceDiff(inputs.currentAvgPrice, operationalTargetPrice);
-
-  const operationalStatus = classifyPricingStatus(
-    operationalDifferencePercent ?? 0,
-    inputs.hasSalesHistory,
-    operationalTargetPrice
+  const { differenceRub, differencePercent } = buildPriceDiff(
+    inputs.currentAvgPrice,
+    targetPrice
   );
+
+  const status = classifySmartPricingStatus(
+    differencePercent,
+    hasPurchaseCost,
+    inputs.hasSalesHistory,
+    targetPrice
+  );
+
+  const risk = computeSmartPricingRisk({
+    returnRatePercent: inputs.returnRatePercent,
+    excludedLogisticsPercent: inputs.excludedLogisticsPercent,
+    returnLogisticsPercent: inputs.returnLogisticsPercent,
+    commissionSource: inputs.commissionSource,
+    productHistoricalCommissionPercent: inputs.productHistoricalCommissionPercent,
+    categoryHistoricalCommissionPercent: inputs.categoryHistoricalCommissionPercent,
+    commissionPercent: inputs.commissionPercent,
+  });
 
   return {
     ...inputs,
-    operationalPriceFor20,
-    operationalPriceFor25,
-    operationalPriceFor30,
-    operationalPriceFor35,
-    operationalTargetPrice,
-    operationalDifferenceRub,
-    operationalDifferencePercent,
-    operationalStatus,
-    financialTargetPrice,
-    priceFor20: operationalPriceFor20,
-    priceFor25: operationalPriceFor25,
-    priceFor30: operationalPriceFor30,
-    priceFor35: operationalPriceFor35,
-    targetPrice: operationalTargetPrice,
-    differenceRub: operationalDifferenceRub,
-    differencePercent: operationalDifferencePercent,
-    status: operationalStatus,
+    priceFor20,
+    priceFor25,
+    priceFor30,
+    priceFor35,
+    targetPrice,
+    differenceRub,
+    differencePercent,
+    status,
+    riskLevel: risk.level,
+    riskLabel: risk.label,
+    riskTooltip: risk.tooltip,
   };
 }
 
 export function buildSmartPricingRows(
-  products: ProductProfitability[],
+  inputs: ProductSmartPricingInputs[],
   targetMarginPercent: number,
   marketingPercent: number
 ): SmartPricingComputedRow[] {
-  return products
-    .map((product) => deriveProductPricingInputs(product))
-    .map((inputs) => buildSmartPricingRow(inputs, targetMarginPercent, marketingPercent))
+  return inputs
+    .map((row) => buildSmartPricingRow(row, targetMarginPercent, marketingPercent))
     .sort((a, b) => {
-      if (a.hasSalesHistory !== b.hasSalesHistory) return a.hasSalesHistory ? -1 : 1;
-      return (b.operationalDifferencePercent ?? -Infinity) - (a.operationalDifferencePercent ?? -Infinity);
+      if (a.purchaseCost !== null && b.purchaseCost === null) return -1;
+      if (a.purchaseCost === null && b.purchaseCost !== null) return 1;
+      return (b.differencePercent ?? -Infinity) - (a.differencePercent ?? -Infinity);
     });
-}
-
-export type SmartPricingSummary = {
-  productsAnalyzed: number;
-  averageRequiredIncreasePercent: number;
-  productsAboveTarget: number;
-  productsNeedingOver20Percent: number;
-  productsNoSalesHistory: number;
-};
-
-export function buildSmartPricingSummary(rows: SmartPricingComputedRow[]): SmartPricingSummary {
-  const withHistory = rows.filter(
-    (row) => row.hasSalesHistory && row.operationalDifferencePercent !== null
-  );
-  const needingIncrease = withHistory.filter((row) => (row.operationalDifferencePercent ?? 0) > 0);
-
-  return {
-    productsAnalyzed: withHistory.length,
-    averageRequiredIncreasePercent:
-      needingIncrease.length > 0
-        ? needingIncrease.reduce((sum, row) => sum + (row.operationalDifferencePercent ?? 0), 0) /
-          needingIncrease.length
-        : 0,
-    productsAboveTarget: withHistory.filter((row) => (row.operationalDifferencePercent ?? 0) <= 0)
-      .length,
-    productsNeedingOver20Percent: withHistory.filter(
-      (row) => (row.operationalDifferencePercent ?? 0) > 20
-    ).length,
-    productsNoSalesHistory: rows.filter((row) => !row.hasSalesHistory).length,
-  };
-}
-
-/** Verify operational target price hits target margin at substituted unit costs. */
-export function verifyOperationalTargetPrice(
-  inputs: ProductPricingHistoricalInputs,
-  targetMarginPercent: number,
-  marketingPercent: number,
-  price: number
-): { operationalProfit: number; operationalMarginPercent: number } {
-  const beta = marketingPercent / 100;
-  const alpha = inputs.commissionRate;
-  const operationalProfit =
-    price -
-    inputs.unitProductCost -
-    alpha * price -
-    inputs.unitTotalLogistics -
-    inputs.unitReturnLogistics -
-    beta * price -
-    inputs.unitOtherDeductions;
-
-  return {
-    operationalProfit,
-    operationalMarginPercent: price > 0 ? (operationalProfit / price) * 100 : 0,
-  };
 }

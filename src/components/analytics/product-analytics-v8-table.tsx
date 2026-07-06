@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { LogisticsBreakdownHint } from "@/components/analytics/logistics-breakdown-hint";
 import { useProductSkuAnalytics } from "@/hooks/use-product-sku-analytics";
@@ -23,6 +25,14 @@ function operationalVariant(marginPercent: number): "success" | "warning" | "dan
   if (band === "weak") return "warning";
   return "danger";
 }
+
+const stickyExpandCell =
+  "sticky left-0 z-20 w-10 min-w-10 bg-card group-hover:bg-card-hover";
+const stickyModelCell =
+  "sticky left-10 z-20 min-w-[6.5rem] bg-card group-hover:bg-card-hover border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]";
+const stickyModelHeader =
+  "sticky left-10 z-20 min-w-[6.5rem] bg-card border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]";
+const stickyExpandHeader = "sticky left-0 z-20 w-10 min-w-10 bg-card";
 
 function SkuChildRows({
   productId,
@@ -68,7 +78,6 @@ function SkuChildRows({
                   <tr className="text-left text-xs text-muted-foreground">
                     <th className="px-2 py-1.5 font-medium">Size</th>
                     <th className="px-2 py-1.5 font-medium">Barcode</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Current Stock</th>
                     <th className="px-2 py-1.5 text-right font-medium">Orders</th>
                     <th className="px-2 py-1.5 text-right font-medium">Purchases</th>
                   </tr>
@@ -92,7 +101,6 @@ function SkuRow({ sku }: { sku: ProductAnalyticsSkuRow }) {
     <tr className="border-t border-border/40">
       <td className="px-2 py-2 font-medium">{sku.size}</td>
       <td className="px-2 py-2 font-mono text-xs text-muted-foreground">{sku.barcode ?? "—"}</td>
-      <td className="px-2 py-2 text-right tabular-nums">{formatNumber(sku.currentStock)}</td>
       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
         {formatNumber(sku.orders)}
       </td>
@@ -111,6 +119,13 @@ export function ProductAnalyticsV8Table({
   rangeTo,
 }: ProductAnalyticsV8TableProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const searchParams = useSearchParams();
+
+  const inventoryHref = (productId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("product", productId);
+    return `/inventory?${params.toString()}`;
+  };
 
   const toggle = (productId: string) => {
     const key = String(productId);
@@ -121,7 +136,7 @@ export function ProductAnalyticsV8Table({
     () => Object.values(expanded).filter(Boolean).length,
     [expanded]
   );
-  const parentColSpan = 14;
+  const parentColSpan = 15;
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-border bg-card">
@@ -138,9 +153,10 @@ export function ProductAnalyticsV8Table({
         <table className="w-full min-w-[1200px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="w-8 px-2 py-2" />
-              <th className="px-3 py-2 font-medium">Model</th>
+              <th className={cn("px-2 py-2", stickyExpandHeader)} />
+              <th className={cn("px-3 py-2 font-medium", stickyModelHeader)}>Model</th>
               <th className="px-3 py-2 font-medium">Product</th>
+              <th className="px-3 py-2 text-right font-medium">Current Stock</th>
               <th className="px-3 py-2 text-right font-medium">Orders</th>
               <th className="px-3 py-2 text-right font-medium">Purchases</th>
               <th className="px-3 py-2 text-right font-medium">Conv. %</th>
@@ -169,8 +185,8 @@ export function ProductAnalyticsV8Table({
 
                 return (
                   <Fragment key={productKey}>
-                    <tr className="border-b border-border/50 transition-colors hover:bg-card-hover">
-                      <td className="px-2 py-2">
+                    <tr className="group border-b border-border/50 transition-colors hover:bg-card-hover">
+                      <td className={cn("px-2 py-2", stickyExpandCell)}>
                         <button
                           type="button"
                           onClick={() => toggle(productKey)}
@@ -184,11 +200,25 @@ export function ProductAnalyticsV8Table({
                           )}
                         </button>
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs font-medium text-primary">
+                      <td
+                        className={cn(
+                          "px-3 py-2 font-mono text-xs font-medium text-primary",
+                          stickyModelCell
+                        )}
+                      >
                         {row.supplierArticle}
                       </td>
                       <td className="max-w-[180px] truncate px-3 py-2" title={row.productName}>
                         {row.productName}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        <Link
+                          href={inventoryHref(productKey)}
+                          className="font-medium text-primary hover:underline"
+                          title="Open in Inventory"
+                        >
+                          {formatNumber(row.currentStock)}
+                        </Link>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         {formatNumber(row.orders)}

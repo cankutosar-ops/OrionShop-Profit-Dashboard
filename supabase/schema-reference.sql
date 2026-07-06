@@ -124,7 +124,11 @@ CREATE TABLE IF NOT EXISTS wb_stock (
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   tech_size TEXT NOT NULL DEFAULT '',
   barcode TEXT,
+  warehouse TEXT,
   quantity INT NOT NULL DEFAULT 0,
-  synced_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (product_id, tech_size, barcode)
+  quantity_full INT NOT NULL DEFAULT 0,
+  in_way_to_client INT NOT NULL DEFAULT 0,
+  in_way_from_client INT NOT NULL DEFAULT 0,
+  last_synced_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (product_id, tech_size, barcode, warehouse)
 );

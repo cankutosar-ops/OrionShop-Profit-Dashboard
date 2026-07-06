@@ -8,15 +8,17 @@ import {
   calculateTotalLogistics,
 } from "@/lib/product-operational-metrics";
 import {
-  DEFAULT_MARKETING_PERCENT,
-  DEFAULT_TARGET_MARGIN_PERCENT,
   PRICING_V3_STATUS_LABEL,
   classifyPricingStatus,
   deriveProductPricingInputs,
   solveOperationalTargetPrice,
   type ProductPricingHistoricalInputs,
-  type SmartPricingStatus,
-} from "@/lib/smart-pricing";
+  type SmartPricingHistoricalStatus as SmartPricingStatus,
+} from "@/lib/smart-pricing-historical";
+import {
+  DEFAULT_MARKETING_PERCENT,
+  DEFAULT_TARGET_MARGIN_PERCENT,
+} from "@/lib/smart-pricing-constants";
 import type { ProductProfitability } from "@/types/database";
 
 export const EXCELLENT_MARGIN_PERCENT = 20;

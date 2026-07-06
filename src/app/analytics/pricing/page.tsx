@@ -4,13 +4,23 @@ import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
 } from "@/lib/smart-pricing";
+import { parseSmartPricingCommissionSettings } from "@/lib/smart-pricing-settings";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getSmartPricingInputs } from "@/services/smart-pricing-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string; margin?: string; marketing?: string }>;
+  searchParams: Promise<
+    PageScopeSearchParamsInput & {
+      margin?: string;
+      marketing?: string;
+      minProductSales?: string;
+      minCategorySales?: string;
+      commissionWindow?: string;
+    }
+  >;
 };
 
 function parsePercent(value: string | undefined, fallback: number): number {
@@ -24,13 +34,14 @@ export default async function SmartPricingPage({ searchParams }: PageProps) {
   const scope = await resolveScopedDateRange(params);
   const targetMargin = parsePercent(params.margin, DEFAULT_TARGET_MARGIN_PERCENT);
   const marketing = parsePercent(params.marketing, DEFAULT_MARKETING_PERCENT);
+  const commissionSettings = parseSmartPricingCommissionSettings(params);
   const inputs = await getSmartPricingInputs(scope);
 
   return (
     <>
       <PageHeader
         title="Smart Pricing"
-        description="Operational target price calculator — adjust margin and marketing to see required prices instantly"
+        description="Forward-looking target price — purchase cost, purchase logistics, and configured commission"
       />
 
       {!inputs ? (
@@ -42,6 +53,7 @@ export default async function SmartPricingPage({ searchParams }: PageProps) {
           inputs={inputs}
           initialTargetMargin={targetMargin}
           initialMarketing={marketing}
+          initialCommissionSettings={commissionSettings}
         />
       )}
     </>

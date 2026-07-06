@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
+import { copyScopeQueryParams } from "@/lib/filter-params";
 import {
   buildDecisionSimulatorFromContext,
   buildLogisticsSliderScenario,
@@ -13,7 +15,7 @@ import {
 import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
-} from "@/lib/smart-pricing";
+} from "@/lib/smart-pricing-constants";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type DecisionSimulatorPanelProps = {
@@ -63,6 +65,7 @@ export function DecisionSimulatorPanel({
   rangeFrom,
   rangeTo,
 }: DecisionSimulatorPanelProps) {
+  const searchParams = useSearchParams();
   const [targetMargin, setTargetMargin] = useState(initialReport.params.targetMarginPercent);
   const [marketing, setMarketing] = useState(initialReport.params.marketingPercent);
   const [logisticsReduction, setLogisticsReduction] = useState(0);
@@ -100,6 +103,7 @@ export function DecisionSimulatorPanel({
 
   function navigateSku(nextSku: string) {
     const params = new URLSearchParams();
+    copyScopeQueryParams(params, searchParams);
     params.set("sku", nextSku);
     params.set("from", rangeFrom);
     params.set("to", rangeTo);

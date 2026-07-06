@@ -7,7 +7,7 @@ import {
 import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
-} from "@/lib/smart-pricing";
+} from "@/lib/smart-pricing-constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { getProductProfitability } from "@/services/dashboard-service";

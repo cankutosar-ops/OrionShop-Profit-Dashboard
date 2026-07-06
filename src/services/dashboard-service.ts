@@ -3,10 +3,10 @@ import { fetchAllInDateRange, fetchAllRows } from "@/lib/supabase/paginate";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import {
   buildCostBreakdown,
-  buildLatestCostByProductId,
   buildProfitBreakdown,
   groupSalesByDate,
 } from "@/lib/profit-calculator";
+import { buildLatestCostByProductId } from "@/lib/cost-history-resolution";
 import { buildOrdersPurchasesKpis } from "@/lib/orders-purchases-metrics";
 import {
   attributeProductFinance,
@@ -14,7 +14,7 @@ import {
 } from "@/lib/product-logistics-attribution";
 import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
 import { buildProfitabilityV2 } from "@/lib/profitability-v2";
-import { getSampleDashboard, type DashboardPayload } from "@/lib/sample-data";
+import { getSampleDashboard, getEmptyPeriodDashboard, type DashboardPayload } from "@/lib/sample-data";
 import type {
   CategoryProfitability,
   OverviewMetrics,
@@ -53,6 +53,19 @@ async function isDatabaseEmpty(client: SupabaseClient, marketplaceAccountId: str
     (sales.count ?? 0) + (finance.count ?? 0) + (ads.count ?? 0) + (products.count ?? 0);
 
   return total === 0;
+}
+
+async function fetchAccountLastSync(
+  client: SupabaseClient,
+  marketplaceAccountId: string
+): Promise<string | null> {
+  const { data } = await client
+    .from("marketplace_accounts")
+    .select("last_successful_sync_at, last_sync_at")
+    .eq("id", marketplaceAccountId)
+    .maybeSingle();
+
+  return data?.last_successful_sync_at ?? data?.last_sync_at ?? null;
 }
 
 export async function fetchProductsWithRelations(
@@ -328,9 +341,8 @@ export async function getDashboardData(scope: ScopedDateRange): Promise<Dashboar
       products.length > 0;
 
     if (!hasActivity) {
-      return getSampleDashboard(
-        "No data found for the selected date range. Showing sample placeholders."
-      );
+      const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
+      return getEmptyPeriodDashboard(lastSyncAt);
     }
 
     return {

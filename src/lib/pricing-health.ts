@@ -11,7 +11,7 @@ import {
   type ProductPricingHistoricalInputs,
   type SmartPricingComputedRow,
   type SmartPricingSummary,
-} from "@/lib/smart-pricing";
+} from "@/lib/smart-pricing-historical";
 import type { ProductProfitability } from "@/types/database";
 
 export type ProductPricingHealthRow = SmartPricingComputedRow & {

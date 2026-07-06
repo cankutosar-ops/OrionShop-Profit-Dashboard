@@ -183,6 +183,60 @@ export type ProductOption = {
   name: string;
 };
 
+/** One row in the Cost Management product table. */
+export type CostManagementRow = {
+  productId: string;
+  supplierArticle: string;
+  productName: string;
+  currentStock: number;
+  /** Period average sale price (revenue ÷ units sold), or null without sales. */
+  currentSalePrice: number | null;
+  currentPurchasePrice: number | null;
+};
+
+export type PurchaseCurrency = "USD" | "RUB" | "TRY" | "EUR";
+
+export const PURCHASE_CURRENCIES: PurchaseCurrency[] = ["USD", "RUB", "TRY", "EUR"];
+
+export type Purchase = {
+  id: string;
+  marketplace_account_id: string;
+  purchase_date: string;
+  supplier: string;
+  currency: PurchaseCurrency;
+  exchange_rate: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PurchaseLine = {
+  id: string;
+  purchase_id: string;
+  product_id: string;
+  supplier_article: string;
+  quantity: number;
+  unit_cost: number;
+  created_at: string;
+  product_name?: string;
+};
+
+export type PurchaseWithLines = Purchase & {
+  lines: PurchaseLine[];
+  line_count: number;
+};
+
+export type PurchaseListItem = Purchase & {
+  line_count: number;
+};
+
+export type PurchaseImportResult = {
+  purchaseId: string;
+  productsImported: number;
+  skipped: number;
+  errors: { row: number; message: string }[];
+};
+
 export type ProductWithRelations = Product & {
   brand: Brand | null;
   category: Category | null;
@@ -199,7 +253,10 @@ export type AccountScope = {
   companyId: string;
 };
 
-export type ScopedDateRange = DateRange & AccountScope;
+export type ScopedDateRange = DateRange & AccountScope & {
+  /** When omitted, all brands for the marketplace account apply. */
+  brandId?: string;
+};
 
 export type ProfitBreakdown = {
   revenue: number;
@@ -315,6 +372,8 @@ export type ProductAnalyticsV3Row = {
   operationalMarginPercent: number;
   /** Financial net profit (buildProfitBreakdown) — for reconciliation only. */
   financialNetProfit: number;
+  /** Total current stock from inventory cache — links to Inventory page. */
+  currentStock: number;
 };
 
 export type InventoryRecommendation =
@@ -391,7 +450,10 @@ export type WbStock = {
   barcode: string | null;
   warehouse: string | null;
   quantity: number;
-  synced_at: string;
+  quantity_full: number;
+  in_way_to_client: number;
+  in_way_from_client: number;
+  last_synced_at: string;
 };
 
 export type CategoryProfitability = {
@@ -521,6 +583,25 @@ type PublicTables = {
       effective_to?: string | null;
     };
     Update: Partial<ProductCostHistory>;
+    Relationships: NoRelationships;
+  };
+  purchases: {
+    Row: Purchase;
+    Insert: Omit<Purchase, "id" | "created_at" | "updated_at"> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<Purchase>;
+    Relationships: NoRelationships;
+  };
+  purchase_lines: {
+    Row: PurchaseLine;
+    Insert: Omit<PurchaseLine, "id" | "created_at" | "product_name"> & {
+      id?: string;
+      created_at?: string;
+    };
+    Update: Partial<PurchaseLine>;
     Relationships: NoRelationships;
   };
   product_variants: {

@@ -9,11 +9,13 @@ import {
 import { toPricingHistoricalInputs } from "@/lib/pricing-health";
 import {
   buildSmartPricingRow,
+  PRICING_V3_STATUS_LABEL,
+  type SmartPricingHistoricalStatus as SmartPricingStatus,
+} from "@/lib/smart-pricing-historical";
+import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
-  PRICING_V3_STATUS_LABEL,
-  type SmartPricingStatus,
-} from "@/lib/smart-pricing";
+} from "@/lib/smart-pricing-constants";
 import type { ProductPricingHealthRow } from "@/services/smart-pricing-service";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 

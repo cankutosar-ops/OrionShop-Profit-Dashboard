@@ -57,6 +57,7 @@ export function toProductAnalyticsV3Row(product: ProductProfitability): ProductA
     operationalProfit: ops.operationalProfit,
     operationalMarginPercent: ops.operationalMarginPercent,
     financialNetProfit: ops.financialNetProfit,
+    currentStock: 0,
   };
 }
 

@@ -275,8 +275,54 @@ export type DashboardPayload = {
   products: ProductProfitability[];
   categories: CategoryProfitability[];
   isSampleData: boolean;
+  /** Account has synced data but the selected date range has no activity. */
+  isEmptyPeriod?: boolean;
+  lastSyncAt?: string | null;
   message?: string;
 };
+
+const EMPTY_PERIOD_BREAKDOWN = {
+  revenue: 0,
+  productCost: 0,
+  commission: 0,
+  logistics: 0,
+  returnLogistics: 0,
+  storage: 0,
+  advertising: 0,
+  penalties: 0,
+  otherExpenses: 0,
+  netProfit: 0,
+  returnRate: 0,
+  unitsSold: 0,
+  unitsReturned: 0,
+};
+
+export function getEmptyPeriodDashboard(lastSyncAt: string | null): DashboardPayload {
+  return {
+    overview: {
+      ...EMPTY_PERIOD_BREAKDOWN,
+      dailyRevenue: [],
+      costBreakdown: [],
+      ordersPurchases: {
+        ordersCount: 0,
+        ordersAmount: 0,
+        cancelledOrdersCount: 0,
+        cancelledOrdersAmount: 0,
+        purchasesCount: 0,
+        purchasesAmount: 0,
+        conversionRate: 0,
+        returnRate: 0,
+        dailyOrdersPurchases: [],
+      },
+      profitabilityV2: buildProfitabilityV2(EMPTY_PERIOD_BREAKDOWN),
+    },
+    products: [],
+    categories: [],
+    isSampleData: false,
+    isEmptyPeriod: true,
+    lastSyncAt,
+  };
+}
 
 export function getSampleDashboard(message?: string): DashboardPayload {
   return {

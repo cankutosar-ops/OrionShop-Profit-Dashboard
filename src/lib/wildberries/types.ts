@@ -89,6 +89,8 @@ export type WbApiStockRow = {
   barcode?: string;
   quantity?: number;
   quantityFull?: number;
+  inWayToClient?: number;
+  inWayFromClient?: number;
   nmId?: number;
   warehouseName?: string;
 };

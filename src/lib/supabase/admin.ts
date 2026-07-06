@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { requireSupabaseEnv } from "./env";
+import { supabaseFetch } from "./fetch";
 
 /** Server-side Supabase client with write access for sync jobs. */
 export function createAdminClient() {
@@ -12,6 +13,7 @@ export function createAdminClient() {
 
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: supabaseFetch },
   });
 }
 

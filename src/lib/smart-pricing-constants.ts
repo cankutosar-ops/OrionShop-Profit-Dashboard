@@ -1,0 +1,4 @@
+export const SMART_PRICING_MARGIN_PRESETS = [20, 25, 30, 35] as const;
+
+export const DEFAULT_TARGET_MARGIN_PERCENT = 30;
+export const DEFAULT_MARKETING_PERCENT = 15;

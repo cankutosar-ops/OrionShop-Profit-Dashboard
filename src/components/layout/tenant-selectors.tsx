@@ -3,8 +3,18 @@
 import { Building2, ChevronDown, Store } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { SYNC_DATE_PARAM } from "@/lib/marketplace-sync-date";
+import { FILTER_PARAMS } from "@/lib/filter-params";
+import { replaceUrlIfChanged, fetchDashboardCompanies } from "@/lib/dashboard-lifecycle";
 import { cn } from "@/lib/utils";
 import type { CompanyWithAccounts, MarketplaceAccountPublic } from "@/types/database";
+
+function clearSyncDateParams(params: URLSearchParams) {
+  params.delete(SYNC_DATE_PARAM.manual);
+  params.delete(SYNC_DATE_PARAM.adjusted);
+  params.delete(SYNC_DATE_PARAM.accountSwitched);
+  params.delete(FILTER_PARAMS.brand);
+}
 
 const MARKETPLACE_LABELS: Record<string, string> = {
   wildberries: "Wildberries",
@@ -100,19 +110,24 @@ export function TenantSelectors() {
 
   const activeCompanyId = searchParams.get("company");
   const activeAccountId = searchParams.get("account");
+  const currentQuery = searchParams.toString();
+  const tenantDefaultsAppliedRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadCompanies() {
       try {
-        const response = await fetch("/api/companies");
-        const data = await response.json();
-        if (!cancelled && response.ok) {
-          setCompanies(data.companies ?? []);
+        const rows = await fetchDashboardCompanies();
+        if (!cancelled) {
+          setCompanies(rows);
         }
+      } catch {
+        if (!cancelled) setCompanies([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        // Always exit the loading state — Sprint 6.7 URL updates can remount
+        // this component before fetch completes; skipping here leaves "Loading…" forever.
+        setLoading(false);
       }
     }
 
@@ -148,10 +163,18 @@ export function TenantSelectors() {
     const needsAccount = activeAccountId !== accountId;
 
     if (needsCompany || needsAccount) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("company", companyId);
-      params.set("account", accountId);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      const targetKey = `${companyId}:${accountId}`;
+      if (tenantDefaultsAppliedRef.current === targetKey) return;
+
+      const changed = replaceUrlIfChanged(router, pathname, currentQuery, (params) => {
+        params.set("company", companyId);
+        params.set("account", accountId);
+        clearSyncDateParams(params);
+      });
+
+      if (changed) {
+        tenantDefaultsAppliedRef.current = targetKey;
+      }
     }
   }, [
     activeAccount?.id,
@@ -159,16 +182,20 @@ export function TenantSelectors() {
     activeCompany?.id,
     activeCompanyId,
     companies.length,
+    currentQuery,
     loading,
     pathname,
     router,
-    searchParams,
   ]);
 
   function updateParams(next: { company?: string; account?: string }) {
     const params = new URLSearchParams(searchParams.toString());
     if (next.company) params.set("company", next.company);
     if (next.account) params.set("account", next.account);
+    clearSyncDateParams(params);
+    if (pathname === "/") {
+      params.set(SYNC_DATE_PARAM.accountSwitched, "1");
+    }
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 

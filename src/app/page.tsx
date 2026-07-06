@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import {
   DollarSign,
   Package,
@@ -19,15 +20,18 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { OrdersPurchasesChart } from "@/components/dashboard/orders-purchases-chart";
 import { ProfitabilityBreakdown } from "@/components/dashboard/profitability-breakdown";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
+import { DashboardOperationalSync } from "@/components/dashboard/dashboard-operational-sync";
+import { DashboardHeaderExtras } from "@/components/dashboard/dashboard-header-extras";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { DashboardPageSearchParamsInput } from "@/lib/filter-params";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 import { getDashboardData } from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
+  searchParams: Promise<DashboardPageSearchParamsInput>;
 };
 
 function KpiSection({
@@ -53,41 +57,61 @@ function KpiSection({
 export default async function DashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
-  const { overview, categories, isSampleData, message } = await getDashboardData(scope);
+  const { overview, categories, isSampleData, isEmptyPeriod, lastSyncAt, message } =
+    await getDashboardData(scope);
   const kpis = overview.ordersPurchases;
   const profitV2 = overview.profitabilityV2;
   const totalOrdersCount = kpis.ordersCount + kpis.cancelledOrdersCount;
+  const emptyValue = "—";
+  const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatCurrency(value));
+  const formatRate = (value: number) => (isEmptyPeriod ? emptyValue : formatPercent(value));
 
   return (
     <>
       <PageHeader
         title="Dashboard"
         description="Live profitability metrics from Supabase"
+        headerExtras={<DashboardHeaderExtras />}
       />
 
-      <DataBanner isSampleData={isSampleData} message={message} />
+      <Suspense fallback={null}>
+        <DashboardOperationalSync />
+      </Suspense>
+
+      <DataBanner
+        isSampleData={isSampleData}
+        isEmptyPeriod={isEmptyPeriod}
+        lastSyncAt={lastSyncAt}
+        syncAdjusted={params.syncAdjusted === "1"}
+        dateManual={params.dateManual === "1"}
+        message={message}
+      />
 
       <div className="space-y-8">
         <KpiSection title="Overview">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <MetricCard
               title="Revenue"
-              value={formatCurrency(overview.revenue)}
+              value={formatMoney(overview.revenue)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
               title="Net Profit"
-              value={formatCurrency(overview.netProfit)}
+              value={formatMoney(overview.netProfit)}
               icon={TrendingUp}
-              variant={overview.netProfit >= 0 ? "success" : "danger"}
+              variant={
+                isEmptyPeriod ? "default" : overview.netProfit >= 0 ? "success" : "danger"
+              }
             />
             <MetricCard
               title="Margin"
-              value={formatPercent(profitV2.marginPercent)}
+              value={formatRate(profitV2.marginPercent)}
               subtitle="Gross profit ÷ revenue"
               icon={Percent}
-              variant={profitV2.marginPercent >= 30 ? "success" : "default"}
+              variant={
+                isEmptyPeriod ? "default" : profitV2.marginPercent >= 30 ? "success" : "default"
+              }
             />
             <MetricCard
               title="Orders"
@@ -99,16 +123,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <MetricCard
               title="Purchases"
               value={formatNumber(kpis.purchasesCount)}
-              subtitle={formatCurrency(kpis.purchasesAmount)}
+              subtitle={formatMoney(kpis.purchasesAmount)}
               icon={ShoppingBag}
               variant="success"
             />
             <MetricCard
               title="Return Rate"
-              value={formatPercent(kpis.returnRate)}
-              subtitle={`${overview.unitsReturned} returns`}
+              value={formatRate(kpis.returnRate)}
+              subtitle={
+                isEmptyPeriod ? emptyValue : `${overview.unitsReturned} returns`
+              }
               icon={RotateCcw}
-              variant={kpis.returnRate > 10 ? "danger" : "default"}
+              variant={isEmptyPeriod ? "default" : kpis.returnRate > 10 ? "danger" : "default"}
             />
           </div>
         </KpiSection>
@@ -117,26 +143,26 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard
               title="Product Cost"
-              value={formatCurrency(profitV2.productCost)}
+              value={formatMoney(profitV2.productCost)}
               icon={Package}
               variant="warning"
             />
             <MetricCard
               title="Marketplace Fees"
-              value={formatCurrency(profitV2.marketplaceFees)}
+              value={formatMoney(profitV2.marketplaceFees)}
               subtitle="Commission + deductions"
               icon={Receipt}
               variant="warning"
             />
             <MetricCard
               title="Logistics"
-              value={formatCurrency(overview.logistics)}
+              value={formatMoney(overview.logistics)}
               icon={Truck}
               variant="default"
             />
             <MetricCard
               title="Storage"
-              value={formatCurrency(overview.storage)}
+              value={formatMoney(overview.storage)}
               icon={Warehouse}
               variant="default"
             />

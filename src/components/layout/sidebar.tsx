@@ -3,29 +3,26 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  BarChart3,
-  ClipboardCheck,
   Coins,
   LayoutDashboard,
   LineChart,
-  Package,
+  Receipt,
   Settings,
   ShoppingBag,
   Tag,
   TrendingUp,
-  Zap,
+  Warehouse,
 } from "lucide-react";
+import { copyScopeQueryParams } from "@/lib/filter-params";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Product Analytics", href: "/analytics/products", icon: LineChart },
+  { name: "Cost Management", href: "/costs", icon: Coins },
+  { name: "Inventory", href: "/inventory", icon: Warehouse },
   { name: "Smart Pricing", href: "/analytics/pricing", icon: Tag },
-  { name: "Decision Simulator", href: "/analytics/simulator", icon: Zap },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Costs", href: "/costs", icon: Coins },
-  { name: "Categories", href: "/categories", icon: BarChart3 },
-  { name: "Product Audit", href: "/audit/product-profitability", icon: ClipboardCheck },
+  { name: "Purchases", href: "/purchases", icon: Receipt },
   { name: "Settings", href: "/settings/companies", icon: Settings },
 ];
 
@@ -34,18 +31,10 @@ export function Sidebar() {
   const searchParams = useSearchParams();
 
   function hrefWithQueryParams(base: string) {
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
-    const company = searchParams.get("company");
-    const account = searchParams.get("account");
-    if (!from && !to && !company && !account) return base;
-
     const params = new URLSearchParams();
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
-    if (company) params.set("company", company);
-    if (account) params.set("account", account);
-    return `${base}?${params.toString()}`;
+    copyScopeQueryParams(params, searchParams);
+    const query = params.toString();
+    return query ? `${base}?${query}` : base;
   }
 
   return (

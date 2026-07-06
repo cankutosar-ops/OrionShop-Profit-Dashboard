@@ -3,23 +3,22 @@ import { PageHeader } from "@/components/layout/page-header";
 import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
-} from "@/lib/smart-pricing";
+} from "@/lib/smart-pricing-constants";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { formatDate } from "@/lib/utils";
 import { getDecisionSimulatorPageData } from "@/services/decision-simulator-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{
-    from?: string;
-    to?: string;
-    company?: string;
-    account?: string;
-    sku?: string;
-    margin?: string;
-    marketing?: string;
-  }>;
+  searchParams: Promise<
+    PageScopeSearchParamsInput & {
+      sku?: string;
+      margin?: string;
+      marketing?: string;
+    }
+  >;
 };
 
 function parsePercent(value: string | undefined, fallback: number): number {

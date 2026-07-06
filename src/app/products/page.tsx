@@ -4,12 +4,13 @@ import { ProductProfitabilityTable } from "@/components/dashboard/product-profit
 import { ProfitBarChart } from "@/components/dashboard/profit-bar-chart";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getDashboardData } from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ from?: string; to?: string; company?: string; account?: string }>;
+  searchParams: Promise<PageScopeSearchParamsInput>;
 };
 
 export default async function ProductsPage({ searchParams }: PageProps) {

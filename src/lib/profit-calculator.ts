@@ -8,6 +8,7 @@ import type {
   WbSale,
 } from "@/types/database";
 import { FINANCE_OPERATION_TYPES } from "@/types/database";
+export { buildLatestCostByProductId } from "@/lib/cost-history-resolution";
 
 /** Temporary audit window — remove after profitability investigation. */
 const AUDIT_RANGE: DateRange = { from: "2026-05-24", to: "2026-06-23" };
@@ -222,34 +223,6 @@ export function getProductCostAtDate(
     .sort((a, b) => b.effective_from.localeCompare(a.effective_from));
 
   return applicable[0]?.cost ?? 0;
-}
-
-/** Latest cost per supplier_article, mapped to each product_id. */
-export function buildLatestCostByProductId(
-  costHistory: ProductCostHistory[],
-  products: { id: string; supplier_article: string }[]
-): Map<string, number> {
-  const latestByArticle = new Map<string, ProductCostHistory>();
-
-  for (const entry of costHistory) {
-    const product = products.find((p) => String(p.id) === String(entry.product_id));
-    if (!product) continue;
-
-    const current = latestByArticle.get(product.supplier_article);
-    if (!current || entry.effective_from.localeCompare(current.effective_from) > 0) {
-      latestByArticle.set(product.supplier_article, entry);
-    }
-  }
-
-  const byProductId = new Map<string, number>();
-  for (const product of products) {
-    const latest = latestByArticle.get(product.supplier_article);
-    if (latest) {
-      byProductId.set(String(product.id), latest.cost);
-    }
-  }
-
-  return byProductId;
 }
 
 function resolveUnitCost(

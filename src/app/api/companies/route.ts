@@ -5,6 +5,8 @@ import {
   listCompanies,
 } from "@/services/marketplace-account-service";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     await ensureDefaultTenant();

@@ -60,7 +60,7 @@ if (stockRows?.length) {
   console.log(`Live wb_stock total quantity: ${totalStock}`);
   for (const row of stockRows.slice(0, 5)) {
     console.log(
-      `  size=${row.tech_size || "—"} barcode=${row.barcode ?? "—"} qty=${row.quantity} synced=${row.synced_at}`
+      `  size=${row.tech_size || "—"} barcode=${row.barcode ?? "—"} qty=${row.quantity} synced=${row.last_synced_at ?? row.synced_at}`
     );
   }
 } else {
