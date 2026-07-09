@@ -1,3 +1,4 @@
+import { rowMatchesFinanceCategory } from "@/lib/finance-category";
 import type { WbFinance, WbSale } from "@/types/database";
 
 export type ProductLogisticsAttribution = {
@@ -31,7 +32,7 @@ export function attributeProductFinance(
   let excludedLogistics = 0;
 
   for (const row of finance) {
-    if (row.operation_type !== "logistics") {
+    if (!rowMatchesFinanceCategory(row, "LOGISTICS")) {
       financeForBreakdown.push(row);
       continue;
     }

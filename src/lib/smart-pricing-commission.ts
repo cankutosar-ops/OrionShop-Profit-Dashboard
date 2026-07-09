@@ -1,3 +1,4 @@
+import { rowMatchesFinanceCategory } from "@/lib/finance-category";
 import {
   DEFAULT_COMMISSION_PERCENT_BY_MARKETPLACE,
 } from "@/lib/marketplace-commission";
@@ -49,7 +50,7 @@ export function sumCompletedSalesMetrics(sales: WbSale[]): CommissionTotals {
 
 export function sumProductCommission(finance: WbFinance[]): number {
   return finance
-    .filter((row) => row.operation_type === "commission")
+    .filter((row) => rowMatchesFinanceCategory(row, "COMMISSION"))
     .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
 }
 

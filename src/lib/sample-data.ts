@@ -77,6 +77,12 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
     ],
   },
   profitabilityV2: buildProfitabilityV2(SAMPLE_BREAKDOWN_BASE),
+  marketplaceFeesPresentation: {
+    legacyMarketplaceFees: 354_100,
+    marketplaceServiceFees: 341_700 + 12_400,
+    accountAdjustments: 0,
+    reimbursements: 0,
+  },
 };
 
 export const SAMPLE_PRODUCTS: ProductProfitability[] = [
@@ -315,6 +321,12 @@ export function getEmptyPeriodDashboard(lastSyncAt: string | null): DashboardPay
         dailyOrdersPurchases: [],
       },
       profitabilityV2: buildProfitabilityV2(EMPTY_PERIOD_BREAKDOWN),
+      marketplaceFeesPresentation: {
+        legacyMarketplaceFees: 0,
+        marketplaceServiceFees: 0,
+        accountAdjustments: 0,
+        reimbursements: 0,
+      },
     },
     products: [],
     categories: [],

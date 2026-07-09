@@ -71,7 +71,11 @@ CREATE TABLE IF NOT EXISTS wb_finance (
   amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
   source_key TEXT,
   description TEXT,
-  srid TEXT
+  srid TEXT,
+  finance_category TEXT,
+  wb_source_suffix TEXT,
+  supplier_oper_name TEXT,
+  finance_nature TEXT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wb_finance_source_key_unique

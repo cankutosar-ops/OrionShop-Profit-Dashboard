@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { rowMatchesFinanceCategory } from "@/lib/finance-category";
 import { buildLatestCostByProductId } from "@/lib/cost-history-resolution";
 import { isProductAnalyticsV3Candidate } from "@/lib/product-funnel-metrics";
 import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
@@ -57,7 +58,7 @@ export type SmartPricingReport = {
 
 function sumReturnLogistics(finance: WbFinance[]): number {
   return finance
-    .filter((row) => row.operation_type === "return_logistics")
+    .filter((row) => rowMatchesFinanceCategory(row, "RETURN_LOGISTICS"))
     .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
 }
 

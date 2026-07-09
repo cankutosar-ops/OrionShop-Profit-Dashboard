@@ -1,3 +1,4 @@
+import { rowMatchesFinanceCategory } from "@/lib/finance-category";
 import {
   attributeProductFinance,
   buildPurchaseSridSet,
@@ -33,7 +34,7 @@ export type AdaptiveLogisticsResult = {
 
 function sumPurchaseLogistics(finance: WbFinance[]): number {
   return finance
-    .filter((row) => row.operation_type === "logistics")
+    .filter((row) => rowMatchesFinanceCategory(row, "LOGISTICS"))
     .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
 }
 

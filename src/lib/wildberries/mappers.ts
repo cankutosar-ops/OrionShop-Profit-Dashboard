@@ -1,4 +1,8 @@
-import type { FinanceOperationType, WbFinance, WbOrder, WbSale, WbStock } from "@/types/database";
+import {
+  categoryToOperationType,
+  resolveFinanceCategory,
+} from "@/lib/finance-category";
+import type { WbFinance, WbOrder, WbSale, WbStock } from "@/types/database";
 import type {
   WbApiFinanceRow,
   WbApiOrder,
@@ -108,7 +112,6 @@ export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale,
 type FinanceLineInput = {
   row: WbApiFinanceRow;
   productId: string | null;
-  operationType: FinanceOperationType;
   amount: number;
   suffix: string;
 };
@@ -118,10 +121,21 @@ export function buildFinanceSourceKey(rrdId: number, suffix: string): string {
   return `rrd:${rrdId}:${suffix}`;
 }
 
-function buildFinanceLine(input: FinanceLineInput): Omit<WbFinance, "id" | "marketplace_account_id"> {
-  const { row, productId, operationType, amount, suffix } = input;
-  const operationDate = row.rr_dt ?? (row.sale_dt ? toDateString(row.sale_dt) : null) ?? toDateString(new Date().toISOString());
+function buildFinanceLine(
+  input: FinanceLineInput
+): Omit<WbFinance, "id" | "marketplace_account_id"> {
+  const { row, productId, amount, suffix } = input;
+  const operationDate =
+    row.rr_dt ??
+    (row.sale_dt ? toDateString(row.sale_dt) : null) ??
+    toDateString(new Date().toISOString());
   const sourceKey = buildFinanceSourceKey(row.rrd_id, suffix);
+  const supplierOperName = row.supplier_oper_name?.trim() || null;
+  const financeCategory = resolveFinanceCategory({
+    wbFieldSuffix: suffix,
+    supplierOperName,
+  });
+  const operationType = categoryToOperationType(financeCategory);
 
   return {
     product_id: productId,
@@ -130,8 +144,12 @@ function buildFinanceLine(input: FinanceLineInput): Omit<WbFinance, "id" | "mark
     operation_type: operationType,
     amount: Math.abs(amount),
     source_key: sourceKey,
-    description: sourceKey,
+    description: null,
     srid: row.srid ?? null,
+    finance_category: financeCategory,
+    wb_source_suffix: suffix,
+    supplier_oper_name: supplierOperName,
+    finance_nature: null,
   };
 }
 
@@ -141,34 +159,34 @@ export function mapFinanceRowsFromReport(
 ): Omit<WbFinance, "id" | "marketplace_account_id">[] {
   const lines: Omit<WbFinance, "id" | "marketplace_account_id">[] = [];
 
-  const add = (operationType: FinanceOperationType, amount: number | undefined, suffix: string) => {
+  const add = (amount: number | undefined, suffix: string) => {
     if (amount && Math.abs(amount) > 0) {
-      lines.push(buildFinanceLine({ row, productId, operationType, amount, suffix }));
+      lines.push(buildFinanceLine({ row, productId, amount, suffix }));
     }
   };
 
-  add("commission", row.ppvz_sales_commission, "commission");
-  add("logistics", row.delivery_rub, "logistics");
-  add("storage", row.storage_fee, "storage");
-  add("penalty", row.penalty, "penalty");
-  add("return_logistics", row.rebill_logistic_cost, "return_logistics");
-  add("other", row.deduction, "deduction");
-  add("other", row.acceptance, "acceptance");
-  add("other", row.acquiring_fee, "acquiring_fee");
-  add("other", row.ppvz_reward, "ppvz_reward");
-  add("other", row.additional_payment, "additional_payment");
-  add("other", row.ppvz_vw, "ppvz_vw");
+  add(row.ppvz_sales_commission, "commission");
+  add(row.delivery_rub, "logistics");
+  add(row.storage_fee, "storage");
+  add(row.penalty, "penalty");
+  add(row.rebill_logistic_cost, "return_logistics");
+  add(row.deduction, "deduction");
+  add(row.acceptance, "acceptance");
+  add(row.acquiring_fee, "acquiring_fee");
+  add(row.ppvz_reward, "ppvz_reward");
+  add(row.additional_payment, "additional_payment");
+  add(row.ppvz_vw, "ppvz_vw");
 
   const operName = (row.supplier_oper_name ?? "").toLowerCase();
   if (!lines.length && operName) {
     if (operName.includes("логист") && operName.includes("обрат")) {
-      add("return_logistics", row.delivery_rub, "oper_return_logistics");
+      add(row.delivery_rub, "oper_return_logistics");
     } else if (operName.includes("логист")) {
-      add("logistics", row.delivery_rub, "oper_logistics");
+      add(row.delivery_rub, "oper_logistics");
     } else if (operName.includes("хранен")) {
-      add("storage", row.storage_fee ?? row.delivery_rub, "oper_storage");
+      add(row.storage_fee ?? row.delivery_rub, "oper_storage");
     } else if (operName.includes("штраф")) {
-      add("penalty", row.penalty ?? row.delivery_rub, "oper_penalty");
+      add(row.penalty ?? row.delivery_rub, "oper_penalty");
     }
   }
 
@@ -195,16 +213,6 @@ export function mapApiStockRowToDb(
 
 export function isWithinDateRange(dateStr: string, from: string, to: string): boolean {
   return dateStr >= from && dateStr <= to;
-}
-
-export function mapFinanceOperationType(apiType: string): FinanceOperationType {
-  const normalized = apiType.toLowerCase();
-  if (normalized.includes("commission") || normalized.includes("комисс")) return "commission";
-  if (normalized.includes("return") || normalized.includes("обратн")) return "return_logistics";
-  if (normalized.includes("logist") || normalized.includes("логист")) return "logistics";
-  if (normalized.includes("storage") || normalized.includes("хранен")) return "storage";
-  if (normalized.includes("penalty") || normalized.includes("штраф")) return "penalty";
-  return "other";
 }
 
 // Re-export types used by legacy imports

@@ -1,3 +1,4 @@
+import { rollupCategoriesToProfitBuckets } from "@/lib/finance-rollup";
 import type {
   DateRange,
   FinanceOperationType,
@@ -160,24 +161,9 @@ export function sumFinanceByType(
     .reduce((sum, r) => sum + Math.abs(Number(r.amount)), 0);
 }
 
-/** Sum all wb_finance rows by operation_type; unclassified types roll into `other`. */
+/** Sum all wb_finance rows by profit buckets (via finance_category rollup or legacy operation_type). */
 export function sumFinanceExpenses(financeRecords: WbFinance[]): FinanceExpenseTotals {
-  const byType = FINANCE_OPERATION_TYPES.reduce(
-    (acc, type) => {
-      acc[type] = sumFinanceByType(financeRecords, type);
-      return acc;
-    },
-    {} as Record<FinanceOperationType, number>
-  );
-
-  const unclassified = financeRecords
-    .filter((record) => !FINANCE_OPERATION_TYPES.includes(record.operation_type))
-    .reduce((sum, record) => sum + Math.abs(Number(record.amount)), 0);
-
-  const total =
-    FINANCE_OPERATION_TYPES.reduce((sum, type) => sum + byType[type], 0) + unclassified;
-
-  return { ...byType, unclassified, total };
+  return rollupCategoriesToProfitBuckets(financeRecords);
 }
 
 export function formatProfitAudit(breakdown: ProfitBreakdown, financeRows: number): string {

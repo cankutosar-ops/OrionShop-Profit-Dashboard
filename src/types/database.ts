@@ -1,3 +1,6 @@
+import type { MarketplaceFeesPresentation } from "@/lib/marketplace-fees-presentation";
+import type { FinanceCategory } from "@/lib/finance-category";
+
 export type MarketplaceType = "wildberries" | "ozon" | "lamoda";
 
 export const MARKETPLACE_TYPES: MarketplaceType[] = ["wildberries", "ozon", "lamoda"];
@@ -113,6 +116,9 @@ export type WbSale = {
   barcode: string | null;
 };
 
+export type { FinanceCategory, FinanceNature } from "@/lib/finance-category";
+export { FINANCE_CATEGORIES } from "@/lib/finance-category";
+
 export type FinanceOperationType =
   | "commission"
   | "logistics"
@@ -137,6 +143,7 @@ export type WbFinance = {
   product_id: string | null;
   nm_id: number | null;
   operation_date: string;
+  /** Permanent high-level profit bucket — always populated at sync. */
   operation_type: FinanceOperationType;
   amount: number;
   /** Wildberries line id: rrd:{rrd_id}:{suffix} — unique per report line. */
@@ -144,6 +151,12 @@ export type WbFinance = {
   description: string | null;
   /** Shipment/order id from WB reportDetailByPeriod — used for purchase logistics attribution. */
   srid: string | null;
+  /** Normalized analytical category — set at sync/backfill only. */
+  finance_category?: FinanceCategory | null;
+  wb_source_suffix?: string | null;
+  supplier_oper_name?: string | null;
+  /** Reserved for a future FinanceNature dimension. */
+  finance_nature?: string | null;
 };
 
 export type WbAd = {
@@ -490,7 +503,10 @@ export type OverviewMetrics = ProfitBreakdown & {
   costBreakdown: { name: string; value: number; color: string }[];
   ordersPurchases: OrdersPurchasesKpis;
   profitabilityV2: ProfitabilityV2Metrics;
+  marketplaceFeesPresentation: MarketplaceFeesPresentation;
 };
+
+export type { MarketplaceFeesPresentation };
 
 /** Minimal Supabase relationship entry (no FK metadata required for typed client). */
 type NoRelationships = [];

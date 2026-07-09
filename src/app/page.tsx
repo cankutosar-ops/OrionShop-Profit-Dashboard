@@ -4,7 +4,6 @@ import {
   DollarSign,
   Package,
   Percent,
-  Receipt,
   RotateCcw,
   ShoppingBag,
   ShoppingCart,
@@ -12,6 +11,7 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
+import { MarketplaceFeesMetricCard } from "@/components/dashboard/marketplace-fees-metric-card";
 import { CategoryProfitabilityTable } from "@/components/dashboard/category-profitability-table";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { CostBreakdownChart } from "@/components/dashboard/cost-breakdown-chart";
@@ -147,12 +147,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               icon={Package}
               variant="warning"
             />
-            <MetricCard
-              title="Marketplace Fees"
-              value={formatMoney(profitV2.marketplaceFees)}
-              subtitle="Commission + deductions"
-              icon={Receipt}
-              variant="warning"
+            <MarketplaceFeesMetricCard
+              totalMarketplaceFees={overview.marketplaceFeesPresentation.legacyMarketplaceFees}
+              accountAdjustments={overview.marketplaceFeesPresentation.accountAdjustments}
+              isEmptyPeriod={isEmptyPeriod}
             />
             <MetricCard
               title="Logistics"
