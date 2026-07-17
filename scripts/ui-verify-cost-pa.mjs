@@ -29,7 +29,7 @@ const newCostArg = process.argv[4]; // optional explicit new unit cost
 const { resolveScopedDateRange } = await import("../src/lib/marketplace-scope.ts");
 const { getProductAnalytics } = await import("../src/services/product-analytics-service.ts");
 const { bulkImportCostRecords } = await import("../src/services/cost-service.ts");
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { fetchCostHistory } = await import("../src/services/dashboard-service.ts");
 const { createAdminClient } = await import("../src/lib/supabase/admin.ts");
 

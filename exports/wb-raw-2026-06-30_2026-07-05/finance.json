@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "endpointUrl": "https://statistics-api.wildberries.ru/api/v5/supplier/reportDetailByPeriod",
+    "method": "GET",
+    "requestParameters": {
+      "dateFrom": "2026-06-30",
+      "dateTo": "2026-07-05",
+      "limit": "500 (paginated)",
+      "rrdid": "0 (paginated)"
+    },
+    "accountId": "2",
+    "dateRange": {
+      "from": "2026-06-30",
+      "to": "2026-07-05"
+    },
+    "exportedAt": "2026-07-12T12:40:17.776Z",
+    "rowCount": 0,
+    "paginationPages": 1,
+    "apiVersion": "v5 (deprecated 2026-07-15)"
+  },
+  "data": []
+}

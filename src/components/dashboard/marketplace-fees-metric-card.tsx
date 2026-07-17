@@ -4,21 +4,19 @@ import { Receipt } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const MARKETPLACE_FEES_TOOLTIP =
-  "Total fees and deductions charged by Wildberries during the selected period.";
-
-const ACCOUNT_ADJUSTMENTS_TOOLTIP =
-  "Includes account-level adjustments recorded by Wildberries.";
+  "Per-sale marketplace costs: commission, acquiring, PPVZ reward/VW, and other marketplace expenses. Account adjustments are shown separately.";
 
 type MarketplaceFeesMetricCardProps = {
-  /** Total marketplace fees (commission + all other-bucket deductions). */
+  /** Total Marketplace Fees for the period (excludes account adjustments). */
   totalMarketplaceFees: number;
-  accountAdjustments: number;
+  /** Commission component — informational secondary line only. */
+  commission: number;
   isEmptyPeriod?: boolean;
 };
 
 export function MarketplaceFeesMetricCard({
   totalMarketplaceFees,
-  accountAdjustments,
+  commission,
   isEmptyPeriod = false,
 }: MarketplaceFeesMetricCardProps) {
   const formatMoney = (value: number) => (isEmptyPeriod ? "—" : formatCurrency(value));
@@ -39,17 +37,9 @@ export function MarketplaceFeesMetricCard({
             </span>
           </p>
           <p className="text-2xl font-bold tracking-tight">{formatMoney(totalMarketplaceFees)}</p>
-          {!isEmptyPeriod && accountAdjustments > 0 && (
-            <p className="group/adj relative inline-block text-xs text-muted-foreground">
-              <span className="cursor-help border-b border-dotted border-muted-foreground/40">
-                Includes {formatMoney(-accountAdjustments)} Account Adjustments
-              </span>
-              <span
-                role="tooltip"
-                className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 hidden w-56 rounded-lg border border-border bg-card px-3 py-2 text-left text-xs font-normal normal-case tracking-normal text-muted-foreground shadow-lg group-hover/adj:block"
-              >
-                {ACCOUNT_ADJUSTMENTS_TOOLTIP}
-              </span>
+          {!isEmptyPeriod && (
+            <p className="text-xs text-muted-foreground">
+              Commission {formatMoney(commission)}
             </p>
           )}
         </div>

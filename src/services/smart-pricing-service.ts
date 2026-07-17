@@ -1,35 +1,47 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { rowMatchesFinanceCategory } from "@/lib/finance-category";
 import { buildLatestCostByProductId } from "@/lib/cost-history-resolution";
-import { isProductAnalyticsV3Candidate } from "@/lib/product-funnel-metrics";
+import { aggregateStockByProduct } from "@/lib/inventory-aggregation";
 import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
-import type { CommissionTotals } from "@/lib/smart-pricing-commission";
-import {
-  buildCategoryLogisticsTotals,
-  buildAccountLogisticsTotals,
-  resolveAdaptiveLogistics,
-  sumProductLogisticsMetrics,
-} from "@/lib/smart-pricing-logistics";
 import {
   buildCategoryCommissionTotals,
-  resolveAdaptiveCommission,
   sumCompletedSalesMetrics,
-  sumProductCommission,
 } from "@/lib/smart-pricing-commission";
+import { resolveAdaptiveHistoricalCosts } from "@/lib/smart-pricing-historical-costs";
+import {
+  buildAccountLogisticsTotals,
+  buildCategoryLogisticsTotals,
+  sumProductHistoricalLogisticsMetrics,
+  totalHistoricalLogistics,
+} from "@/lib/smart-pricing-logistics";
+import {
+  buildAccountMarketplaceFeesTotals,
+  buildCategoryMarketplaceFeesTotals,
+  saleUnitSalesAmount,
+  sumProductMarketplaceFeesMetrics,
+} from "@/lib/smart-pricing-marketplace-fees";
+import {
+  buildAccountStorageTotals,
+  buildCategoryStorageTotals,
+  sumProductStorageMetrics,
+} from "@/lib/smart-pricing-storage";
 import {
   COMMISSION_WINDOW_KEYS,
   DEFAULT_SMART_PRICING_COMMISSION_SETTINGS,
   filterFinanceByCommissionWindow,
   filterSalesByCommissionWindow,
   type CommissionWindowKey,
-  type SmartPricingCommissionReplay,
 } from "@/lib/smart-pricing-settings";
 import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
   type ProductSmartPricingInputs,
 } from "@/lib/smart-pricing";
+import type {
+  HistoricalCostWindowTotals,
+  SmartPricingCommissionReplay,
+  SmartPricingHistoricalReplay,
+} from "@/lib/smart-pricing-types";
 import {
   buildPricingHealthSummary,
   buildProductPricingHealthRows,
@@ -42,10 +54,12 @@ import {
   fetchOrdersInRange,
   fetchProductsWithRelations,
   fetchSalesInRange,
-  getProductProfitability,
-} from "@/services/dashboard-service";
+} from "@/services/persisted-query-service";
+import { getInventoryForAccount } from "@/services/inventory-service";
+import { getProductProfitability } from "@/services/dashboard-service";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import type { ScopedDateRange, WbFinance, WbSale } from "@/types/database";
+import { logScopeAudit } from "@/lib/scope-audit-log";
 
 export type SmartPricingReport = {
   range: ScopedDateRange;
@@ -55,33 +69,6 @@ export type SmartPricingReport = {
   rows: ProductPricingHealthRow[];
   summary: PricingHealthSummary;
 };
-
-function sumReturnLogistics(finance: WbFinance[]): number {
-  return finance
-    .filter((row) => rowMatchesFinanceCategory(row, "RETURN_LOGISTICS"))
-    .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
-}
-
-function buildCategoryTotalsByWindow(
-  scope: ScopedDateRange,
-  products: { id: string; category_id: string }[],
-  sales: WbSale[],
-  finance: WbFinance[]
-): Record<CommissionWindowKey, Map<string, CommissionTotals>> {
-  const result = {} as Record<CommissionWindowKey, Map<string, CommissionTotals>>;
-
-  for (const window of COMMISSION_WINDOW_KEYS) {
-    const windowSales = filterSalesByCommissionWindow(sales, scope, window);
-    const windowFinance = filterFinanceByCommissionWindow(finance, scope, window);
-    result[window] = buildCategoryCommissionTotals(
-      products,
-      indexByProductId(windowSales),
-      indexByProductId(windowFinance)
-    );
-  }
-
-  return result;
-}
 
 function indexByProductId<T extends { product_id: string | null }>(
   rows: T[]
@@ -97,6 +84,128 @@ function indexByProductId<T extends { product_id: string | null }>(
   return map;
 }
 
+type WindowAggregates = {
+  categoryLogistics: Map<CommissionWindowKey, ReturnType<typeof buildCategoryLogisticsTotals>>;
+  categoryFees: Map<CommissionWindowKey, ReturnType<typeof buildCategoryMarketplaceFeesTotals>>;
+  categoryStorage: Map<CommissionWindowKey, ReturnType<typeof buildCategoryStorageTotals>>;
+  accountBuckets: Map<
+    CommissionWindowKey,
+    {
+      logistics: ReturnType<typeof buildAccountLogisticsTotals>;
+      marketplaceFees: ReturnType<typeof buildAccountMarketplaceFeesTotals>;
+      storage: ReturnType<typeof buildAccountStorageTotals>;
+    }
+  >;
+};
+
+function buildWindowAggregates(
+  scope: ScopedDateRange,
+  products: { id: string; category_id: string }[],
+  sales: WbSale[],
+  finance: WbFinance[]
+): WindowAggregates {
+  const categoryLogistics = new Map<
+    CommissionWindowKey,
+    ReturnType<typeof buildCategoryLogisticsTotals>
+  >();
+  const categoryFees = new Map<
+    CommissionWindowKey,
+    ReturnType<typeof buildCategoryMarketplaceFeesTotals>
+  >();
+  const categoryStorage = new Map<
+    CommissionWindowKey,
+    ReturnType<typeof buildCategoryStorageTotals>
+  >();
+  const accountBuckets = new Map<
+    CommissionWindowKey,
+    {
+      logistics: ReturnType<typeof buildAccountLogisticsTotals>;
+      marketplaceFees: ReturnType<typeof buildAccountMarketplaceFeesTotals>;
+      storage: ReturnType<typeof buildAccountStorageTotals>;
+    }
+  >();
+
+  for (const window of COMMISSION_WINDOW_KEYS) {
+    const windowSales = filterSalesByCommissionWindow(sales, scope, window);
+    const windowFinance = filterFinanceByCommissionWindow(finance, scope, window);
+    const salesByProductId = indexByProductId(windowSales);
+    const financeByProductId = indexByProductId(windowFinance);
+
+    categoryLogistics.set(
+      window,
+      buildCategoryLogisticsTotals(products, salesByProductId, financeByProductId)
+    );
+    categoryFees.set(
+      window,
+      buildCategoryMarketplaceFeesTotals(products, salesByProductId, financeByProductId)
+    );
+    categoryStorage.set(
+      window,
+      buildCategoryStorageTotals(products, salesByProductId, financeByProductId)
+    );
+    accountBuckets.set(window, {
+      logistics: buildAccountLogisticsTotals(products, salesByProductId, financeByProductId),
+      marketplaceFees: buildAccountMarketplaceFeesTotals(
+        products,
+        salesByProductId,
+        financeByProductId
+      ),
+      storage: buildAccountStorageTotals(products, salesByProductId, financeByProductId),
+    });
+  }
+
+  return { categoryLogistics, categoryFees, categoryStorage, accountBuckets };
+}
+
+function buildHistoricalWindowTotals(
+  productSales: WbSale[],
+  productFinance: WbFinance[],
+  categoryId: string,
+  aggregates: WindowAggregates,
+  window: CommissionWindowKey,
+  scope: ScopedDateRange
+): HistoricalCostWindowTotals {
+  const windowSales = filterSalesByCommissionWindow(productSales, scope, window);
+  const windowFinance = filterFinanceByCommissionWindow(productFinance, scope, window);
+  const account = aggregates.accountBuckets.get(window);
+
+  return {
+    productLogistics: sumProductHistoricalLogisticsMetrics(windowSales, windowFinance),
+    categoryLogistics:
+      aggregates.categoryLogistics.get(window)?.get(categoryId) ?? {
+        outboundLogistics: 0,
+        rebillLogistics: 0,
+        unitsSold: 0,
+      },
+    accountLogistics: account?.logistics ?? {
+      outboundLogistics: 0,
+      rebillLogistics: 0,
+      unitsSold: 0,
+    },
+    productMarketplaceFees: sumProductMarketplaceFeesMetrics(windowSales),
+    categoryMarketplaceFees:
+      aggregates.categoryFees.get(window)?.get(categoryId) ?? {
+        marketplaceFees: 0,
+        revenue: 0,
+        salesForPay: 0,
+        unitsSold: 0,
+      },
+    accountMarketplaceFees: account?.marketplaceFees ?? {
+      marketplaceFees: 0,
+      revenue: 0,
+      salesForPay: 0,
+      unitsSold: 0,
+    },
+    productStorage: sumProductStorageMetrics(windowSales, windowFinance),
+    categoryStorage:
+      aggregates.categoryStorage.get(window)?.get(categoryId) ?? {
+        storage: 0,
+        unitsSold: 0,
+      },
+    accountStorage: account?.storage ?? { storage: 0, unitsSold: 0 },
+  };
+}
+
 export async function getSmartPricingInputs(
   scope: ScopedDateRange
 ): Promise<ProductSmartPricingInputs[] | null> {
@@ -104,109 +213,137 @@ export async function getSmartPricingInputs(
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const [products, costHistory, sales, finance, orders, account] = await Promise.all([
-    fetchProductsWithRelations(scope.marketplaceAccountId, client),
-    fetchCostHistory(scope.marketplaceAccountId, client),
-    fetchSalesInRange(scope, client),
-    fetchFinanceInRange(scope, client),
-    fetchOrdersInRange(scope, client),
+  // Respect header Brand Filter (same scope as Dashboard / Reports).
+  const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
+    brandId: scope.brandId,
+  });
+  const productIds = products.map((p) => String(p.id));
+  const [costHistory, sales, finance, orders, account, inventoryRows] = await Promise.all([
+    fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
+    fetchSalesInRange(scope, client, { productIds }),
+    fetchFinanceInRange(scope, client, { productIds }),
+    fetchOrdersInRange(scope, client, { productIds }),
     getMarketplaceAccountForSync(scope.marketplaceAccountId),
+    getInventoryForAccount(scope.marketplaceAccountId, client),
   ]);
 
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
+  const stockByProductId = aggregateStockByProduct(inventoryRows);
   const salesByProductId = indexByProductId<WbSale>(sales);
   const financeByProductId = indexByProductId<WbFinance>(finance);
-  const categoryTotalsByWindow = buildCategoryTotalsByWindow(scope, products, sales, finance);
-  const categoryLogisticsTotals = buildCategoryLogisticsTotals(
-    products,
-    salesByProductId,
-    financeByProductId
-  );
-  const accountLogisticsTotals = buildAccountLogisticsTotals(
-    products,
-    salesByProductId,
-    financeByProductId
-  );
+  const ordersByProductId = indexByProductId(orders);
+  const aggregates = buildWindowAggregates(scope, products, sales, finance);
   const defaultSettings = DEFAULT_SMART_PRICING_COMMISSION_SETTINGS;
+  const defaultWindow = defaultSettings.commissionWindow;
+
+  logScopeAudit("Smart Pricing", scope, scope, {
+    orders: orders.length,
+    sales: sales.length,
+    finance: finance.length,
+    inventory: inventoryRows.length,
+  });
 
   return products
     .map((product) => {
       const productId = String(product.id);
+      const categoryId = String(product.category_id);
+      const brandId = String(product.brand_id);
+      const stock = stockByProductId.get(productId);
+      const currentStock = stock?.currentStock ?? 0;
       const productSales = salesByProductId.get(productId) ?? [];
-      const productOrders = orders.filter((row) => String(row.product_id) === productId);
       const productFinance = financeByProductId.get(productId) ?? [];
+      const productOrders = ordersByProductId.get(productId) ?? [];
+
       const completedSales = productSales.filter((row) => !row.is_return);
       const returnedUnits = productSales
         .filter((row) => row.is_return)
         .reduce((sum, row) => sum + row.quantity, 0);
       const unitsSold = completedSales.reduce((sum, row) => sum + row.quantity, 0);
       const totalUnits = unitsSold + returnedUnits;
-      const revenue = completedSales.reduce((sum, row) => sum + row.revenue, 0);
+      const revenue = completedSales.reduce((sum, row) => sum + saleUnitSalesAmount(row), 0);
       const hasSalesHistory = unitsSold > 0 && revenue > 0;
-      const categoryId = String(product.category_id);
 
-      const productLogisticsTotals = sumProductLogisticsMetrics(productSales, productFinance);
-      const purchaseLogisticsTotal = productLogisticsTotals.purchaseLogistics;
-      const excludedLogistics = productLogisticsTotals.excludedLogistics;
-      const returnLogisticsTotal = sumReturnLogistics(productFinance);
-      const unitPurchaseLogistics =
-        unitsSold > 0 ? purchaseLogisticsTotal / unitsSold : 0;
-      const unitExcludedLogistics = unitsSold > 0 ? excludedLogistics / unitsSold : 0;
-      const unitReturnLogistics = unitsSold > 0 ? returnLogisticsTotal / unitsSold : 0;
-
-      const adaptiveLogistics = resolveAdaptiveLogistics({
-        productTotals: productLogisticsTotals,
-        categoryTotals: categoryLogisticsTotals.get(categoryId) ?? {
-          purchaseLogistics: 0,
-          excludedLogistics: 0,
-          unitsSold: 0,
-        },
-        accountTotals: accountLogisticsTotals,
-      });
-      const effectiveLogistics = adaptiveLogistics.effectiveLogistics;
-
-      const outboundPerUnit = unitPurchaseLogistics + unitExcludedLogistics;
-      const totalLogisticsPerUnit =
-        unitPurchaseLogistics + unitExcludedLogistics + unitReturnLogistics;
-      const returnRatePercent = totalUnits > 0 ? (returnedUnits / totalUnits) * 100 : 0;
-      const excludedLogisticsPercent =
-        outboundPerUnit > 0 ? (unitExcludedLogistics / outboundPerUnit) * 100 : 0;
+      const productLogistics = sumProductHistoricalLogisticsMetrics(productSales, productFinance);
+      const unitOutboundLogistics =
+        unitsSold > 0 ? productLogistics.outboundLogistics / unitsSold : 0;
+      const unitRebillLogistics =
+        unitsSold > 0 ? productLogistics.rebillLogistics / unitsSold : 0;
+      const totalProductLogistics = totalHistoricalLogistics(productLogistics);
       const returnLogisticsPercent =
-        totalLogisticsPerUnit > 0
-          ? (unitReturnLogistics / totalLogisticsPerUnit) * 100
+        totalProductLogistics > 0
+          ? (productLogistics.rebillLogistics / totalProductLogistics) * 100
           : 0;
 
-      const byWindow = {} as SmartPricingCommissionReplay["byWindow"];
+      const defaultWindowTotals = buildHistoricalWindowTotals(
+        productSales,
+        productFinance,
+        categoryId,
+        aggregates,
+        defaultWindow,
+        scope
+      );
+
+      const resolved = resolveAdaptiveHistoricalCosts({
+        marketplace: account.marketplace,
+        product: {
+          logistics: defaultWindowTotals.productLogistics,
+          marketplaceFees: defaultWindowTotals.productMarketplaceFees,
+          storage: defaultWindowTotals.productStorage,
+        },
+        category: {
+          logistics: defaultWindowTotals.categoryLogistics,
+          marketplaceFees: defaultWindowTotals.categoryMarketplaceFees,
+          storage: defaultWindowTotals.categoryStorage,
+        },
+        account: {
+          logistics: defaultWindowTotals.accountLogistics,
+          marketplaceFees: defaultWindowTotals.accountMarketplaceFees,
+          storage: defaultWindowTotals.accountStorage,
+        },
+        minProductSales: defaultSettings.minProductSales,
+        minCategorySales: defaultSettings.minCategorySales,
+      });
+
+      const historicalReplay: SmartPricingHistoricalReplay = {
+        marketplace: account.marketplace,
+        categoryId,
+        byWindow: {} as SmartPricingHistoricalReplay["byWindow"],
+      };
+
       for (const window of COMMISSION_WINDOW_KEYS) {
-        const windowSales = filterSalesByCommissionWindow(productSales, scope, window);
-        const windowFinance = filterFinanceByCommissionWindow(productFinance, scope, window);
-        const productTotals = sumCompletedSalesMetrics(windowSales);
-        productTotals.commission = sumProductCommission(windowFinance);
-        byWindow[window] = {
-          productTotals,
-          categoryTotals: categoryTotalsByWindow[window].get(categoryId) ?? {
-            commission: 0,
-            revenue: 0,
-            unitsSold: 0,
-          },
-        };
+        historicalReplay.byWindow[window] = buildHistoricalWindowTotals(
+          productSales,
+          productFinance,
+          categoryId,
+          aggregates,
+          window,
+          scope
+        );
       }
 
       const commissionReplay: SmartPricingCommissionReplay = {
         marketplace: account.marketplace,
         categoryId,
-        byWindow,
+        byWindow: {} as SmartPricingCommissionReplay["byWindow"],
       };
 
-      const defaultWindowData = byWindow[defaultSettings.commissionWindow];
-      const adaptive = resolveAdaptiveCommission({
-        marketplace: account.marketplace,
-        categoryId,
-        productTotals: defaultWindowData.productTotals,
-        categoryTotals: defaultWindowData.categoryTotals,
-        minProductSales: defaultSettings.minProductSales,
-        minCategorySales: defaultSettings.minCategorySales,
-      });
+      for (const window of COMMISSION_WINDOW_KEYS) {
+        const wSales = filterSalesByCommissionWindow(productSales, scope, window);
+        const productTotals = sumCompletedSalesMetrics(wSales);
+        commissionReplay.byWindow[window] = {
+          productTotals,
+          categoryTotals:
+            buildCategoryCommissionTotals(
+              products,
+              indexByProductId(filterSalesByCommissionWindow(sales, scope, window))
+            ).get(categoryId) ?? {
+              commission: 0,
+              revenue: 0,
+              salesForPay: 0,
+              unitsSold: 0,
+            },
+        };
+      }
 
       const funnel = buildProductFunnelMetrics(productOrders, productSales);
 
@@ -214,43 +351,62 @@ export async function getSmartPricingInputs(
         productId,
         supplierArticle: product.supplier_article,
         productName: product.name,
-        purchaseCost: latestCostByProductId.get(productId) ?? null,
-        unitPurchaseLogistics,
-        unitExcludedLogistics,
-        effectiveLogistics,
-        logisticsSource: adaptiveLogistics.logisticsSource,
-        logisticsCompletedUnits: adaptiveLogistics.logisticsCompletedUnits,
-        productHistoricalEffectiveLogistics:
-          adaptiveLogistics.productHistoricalEffectiveLogistics,
-        categoryHistoricalEffectiveLogistics:
-          adaptiveLogistics.categoryHistoricalEffectiveLogistics,
-        accountHistoricalEffectiveLogistics:
-          adaptiveLogistics.accountHistoricalEffectiveLogistics,
-        commissionPercent: adaptive.commissionPercent,
-        commissionSource: adaptive.commissionSource,
-        completedSales: adaptive.completedSales,
-        productHistoricalCommissionPercent: adaptive.productHistoricalCommissionPercent,
-        categoryHistoricalCommissionPercent: adaptive.categoryHistoricalCommissionPercent,
-        marketplaceCommissionPercent: adaptive.marketplaceCommissionPercent,
+        brandId,
+        brandName: product.brand?.name?.trim() || "—",
+        categoryId,
+        categoryName: product.category?.name?.trim() || "—",
+        currentStock,
+        purchaseCost: (() => {
+          const raw = latestCostByProductId.get(productId);
+          return raw !== undefined && Number.isFinite(raw) && raw >= 0 ? raw : null;
+        })(),
+        resolutionSource: resolved.resolutionSource,
+        historicalLogistics: resolved.historicalLogistics,
+        effectiveLogistics: resolved.historicalLogistics,
+        storagePerUnit: resolved.storagePerUnit,
+        unitOutboundLogistics,
+        unitRebillLogistics,
+        historicalCompletedUnits: resolved.completedUnits,
+        productHistoricalLogistics: resolved.productHistoricalLogistics,
+        categoryHistoricalLogistics: resolved.categoryHistoricalLogistics,
+        accountHistoricalLogistics: resolved.accountHistoricalLogistics,
+        productHistoricalStoragePerUnit: resolved.productHistoricalStoragePerUnit,
+        categoryHistoricalStoragePerUnit: resolved.categoryHistoricalStoragePerUnit,
+        accountHistoricalStoragePerUnit: resolved.accountHistoricalStoragePerUnit,
+        marketplaceFeesPercent: resolved.marketplaceFeesPercent,
+        commissionPercent: resolved.marketplaceFeesPercent,
+        marketplaceFeesSource: resolved.resolutionSource,
+        commissionSource: resolved.resolutionSource,
+        completedSales: unitsSold,
+        productHistoricalMarketplaceFeesPercent:
+          resolved.productHistoricalMarketplaceFeesPercent,
+        categoryHistoricalMarketplaceFeesPercent:
+          resolved.categoryHistoricalMarketplaceFeesPercent,
+        productHistoricalCommissionPercent:
+          resolved.productHistoricalMarketplaceFeesPercent,
+        categoryHistoricalCommissionPercent:
+          resolved.categoryHistoricalMarketplaceFeesPercent,
+        marketplaceCommissionPercent: resolved.marketplaceFeesPercent,
         currentAvgPrice: hasSalesHistory ? revenue / unitsSold : null,
         hasSalesHistory,
         orders: funnel.orders,
-        returnRatePercent,
-        excludedLogisticsPercent,
+        returnRatePercent: totalUnits > 0 ? (returnedUnits / totalUnits) * 100 : 0,
         returnLogisticsPercent,
+        unitPurchaseLogistics: unitOutboundLogistics,
+        unitExcludedLogistics: 0,
+        logisticsSource: resolved.resolutionSource,
+        logisticsCompletedUnits: resolved.completedUnits,
+        productHistoricalEffectiveLogistics: resolved.productHistoricalLogistics,
+        categoryHistoricalEffectiveLogistics: resolved.categoryHistoricalLogistics,
+        accountHistoricalEffectiveLogistics: resolved.accountHistoricalLogistics,
+        excludedLogisticsPercent: 0,
+        historicalReplay,
         commissionReplay,
       };
 
-      return { row, funnel };
+      return row;
     })
-    .filter(({ row, funnel }) =>
-      isProductAnalyticsV3Candidate({
-        orders: row.orders,
-        purchases: funnel.purchases,
-        revenue: row.currentAvgPrice ?? 0,
-      })
-    )
-    .map(({ row }) => row)
+    .filter((row) => row.currentStock > 0)
     .sort((a, b) => a.supplierArticle.localeCompare(b.supplierArticle));
 }
 

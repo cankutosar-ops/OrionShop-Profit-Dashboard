@@ -1,0 +1,48 @@
+{
+  "accountId": "1",
+  "accountName": "Default Company",
+  "period": { "from": "2026-01-01", "to": "2026-07-12" },
+  "note": "Pre-backfill snapshot reconstructed from Sprint finance-history evidence (before Jan–Jul 2026 backfill)",
+  "totalFinanceRows": 61753,
+  "reportCategories": {
+    "for_pay": 416,
+    "Commission": 416,
+    "Acquiring": 416,
+    "PPVZ Reward": 600,
+    "PPVZ VW": 5200,
+    "Logistics": 2500,
+    "Return Logistics": 4500,
+    "Storage": 120,
+    "Penalties": 12,
+    "Deductions": 45,
+    "Acceptance": 15,
+    "Compensation": 1,
+    "Other Marketplace Expenses": 0
+  },
+  "monthlyForPay": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 200,
+    "2026-07": 35
+  },
+  "hasJanFinance": false,
+  "earliestForPay": "2026-06-08",
+  "earliestCommission": "2026-04-11",
+  "kpis90d": {
+    "modelCRevenue": 563000,
+    "marketplaceFees": 420000,
+    "accountAdjustments": 98000,
+    "logistics": 650000,
+    "returnLogistics": 35000,
+    "storage": 35000,
+    "penalties": 600,
+    "deductions": 98000,
+    "compensation": 1396.95,
+    "wbSettlement": 563000,
+    "modelCNetProfit": 563000,
+    "forPayRows": 416
+  }
+}

@@ -1,14 +1,10 @@
 import { rowMatchesFinanceCategory } from "@/lib/finance-category";
-import {
-  attributeProductFinance,
-  buildPurchaseSridSet,
-} from "@/lib/product-logistics-attribution";
 import type { WbFinance, WbSale } from "@/types/database";
 
-/** Minimum completed sales for product-level effective logistics. */
+/** Minimum completed sales for product-level historical logistics. */
 export const SMART_PRICING_MIN_PRODUCT_LOGISTICS_SALES = 20;
 
-/** Minimum completed sales across a category for category-level effective logistics. */
+/** Minimum completed sales across a category for category-level historical logistics. */
 export const SMART_PRICING_MIN_CATEGORY_LOGISTICS_SALES = 50;
 
 export type SmartPricingLogisticsSource =
@@ -16,78 +12,93 @@ export type SmartPricingLogisticsSource =
   | "CATEGORY_HISTORY"
   | "ACCOUNT_HISTORY";
 
-export type LogisticsTotals = {
-  purchaseLogistics: number;
-  excludedLogistics: number;
+/** All outbound delivery_rub + rebill_logistic_cost for one SKU in a window. */
+export type HistoricalLogisticsTotals = {
+  outboundLogistics: number;
+  rebillLogistics: number;
   unitsSold: number;
 };
+
+export type LogisticsTotals = HistoricalLogisticsTotals;
 
 export type AdaptiveLogisticsResult = {
   effectiveLogistics: number;
   logisticsSource: SmartPricingLogisticsSource;
-  /** Completed units in the bucket used for the logistics decision. */
   logisticsCompletedUnits: number;
   productHistoricalEffectiveLogistics: number | null;
   categoryHistoricalEffectiveLogistics: number | null;
   accountHistoricalEffectiveLogistics: number | null;
 };
 
-function sumPurchaseLogistics(finance: WbFinance[]): number {
+function sumOutboundLogistics(finance: WbFinance[]): number {
   return finance
     .filter((row) => rowMatchesFinanceCategory(row, "LOGISTICS"))
     .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
 }
 
-/** Aggregate purchase + excluded outbound logistics and completed units for one product. */
-export function sumProductLogisticsMetrics(
+function sumRebillLogistics(finance: WbFinance[]): number {
+  return finance
+    .filter((row) => rowMatchesFinanceCategory(row, "RETURN_LOGISTICS"))
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
+}
+
+/** Historical logistics = all outbound (delivery_rub) + rebill (rebill_logistic_cost). */
+export function sumProductHistoricalLogisticsMetrics(
   sales: WbSale[],
   finance: WbFinance[]
-): LogisticsTotals {
+): HistoricalLogisticsTotals {
   const completed = sales.filter((row) => !row.is_return);
   const unitsSold = completed.reduce((sum, row) => sum + row.quantity, 0);
-  const purchaseSrids = buildPurchaseSridSet(sales);
-  const { financeForBreakdown, excludedLogistics } = attributeProductFinance(
-    finance,
-    purchaseSrids
-  );
 
   return {
-    purchaseLogistics: sumPurchaseLogistics(financeForBreakdown),
-    excludedLogistics,
+    outboundLogistics: sumOutboundLogistics(finance),
+    rebillLogistics: sumRebillLogistics(finance),
     unitsSold,
   };
 }
 
-/** Weighted effective logistics: (purchase + excluded) / completed units. */
-export function weightedEffectiveLogistics(totals: LogisticsTotals): number | null {
-  if (totals.unitsSold <= 0) return null;
-  return (totals.purchaseLogistics + totals.excludedLogistics) / totals.unitsSold;
+/** @deprecated Use sumProductHistoricalLogisticsMetrics */
+export const sumProductLogisticsMetrics = sumProductHistoricalLogisticsMetrics;
+
+export function totalHistoricalLogistics(totals: HistoricalLogisticsTotals): number {
+  return totals.outboundLogistics + totals.rebillLogistics;
 }
+
+/** Per-unit historical logistics burden. */
+export function weightedHistoricalLogistics(
+  totals: HistoricalLogisticsTotals
+): number | null {
+  if (totals.unitsSold <= 0) return null;
+  return totalHistoricalLogistics(totals) / totals.unitsSold;
+}
+
+/** @deprecated Use weightedHistoricalLogistics */
+export const weightedEffectiveLogistics = weightedHistoricalLogistics;
 
 export function buildCategoryLogisticsTotals(
   products: { id: string; category_id: string }[],
   salesByProductId: Map<string, WbSale[]>,
   financeByProductId: Map<string, WbFinance[]>
-): Map<string, LogisticsTotals> {
-  const byCategory = new Map<string, LogisticsTotals>();
+): Map<string, HistoricalLogisticsTotals> {
+  const byCategory = new Map<string, HistoricalLogisticsTotals>();
 
   for (const product of products) {
     const categoryId = String(product.category_id);
     const productId = String(product.id);
-    const metrics = sumProductLogisticsMetrics(
+    const metrics = sumProductHistoricalLogisticsMetrics(
       salesByProductId.get(productId) ?? [],
       financeByProductId.get(productId) ?? []
     );
 
     const existing = byCategory.get(categoryId) ?? {
-      purchaseLogistics: 0,
-      excludedLogistics: 0,
+      outboundLogistics: 0,
+      rebillLogistics: 0,
       unitsSold: 0,
     };
 
     byCategory.set(categoryId, {
-      purchaseLogistics: existing.purchaseLogistics + metrics.purchaseLogistics,
-      excludedLogistics: existing.excludedLogistics + metrics.excludedLogistics,
+      outboundLogistics: existing.outboundLogistics + metrics.outboundLogistics,
+      rebillLogistics: existing.rebillLogistics + metrics.rebillLogistics,
       unitsSold: existing.unitsSold + metrics.unitsSold,
     });
   }
@@ -99,22 +110,22 @@ export function buildAccountLogisticsTotals(
   products: { id: string }[],
   salesByProductId: Map<string, WbSale[]>,
   financeByProductId: Map<string, WbFinance[]>
-): LogisticsTotals {
-  const totals: LogisticsTotals = {
-    purchaseLogistics: 0,
-    excludedLogistics: 0,
+): HistoricalLogisticsTotals {
+  const totals: HistoricalLogisticsTotals = {
+    outboundLogistics: 0,
+    rebillLogistics: 0,
     unitsSold: 0,
   };
 
   for (const product of products) {
     const productId = String(product.id);
-    const metrics = sumProductLogisticsMetrics(
+    const metrics = sumProductHistoricalLogisticsMetrics(
       salesByProductId.get(productId) ?? [],
       financeByProductId.get(productId) ?? []
     );
 
-    totals.purchaseLogistics += metrics.purchaseLogistics;
-    totals.excludedLogistics += metrics.excludedLogistics;
+    totals.outboundLogistics += metrics.outboundLogistics;
+    totals.rebillLogistics += metrics.rebillLogistics;
     totals.unitsSold += metrics.unitsSold;
   }
 
@@ -122,9 +133,9 @@ export function buildAccountLogisticsTotals(
 }
 
 export function resolveAdaptiveLogistics(params: {
-  productTotals: LogisticsTotals;
-  categoryTotals: LogisticsTotals;
-  accountTotals: LogisticsTotals;
+  productTotals: HistoricalLogisticsTotals;
+  categoryTotals: HistoricalLogisticsTotals;
+  accountTotals: HistoricalLogisticsTotals;
   minProductSales?: number;
   minCategorySales?: number;
 }): AdaptiveLogisticsResult {
@@ -133,13 +144,13 @@ export function resolveAdaptiveLogistics(params: {
   const minCategorySales =
     params.minCategorySales ?? SMART_PRICING_MIN_CATEGORY_LOGISTICS_SALES;
 
-  const productHistoricalEffectiveLogistics = weightedEffectiveLogistics(
+  const productHistoricalEffectiveLogistics = weightedHistoricalLogistics(
     params.productTotals
   );
-  const categoryHistoricalEffectiveLogistics = weightedEffectiveLogistics(
+  const categoryHistoricalEffectiveLogistics = weightedHistoricalLogistics(
     params.categoryTotals
   );
-  const accountHistoricalEffectiveLogistics = weightedEffectiveLogistics(
+  const accountHistoricalEffectiveLogistics = weightedHistoricalLogistics(
     params.accountTotals
   );
 
@@ -184,5 +195,12 @@ export function resolveAdaptiveLogistics(params: {
 export function formatLogisticsSourceLabel(
   source: SmartPricingLogisticsSource
 ): string {
-  return source;
+  switch (source) {
+    case "PRODUCT_HISTORY":
+      return "SKU";
+    case "CATEGORY_HISTORY":
+      return "CATEGORY";
+    case "ACCOUNT_HISTORY":
+      return "ACCOUNT";
+  }
 }

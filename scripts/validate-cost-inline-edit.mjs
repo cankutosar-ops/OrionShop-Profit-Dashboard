@@ -22,7 +22,7 @@ assertProductionValidationAllowed(accountId);
 const { resolveScopedDateRange } = await import("../src/lib/marketplace-scope.ts");
 const { updateProductPurchaseCost, bulkImportCostRecords, buildCostTemplateRows } =
   await import("../src/services/cost-service.ts");
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { fetchCostHistory, getProductProfitability } = await import(
   "../src/services/dashboard-service.ts"
 );

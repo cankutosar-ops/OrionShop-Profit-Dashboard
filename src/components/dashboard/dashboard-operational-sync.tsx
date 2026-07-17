@@ -101,7 +101,12 @@ export function DashboardOperationalSync() {
         }
 
         notifyDashboardSyncComplete();
-        if (!refreshedRef.current) {
+        const processed = (result.results ?? []).reduce(
+          (sum, row) => sum + (row.recordsProcessed ?? 0),
+          0
+        );
+        // Skip refresh when sync changed nothing — avoids duplicate Dashboard RSC.
+        if (processed > 0 && !refreshedRef.current) {
           refreshedRef.current = true;
           router.refresh();
         }

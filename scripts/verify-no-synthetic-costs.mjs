@@ -19,7 +19,7 @@ const accountId = process.argv[2] ?? "2";
 const articles = process.argv.slice(3);
 const targets = articles.length > 0 ? articles : ["R-1057E", "R-1058E", "R-1059S"];
 
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { fetchCostHistory } = await import("../src/services/dashboard-service.ts");
 const { createAdminClient } = await import("../src/lib/supabase/admin.ts");
 

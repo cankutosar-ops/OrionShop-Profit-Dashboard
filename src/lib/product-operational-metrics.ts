@@ -1,4 +1,4 @@
-import { calculateNetMarginPercent } from "@/lib/profitability-v2";
+import { calculateNetMarginPercent } from "@/lib/profit-margin";
 import type { ProductProfitability } from "@/types/database";
 
 /** All outbound logistics rows for the SKU (purchase + excluded). */
@@ -8,22 +8,25 @@ export function calculateTotalLogistics(
   return product.purchaseLogistics + product.excludedLogistics;
 }
 
-/** Storage, penalties, and other wb_finance deductions (excludes commission). */
+/**
+ * Storage, penalties, and reimbursements outside Marketplace Fees KPI.
+ * Account adjustments are included in marketplaceFees.
+ */
 export function calculateOtherMarketplaceCosts(
-  product: Pick<ProductProfitability, "storage" | "penalties" | "otherExpenses">
+  product: Pick<ProductProfitability, "storage" | "penalties" | "reimbursements">
 ): number {
-  return product.storage + product.penalties + product.otherExpenses;
+  return product.storage + product.penalties + product.reimbursements;
 }
 
 /**
  * Operational P&L for Product Analytics (decision tool).
- * Uses total logistics and WB advertising as marketing spend.
+ * Uses the same approved Marketplace Fees definition as the Dashboard.
  */
 export function calculateOperationalProfit(product: ProductProfitability): number {
   return (
     product.revenue -
     product.productCost -
-    product.commission -
+    product.marketplaceFees -
     calculateTotalLogistics(product) -
     product.returnLogistics -
     product.advertising -
@@ -54,10 +57,11 @@ export type ProductOperationalMetrics = {
   excludedLogistics: number;
   returnLogistics: number;
   marketing: number;
+  marketplaceFees: number;
   otherMarketplaceCosts: number;
   operationalProfit: number;
   operationalMarginPercent: number;
-  /** Financial net profit from buildProfitBreakdown — unchanged. */
+  /** Financial net profit (Model B engine). */
   financialNetProfit: number;
   financialMarginPercent: number;
 };
@@ -72,6 +76,7 @@ export function buildProductOperationalMetrics(
     excludedLogistics: product.excludedLogistics,
     returnLogistics: product.returnLogistics,
     marketing: product.advertising,
+    marketplaceFees: product.marketplaceFees,
     otherMarketplaceCosts: calculateOtherMarketplaceCosts(product),
     operationalProfit,
     operationalMarginPercent: calculateOperationalMarginPercent(product.revenue, operationalProfit),

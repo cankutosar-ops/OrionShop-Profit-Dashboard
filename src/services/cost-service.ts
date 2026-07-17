@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
 import { pickLatestCostHistoryByProductId } from "@/lib/cost-history-resolution";
 import type { CostTemplateRow, ParsedCostImportRow } from "@/lib/cost-excel";
-import { fetchSalesInRange } from "@/services/dashboard-service";
+import { fetchSalesInRange } from "@/services/persisted-query-service";
 import { getCurrentStockByProductId } from "@/services/inventory-report-service";
 import type {
   CostManagementRow,

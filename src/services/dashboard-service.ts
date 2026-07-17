@@ -1,20 +1,45 @@
+import { cache } from "react";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import {
-  buildCostBreakdown,
-  buildProfitBreakdown,
-  groupSalesByDate,
-} from "@/lib/profit-calculator";
 import { buildLatestCostByProductId } from "@/lib/cost-history-resolution";
+import { buildCostBreakdown } from "@/lib/cost-breakdown-chart";
+import { groupSalesByDate } from "@/lib/daily-revenue-series";
+import { rollupCategoriesToProfitBuckets } from "@/lib/finance-rollup";
+import { computeProductCost } from "@/lib/product-cost";
+import { aggregateSalesMetrics } from "@/lib/sales-metrics";
 import { buildOrdersPurchasesKpis } from "@/lib/orders-purchases-metrics";
+import { buildProductProfitabilityRows } from "@/lib/product-profitability-builder";
 import {
-  attributeProductFinance,
-  buildPurchaseSridSet,
-} from "@/lib/product-logistics-attribution";
-import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
+  alignGroupedProfitabilityToModelB,
+  buildDimensionProfitability,
+} from "@/lib/dimension-profitability";
 import { buildMarketplaceFeesPresentation } from "@/lib/marketplace-fees-presentation";
-import { buildProfitabilityV2 } from "@/lib/profitability-v2";
-import { getSampleDashboard, getEmptyPeriodDashboard, type DashboardPayload } from "@/lib/sample-data";
+import { buildModelBProfitMetrics } from "@/lib/profit-engine-model-b";
+import { buildModelCProfitMetrics } from "@/lib/profit-engine-model-c";
+import { summarizeFinanceByCategory } from "@/lib/finance-rollup";
+import { buildNetForPayFromDb } from "@/lib/sales-revenue-resolution";
+import {
+  measureAsync,
+  measureSync,
+  recordPerfEvent,
+  runWithPerfRequest,
+} from "@/lib/perf/perf-recorder";
+import { fetchWbOrdersApi, resolveOrdersValue } from "@/services/orders-value-service";
+import { resolveNetSales } from "@/services/sales-revenue-service";
+import { getWbSettlementMetrics } from "@/services/wb-settlement-service";
+import { logScopeAudit } from "@/lib/scope-audit-log";
+import {
+  buildCashReceivedMetricsFromReports,
+  buildExpectedWbPayoutMetricsFromReports,
+  loadWbWeeklySalesReports,
+  type WbSalesReportsLoadResult,
+} from "@/services/wb-sales-reports-service";
+import { getWbBalanceMetrics } from "@/services/wb-balance-service";
+import {
+  getSampleDashboard,
+  getEmptyPeriodDashboard,
+  type DashboardPayload,
+} from "@/lib/sample-data";
 import {
   fetchAdsInRange,
   fetchCostHistory,
@@ -23,11 +48,26 @@ import {
   fetchProductsWithRelations,
   fetchSalesInRange,
 } from "@/services/persisted-query-service";
+import type { WbApiOrder } from "@/lib/wildberries/types";
 import type {
   CategoryProfitability,
+  GroupedProfitability,
+  ModelBProfitMetrics,
   OverviewMetrics,
+  ProductCostHistory,
   ProductProfitability,
+  ProductWithRelations,
   ScopedDateRange,
+  WbAd,
+  WbFinance,
+  WbOrder,
+  WbSale,
+  WbSettlementMetrics,
+} from "@/types/database";
+import type {
+  CashReceivedMetrics,
+  ExpectedWbPayoutMetrics,
+  WbBalanceMetrics,
 } from "@/types/database";
 
 export {
@@ -39,7 +79,29 @@ export {
   fetchSalesInRange,
 } from "@/services/persisted-query-service";
 
-async function isDatabaseEmpty(client: SupabaseClient, marketplaceAccountId: string): Promise<boolean> {
+type ScopedDashboardSqlRaw = {
+  products: ProductWithRelations[];
+  productIds: string[];
+  supplierArticles: string[];
+  sales: WbSale[];
+  finance: WbFinance[];
+  ads: WbAd[];
+  costHistory: ProductCostHistory[];
+  orders: WbOrder[];
+};
+
+type ScopedDashboardRaw = ScopedDashboardSqlRaw & {
+  salesReports: WbSalesReportsLoadResult;
+  cashReceived: CashReceivedMetrics;
+  expectedWbPayout: ExpectedWbPayoutMetrics;
+  wbBalance: WbBalanceMetrics;
+  apiOrders: WbApiOrder[] | undefined;
+};
+
+async function isDatabaseEmpty(
+  client: SupabaseClient,
+  marketplaceAccountId: string
+): Promise<boolean> {
   const [sales, finance, ads, products] = await Promise.all([
     client
       .from("wb_sales")
@@ -75,154 +137,552 @@ async function fetchAccountLastSync(
   return data?.last_successful_sync_at ?? data?.last_sync_at ?? null;
 }
 
-export async function getOverviewMetrics(
+/** SQL-only scoped fetch — shared across Suspense segments via react.cache. */
+async function fetchScopedDashboardSql(
   scope: ScopedDateRange,
   client?: SupabaseClient
-): Promise<OverviewMetrics> {
-  const [sales, finance, ads, costHistory, products, orders] = await Promise.all([
-    fetchSalesInRange(scope, client),
-    fetchFinanceInRange(scope, client),
-    fetchAdsInRange(scope, client),
-    fetchCostHistory(scope.marketplaceAccountId, client),
-    fetchProductsWithRelations(scope.marketplaceAccountId, client),
-    fetchOrdersInRange(scope, client),
+): Promise<ScopedDashboardSqlRaw> {
+  const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
+    brandId: scope.brandId,
+  });
+  const productIds = products.map((product) => String(product.id));
+  const supplierArticles = products.map((product) => product.supplier_article);
+
+  const [sales, finance, ads, costHistory, orders] = await Promise.all([
+    fetchSalesInRange(scope, client, { productIds }),
+    fetchFinanceInRange(scope, client, { productIds }),
+    fetchAdsInRange(scope, client, { productIds, supplierArticles }),
+    fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
+    fetchOrdersInRange(scope, client, { productIds }),
   ]);
 
-  const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
-  const breakdown = buildProfitBreakdown({
+  return {
+    products,
+    productIds,
+    supplierArticles,
     sales,
     finance,
     ads,
     costHistory,
-    latestCostByProductId,
-    auditRange: scope,
-  });
-  const dailyRevenue = groupSalesByDate(sales, costHistory, finance, latestCostByProductId);
-  const costBreakdown = buildCostBreakdown(breakdown);
-  const ordersPurchases = buildOrdersPurchasesKpis(orders, sales);
-  const profitabilityV2 = buildProfitabilityV2(breakdown);
-  const marketplaceFeesPresentation = buildMarketplaceFeesPresentation(finance, breakdown.commission);
+    orders,
+  };
+}
+
+/**
+ * Per-request dedupe of SQL dashboard fetch (avoid rebuilding across Suspense children).
+ */
+export const getCachedDashboardSql = cache(
+  async (
+    marketplaceAccountId: string,
+    companyId: string,
+    from: string,
+    to: string,
+    brandId: string
+  ): Promise<ScopedDashboardSqlRaw> => {
+    return fetchScopedDashboardSql({
+      marketplaceAccountId,
+      companyId,
+      from,
+      to,
+      ...(brandId ? { brandId } : {}),
+    });
+  }
+);
+
+async function loadSqlForScope(
+  scope: ScopedDateRange,
+  client?: SupabaseClient
+): Promise<ScopedDashboardSqlRaw> {
+  // Prefer react.cache path so Core + WB Suspense segments share one SQL load.
+  if (!client) {
+    return getCachedDashboardSql(
+      scope.marketplaceAccountId,
+      scope.companyId,
+      scope.from,
+      scope.to,
+      scope.brandId ?? ""
+    );
+  }
+  return fetchScopedDashboardSql(scope, client);
+}
+
+/** Single scoped fetch: SQL + independent WB requests in parallel. */
+async function fetchScopedDashboardRaw(
+  scope: ScopedDateRange,
+  client?: SupabaseClient
+): Promise<ScopedDashboardRaw> {
+  const sqlPromise = loadSqlForScope(scope, client);
+  // Kick WB work immediately — do not wait for SQL to finish first.
+  const wbPromise = Promise.all([
+    loadWbWeeklySalesReports(scope),
+    getWbBalanceMetrics(scope.marketplaceAccountId),
+    fetchWbOrdersApi(scope),
+  ]);
+
+  const [sql, [salesReports, wbBalance, apiOrders]] = await Promise.all([
+    sqlPromise,
+    wbPromise,
+  ]);
+
+  const cashReceived = buildCashReceivedMetricsFromReports(scope, salesReports);
+  const expectedWbPayout = buildExpectedWbPayoutMetricsFromReports(scope, salesReports);
 
   return {
-    ...breakdown,
+    ...sql,
+    salesReports,
+    cashReceived,
+    expectedWbPayout,
+    wbBalance,
+    apiOrders,
+  };
+}
+
+function toLegacyCategory(row: GroupedProfitability): CategoryProfitability {
+  return {
+    ...row,
+    categoryId: row.id,
+    categoryName: row.name,
+    netProfit: row.finalNetProfit,
+  };
+}
+
+function buildGroupedViews(
+  products: ProductProfitability[],
+  modelB: ModelBProfitMetrics
+): { categories: GroupedProfitability[]; brands: GroupedProfitability[] } {
+  return {
+    categories: alignGroupedProfitabilityToModelB(
+      buildDimensionProfitability(products, "category"),
+      modelB
+    ),
+    brands: alignGroupedProfitabilityToModelB(
+      buildDimensionProfitability(products, "brand"),
+      modelB
+    ),
+  };
+}
+
+const LOADING_SETTLEMENT: WbSettlementMetrics = {
+  netForPay: 0,
+  logistics: 0,
+  storage: 0,
+  penalties: 0,
+  deductions: 0,
+  acceptance: 0,
+  settlement: 0,
+  dataSource: "weekly_reports",
+  availability: {
+    available: false,
+    latestRealizationReportDate: null,
+    selectedFrom: "",
+    selectedTo: "",
+  },
+};
+
+function buildSqlOnlyRaw(sql: ScopedDashboardSqlRaw): ScopedDashboardRaw {
+  return {
+    ...sql,
+    salesReports: { kind: "unsupported" },
+    cashReceived: { amount: null, payoutCount: 0, unavailableReason: "Loading…" },
+    expectedWbPayout: { amount: null, reportCount: 0, unavailableReason: "Loading…" },
+    wbBalance: {
+      current: null,
+      forWithdraw: null,
+      currency: null,
+      unavailableReason: "Loading…",
+    },
+    apiOrders: undefined,
+  };
+}
+
+async function buildOverviewMetricsFromRaw(
+  scope: ScopedDateRange,
+  raw: ScopedDashboardRaw,
+  options?: { skipSettlement?: boolean }
+): Promise<OverviewMetrics> {
+  const latestCostByProductId = buildLatestCostByProductId(raw.costHistory, raw.products);
+  const salesMetrics = aggregateSalesMetrics(raw.sales);
+  const productCost = computeProductCost(raw.sales, raw.costHistory, latestCostByProductId);
+  const financeTotals = rollupCategoriesToProfitBuckets(raw.finance);
+  const advertising = raw.ads.reduce((sum, ad) => sum + ad.spend, 0);
+  const commission = financeTotals.commission;
+  const logistics = financeTotals.logistics;
+  const returnLogistics = financeTotals.return_logistics;
+  const storage = financeTotals.storage;
+  const penalties = financeTotals.penalty;
+  const otherExpenses = financeTotals.other + financeTotals.unclassified;
+  const dailyRevenue = groupSalesByDate(raw.sales, raw.costHistory, latestCostByProductId);
+  const marketplaceFeesPresentation = buildMarketplaceFeesPresentation(
+    raw.finance,
+    commission
+  );
+  const costBreakdown = buildCostBreakdown({
+    productCost,
+    marketplaceFees: marketplaceFeesPresentation.marketplaceFees,
+    logistics,
+    returnLogistics,
+    storage,
+    advertising,
+    penalties,
+  });
+  const ordersPurchasesBase = buildOrdersPurchasesKpis(raw.orders, raw.sales);
+  const ordersValueResolution = await resolveOrdersValue(scope, raw.orders, {
+    preloadedApiOrders: raw.apiOrders,
+    skipApiFetch: true,
+  });
+  const ordersPurchases = {
+    ...ordersPurchasesBase,
+    ordersValue: ordersValueResolution.ordersValue,
+  };
+  const totalLogistics = logistics + returnLogistics;
+  const netSalesResolution = await resolveNetSales(scope, raw.sales);
+  const categorySummary = summarizeFinanceByCategory(raw.finance);
+  const salesForPay = buildNetForPayFromDb(raw.sales);
+  const modelBProfit = measureSync("model_b.calculateModelBNetProfit", "model_b", () =>
+    buildModelBProfitMetrics(netSalesResolution, {
+      salesForPay,
+      acquiring: categorySummary.ACQUIRING,
+      logistics: totalLogistics,
+      storage,
+      penalties,
+      adjustments: marketplaceFeesPresentation.accountAdjustments,
+      productCost,
+      advertising,
+    })
+  );
+
+  const wbSettlement = options?.skipSettlement
+    ? LOADING_SETTLEMENT
+    : await getWbSettlementMetrics(scope, raw.finance, totalLogistics, raw.salesReports);
+
+  const settlementAvailable = wbSettlement.availability?.available !== false;
+  const modelCProfit = settlementAvailable
+    ? buildModelCProfitMetrics({
+        netForPay: wbSettlement.netForPay,
+        marketplaceFees: marketplaceFeesPresentation.marketplaceFees,
+        logistics: totalLogistics,
+        storage: wbSettlement.storage,
+        penalties: wbSettlement.penalties,
+        deductions: wbSettlement.deductions,
+        acceptance: wbSettlement.acceptance,
+        productCost,
+        advertising,
+      })
+    : {
+        revenue: 0,
+        marketplaceFees: 0,
+        logistics: 0,
+        storage: 0,
+        penalties: 0,
+        deductions: 0,
+        acceptance: 0,
+        productCost: 0,
+        advertising: 0,
+        netProfit: 0,
+      };
+  const quantityMetrics = {
+    unitsSold: salesMetrics.unitsSold,
+    unitsReturned: salesMetrics.unitsReturned,
+    netUnits: salesMetrics.unitsSold - salesMetrics.unitsReturned,
+  };
+
+  logScopeAudit("Dashboard", scope, scope, {
+    orders: raw.orders.length,
+    sales: raw.sales.length,
+    finance: raw.finance.length,
+    ads: raw.ads.length,
+  });
+
+  return {
+    revenue: salesMetrics.revenue,
+    productCost,
+    commission,
+    logistics,
+    returnLogistics,
+    storage,
+    advertising,
+    penalties,
+    otherExpenses,
+    netProfit: modelBProfit.netProfit,
+    returnRate: salesMetrics.returnRate,
+    unitsSold: salesMetrics.unitsSold,
+    unitsReturned: salesMetrics.unitsReturned,
     dailyRevenue,
     costBreakdown,
     ordersPurchases,
-    profitabilityV2,
     marketplaceFeesPresentation,
+    modelBProfit,
+    modelCProfit,
+    wbSettlement,
+    quantityMetrics,
+    cashReceived: raw.cashReceived,
+    expectedWbPayout: raw.expectedWbPayout,
+    wbBalance: raw.wbBalance,
   };
+}
+
+/**
+ * Core dashboard payload from SQL only (Model B + charts). No WB API wait.
+ * Used for critical-path streaming; WB strip loads in a sibling Suspense.
+ */
+export async function getDashboardCoreData(scope: ScopedDateRange): Promise<DashboardPayload> {
+  return runWithPerfRequest("/", async () =>
+    measureAsync(
+      "server.getDashboardCoreData",
+      "server",
+      async () => {
+        const env = getSupabaseEnv();
+        if (!env.isConfigured) {
+          return getSampleDashboard(
+            "Supabase is not configured. Copy .env.example to .env.local and add your credentials."
+          );
+        }
+
+        try {
+          const client = createServerClient();
+          const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
+          if (empty) {
+            return getSampleDashboard(
+              "Database tables are empty. Showing sample data until Wildberries data is synced."
+            );
+          }
+
+          const sql = await measureAsync("server.fetchScopedDashboardSql", "server", () =>
+            // No client arg — use react.cache so WB strip shares this SQL result.
+            loadSqlForScope(scope)
+          );
+
+          const raw = buildSqlOnlyRaw(sql);
+
+          const overview = await buildOverviewMetricsFromRaw(scope, raw, {
+            skipSettlement: true,
+          });
+
+          const products = buildProductProfitabilityRows({
+            products: sql.products,
+            orders: sql.orders,
+            sales: sql.sales,
+            finance: sql.finance,
+            ads: sql.ads,
+            costHistory: sql.costHistory,
+          });
+          const { categories, brands } = buildGroupedViews(products, overview.modelBProfit);
+
+          const hasActivity =
+            overview.modelBProfit.netSales > 0 ||
+            overview.modelBProfit.advertising > 0 ||
+            products.length > 0;
+
+          const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
+
+          if (!hasActivity) {
+            return getEmptyPeriodDashboard(lastSyncAt);
+          }
+
+          return {
+            overview,
+            products,
+            categories,
+            brands,
+            isSampleData: false,
+            lastSyncAt,
+          };
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Failed to connect to Supabase";
+          return getSampleDashboard(
+            `Could not load live data: ${message}. Showing sample placeholders.`
+          );
+        }
+      },
+      { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
+    )
+  );
+}
+
+export type DashboardWbStripPayload = {
+  ordersValue: number;
+  expectedWbPayout: ExpectedWbPayoutMetrics;
+  wbBalance: WbBalanceMetrics;
+  wbSettlement: WbSettlementMetrics;
+};
+
+/** Deferred WB enrichment — runs in parallel Suspense; shares SQL via react.cache. */
+export const getDashboardWbStripData = cache(
+  async (scopeKey: string, scopeJson: string): Promise<DashboardWbStripPayload | null> => {
+    const scope = JSON.parse(scopeJson) as ScopedDateRange;
+    return measureAsync("server.getDashboardWbStripData", "server", async () => {
+      const env = getSupabaseEnv();
+      if (!env.isConfigured) return null;
+
+      try {
+        const client = createServerClient();
+        const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
+        if (empty) return null;
+
+        const [sql, salesReports, wbBalance, apiOrders] = await Promise.all([
+          loadSqlForScope(scope),
+          loadWbWeeklySalesReports(scope),
+          getWbBalanceMetrics(scope.marketplaceAccountId),
+          fetchWbOrdersApi(scope),
+        ]);
+
+        const expectedWbPayout = buildExpectedWbPayoutMetricsFromReports(scope, salesReports);
+        const ordersValueResolution = await resolveOrdersValue(scope, sql.orders, {
+          preloadedApiOrders: apiOrders,
+        });
+        const financeTotals = rollupCategoriesToProfitBuckets(sql.finance);
+        const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
+        const wbSettlement = await getWbSettlementMetrics(
+          scope,
+          sql.finance,
+          totalLogistics,
+          salesReports
+        );
+
+        return {
+          ordersValue: ordersValueResolution.ordersValue,
+          expectedWbPayout,
+          wbBalance,
+          wbSettlement,
+        };
+      } catch {
+        return null;
+      }
+    });
+  }
+);
+
+export async function loadDashboardWbStrip(
+  scope: ScopedDateRange
+): Promise<DashboardWbStripPayload | null> {
+  const key = `${scope.marketplaceAccountId}:${scope.companyId}:${scope.from}:${scope.to}:${scope.brandId ?? ""}`;
+  return getDashboardWbStripData(key, JSON.stringify(scope));
+}
+
+export async function getOverviewMetrics(
+  scope: ScopedDateRange,
+  client?: SupabaseClient
+): Promise<OverviewMetrics> {
+  const raw = await fetchScopedDashboardRaw(scope, client);
+  return buildOverviewMetricsFromRaw(scope, raw);
 }
 
 export async function getProductProfitability(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<ProductProfitability[]> {
-  const [products, orders, sales, finance, ads, costHistory] = await Promise.all([
-    fetchProductsWithRelations(scope.marketplaceAccountId, client),
-    fetchOrdersInRange(scope, client),
-    fetchSalesInRange(scope, client),
-    fetchFinanceInRange(scope, client),
-    fetchAdsInRange(scope, client),
-    fetchCostHistory(scope.marketplaceAccountId, client),
-  ]);
+  // SQL only — product profitability does not need live WB API enrichment.
+  const sql = await loadSqlForScope(scope, client);
 
-  const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
-
-  return products
-    .map((product) => {
-      const productOrders = orders.filter((o) => String(o.product_id) === String(product.id));
-      const productSales = sales.filter((s) => String(s.product_id) === String(product.id));
-      const productFinance = finance.filter((f) => String(f.product_id) === String(product.id));
-      const productAds = ads.filter(
-        (a) =>
-          String(a.product_id) === String(product.id) ||
-          a.supplier_article === product.supplier_article
-      );
-
-      const funnel = buildProductFunnelMetrics(productOrders, productSales);
-      const purchaseSrids = buildPurchaseSridSet(productSales);
-      const {
-        financeForBreakdown,
-        purchaseLogisticsRows,
-        excludedLogisticsRows,
-        excludedLogistics,
-      } = attributeProductFinance(productFinance, purchaseSrids);
-
-      const breakdown = buildProfitBreakdown({
-        sales: productSales,
-        finance: financeForBreakdown,
-        ads: productAds,
-        costHistory: [],
-        latestCostByProductId,
-      });
-
-      return {
-        ...breakdown,
-        productId: String(product.id),
-        modelCode: product.supplier_article,
-        productName: product.name,
-        categoryName: product.category?.name ?? "Uncategorized",
-        brandName: product.brand?.name ?? "Unknown",
-        orders: funnel.orders,
-        purchases: funnel.purchases,
-        conversionPercent: funnel.conversionPercent,
-        cancelled: funnel.cancelled,
-        cancellationPercent: funnel.cancellationPercent,
-        purchaseLogistics: breakdown.logistics,
-        excludedLogistics,
-        purchaseLogisticsRows,
-        excludedLogisticsRows,
-      };
-    })
-    .filter(
-      (p) =>
-        p.orders > 0 ||
-        p.purchases > 0 ||
-        p.revenue > 0 ||
-        p.advertising > 0
-    )
-    .sort((a, b) => b.netProfit - a.netProfit);
+  return buildProductProfitabilityRows({
+    products: sql.products,
+    orders: sql.orders,
+    sales: sql.sales,
+    finance: sql.finance,
+    ads: sql.ads,
+    costHistory: sql.costHistory,
+  });
 }
 
 export async function getCategoryProfitability(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<CategoryProfitability[]> {
-  const productMetrics = await getProductProfitability(scope, client);
+  const sql = await loadSqlForScope(scope, client);
+  const products = buildProductProfitabilityRows({
+    products: sql.products,
+    orders: sql.orders,
+    sales: sql.sales,
+    finance: sql.finance,
+    ads: sql.ads,
+    costHistory: sql.costHistory,
+  });
+  const overview = await buildOverviewMetricsFromRaw(scope, buildSqlOnlyRaw(sql), {
+    skipSettlement: true,
+  });
+  return buildGroupedViews(products, overview.modelBProfit).categories.map(toLegacyCategory);
+}
 
-  const categoryMap = new Map<
-    string,
-    CategoryProfitability & { _totalUnits: number; _returnedUnits: number }
-  >();
+/**
+ * Products/Categories pages — SQL only (no WB APIs / settlement / overview).
+ * Product/category math builders unchanged.
+ */
+export async function getDashboardListData(scope: ScopedDateRange): Promise<{
+  products: ProductProfitability[];
+  categories: GroupedProfitability[];
+  brands: GroupedProfitability[];
+  isSampleData: boolean;
+  message?: string;
+  lastSyncAt?: string | null;
+}> {
+  return measureAsync("server.getDashboardListData", "server", async () => {
+    const env = getSupabaseEnv();
+    if (!env.isConfigured) {
+      const sample = getSampleDashboard(
+        "Supabase is not configured. Copy .env.example to .env.local and add your credentials."
+      );
+      return {
+        products: sample.products,
+        categories: sample.categories,
+        brands: sample.brands,
+        isSampleData: true,
+        message: sample.message,
+      };
+    }
 
-  for (const product of productMetrics) {
-    const categoryName = product.categoryName;
-    const existing = categoryMap.get(categoryName) ?? {
-      categoryId: categoryName,
-      categoryName,
-      revenue: 0,
-      netProfit: 0,
-      productCount: 0,
-      returnRate: 0,
-      _totalUnits: 0,
-      _returnedUnits: 0,
-    };
+    try {
+      const client = createServerClient();
+      if (await isDatabaseEmpty(client, scope.marketplaceAccountId)) {
+        const sample = getSampleDashboard(
+          "Database tables are empty. Showing sample data until Wildberries data is synced."
+        );
+        return {
+          products: sample.products,
+          categories: sample.categories,
+          brands: sample.brands,
+          isSampleData: true,
+          message: sample.message,
+        };
+      }
 
-    existing.revenue += product.revenue;
-    existing.netProfit += product.netProfit;
-    existing.productCount += 1;
-    existing._totalUnits += product.unitsSold + product.unitsReturned;
-    existing._returnedUnits += product.unitsReturned;
+      const sql = await loadSqlForScope(scope);
+      const products = buildProductProfitabilityRows({
+        products: sql.products,
+        orders: sql.orders,
+        sales: sql.sales,
+        finance: sql.finance,
+        ads: sql.ads,
+        costHistory: sql.costHistory,
+      });
+      const overview = await buildOverviewMetricsFromRaw(scope, buildSqlOnlyRaw(sql), {
+        skipSettlement: true,
+      });
+      const { categories, brands } = buildGroupedViews(products, overview.modelBProfit);
+      const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
 
-    categoryMap.set(categoryName, existing);
-  }
-
-  return Array.from(categoryMap.values())
-    .map(({ _totalUnits, _returnedUnits, ...cat }) => ({
-      ...cat,
-      returnRate: _totalUnits > 0 ? (_returnedUnits / _totalUnits) * 100 : 0,
-    }))
-    .sort((a, b) => b.netProfit - a.netProfit);
+      return {
+        products,
+        categories,
+        brands,
+        isSampleData: false,
+        lastSyncAt,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to connect to Supabase";
+      const sample = getSampleDashboard(
+        `Could not load live data: ${message}. Showing sample placeholders.`
+      );
+      return {
+        products: sample.products,
+        categories: sample.categories,
+        brands: sample.brands,
+        isSampleData: true,
+        message: sample.message,
+      };
+    }
+  });
 }
 
 /**
@@ -230,52 +690,84 @@ export async function getCategoryProfitability(
  * Falls back to sample placeholders when Supabase is not configured or tables are empty.
  */
 export async function getDashboardData(scope: ScopedDateRange): Promise<DashboardPayload> {
-  const env = getSupabaseEnv();
+  return runWithPerfRequest("/", async () =>
+    measureAsync(
+      "server.getDashboardData",
+      "server",
+      async () => {
+        const env = getSupabaseEnv();
 
-  if (!env.isConfigured) {
-    return getSampleDashboard(
-      "Supabase is not configured. Copy .env.example to .env.local and add your credentials."
-    );
-  }
+        if (!env.isConfigured) {
+          return getSampleDashboard(
+            "Supabase is not configured. Copy .env.example to .env.local and add your credentials."
+          );
+        }
 
-  try {
-    const client = createServerClient();
-    const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
+        try {
+          const client = createServerClient();
+          const empty = await measureAsync("server.isDatabaseEmpty", "server", () =>
+            isDatabaseEmpty(client, scope.marketplaceAccountId)
+          );
 
-    if (empty) {
-      return getSampleDashboard(
-        "Database tables are empty. Showing sample data until Wildberries data is synced."
-      );
-    }
+          if (empty) {
+            return getSampleDashboard(
+              "Database tables are empty. Showing sample data until Wildberries data is synced."
+            );
+          }
 
-    const [overview, products, categories] = await Promise.all([
-      getOverviewMetrics(scope, client),
-      getProductProfitability(scope, client),
-      getCategoryProfitability(scope, client),
-    ]);
+          const raw = await measureAsync("server.fetchScopedDashboardRaw", "server", () =>
+            fetchScopedDashboardRaw(scope, client)
+          );
+          const overviewStarted = Date.now();
+          const [overview, products] = await Promise.all([
+            buildOverviewMetricsFromRaw(scope, raw),
+            Promise.resolve(
+              buildProductProfitabilityRows({
+                products: raw.products,
+                orders: raw.orders,
+                sales: raw.sales,
+                finance: raw.finance,
+                ads: raw.ads,
+                costHistory: raw.costHistory,
+              })
+            ),
+          ]);
+          recordPerfEvent({
+            category: "server",
+            name: "server.buildOverviewAndProducts",
+            durationMs: Date.now() - overviewStarted,
+            meta: { products: products.length },
+          });
+          const { categories, brands } = buildGroupedViews(products, overview.modelBProfit);
 
-    const hasActivity =
-      overview.revenue > 0 ||
-      overview.advertising > 0 ||
-      products.length > 0;
+          const hasActivity =
+            overview.modelBProfit.netSales > 0 ||
+            overview.modelBProfit.advertising > 0 ||
+            products.length > 0;
 
-    if (!hasActivity) {
-      const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
-      return getEmptyPeriodDashboard(lastSyncAt);
-    }
+          if (!hasActivity) {
+            const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
+            return getEmptyPeriodDashboard(lastSyncAt);
+          }
 
-    return {
-      overview,
-      products,
-      categories,
-      isSampleData: false,
-    };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to connect to Supabase";
+          return {
+            overview,
+            products,
+            categories,
+            brands,
+            isSampleData: false,
+            lastSyncAt: await fetchAccountLastSync(client, scope.marketplaceAccountId),
+          };
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Failed to connect to Supabase";
 
-    return getSampleDashboard(
-      `Could not load live data: ${message}. Showing sample placeholders.`
-    );
-  }
+          return getSampleDashboard(
+            `Could not load live data: ${message}. Showing sample placeholders.`
+          );
+        }
+      },
+      { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
+    )
+  );
 }

@@ -3,9 +3,16 @@
 import { Building2, ChevronDown, Store } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { SYNC_DATE_PARAM } from "@/lib/marketplace-sync-date";
-import { FILTER_PARAMS } from "@/lib/filter-params";
+import { useAccountSwitch } from "@/components/layout/account-switch-context";
 import { replaceUrlIfChanged, fetchDashboardCompanies } from "@/lib/dashboard-lifecycle";
+import { navigateScope } from "@/lib/scope-navigation";
+import { FILTER_PARAMS } from "@/lib/filter-params";
+import {
+  lastSyncDateKey,
+  rangeExtendsBeyondLastSync,
+  SYNC_DATE_PARAM,
+} from "@/lib/marketplace-sync-date";
+import { getDefaultDateRange } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { CompanyWithAccounts, MarketplaceAccountPublic } from "@/types/database";
 
@@ -14,6 +21,33 @@ function clearSyncDateParams(params: URLSearchParams) {
   params.delete(SYNC_DATE_PARAM.adjusted);
   params.delete(SYNC_DATE_PARAM.accountSwitched);
   params.delete(FILTER_PARAMS.brand);
+}
+
+/**
+ * Apply date clamp for the target account in the SAME navigation as the switch.
+ * Avoids a second Dashboard reload from MarketplaceDateScope + refresh.
+ */
+function applyDashboardDateScopeForAccount(
+  params: URLSearchParams,
+  account: MarketplaceAccountPublic | null | undefined
+) {
+  const defaults = getDefaultDateRange();
+  const from = params.get(FILTER_PARAMS.from) ?? defaults.from;
+  const to = params.get(FILTER_PARAMS.to) ?? defaults.to;
+  const lastSyncAt = account?.last_successful_sync_at ?? account?.last_sync_at ?? null;
+  const lastSyncDay = lastSyncDateKey(lastSyncAt);
+
+  const needsAdjust =
+    !!lastSyncDay &&
+    rangeExtendsBeyondLastSync(from, to, lastSyncAt) &&
+    !(from === lastSyncDay && to === lastSyncDay);
+
+  if (needsAdjust && lastSyncDay) {
+    params.set(FILTER_PARAMS.from, lastSyncDay);
+    params.set(FILTER_PARAMS.to, lastSyncDay);
+    params.set(SYNC_DATE_PARAM.adjusted, "1");
+    params.delete(SYNC_DATE_PARAM.manual);
+  }
 }
 
 const MARKETPLACE_LABELS: Record<string, string> = {
@@ -61,7 +95,7 @@ function Dropdown({
         onClick={() => setOpen((current) => !current)}
         disabled={disabled || options.length === 0}
         className={cn(
-          "inline-flex min-w-[160px] items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-card-hover disabled:opacity-50"
+          "inline-flex min-w-[160px] items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50"
         )}
       >
         <span className="flex items-center gap-2 truncate">
@@ -77,12 +111,13 @@ function Dropdown({
             <button
               key={option.id}
               type="button"
+              disabled={disabled}
               onClick={() => {
                 onSelect(option.id);
                 setOpen(false);
               }}
               className={cn(
-                "flex w-full flex-col px-3 py-2.5 text-left text-sm transition-colors hover:bg-card-hover",
+                "flex w-full flex-col px-3 py-2.5 text-left text-sm transition-colors hover:bg-card-hover disabled:opacity-50",
                 option.id === active?.id && "bg-primary/10 text-primary"
               )}
             >
@@ -104,6 +139,7 @@ export function TenantSelectors() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { isBusy, runAccountSwitch } = useAccountSwitch();
 
   const [companies, setCompanies] = useState<CompanyWithAccounts[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,8 +161,6 @@ export function TenantSelectors() {
       } catch {
         if (!cancelled) setCompanies([]);
       } finally {
-        // Always exit the loading state — Sprint 6.7 URL updates can remount
-        // this component before fetch completes; skipping here leaves "Loading…" forever.
         setLoading(false);
       }
     }
@@ -153,7 +187,7 @@ export function TenantSelectors() {
     null;
 
   useEffect(() => {
-    if (loading || companies.length === 0) return;
+    if (loading || companies.length === 0 || isBusy) return;
 
     const companyId = activeCompany?.id;
     const accountId = activeAccount?.id;
@@ -183,20 +217,59 @@ export function TenantSelectors() {
     activeCompanyId,
     companies.length,
     currentQuery,
+    isBusy,
     loading,
     pathname,
     router,
   ]);
 
-  function updateParams(next: { company?: string; account?: string }) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (next.company) params.set("company", next.company);
-    if (next.account) params.set("account", next.account);
-    clearSyncDateParams(params);
-    if (pathname === "/") {
-      params.set(SYNC_DATE_PARAM.accountSwitched, "1");
-    }
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  function navigateToTenant(next: {
+    company?: string;
+    account?: string;
+    accountRow?: MarketplaceAccountPublic | null;
+  }) {
+    if (isBusy) return;
+
+    const sameCompany = !next.company || next.company === activeCompanyId;
+    const sameAccount = !next.account || next.account === activeAccountId;
+    if (sameCompany && sameAccount) return;
+
+    runAccountSwitch(
+      {
+        company: next.company ?? null,
+        account: next.account ?? null,
+      },
+      () => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (next.company) params.set("company", next.company);
+        if (next.account) params.set("account", next.account);
+        clearSyncDateParams(params);
+
+        // One navigation: company + account + date clamp together (Dashboard).
+        if (pathname === "/") {
+          applyDashboardDateScopeForAccount(params, next.accountRow);
+        }
+
+        const kind =
+          next.company && next.company !== activeCompanyId
+            ? "company_switch"
+            : "account_switch";
+        try {
+          sessionStorage.setItem(
+            "orionshop.perf.nav",
+            JSON.stringify({
+              kind,
+              startedAt: Date.now(),
+              perfStart: performance.now(),
+            })
+          );
+        } catch {
+          // ignore
+        }
+
+        navigateScope(router, `${pathname}?${params.toString()}`, "push");
+      }
+    );
   }
 
   function selectCompany(companyId: string) {
@@ -206,12 +279,23 @@ export function TenantSelectors() {
       company?.accounts.find((row) => row.is_active) ??
       company?.accounts[0] ??
       null;
-    updateParams({ company: companyId, account: account?.id });
+    navigateToTenant({
+      company: companyId,
+      account: account?.id,
+      accountRow: account,
+    });
   }
 
   function selectAccount(accountId: string) {
-    updateParams({ company: activeCompany?.id, account: accountId });
+    const account = companyAccounts.find((row) => row.id === accountId) ?? null;
+    navigateToTenant({
+      company: activeCompany?.id,
+      account: accountId,
+      accountRow: account,
+    });
   }
+
+  const selectorsDisabled = loading || isBusy;
 
   const companyOptions = companies.map((company) => ({
     id: company.id,
@@ -230,20 +314,20 @@ export function TenantSelectors() {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <Dropdown
-        label={loading ? "Loading…" : "Company"}
+        label={loading ? "Loading…" : isBusy ? "Switching…" : "Company"}
         icon={Building2}
         value={activeCompany?.id ?? ""}
         options={companyOptions}
         onSelect={selectCompany}
-        disabled={loading}
+        disabled={selectorsDisabled}
       />
       <Dropdown
-        label={loading ? "Loading…" : "Marketplace"}
+        label={loading ? "Loading…" : isBusy ? "Switching…" : "Marketplace"}
         icon={Store}
         value={activeAccount?.id ?? ""}
         options={accountOptions}
         onSelect={selectAccount}
-        disabled={loading || companyAccounts.length === 0}
+        disabled={selectorsDisabled || companyAccounts.length === 0}
       />
     </div>
   );

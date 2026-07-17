@@ -284,11 +284,32 @@ export function CompaniesManager() {
         }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Sync failed");
+      if (response.status === 409) throw new Error(data.error ?? "Sync already running");
+      if (!response.ok && response.status !== 202) throw new Error(data.error ?? "Sync failed");
 
-      const results = (data.results ?? []) as Array<{ entity: string; recordsUpdated: number }>;
+      let results = (data.results ?? []) as Array<{ entity: string; recordsUpdated: number }>;
+      let lastSyncStatus = data.lastSyncStatus ?? "success";
+
+      if (response.status === 202) {
+        setMessage("Sync running in background…");
+        const pollStarted = Date.now();
+        while (Date.now() - pollStarted < 15 * 60 * 1000) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          const statusRes = await fetch(
+            `/api/sync/status?marketplaceAccountId=${encodeURIComponent(accountId)}`,
+            { cache: "no-store" }
+          );
+          const statusData = await statusRes.json();
+          if (statusData.status === "running") continue;
+          if (statusData.error) throw new Error(statusData.error);
+          results = statusData.results ?? [];
+          lastSyncStatus = statusData.status;
+          break;
+        }
+      }
+
       const updated = results.reduce((sum, row) => sum + row.recordsUpdated, 0);
-      setMessage(`Sync complete — ${updated} rows updated (${data.lastSyncStatus ?? "success"})`);
+      setMessage(`Sync complete — ${updated} rows updated (${lastSyncStatus})`);
       await loadCompanies();
       router.refresh();
     } catch (err) {

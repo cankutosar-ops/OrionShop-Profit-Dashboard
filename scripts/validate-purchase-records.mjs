@@ -20,7 +20,7 @@ const accountId = getValidationAccountId(process.argv[2] ?? "2");
 assertProductionValidationAllowed(accountId);
 
 const { fetchProductOptions } = await import("../src/services/cost-service.ts");
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { createAdminClient } = await import("../src/lib/supabase/admin.ts");
 const {
   buildPurchaseTemplateRows,

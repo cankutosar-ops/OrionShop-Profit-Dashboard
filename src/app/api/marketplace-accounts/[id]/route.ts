@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
-import { createWbSyncService } from "@/lib/wildberries/sync-service";
 import { getDefaultDateRange } from "@/lib/utils";
 import {
   deleteMarketplaceAccount,
   listCompanies,
-  markAccountSyncFinished,
-  markAccountSyncStarted,
   testMarketplaceAccountConnection,
   updateMarketplaceAccount,
 } from "@/services/marketplace-account-service";
+import {
+  runBlockingDashboardSync,
+  scheduleBackgroundDashboardSync,
+  SyncAlreadyRunningError,
+} from "@/services/sync-job-service";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -71,31 +73,45 @@ export async function POST(request: Request, context: RouteContext) {
       const entities =
         (body as { entities?: string[] }).entities ??
         (["products", "orders", "sales", "finance", "stock"] as const);
+      const blocking = (body as { blocking?: boolean }).blocking ?? false;
 
-      await markAccountSyncStarted(id);
+      const syncRequest = {
+        marketplaceAccountId: id,
+        dateFrom,
+        dateTo,
+        entities: entities as ("products" | "orders" | "sales" | "finance" | "stock")[],
+      };
 
-      try {
-        const syncService = await createWbSyncService(id);
-        const results = await syncService.syncAll({
-          marketplaceAccountId: id,
-          dateFrom,
-          dateTo,
-          entities: entities as ("products" | "orders" | "sales" | "finance" | "stock")[],
+      if (blocking) {
+        const result = await runBlockingDashboardSync(syncRequest);
+        return NextResponse.json({
+          success: result.success,
+          lastSyncStatus: result.lastSyncStatus,
+          results: result.results,
+          timing: result.timing,
+          mode: "blocking",
         });
-
-        const hasErrors = results.some((r) => r.errors.length > 0);
-        const status = hasErrors ? "partial" : "success";
-        await markAccountSyncFinished(id, status);
-
-        return NextResponse.json({ success: !hasErrors, lastSyncStatus: status, results });
-      } catch (syncError) {
-        await markAccountSyncFinished(id, "failed").catch(() => undefined);
-        throw syncError;
       }
+
+      const scheduled = await scheduleBackgroundDashboardSync(syncRequest);
+      return NextResponse.json(
+        {
+          accepted: true,
+          mode: "background",
+          requestId: scheduled.requestId,
+          marketplaceAccountId: id,
+          lastSyncStatus: "running",
+          statusUrl: `/api/sync/status?marketplaceAccountId=${id}`,
+        },
+        { status: 202 }
+      );
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (error) {
+    if (error instanceof SyncAlreadyRunningError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     const message = error instanceof Error ? error.message : "Marketplace account action failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }

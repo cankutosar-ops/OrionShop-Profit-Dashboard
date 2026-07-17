@@ -18,7 +18,7 @@ const supplierArticle = process.argv[2] ?? "i8-80444";
 const accountId = process.argv[3] ?? "2";
 
 const { createAdminClient } = await import("../src/lib/supabase/admin.ts");
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { getProductProfitability } = await import("../src/services/dashboard-service.ts");
 
 const supabase = createAdminClient();
@@ -242,7 +242,7 @@ else {
   } else if (!paMatch.length) {
     console.log("BREAK: product excluded from PA table OR productCost=0 due to no sales in date range");
   } else if (paMatch[0].productCost === 0) {
-    console.log("BREAK: PA row exists but productCost is 0 — check sales × cost calculation in buildProfitBreakdown");
+    console.log("BREAK: PA row exists but productCost is 0 — check sales × cost calculation in computeProductCost");
   } else {
     console.log("NO BREAK: chain appears complete");
   }

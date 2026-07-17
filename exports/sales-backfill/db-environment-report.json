@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-07-13T16:53:11.856Z",
+  "connected": {
+    "supabaseProjectId": "mdiqspjvmekyngmiehqk",
+    "supabaseUrl": "https://mdiqspjvmekyngmiehqk.supabase.co",
+    "database": "postgres",
+    "environment": {
+      "branch": "production (default)",
+      "credentials": {
+        "hasAccessToken": false,
+        "hasDbPassword": false,
+        "hasDatabaseUrl": false
+      }
+    },
+    "databaseVersion": null,
+    "schemaQuerySource": "openapi_fallback"
+  },
+  "wb_sales": {
+    "columns": [
+      {
+        "column_name": "barcode",
+        "data_type": "text",
+        "source": "openapi"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "source": "openapi"
+      },
+      {
+        "column_name": "id",
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      {
+        "column_name": "is_return",
+        "data_type": "boolean",
+        "source": "openapi"
+      },
+      {
+        "column_name": "marketplace_account_id",
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      {
+        "column_name": "nm_id",
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      {
+        "column_name": "quantity",
+        "data_type": "integer",
+        "source": "openapi"
+      },
+      {
+        "column_name": "return_date",
+        "data_type": "date",
+        "source": "openapi"
+      },
+      {
+        "column_name": "revenue",
+        "data_type": "numeric",
+        "source": "openapi"
+      },
+      {
+        "column_name": "sale_date",
+        "data_type": "timestamp with time zone",
+        "source": "openapi"
+      },
+      {
+        "column_name": "srid",
+        "data_type": "text",
+        "source": "openapi"
+      },
+      {
+        "column_name": "tech_size",
+        "data_type": "text",
+        "source": "openapi"
+      }
+    ],
+    "columnMap": {
+      "barcode": {
+        "data_type": "text",
+        "source": "openapi"
+      },
+      "created_at": {
+        "data_type": "timestamp with time zone",
+        "source": "openapi"
+      },
+      "id": {
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      "is_return": {
+        "data_type": "boolean",
+        "source": "openapi"
+      },
+      "marketplace_account_id": {
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      "nm_id": {
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      "product_id": {
+        "data_type": "bigint",
+        "source": "openapi"
+      },
+      "quantity": {
+        "data_type": "integer",
+        "source": "openapi"
+      },
+      "return_date": {
+        "data_type": "date",
+        "source": "openapi"
+      },
+      "revenue": {
+        "data_type": "numeric",
+        "source": "openapi"
+      },
+      "sale_date": {
+        "data_type": "timestamp with time zone",
+        "source": "openapi"
+      },
+      "srid": {
+        "data_type": "text",
+        "source": "openapi"
+      },
+      "tech_size": {
+        "data_type": "text",
+        "source": "openapi"
+      },
+      "price_with_disc": {
+        "exists": false,
+        "probeError": "column wb_sales.price_with_disc does not exist"
+      },
+      "for_pay": {
+        "exists": false,
+        "probeError": "column wb_sales.for_pay does not exist"
+      }
+    },
+    "required": {
+      "price_with_disc": false,
+      "for_pay": false
+    },
+    "schemaCorrect": false
+  },
+  "migration": {
+    "status": "generated_not_applied",
+    "generated": true,
+    "migrationFile": "supabase/migrations/20260712180000_wb_sales_price_with_disc.sql",
+    "missing": [
+      "price_with_disc",
+      "for_pay"
+    ]
+  },
+  "sprintGate": {
+    "passed": false,
+    "message": "BLOCKED — apply migration before backfill or runtime changes."
+  }
+}

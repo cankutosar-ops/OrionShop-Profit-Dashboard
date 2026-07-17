@@ -18,7 +18,7 @@ const accountId = process.argv[2] ?? "2";
 const ARTICLE = process.argv[3] ?? "i8-80444";
 
 const { createAdminClient } = await import("../src/lib/supabase/admin.ts");
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { fetchCostHistory } = await import("../src/services/dashboard-service.ts");
 
 const supabase = createAdminClient();

@@ -31,7 +31,10 @@ export function SyncButton() {
     setMessage(null);
     setError(null);
 
-    const range = getDefaultDateRange();
+    const range = {
+      from: searchParams.get("from") ?? getDefaultDateRange().from,
+      to: searchParams.get("to") ?? getDefaultDateRange().to,
+    };
     const marketplaceAccountId = searchParams.get("account");
 
     try {

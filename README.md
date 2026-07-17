@@ -18,9 +18,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+**LAN access (phone / iPad / another PC):** see [docs/DEV_LAN.md](./docs/DEV_LAN.md) — `npm run dev` prints a LAN URL automatically.
+
 **Full Wildberries sync setup:** see [SETUP.md](./SETUP.md)
 
 **Database migration (schema alignment):** see [supabase/MIGRATION_GUIDE.md](./supabase/MIGRATION_GUIDE.md)
+
+**Development stability workflow:** see [docs/DEVELOPMENT_STABILITY.md](./docs/DEVELOPMENT_STABILITY.md)
 
 If Supabase is not configured or tables are empty, the dashboard shows **sample placeholder data** so you can preview the UI immediately.
 
@@ -91,7 +95,8 @@ src/
 ├── components/dashboard/        # Charts, tables, metrics
 ├── lib/
 │   ├── supabase/                # Client config (server + browser)
-│   ├── profit-calculator.ts     # Net profit engine
+│   ├── profit-engine-model-b.ts   # Model B (Commercial Profit)
+│   ├── profit-engine-model-c.ts   # Model C (Settlement Profit)
 │   ├── sample-data.ts           # Placeholder data
 │   └── wildberries/             # API scaffold (not connected)
 ├── services/

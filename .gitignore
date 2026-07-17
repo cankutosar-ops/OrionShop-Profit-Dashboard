@@ -13,6 +13,8 @@
 
 # next.js
 /.next/
+/.next-dev/
+/.dev-server.lock.json
 /out/
 
 # production
@@ -39,3 +41,6 @@ next-env.d.ts
 # vercel
 .vercel
 scripts/.ui-verify-output/
+
+# performance audit (Sprint 6.35.2)
+.perf/

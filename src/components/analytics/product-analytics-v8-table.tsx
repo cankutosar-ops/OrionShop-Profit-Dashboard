@@ -73,13 +73,18 @@ function SkuChildRows({
           )}
           {data && data.skus.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full max-w-xl text-sm">
+              <table className="w-full min-w-[860px] text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted-foreground">
                     <th className="px-2 py-1.5 font-medium">Size</th>
                     <th className="px-2 py-1.5 font-medium">Barcode</th>
+                    <th className="px-2 py-1.5 text-right font-medium">Current Stock</th>
                     <th className="px-2 py-1.5 text-right font-medium">Orders</th>
                     <th className="px-2 py-1.5 text-right font-medium">Purchases</th>
+                    <th className="px-2 py-1.5 text-right font-medium">Conversion %</th>
+                    <th className="px-2 py-1.5 text-right font-medium">Cancelled</th>
+                    <th className="px-2 py-1.5 text-right font-medium">Cancel %</th>
+                    <th className="px-2 py-1.5 text-right font-medium">Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -97,15 +102,32 @@ function SkuChildRows({
 }
 
 function SkuRow({ sku }: { sku: ProductAnalyticsSkuRow }) {
+  const hasOrders = sku.orders > 0;
+
   return (
     <tr className="border-t border-border/40">
       <td className="px-2 py-2 font-medium">{sku.size}</td>
       <td className="px-2 py-2 font-mono text-xs text-muted-foreground">{sku.barcode ?? "—"}</td>
       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+        {formatNumber(sku.currentStock)}
+      </td>
+      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
         {formatNumber(sku.orders)}
       </td>
       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
         {formatNumber(sku.purchases)}
+      </td>
+      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+        {hasOrders ? formatPercent(sku.conversionPercent) : "—"}
+      </td>
+      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+        {formatNumber(sku.cancelled)}
+      </td>
+      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+        {hasOrders ? formatPercent(sku.cancellationPercent) : "—"}
+      </td>
+      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+        {formatCurrency(sku.revenue)}
       </td>
     </tr>
   );
@@ -163,7 +185,7 @@ export function ProductAnalyticsV8Table({
               <th className="px-3 py-2 text-right font-medium">Cancelled</th>
               <th className="px-3 py-2 text-right font-medium">Cancel. %</th>
               <th className="px-3 py-2 text-right font-medium">Revenue</th>
-              <th className="px-3 py-2 text-right font-medium">Commission</th>
+              <th className="px-3 py-2 text-right font-medium">Marketplace Fees</th>
               <th className="px-3 py-2 text-right font-medium">Total Logistics</th>
               <th className="px-3 py-2 text-right font-medium">Product Cost</th>
               <th className="px-3 py-2 text-right font-medium">Oper. Profit</th>
@@ -239,7 +261,7 @@ export function ProductAnalyticsV8Table({
                         {formatCurrency(row.revenue)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                        {formatCurrency(row.commission)}
+                        {formatCurrency(row.marketplaceFees)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         <LogisticsBreakdownHint

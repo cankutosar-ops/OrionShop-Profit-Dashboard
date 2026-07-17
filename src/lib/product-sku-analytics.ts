@@ -69,6 +69,10 @@ export function buildSkuDisplayRows(
     const skuOrders = filterOrdersSalesBySize(orders, group.size);
     const skuSales = filterOrdersSalesBySize(sales, group.size);
     const funnel = buildProductFunnelMetrics(skuOrders, skuSales);
+    const purchaseSales = skuSales.filter((sale) => !sale.is_return);
+    const skuRevenue = purchaseSales.reduce((sum, sale) => sum + Number(sale.revenue ?? 0), 0);
+    const cancelled = Math.max(0, funnel.orders - funnel.purchases);
+    const cancellationPercent = funnel.orders > 0 ? (cancelled / funnel.orders) * 100 : 0;
 
     return {
       variantKey: group.variantKey,
@@ -77,6 +81,10 @@ export function buildSkuDisplayRows(
       currentStock: getStockQuantityBySize(stockRows, group.size),
       orders: funnel.orders,
       purchases: funnel.purchases,
+      conversionPercent: funnel.conversionPercent,
+      cancelled,
+      cancellationPercent,
+      revenue: skuRevenue,
     };
   });
 }

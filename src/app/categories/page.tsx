@@ -1,12 +1,12 @@
-import { CategoryProfitabilityTable } from "@/components/dashboard/category-profitability-table";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { ProfitBarChartLazy } from "@/components/dashboard/dashboard-charts-lazy";
 import { DataBanner } from "@/components/dashboard/data-banner";
-import { ProfitBarChart } from "@/components/dashboard/profit-bar-chart";
+import { ProfitabilityGroupedTable } from "@/components/dashboard/profitability-grouped-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { cn, formatCurrency } from "@/lib/utils";
-import { getDashboardData } from "@/services/dashboard-service";
+import { getDashboardListData } from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
@@ -17,21 +17,21 @@ type PageProps = {
 export default async function CategoriesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
-  const { categories, isSampleData, message } = await getDashboardData(scope);
+  const { categories, brands, isSampleData, message } = await getDashboardListData(scope);
 
   const profitChartData = categories.map((c) => ({
-    label: c.categoryName,
-    value: c.netProfit,
+    label: c.name,
+    value: c.finalNetProfit,
   }));
 
   const revenueChartData = categories.map((c) => ({
-    label: c.categoryName,
+    label: c.name,
     value: c.revenue,
-    secondary: c.netProfit,
+    secondary: c.finalNetProfit,
   }));
 
   const totalRevenue = categories.reduce((sum, c) => sum + c.revenue, 0);
-  const totalProfit = categories.reduce((sum, c) => sum + c.netProfit, 0);
+  const totalProfit = categories.reduce((sum, c) => sum + c.finalNetProfit, 0);
 
   return (
     <>
@@ -66,11 +66,11 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Profit by Category" description="Net profit across all categories">
-          <ProfitBarChart data={profitChartData} valueLabel="Net Profit" color="#22c55e" />
+          <ProfitBarChartLazy data={profitChartData} valueLabel="Net Profit" color="#22c55e" />
         </ChartCard>
 
         <ChartCard title="Revenue by Category" description="Revenue and profit comparison">
-          <ProfitBarChart
+          <ProfitBarChartLazy
             data={revenueChartData}
             valueLabel="Revenue"
             secondaryLabel="Net Profit"
@@ -81,7 +81,11 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
       </div>
 
       <div className="mt-8">
-        <CategoryProfitabilityTable categories={categories} isSampleData={isSampleData} />
+        <ProfitabilityGroupedTable
+          categories={categories}
+          brands={brands}
+          isSampleData={isSampleData}
+        />
       </div>
     </>
   );

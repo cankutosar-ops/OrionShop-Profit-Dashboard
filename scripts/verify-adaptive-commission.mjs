@@ -37,7 +37,7 @@ if (!spInputs) {
 }
 
 // Build rows for ALL catalog products (not just smart-pricing filter) for 50+ sample
-const { buildCategoryCommissionTotals, resolveAdaptiveCommission, sumCompletedSalesMetrics, sumProductCommission } =
+const { buildCategoryCommissionTotals, resolveAdaptiveCommission, sumCompletedSalesMetrics } =
   await import("../src/lib/smart-pricing-commission.ts");
 
 const sales = await fetchSalesInRange(scope, client);
@@ -63,9 +63,7 @@ const rows = products.map((product) => {
   const productId = String(product.id);
   const sp = spByModel.get(product.supplier_article);
   const productSales = salesByProductId.get(productId) ?? [];
-  const productFinance = financeByProductId.get(productId) ?? [];
   const productTotals = sumCompletedSalesMetrics(productSales);
-  productTotals.commission = sumProductCommission(productFinance);
   const adaptive = resolveAdaptiveCommission({
     marketplace: "wildberries",
     categoryId: String(product.category_id),
@@ -73,6 +71,7 @@ const rows = products.map((product) => {
     categoryTotals: categoryTotals.get(String(product.category_id)) ?? {
       commission: 0,
       revenue: 0,
+      salesForPay: 0,
       unitsSold: 0,
     },
   });

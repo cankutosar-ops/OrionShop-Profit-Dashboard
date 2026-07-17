@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "endpointUrl": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/detailed",
+    "method": "POST",
+    "requestParameters": {
+      "dateFrom": "2026-06-30",
+      "dateTo": "2026-07-05",
+      "period": "weekly"
+    },
+    "accountId": "2",
+    "dateRange": {
+      "from": "2026-06-30",
+      "to": "2026-07-05"
+    },
+    "exportedAt": "2026-07-12T09:54:23.444Z",
+    "rowCount": 0,
+    "error": "HTTP 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller 0acfd317-7629-5e85-92d0-ca81f8a0454a; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"44276b7b2cc4aa150c8748a9ea2de853\",\n    \"origin\": \"s2s-finance\",\n    \"status\": 429,\n    \"statusText\": \"Too Many Requests\",\n    \"timestamp\": \"2026-07-12T09:54:23Z\"\n}\r\n",
+    "statusCode": 429,
+    "responseBodyPreview": "{\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller 0acfd317-7629-5e85-92d0-ca81f8a0454a; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"44276b7b2cc4aa150c8748a9ea2de853\",\n    \"origin\": \"s2s-finance\",\n    \"status\": 429,\n    \"statusText\": \"Too Many Requests\",\n    \"timestamp\": \"2026-07-12T09:54:23Z\"\n}\r\n"
+  },
+  "data": null
+}

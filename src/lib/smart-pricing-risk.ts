@@ -1,4 +1,4 @@
-import type { SmartPricingCommissionSource } from "@/lib/smart-pricing-commission";
+import type { SmartPricingHistoricalSource } from "@/lib/smart-pricing-historical-costs";
 
 export type SmartPricingRiskLevel = "low" | "medium" | "high";
 
@@ -41,15 +41,18 @@ function scoreReturnLogistics(percent: number): number {
 }
 
 function scoreCommissionStability(params: {
-  commissionSource: SmartPricingCommissionSource;
+  commissionSource: SmartPricingHistoricalSource;
   productHistoricalCommissionPercent: number | null;
   categoryHistoricalCommissionPercent: number | null;
   commissionPercent: number;
 }): number {
   let points = 0;
 
-  if (params.commissionSource === "MARKETPLACE_DEFAULT") points += 2;
-  else if (params.commissionSource === "CATEGORY_HISTORY") points += 1;
+  if (params.commissionSource === "ACCOUNT_HISTORY") {
+    points += 2;
+  } else if (params.commissionSource === "CATEGORY_HISTORY") {
+    points += 1;
+  }
 
   const product = params.productHistoricalCommissionPercent;
   const category = params.categoryHistoricalCommissionPercent;
@@ -69,7 +72,7 @@ export function computeSmartPricingRisk(params: {
   returnRatePercent: number;
   excludedLogisticsPercent: number;
   returnLogisticsPercent: number;
-  commissionSource: SmartPricingCommissionSource;
+  commissionSource: SmartPricingHistoricalSource;
   productHistoricalCommissionPercent: number | null;
   categoryHistoricalCommissionPercent: number | null;
   commissionPercent: number;

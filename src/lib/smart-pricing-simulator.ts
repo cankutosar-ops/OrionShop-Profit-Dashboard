@@ -35,12 +35,21 @@ export type SmartPricingSimulation = {
 export function buildSolverInputsFromRow(
   row: SmartPricingComputedRow
 ): SmartPricingSolverInputs | null {
-  if (row.purchaseCost === null) return null;
+  if (
+    row.purchaseCost === null ||
+    !Number.isFinite(row.purchaseCost) ||
+    row.purchaseCost < 0
+  ) {
+    return null;
+  }
 
   return {
     purchaseCost: row.purchaseCost,
-    effectiveLogistics: row.effectiveLogistics,
-    commissionPercent: row.commissionPercent,
+    historicalLogistics: row.historicalLogistics,
+    effectiveLogistics: row.historicalLogistics,
+    storagePerUnit: row.storagePerUnit,
+    marketplaceFeesPercent: row.marketplaceFeesPercent,
+    commissionPercent: row.marketplaceFeesPercent,
   };
 }
 
@@ -73,7 +82,8 @@ export function classifyTestPriceComparison(
 export function computeSmartPricingSimulation(
   row: SmartPricingComputedRow,
   testPrice: number,
-  marketingPercent: number
+  marketingPercent: number,
+  taxPercent?: number
 ): SmartPricingSimulation | null {
   const solver = buildSolverInputsFromRow(row);
   if (solver === null || !Number.isFinite(testPrice) || testPrice <= 0) return null;
@@ -82,7 +92,8 @@ export function computeSmartPricingSimulation(
     solver,
     0,
     marketingPercent,
-    testPrice
+    testPrice,
+    taxPercent
   );
 
   const isLoss = profit < 0;
@@ -99,6 +110,26 @@ export function computeSmartPricingSimulation(
     comparisonLabel: SIMULATOR_COMPARISON_LABEL[comparison],
     isLoss,
   };
+}
+
+/** Markup on Cost (%) = Net Profit / Current Product Cost × 100 — display only. */
+export function computeMarkupOnCostPercent(
+  netProfit: number,
+  purchaseCost: number | null
+): number | null {
+  if (purchaseCost === null || !Number.isFinite(purchaseCost) || purchaseCost <= 0) {
+    return null;
+  }
+  if (!Number.isFinite(netProfit)) return null;
+  return (netProfit / purchaseCost) * 100;
+}
+
+/** Display-only USD conversion — never feeds pricing math. */
+export function convertRubToUsd(rub: number, usdExchangeRate: number): number | null {
+  if (!Number.isFinite(rub) || !Number.isFinite(usdExchangeRate) || usdExchangeRate <= 0) {
+    return null;
+  }
+  return rub / usdExchangeRate;
 }
 
 export function adjustTestPrice(current: number, percentDelta: number): number {

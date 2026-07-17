@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-07-13T16:53:14.368Z",
+  "period": {
+    "from": "2026-01-01",
+    "to": "2026-07-13"
+  },
+  "accounts": [
+    {
+      "accountId": "1",
+      "label": "Default Company",
+      "schema": {
+        "price_with_disc": false,
+        "for_pay": false,
+        "probeErrors": {
+          "price_with_disc": "column wb_sales.price_with_disc does not exist",
+          "for_pay": "column wb_sales.for_pay does not exist"
+        }
+      },
+      "rows": {
+        "total": 810,
+        "nonReturns": 649,
+        "returns": 161,
+        "withDisc": 0,
+        "withForPay": 0,
+        "missingDisc": 0,
+        "missingForPay": 0,
+        "uniqueSrids": 810,
+        "duplicateRows": 0
+      },
+      "backfill": {
+        "completedWindows": 0,
+        "failedWindows": 0,
+        "pendingWindows": [
+          "2026-01-01 → 2026-01-31",
+          "2026-02-01 → 2026-02-28",
+          "2026-03-01 → 2026-03-31",
+          "2026-04-01 → 2026-04-30",
+          "2026-05-01 → 2026-05-31",
+          "2026-06-01 → 2026-06-30",
+          "2026-07-01 → 2026-07-13"
+        ],
+        "failedWindowDetails": {}
+      },
+      "revenue": {
+        "api": {
+          "grossSales": 7633811.190000003,
+          "returnedSales": 1465854.7300000002,
+          "netSales": 6167956.460000003
+        },
+        "apiError": null,
+        "db": {
+          "grossSales": 0,
+          "returnedSales": 0,
+          "netSales": 0
+        },
+        "dashboard": {
+          "grossSales": 0,
+          "returnedSales": 0,
+          "netSales": 0,
+          "status": "unavailable"
+        },
+        "serviceResolution": {
+          "dataSource": "db",
+          "status": "unavailable",
+          "netSales": 0
+        },
+        "diffApiDb": null,
+        "diffDashboardDb": 0
+      },
+      "checks": {
+        "schemaReady": false,
+        "discPopulated": false,
+        "forPayPopulated": false,
+        "noApiFallback": false,
+        "dbOnlySource": true,
+        "netSalesReady": false,
+        "apiMatchesDb": false,
+        "dashboardMatchesDb": true,
+        "noDuplicates": true
+      }
+    },
+    {
+      "accountId": "2",
+      "label": "Orion Shop",
+      "schema": {
+        "price_with_disc": false,
+        "for_pay": false,
+        "probeErrors": {
+          "price_with_disc": "column wb_sales.price_with_disc does not exist",
+          "for_pay": "column wb_sales.for_pay does not exist"
+        }
+      },
+      "rows": {
+        "total": 577,
+        "nonReturns": 522,
+        "returns": 55,
+        "withDisc": 0,
+        "withForPay": 0,
+        "missingDisc": 0,
+        "missingForPay": 0,
+        "uniqueSrids": 577,
+        "duplicateRows": 0
+      },
+      "backfill": {
+        "completedWindows": 0,
+        "failedWindows": 0,
+        "pendingWindows": [
+          "2026-01-01 → 2026-01-31",
+          "2026-02-01 → 2026-02-28",
+          "2026-03-01 → 2026-03-31",
+          "2026-04-01 → 2026-04-30",
+          "2026-05-01 → 2026-05-31",
+          "2026-06-01 → 2026-06-30",
+          "2026-07-01 → 2026-07-13"
+        ],
+        "failedWindowDetails": {}
+      },
+      "revenue": {
+        "api": null,
+        "apiError": "WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller 0acfd317-7629-5e85-92d0-ca81f8a0454a; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"187b6361adf21dee2289a7a477439d85\",\n    \"origin\": \"s2s-api",
+        "db": {
+          "grossSales": 0,
+          "returnedSales": 0,
+          "netSales": 0
+        },
+        "dashboard": {
+          "grossSales": 0,
+          "returnedSales": 0,
+          "netSales": 0,
+          "status": "unavailable"
+        },
+        "serviceResolution": {
+          "dataSource": "db",
+          "status": "unavailable",
+          "netSales": 0
+        },
+        "diffApiDb": null,
+        "diffDashboardDb": 0
+      },
+      "checks": {
+        "schemaReady": false,
+        "discPopulated": false,
+        "forPayPopulated": false,
+        "noApiFallback": false,
+        "dbOnlySource": true,
+        "netSalesReady": false,
+        "apiMatchesDb": false,
+        "dashboardMatchesDb": true,
+        "noDuplicates": true
+      }
+    }
+  ],
+  "sprintComplete": false
+}

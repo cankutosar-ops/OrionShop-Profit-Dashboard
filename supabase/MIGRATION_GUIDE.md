@@ -147,3 +147,35 @@ curl -X POST http://localhost:3000/api/sync \
 supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
 ```
+
+---
+
+## Permanent Migration Safety Protocol
+
+This protocol prevents runtime code from depending on database columns that were never applied remotely.
+
+### Gate order (mandatory)
+
+| Step | Command | Pass condition |
+|------|---------|----------------|
+| 1. Schema | `npm run validate:db-environment` | `price_with_disc`, `for_pay` exist in `information_schema.columns` |
+| 2. Apply | `npm run apply:wb-sales-revenue-migration` | Columns probe succeeds after DDL |
+| 3. Backfill | `npm run backfill:sales-history` | ≥95% rows populated per account |
+| 4. Validate | `npm run verify:sales-revenue-sprint` | API = DB = Dashboard (0 ₽ diff) |
+| 5. Runtime | Code review | No Sales API fallback in Model B revenue path |
+
+### Rules
+
+1. **Before** runtime code reads a new column, run `information_schema.columns` (via `validate-db-environment.mjs`).
+2. **If missing** — stop. Generate SQL only. Do not remove fallbacks or change revenue logic.
+3. **Never** mark a migration as applied until the remote database confirms the column exists.
+4. **Never** remove API/DB fallbacks until schema ✓, backfill ✓, validation ✓.
+
+### Credentials for schema validation
+
+Add one of these to `.env.local`:
+
+- `SUPABASE_DB_PASSWORD` — direct Postgres (`information_schema`)
+- `SUPABASE_ACCESS_TOKEN` — Supabase Management API (`supabase login` token)
+
+Without credentials, OpenAPI introspection is used as a secondary signal only; the sprint remains **blocked** until `information_schema` confirms the schema.

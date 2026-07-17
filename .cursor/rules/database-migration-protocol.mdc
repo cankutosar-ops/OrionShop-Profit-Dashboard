@@ -1,0 +1,19 @@
+---
+description: Database migration safety — verify schema before runtime changes
+alwaysApply: true
+---
+
+# Database Migration Protocol
+
+Before any runtime code uses a new database column:
+
+1. **Verify schema** — run `npm run validate:db-environment` (queries `information_schema.columns` when credentials exist).
+2. **If column missing** — stop the sprint. Generate SQL migration only (`supabase/migrations/`). Do **not** change runtime behaviour.
+3. **Apply migration** — `npm run apply:wb-sales-revenue-migration` or Supabase SQL Editor. Confirm schema before continuing.
+4. **Backfill** — populate historical data (`npm run backfill:sales-history`).
+5. **Validate** — `npm run verify:sales-revenue-sprint` must show API = DB = Dashboard (0 ₽ diff).
+6. **Remove fallbacks** — only after schema ✓, backfill ✓, validation ✓.
+
+Never remove API/DB fallbacks until all three gates pass.
+
+See `supabase/MIGRATION_GUIDE.md` → "Permanent Migration Safety Protocol".

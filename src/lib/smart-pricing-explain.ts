@@ -1,6 +1,7 @@
 import { formatRecommendedPriceFormula, verifyRecommendedPrice } from "@/lib/smart-pricing";
 import type { SmartPricingComputedRow } from "@/lib/smart-pricing";
-import { formatLogisticsSourceLabel } from "@/lib/smart-pricing-logistics";
+import { DEFAULT_TAX_PERCENT } from "@/lib/smart-pricing-constants";
+import { formatHistoricalSourceLabel } from "@/lib/smart-pricing-historical-costs";
 import { buildSolverInputsFromRow } from "@/lib/smart-pricing-simulator";
 import { formatCommissionSourceLabel } from "@/lib/smart-pricing-settings";
 
@@ -16,49 +17,62 @@ export function buildSmartPricingExplainContent(
   row: SmartPricingComputedRow,
   targetMarginPercent: number,
   marketingPercent: number,
+  taxPercent: number = DEFAULT_TAX_PERCENT,
   testPrice?: number | null
 ): SmartPricingExplainContent | null {
   if (row.purchaseCost === null) return null;
 
+  const solver = buildSolverInputsFromRow(row);
+  if (solver === null) return null;
+
   const formula = formatRecommendedPriceFormula(
-    {
-      purchaseCost: row.purchaseCost,
-      effectiveLogistics: row.effectiveLogistics,
-      commissionPercent: row.commissionPercent,
-    },
+    solver,
     targetMarginPercent,
-    marketingPercent
+    marketingPercent,
+    taxPercent
   );
 
   const recommendedPrice =
     row.targetPrice !== null ? `${row.targetPrice.toFixed(2)} ₽` : "—";
 
-  const sellingPrice =
-    testPrice ?? row.targetPrice;
-  const solver = buildSolverInputsFromRow(row);
+  const sellingPrice = testPrice ?? row.targetPrice;
   const simulation =
-    solver !== null && sellingPrice !== null && sellingPrice > 0
+    sellingPrice !== null && sellingPrice > 0
       ? (() => {
-          const { profit, marginPercent } = verifyRecommendedPrice(
+          const { profit, marginPercent, operatingProfit, tax } = verifyRecommendedPrice(
             solver,
             targetMarginPercent,
             marketingPercent,
-            sellingPrice
+            sellingPrice,
+            taxPercent
           );
           return [
             { label: "Selling Price", value: `${sellingPrice.toFixed(2)} ₽` },
             {
-              label: "Commission",
-              value: `${row.commissionPercent.toFixed(2)}% (${formatCommissionSourceLabel(row.commissionSource)})`,
+              label: "Resolution Source",
+              value: formatHistoricalSourceLabel(row.resolutionSource),
+            },
+            {
+              label: "Commission %",
+              value: `${row.marketplaceFeesPercent.toFixed(2)}% (${formatCommissionSourceLabel(row.marketplaceFeesSource)})`,
+            },
+            {
+              label: "Historical Logistics",
+              value: `${row.historicalLogistics.toFixed(2)} ₽ (${formatHistoricalSourceLabel(row.resolutionSource)}, ${row.historicalCompletedUnits} units)`,
+            },
+            {
+              label: "Storage",
+              value: `${row.storagePerUnit.toFixed(2)} ₽ (${formatHistoricalSourceLabel(row.resolutionSource)})`,
             },
             { label: "Marketing", value: `${marketingPercent.toFixed(0)}%` },
-            { label: "Purchase Cost", value: `${row.purchaseCost!.toFixed(2)} ₽` },
             {
-              label: "Effective Logistics",
-              value: `${row.effectiveLogistics.toFixed(2)} ₽ (${formatLogisticsSourceLabel(row.logisticsSource)}, ${row.logisticsCompletedUnits} units)`,
+              label: "Tax (on Seller Payout)",
+              value: `${taxPercent.toFixed(0)}% → ${tax.toFixed(2)} ₽`,
             },
-            { label: "Expected Net Profit", value: `${profit.toFixed(2)} ₽` },
-            { label: "Profit Margin", value: `${marginPercent.toFixed(1)}%` },
+            { label: "Purchase Cost", value: `${row.purchaseCost.toFixed(2)} ₽` },
+            { label: "Operating Profit", value: `${operatingProfit.toFixed(2)} ₽` },
+            { label: "Final Net Profit (after tax)", value: `${profit.toFixed(2)} ₽` },
+            { label: "Final Margin %", value: `${marginPercent.toFixed(1)}%` },
           ];
         })()
       : null;
@@ -68,19 +82,27 @@ export function buildSmartPricingExplainContent(
     lines: [
       { label: "Purchase Cost", value: `${row.purchaseCost.toFixed(2)} ₽` },
       {
-        label: "Effective Logistics",
-        value: `${row.effectiveLogistics.toFixed(2)} ₽ (${formatLogisticsSourceLabel(row.logisticsSource)}, ${row.logisticsCompletedUnits} units)`,
+        label: "Resolution Source",
+        value: formatHistoricalSourceLabel(row.resolutionSource),
       },
       {
-        label: "Logistics Source",
-        value: `${formatLogisticsSourceLabel(row.logisticsSource)} · ${row.logisticsCompletedUnits} completed units`,
+        label: "Historical Logistics",
+        value: `${row.historicalLogistics.toFixed(2)} ₽ (${formatHistoricalSourceLabel(row.resolutionSource)}, ${row.historicalCompletedUnits} units)`,
       },
       {
-        label: "Commission",
-        value: `${row.commissionPercent.toFixed(2)}% (${formatCommissionSourceLabel(row.commissionSource)})`,
+        label: "Storage",
+        value: `${row.storagePerUnit.toFixed(2)} ₽ (${formatHistoricalSourceLabel(row.resolutionSource)})`,
+      },
+      {
+        label: "Commission %",
+        value: `${row.marketplaceFeesPercent.toFixed(2)}% (${formatCommissionSourceLabel(row.marketplaceFeesSource)})`,
       },
       { label: "Marketing", value: `${marketingPercent.toFixed(0)}%` },
-      { label: "Target Margin", value: `${targetMarginPercent.toFixed(0)}%` },
+      { label: "Tax (on Seller Payout)", value: `${taxPercent.toFixed(0)}%` },
+      {
+        label: "Target Margin (after tax)",
+        value: `${targetMarginPercent.toFixed(0)}%`,
+      },
     ],
     formula,
     recommendedPrice,

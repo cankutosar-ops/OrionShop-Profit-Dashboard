@@ -61,6 +61,7 @@ export type DashboardPageSearchParamsInput = PageScopeSearchParamsInput & {
   dateManual?: string;
   syncAdjusted?: string;
   accountSwitched?: string;
+  profitModel?: string;
 };
 
 export function scopeParamsToSearchParams(params: PageScopeSearchParamsInput): URLSearchParams {

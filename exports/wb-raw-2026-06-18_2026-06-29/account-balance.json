@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "endpointUrl": "https://finance-api.wildberries.ru/api/v1/account/balance",
+    "method": "GET",
+    "requestParameters": {},
+    "accountId": "1",
+    "dateRange": {
+      "from": "2026-06-18",
+      "to": "2026-06-29"
+    },
+    "exportedAt": "2026-07-11T10:30:52.694Z",
+    "rowCount": 1,
+    "note": "Point-in-time balance snapshot at export time; not filtered by date range."
+  },
+  "data": {
+    "currency": "RUB",
+    "current": 152029.58,
+    "for_withdraw": 8.65
+  }
+}

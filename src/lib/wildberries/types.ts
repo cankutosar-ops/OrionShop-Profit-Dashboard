@@ -6,6 +6,11 @@ export type WbApiOrder = {
   barcode?: string;
   totalPrice: number;
   discountPercent?: number;
+  /** Seller-discounted price — Wildberries Portal Orders Value field. */
+  priceWithDisc?: number;
+  /** Customer paid price after WB (SPP) discount. */
+  finishedPrice?: number;
+  spp?: number;
   warehouseName?: string;
   oblast?: string;
   isCancel?: boolean;
@@ -70,6 +75,8 @@ export type WbApiFinanceRow = {
   ppvz_reward?: number;
   additional_payment?: number;
   ppvz_vw?: number;
+  ppvz_for_pay?: number;
+  doc_type_name?: string;
   srid?: string;
 };
 
@@ -93,6 +100,27 @@ export type WbApiStockRow = {
   inWayFromClient?: number;
   nmId?: number;
   warehouseName?: string;
+};
+
+/** Weekly/daily sales report summary — finance API v1 (settlement / bank payout). */
+export type WbSalesReportListItem = {
+  reportId: number;
+  dateFrom: string;
+  dateTo: string;
+  createDate: string;
+  currency?: string;
+  reportType?: number;
+  retailAmountSum?: string;
+  forPaySum?: string;
+  bankPaymentSum?: string;
+  sellerFinanceName?: string;
+};
+
+/** Seller wallet snapshot — Finance API GET /api/v1/account/balance */
+export type WbAccountBalance = {
+  currency: string;
+  current: number;
+  for_withdraw: number;
 };
 
 export type WbApiCardsResponse = {

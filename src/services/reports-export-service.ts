@@ -30,8 +30,8 @@ export function formatFinanceCategoryJson(report: FinanceCategoryReport): string
     {
       scope: report.scope,
       categories: rows,
-      netProfit: report.breakdown.netProfit,
-      revenue: report.breakdown.revenue,
+      netProfit: report.modelBProfit.netProfit,
+      revenue: report.modelBProfit.netSales,
     },
     null,
     2

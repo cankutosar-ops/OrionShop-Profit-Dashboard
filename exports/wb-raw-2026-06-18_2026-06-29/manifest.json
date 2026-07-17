@@ -1,0 +1,26 @@
+{
+  "accountId": "1",
+  "accountName": "Wildberries Default",
+  "dateRange": {
+    "from": "2026-06-18",
+    "to": "2026-06-29"
+  },
+  "exportedAt": "2026-07-11T10:33:53.455Z",
+  "outputDir": "exports/wb-raw-2026-06-18_2026-06-29",
+  "files": [
+    {
+      "ok": true,
+      "filename": "sales-reports-list-daily.json"
+    },
+    {
+      "ok": true,
+      "filename": "sales-reports-detailed-v1-weekly.json"
+    }
+  ],
+  "notes": [
+    "Raw API responses only — no transformations, filtering, or field mapping.",
+    "orders.json and sales.json: Statistics API paginates from dateFrom; may include rows with dates outside the requested range.",
+    "finance.json: reportDetailByPeriod filtered by dateFrom/dateTo on WB side.",
+    "Settlement files use Finance API v1 (Personal/Service token with Finance scope)."
+  ]
+}

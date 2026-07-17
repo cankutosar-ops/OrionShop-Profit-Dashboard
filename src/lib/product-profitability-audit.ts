@@ -1,14 +1,14 @@
 import {
   calculateDeductions,
   calculateGrossMarginPercent,
-  calculateGrossProfit,
-} from "@/lib/profitability-v2";
+  calculateGrossProfitFromRow,
+} from "@/lib/profit-margin";
 import type { ProductProfitability, ProductProfitabilityAuditRow } from "@/types/database";
 
 export function toProductProfitabilityAuditRow(
   product: ProductProfitability
 ): ProductProfitabilityAuditRow {
-  const grossProfit = calculateGrossProfit(product);
+  const grossProfit = calculateGrossProfitFromRow(product);
   const marginPercent = calculateGrossMarginPercent(product.revenue, grossProfit);
 
   return {
@@ -20,7 +20,7 @@ export function toProductProfitabilityAuditRow(
     commission: product.commission,
     logistics: product.logistics,
     returnLogistics: product.returnLogistics,
-    deductions: calculateDeductions(product),
+    deductions: calculateDeductions(product.otherExpenses),
     productCost: product.productCost,
     grossProfit,
     netProfit: product.netProfit,

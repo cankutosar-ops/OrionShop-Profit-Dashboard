@@ -1,15 +1,17 @@
-import type { CommissionTotals } from "@/lib/smart-pricing-commission";
 import {
-  resolveAdaptiveCommission,
-  SMART_PRICING_MIN_CATEGORY_SALES,
-  SMART_PRICING_MIN_PRODUCT_SALES,
-  type AdaptiveCommissionResult,
-  type SmartPricingCommissionSource,
-} from "@/lib/smart-pricing-commission";
-import type { MarketplaceType, WbFinance, WbSale } from "@/types/database";
-import type { ProductSmartPricingInputs } from "@/lib/smart-pricing";
+  resolveAdaptiveHistoricalCosts,
+  type HistoricalCostBucket,
+} from "@/lib/smart-pricing-historical-costs";
+import type {
+  CommissionWindowKey,
+  ProductSmartPricingInputs,
+} from "@/lib/smart-pricing-types";
 
-export type CommissionWindowKey = "30" | "60" | "90" | "180" | "range";
+export type {
+  CommissionWindowKey,
+  CommissionWindowTotals,
+  SmartPricingCommissionReplay,
+} from "@/lib/smart-pricing-types";
 
 export const COMMISSION_WINDOW_OPTIONS: { value: CommissionWindowKey; label: string }[] = [
   { value: "30", label: "30 days" },
@@ -26,23 +28,12 @@ export type SmartPricingCommissionSettings = {
 };
 
 export const DEFAULT_SMART_PRICING_COMMISSION_SETTINGS: SmartPricingCommissionSettings = {
-  minProductSales: SMART_PRICING_MIN_PRODUCT_SALES,
-  minCategorySales: SMART_PRICING_MIN_CATEGORY_SALES,
+  minProductSales: 20,
+  minCategorySales: 50,
   commissionWindow: "range",
 };
 
 export const COMMISSION_WINDOW_KEYS: CommissionWindowKey[] = ["30", "60", "90", "180", "range"];
-
-export type CommissionWindowTotals = {
-  productTotals: CommissionTotals;
-  categoryTotals: CommissionTotals;
-};
-
-export type SmartPricingCommissionReplay = {
-  marketplace: MarketplaceType;
-  categoryId: string;
-  byWindow: Record<CommissionWindowKey, CommissionWindowTotals>;
-};
 
 export function commissionWindowDateFrom(scopeTo: string, window: CommissionWindowKey): string {
   if (window === "range") return scopeTo;
@@ -52,78 +43,118 @@ export function commissionWindowDateFrom(scopeTo: string, window: CommissionWind
   return start.toISOString().slice(0, 10);
 }
 
-export function filterSalesByCommissionWindow(
-  sales: WbSale[],
+export function filterSalesByCommissionWindow<T extends { sale_date: string }>(
+  sales: T[],
   scope: { from: string; to: string },
   window: CommissionWindowKey
-): WbSale[] {
-  const from =
-    window === "range" ? scope.from : commissionWindowDateFrom(scope.to, window);
+): T[] {
+  const from = window === "range" ? scope.from : commissionWindowDateFrom(scope.to, window);
   return sales.filter((row) => {
     const date = row.sale_date.slice(0, 10);
     return date >= from && date <= scope.to;
   });
 }
 
-export function filterFinanceByCommissionWindow(
-  finance: WbFinance[],
+export function filterFinanceByCommissionWindow<T extends { operation_date: string }>(
+  finance: T[],
   scope: { from: string; to: string },
   window: CommissionWindowKey
-): WbFinance[] {
-  const from =
-    window === "range" ? scope.from : commissionWindowDateFrom(scope.to, window);
+): T[] {
+  const from = window === "range" ? scope.from : commissionWindowDateFrom(scope.to, window);
   return finance.filter((row) => {
     const date = row.operation_date.slice(0, 10);
     return date >= from && date <= scope.to;
   });
 }
 
-export function resolveAdaptiveCommissionWithSettings(
-  params: {
-    marketplace: MarketplaceType;
-    categoryId: string;
-    productTotals: CommissionTotals;
-    categoryTotals: CommissionTotals;
-  },
-  settings: Pick<SmartPricingCommissionSettings, "minProductSales" | "minCategorySales">
-): AdaptiveCommissionResult {
-  return resolveAdaptiveCommission({
-    ...params,
-    minProductSales: settings.minProductSales,
-    minCategorySales: settings.minCategorySales,
-  });
+function windowBucketFromTotals(
+  totals: ProductSmartPricingInputs["historicalReplay"]["byWindow"][CommissionWindowKey]
+): {
+  product: HistoricalCostBucket;
+  category: HistoricalCostBucket;
+  account: HistoricalCostBucket;
+} {
+  return {
+    product: {
+      logistics: totals.productLogistics,
+      marketplaceFees: totals.productMarketplaceFees,
+      storage: totals.productStorage,
+    },
+    category: {
+      logistics: totals.categoryLogistics,
+      marketplaceFees: totals.categoryMarketplaceFees,
+      storage: totals.categoryStorage,
+    },
+    account: {
+      logistics: totals.accountLogistics,
+      marketplaceFees: totals.accountMarketplaceFees,
+      storage: totals.accountStorage,
+    },
+  };
 }
 
 export function applySmartPricingCommissionSettings(
   input: ProductSmartPricingInputs,
   settings: SmartPricingCommissionSettings
 ): ProductSmartPricingInputs {
-  const windowData = input.commissionReplay.byWindow[settings.commissionWindow];
-  const adaptive = resolveAdaptiveCommissionWithSettings(
-    {
-      marketplace: input.commissionReplay.marketplace,
-      categoryId: input.commissionReplay.categoryId,
-      productTotals: windowData.productTotals,
-      categoryTotals: windowData.categoryTotals,
-    },
-    settings
-  );
+  const windowTotals = input.historicalReplay.byWindow[settings.commissionWindow];
+  const buckets = windowBucketFromTotals(windowTotals);
+  const resolved = resolveAdaptiveHistoricalCosts({
+    marketplace: input.historicalReplay.marketplace,
+    product: buckets.product,
+    category: buckets.category,
+    account: buckets.account,
+    minProductSales: settings.minProductSales,
+    minCategorySales: settings.minCategorySales,
+  });
 
   return {
     ...input,
-    commissionPercent: adaptive.commissionPercent,
-    commissionSource: adaptive.commissionSource,
-    completedSales: adaptive.completedSales,
-    productHistoricalCommissionPercent: adaptive.productHistoricalCommissionPercent,
-    categoryHistoricalCommissionPercent: adaptive.categoryHistoricalCommissionPercent,
-    marketplaceCommissionPercent: adaptive.marketplaceCommissionPercent,
+    resolutionSource: resolved.resolutionSource,
+    historicalLogistics: resolved.historicalLogistics,
+    effectiveLogistics: resolved.historicalLogistics,
+    storagePerUnit: resolved.storagePerUnit,
+    historicalCompletedUnits: resolved.completedUnits,
+    productHistoricalLogistics: resolved.productHistoricalLogistics,
+    categoryHistoricalLogistics: resolved.categoryHistoricalLogistics,
+    accountHistoricalLogistics: resolved.accountHistoricalLogistics,
+    productHistoricalStoragePerUnit: resolved.productHistoricalStoragePerUnit,
+    categoryHistoricalStoragePerUnit: resolved.categoryHistoricalStoragePerUnit,
+    accountHistoricalStoragePerUnit: resolved.accountHistoricalStoragePerUnit,
+    marketplaceFeesPercent: resolved.marketplaceFeesPercent,
+    commissionPercent: resolved.marketplaceFeesPercent,
+    marketplaceFeesSource: resolved.resolutionSource,
+    commissionSource: resolved.resolutionSource,
+    productHistoricalMarketplaceFeesPercent:
+      resolved.productHistoricalMarketplaceFeesPercent,
+    categoryHistoricalMarketplaceFeesPercent:
+      resolved.categoryHistoricalMarketplaceFeesPercent,
+    productHistoricalCommissionPercent:
+      resolved.productHistoricalMarketplaceFeesPercent,
+    categoryHistoricalCommissionPercent:
+      resolved.categoryHistoricalMarketplaceFeesPercent,
+    marketplaceCommissionPercent: resolved.marketplaceFeesPercent,
+    logisticsSource: resolved.resolutionSource,
+    logisticsCompletedUnits: resolved.completedUnits,
+    productHistoricalEffectiveLogistics: resolved.productHistoricalLogistics,
+    categoryHistoricalEffectiveLogistics: resolved.categoryHistoricalLogistics,
+    accountHistoricalEffectiveLogistics: resolved.accountHistoricalLogistics,
   };
 }
 
 export function formatCommissionSourceLabel(
-  source: SmartPricingCommissionSource
+  source: ProductSmartPricingInputs["commissionSource"]
 ): string {
-  return source;
+  switch (source) {
+    case "PRODUCT_HISTORY":
+      return "SKU";
+    case "CATEGORY_HISTORY":
+      return "CATEGORY";
+    case "ACCOUNT_HISTORY":
+      return "ACCOUNT";
+    default:
+      return source;
+  }
 }
 
 export function parseSmartPricingCommissionSettings(

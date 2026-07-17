@@ -42,29 +42,64 @@ export function pickLatestCostHistoryByProductId<T extends ProductCostHistory>(
   return byProduct;
 }
 
-/** Latest cost per supplier_article, mapped to each product_id. */
+function normalizeSupplierArticle(article: string): string {
+  return article.trim();
+}
+
+function toValidUnitCost(value: unknown): number | null {
+  const cost = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(cost) || cost < 0) return null;
+  return cost;
+}
+
+/**
+ * Latest active unit cost per product_id.
+ *
+ * 1. Prefer each product's own latest `product_cost_history` row (Cost Management parity).
+ * 2. Fill siblings that share the same trimmed supplier_article from a product that has a cost.
+ */
 export function buildLatestCostByProductId(
   costHistory: ProductCostHistory[],
   products: { id: string; supplier_article: string }[]
 ): Map<string, number> {
-  const latestByArticle = new Map<string, ProductCostHistory>();
+  const byProductId = new Map<string, number>();
+  const productById = new Map(
+    products.map((product) => [String(product.id), product] as const)
+  );
 
-  for (const entry of costHistory) {
-    const product = products.find((p) => String(p.id) === String(entry.product_id));
-    if (!product) continue;
-
-    const article = product.supplier_article;
-    const current = latestByArticle.get(article);
-    if (!current || isMoreRecentCostHistory(entry, current)) {
-      latestByArticle.set(article, entry);
+  // 1) Authoritative per-product latest cost (same basis as Cost Management).
+  const latestByProduct = pickLatestCostHistoryByProductId(costHistory);
+  for (const [productId, row] of latestByProduct) {
+    if (!productById.has(productId)) continue;
+    const cost = toValidUnitCost(row.cost);
+    if (cost !== null) {
+      byProductId.set(productId, cost);
     }
   }
 
-  const byProductId = new Map<string, number>();
+  // 2) Share latest cost across identical supplier articles (trimmed).
+  const latestByArticle = new Map<string, { cost: number; row: ProductCostHistory }>();
+  for (const [productId, cost] of byProductId) {
+    const product = productById.get(productId);
+    if (!product) continue;
+    const article = normalizeSupplierArticle(product.supplier_article);
+    if (!article) continue;
+    const row = latestByProduct.get(productId);
+    if (!row) continue;
+    const current = latestByArticle.get(article);
+    if (!current || isMoreRecentCostHistory(row, current.row)) {
+      latestByArticle.set(article, { cost, row });
+    }
+  }
+
   for (const product of products) {
-    const latest = latestByArticle.get(product.supplier_article);
-    if (latest) {
-      byProductId.set(String(product.id), latest.cost);
+    const productId = String(product.id);
+    if (byProductId.has(productId)) continue;
+    const article = normalizeSupplierArticle(product.supplier_article);
+    if (!article) continue;
+    const shared = latestByArticle.get(article);
+    if (shared) {
+      byProductId.set(productId, shared.cost);
     }
   }
 

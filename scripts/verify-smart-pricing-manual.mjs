@@ -14,8 +14,8 @@ for (const line of readFileSync(resolve(".env.local"), "utf8").split("\n")) {
 
 const accountId = process.argv[2] ?? "2";
 const seed = Number(process.argv[3] ?? Date.now());
-const TARGET_MARGIN = 30;
-const MARKETING = 15;
+const TARGET_MARGIN = 15;
+const MARKETING = 5;
 const TOLERANCE = 0.01;
 
 function mulberry32(a) {
@@ -63,6 +63,13 @@ console.log("");
 let firstFailure = null;
 
 for (const row of sample) {
+  const manual15 = manualRecommended(
+    row.purchaseCost,
+    row.purchaseLogistics,
+    row.commissionPercent,
+    MARKETING,
+    15
+  );
   const manual20 = manualRecommended(
     row.purchaseCost,
     row.purchaseLogistics,
@@ -70,36 +77,20 @@ for (const row of sample) {
     MARKETING,
     20
   );
-  const manual25 = manualRecommended(
+  const manualRecommendedTarget = manualRecommended(
     row.purchaseCost,
     row.purchaseLogistics,
     row.commissionPercent,
     MARKETING,
-    25
-  );
-  const manual30 = manualRecommended(
-    row.purchaseCost,
-    row.purchaseLogistics,
-    row.commissionPercent,
-    MARKETING,
-    30
-  );
-  const manual35 = manualRecommended(
-    row.purchaseCost,
-    row.purchaseLogistics,
-    row.commissionPercent,
-    MARKETING,
-    35
+    TARGET_MARGIN
   );
 
   const engine = buildSmartPricingRow(row, TARGET_MARGIN, MARKETING);
 
   const checks = [
+    { label: "15%", manual: manual15, engine: engine.priceFor15 },
     { label: "20%", manual: manual20, engine: engine.priceFor20 },
-    { label: "25%", manual: manual25, engine: engine.priceFor25 },
-    { label: "30%", manual: manual30, engine: engine.priceFor30 },
-    { label: "35%", manual: manual35, engine: engine.priceFor35 },
-    { label: "Recommended (30%)", manual: manual30, engine: engine.targetPrice },
+    { label: `Recommended (${TARGET_MARGIN}%)`, manual: manualRecommendedTarget, engine: engine.targetPrice },
   ];
 
   console.log("---", row.supplierArticle, "---");

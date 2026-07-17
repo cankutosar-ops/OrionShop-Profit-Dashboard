@@ -2,6 +2,7 @@ import { CostManagementManager } from "@/components/costs/cost-management-manage
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
+import { measureAsync, recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { fetchCostManagementRows } from "@/services/cost-service";
 
@@ -30,8 +31,18 @@ export default async function CostManagementPage({ searchParams }: PageProps) {
   }
 
   const params = await searchParams;
+  const started = Date.now();
   const scope = await resolveScopedDateRange(params);
-  const rows = await fetchCostManagementRows(scope);
+  const rows = await measureAsync("server.fetchCostManagementRows", "server", () =>
+    fetchCostManagementRows(scope)
+  );
+  recordPerfEvent({
+    category: "server",
+    name: "server.CostManagementPage.render",
+    durationMs: Date.now() - started,
+    route: "/costs",
+    meta: { rows: rows.length },
+  });
 
   return (
     <>

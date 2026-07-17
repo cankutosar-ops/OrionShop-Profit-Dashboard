@@ -1,33 +1,47 @@
 import { NextResponse } from "next/server";
-import { beginSyncTrace, endSyncTrace, syncLog } from "@/lib/wildberries/sync-log";
-import { executeDashboardSync } from "@/services/dashboard-sync-service";
+import { syncLog } from "@/lib/wildberries/sync-log";
 import {
   ensureDefaultTenant,
   resolveMarketplaceAccountId,
 } from "@/services/marketplace-account-service";
+import {
+  runBlockingDashboardSync,
+  scheduleBackgroundDashboardSync,
+  SyncAlreadyRunningError,
+} from "@/services/sync-job-service";
 
 export const maxDuration = 300;
 
 /**
  * POST /api/sync
  * Sync Wildberries data into Supabase for a specific marketplace account.
+ * Default: returns 202 immediately and runs sync in the background via after().
+ * Pass { blocking: true } for CLI/scripts that need a synchronous response.
  */
 export async function POST(request: Request) {
-  const requestId = crypto.randomUUID().slice(0, 8);
-  beginSyncTrace(requestId);
-
   try {
-    syncLog("route", "POST /api/sync received", { requestId });
-
     const body = await request.json();
-    const { marketplaceAccountId, dateFrom, dateTo, entities } = body as {
+    const {
+      marketplaceAccountId,
+      dateFrom,
+      dateTo,
+      entities,
+      blocking = false,
+    } = body as {
       marketplaceAccountId?: string;
       dateFrom?: string;
       dateTo?: string;
-      entities?: Parameters<typeof executeDashboardSync>[0]["entities"];
+      entities?: Parameters<typeof runBlockingDashboardSync>[0]["entities"];
+      blocking?: boolean;
     };
 
-    syncLog("route", "Request body parsed", { marketplaceAccountId, dateFrom, dateTo, entities });
+    syncLog("route", "POST /api/sync received", {
+      marketplaceAccountId,
+      dateFrom,
+      dateTo,
+      entities,
+      blocking,
+    });
 
     if (!dateFrom || !dateTo) {
       syncLog("route", "Missing dateFrom/dateTo — returning 400");
@@ -41,31 +55,52 @@ export async function POST(request: Request) {
       ? { marketplaceAccountId }
       : await resolveMarketplaceAccountId(null, null);
 
-    const result = await executeDashboardSync({
+    const syncRequest = {
       marketplaceAccountId: resolved.marketplaceAccountId,
       dateFrom,
       dateTo,
       entities,
-    });
+    };
 
-    syncLog("route", "Returning response", {
-      success: result.success,
-      status: result.lastSyncStatus,
-    });
-    endSyncTrace(requestId, result.success);
+    if (blocking) {
+      const result = await runBlockingDashboardSync(syncRequest);
+      syncLog("route", "Blocking sync complete", {
+        success: result.success,
+        status: result.lastSyncStatus,
+      });
+      return NextResponse.json({
+        success: result.success,
+        marketplaceAccountId: result.marketplaceAccountId,
+        lastSyncStatus: result.lastSyncStatus,
+        results: result.results,
+        timing: result.timing,
+        mode: "blocking",
+      });
+    }
 
-    return NextResponse.json({
-      success: result.success,
-      marketplaceAccountId: result.marketplaceAccountId,
-      lastSyncStatus: result.lastSyncStatus,
-      results: result.results,
-    });
+    const scheduled = await scheduleBackgroundDashboardSync(syncRequest);
+    syncLog("route", "Background sync accepted", scheduled);
+
+    return NextResponse.json(
+      {
+        accepted: true,
+        mode: "background",
+        requestId: scheduled.requestId,
+        marketplaceAccountId: scheduled.marketplaceAccountId,
+        lastSyncStatus: "running",
+        statusUrl: `/api/sync/status?marketplaceAccountId=${scheduled.marketplaceAccountId}`,
+      },
+      { status: 202 }
+    );
   } catch (error) {
+    if (error instanceof SyncAlreadyRunningError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+
     const message = error instanceof Error ? error.message : "Sync failed";
     const status = message.includes("API key") || message.includes("not found") ? 400 : 500;
 
     syncLog("route", "POST /api/sync failed", { message, status });
-    endSyncTrace(requestId, false);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -78,5 +113,7 @@ export async function GET() {
     message:
       "POST /api/sync with marketplaceAccountId, dateFrom and dateTo to sync Wildberries data.",
     entities: ["products", "orders", "sales", "finance", "stock"],
+    defaultMode: "background",
+    statusEndpoint: "/api/sync/status?marketplaceAccountId=<id>",
   });
 }

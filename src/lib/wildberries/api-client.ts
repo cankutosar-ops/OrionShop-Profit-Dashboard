@@ -1,4 +1,5 @@
-import { WB_CONTENT_API, WB_RATE_LIMIT_MS, WB_STATISTICS_API } from "./constants";
+import { WB_CONTENT_API, WB_FINANCE_API, WB_FINANCE_PAGE_DELAY_MS, WB_RATE_LIMIT_MAX_RETRIES, WB_RATE_LIMIT_MS, WB_STATISTICS_API } from "./constants";
+import { recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { syncLog } from "./sync-log";
 import type {
   WbApiCardsResponse,
@@ -7,6 +8,8 @@ import type {
   WbApiProductCard,
   WbApiSale,
   WbApiStockRow,
+  WbAccountBalance,
+  WbSalesReportListItem,
 } from "./types";
 
 export type WbApiConfig = {
@@ -63,48 +66,101 @@ export class WbApiClient {
   }
 
   private async request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
-    const elapsed = Date.now() - this.lastRequestAt;
-    if (elapsed < WB_RATE_LIMIT_MS) {
-      await sleep(WB_RATE_LIMIT_MS - elapsed);
+    let attempt = 0;
+    let count429 = 0;
+    const overallStarted = Date.now();
+    const endpoint = `${baseUrl}${path.split("?")[0]}`;
+
+    while (true) {
+      attempt += 1;
+      const elapsed = Date.now() - this.lastRequestAt;
+      if (elapsed < WB_RATE_LIMIT_MS) {
+        await sleep(WB_RATE_LIMIT_MS - elapsed);
+      }
+
+      const url = `${baseUrl}${path}`;
+      syncLog("wb-api", "Request START", {
+        method: init?.method ?? "GET",
+        url,
+        attempt,
+      });
+
+      const startedAt = Date.now();
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          Authorization: this.token,
+          "Content-Type": "application/json",
+          ...init?.headers,
+        },
+      });
+
+      this.lastRequestAt = Date.now();
+      const durationMs = Date.now() - startedAt;
+
+      syncLog("wb-api", "Request END", {
+        method: init?.method ?? "GET",
+        url,
+        status: response.status,
+        durationMs,
+        attempt,
+      });
+
+      if (response.status === 429 && attempt < WB_RATE_LIMIT_MAX_RETRIES) {
+        count429 += 1;
+        const waitMs = Math.min(180_000, 20_000 * attempt);
+        syncLog("wb-api", "Rate limited — retrying", { attempt, waitMs });
+        await sleep(waitMs);
+        continue;
+      }
+
+      if (!response.ok) {
+        recordPerfEvent({
+          category: "wb_api",
+          name: `wb_api.${path.split("?")[0]}`,
+          durationMs: Date.now() - overallStarted,
+          meta: {
+            endpoint,
+            path,
+            method: init?.method ?? "GET",
+            status: response.status,
+            retries: Math.max(0, attempt - 1),
+            count429,
+            cache: "miss",
+            ok: false,
+          },
+        });
+        const body = await response.text();
+        throw new WbApiError(
+          `WB API error ${response.status}: ${body.slice(0, 300)}`,
+          response.status,
+          path
+        );
+      }
+
+      recordPerfEvent({
+        category: "wb_api",
+        name: `wb_api.${path.split("?")[0]}`,
+        durationMs: Date.now() - overallStarted,
+        meta: {
+          endpoint,
+          path,
+          method: init?.method ?? "GET",
+          status: response.status,
+          retries: Math.max(0, attempt - 1),
+          count429,
+          cache: "miss",
+          ok: true,
+          attemptDurationMs: durationMs,
+        },
+      });
+
+      if (response.status === 204) {
+        return [] as T;
+      }
+
+      return response.json() as Promise<T>;
     }
-
-    const url = `${baseUrl}${path}`;
-    syncLog("wb-api", "Request START", { method: init?.method ?? "GET", url });
-
-    const startedAt = Date.now();
-    const response = await fetch(url, {
-      ...init,
-      headers: {
-        Authorization: this.token,
-        "Content-Type": "application/json",
-        ...init?.headers,
-      },
-    });
-
-    this.lastRequestAt = Date.now();
-    const durationMs = Date.now() - startedAt;
-
-    syncLog("wb-api", "Request END", {
-      method: init?.method ?? "GET",
-      url,
-      status: response.status,
-      durationMs,
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      throw new WbApiError(
-        `WB API error ${response.status}: ${body.slice(0, 300)}`,
-        response.status,
-        path
-      );
-    }
-
-    if (response.status === 204) {
-      return [] as T;
-    }
-
-    return response.json() as Promise<T>;
   }
 
   /** Paginated fetch for orders/sales statistics endpoints */
@@ -159,6 +215,49 @@ export class WbApiClient {
     return this.fetchPaginatedStatistics<WbApiStockRow>("/api/v1/supplier/stocks", dateFrom);
   }
 
+  /**
+   * Weekly/daily realization report list with bank transfer totals.
+   * Requires Personal or Service token with Finance scope.
+   */
+  async fetchSalesReportsList(
+    dateFrom: string,
+    dateTo: string,
+    period: "weekly" | "daily" = "weekly"
+  ): Promise<WbSalesReportListItem[]> {
+    const all: WbSalesReportListItem[] = [];
+    let offset = 0;
+    const limit = 1000;
+
+    syncLog("wb-api", "Sales reports list START", { dateFrom, dateTo, period });
+
+    while (true) {
+      const batch = await this.request<WbSalesReportListItem[]>(
+        WB_FINANCE_API,
+        "/api/finance/v1/sales-reports/list",
+        {
+          method: "POST",
+          body: JSON.stringify({ dateFrom, dateTo, period, limit, offset }),
+        }
+      );
+
+      if (!batch.length) break;
+      all.push(...batch);
+      if (batch.length < limit) break;
+      offset += limit;
+    }
+
+    syncLog("wb-api", "Sales reports list END", { totalRows: all.length });
+    return all;
+  }
+
+  /** Seller wallet balance — portal main-page widget. Requires Finance-scoped token. */
+  async fetchAccountBalance(): Promise<WbAccountBalance> {
+    syncLog("wb-api", "Account balance START", {});
+    const data = await this.request<WbAccountBalance>(WB_FINANCE_API, "/api/v1/account/balance");
+    syncLog("wb-api", "Account balance END", { currency: data.currency });
+    return data;
+  }
+
   async fetchFinanceReport(dateFrom: string, dateTo: string): Promise<WbApiFinanceRow[]> {
     const all: WbApiFinanceRow[] = [];
     let rrdid = 0;
@@ -190,6 +289,7 @@ export class WbApiClient {
       const lastRrd = batch[batch.length - 1].rrd_id;
       if (lastRrd === rrdid) break;
       rrdid = lastRrd;
+      await sleep(WB_FINANCE_PAGE_DELAY_MS);
     }
 
     syncLog("wb-api", "Finance report END", { totalRows: all.length, pages: page });

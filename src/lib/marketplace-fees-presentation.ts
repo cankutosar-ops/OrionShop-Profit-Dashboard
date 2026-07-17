@@ -1,6 +1,6 @@
-import type { MarketplaceFeesPresentation } from "@/lib/finance-rollup";
 import { buildMarketplaceFeesPresentationFromFinance } from "@/lib/finance-rollup";
 import { parseWbSourceSuffix } from "@/lib/finance-category";
+import type { MarketplaceFeesPresentation } from "@/types/finance";
 
 export type { MarketplaceFeesPresentation };
 

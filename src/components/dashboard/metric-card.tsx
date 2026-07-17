@@ -8,6 +8,13 @@ type MetricCardProps = {
   icon: LucideIcon;
   trend?: { value: number; label: string };
   variant?: "default" | "success" | "warning" | "danger";
+  /** Override icon gradient (Model B commercial palette). */
+  iconClassName?: string;
+  hint?: string;
+  /** Card wrapper classes (e.g. Net Profit emphasis). */
+  className?: string;
+  /** Enlarge value typography (~25% for primary KPI). */
+  size?: "default" | "hero";
 };
 
 const variantStyles = {
@@ -24,13 +31,30 @@ export function MetricCard({
   icon: Icon,
   trend,
   variant = "default",
+  iconClassName,
+  className,
+  size = "default",
+  hint,
 }: MetricCardProps) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:bg-card-hover">
+    <div
+      title={hint}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:bg-card-hover",
+        className
+      )}
+    >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
+          <p
+            className={cn(
+              "font-bold tracking-tight",
+              size === "hero" ? "text-3xl leading-none" : "text-2xl"
+            )}
+          >
+            {value}
+          </p>
           {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
           {trend && (
             <p
@@ -47,7 +71,7 @@ export function MetricCard({
         <div
           className={cn(
             "flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br",
-            variantStyles[variant]
+            iconClassName ?? variantStyles[variant]
           )}
         >
           <Icon className="h-5 w-5" />

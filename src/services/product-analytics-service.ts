@@ -11,6 +11,7 @@ import {
 } from "@/lib/product-analytics";
 import { getProductProfitability } from "@/services/dashboard-service";
 import { getCurrentStockByProductId } from "@/services/inventory-report-service";
+import { logScopeAudit } from "@/lib/scope-audit-log";
 import type {
   ProductAnalyticsRow,
   ProductAnalyticsTotals,
@@ -48,6 +49,12 @@ export async function getProductAnalytics(
     currentStock: stockByProductId.get(String(row.productId)) ?? 0,
   }));
   const totals = buildProductAnalyticsTotals(products);
+
+  logScopeAudit("Product Analytics", scope, scope, {
+    orders: products.reduce((sum, p) => sum + p.orders, 0),
+    sales: products.reduce((sum, p) => sum + p.purchases, 0),
+    finance: 0,
+  });
 
   return {
     range: scope,

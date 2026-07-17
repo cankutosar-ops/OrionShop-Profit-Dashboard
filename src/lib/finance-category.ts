@@ -1,37 +1,8 @@
-import type { FinanceOperationType, WbFinance } from "@/types/database";
-
-export type FinanceCategory =
-  | "COMMISSION"
-  | "ACQUIRING"
-  | "PPVZ_REWARD"
-  | "PPVZ_VW"
-  | "LOGISTICS"
-  | "RETURN_LOGISTICS"
-  | "STORAGE"
-  | "PENALTY"
-  | "ADJUSTMENT"
-  | "COMPENSATION"
-  | "OTHER";
-
-/**
- * Reserved for a future reporting dimension (e.g. expense vs credit).
- * Stored on wb_finance.finance_nature when populated — nullable until then.
- */
-export type FinanceNature = string;
-
-export const FINANCE_CATEGORIES: FinanceCategory[] = [
-  "COMMISSION",
-  "ACQUIRING",
-  "PPVZ_REWARD",
-  "PPVZ_VW",
-  "LOGISTICS",
-  "RETURN_LOGISTICS",
-  "STORAGE",
-  "PENALTY",
-  "ADJUSTMENT",
-  "COMPENSATION",
-  "OTHER",
-];
+import type { FinanceCategory, FinanceOperationType, FinanceNature } from "@/types/finance";
+import { FINANCE_CATEGORIES } from "@/types/finance";
+import type { WbFinance } from "@/types/database";
+export type { FinanceCategory, FinanceNature };
+export { FINANCE_CATEGORIES };
 
 const SUFFIX_TO_CATEGORY: Record<string, FinanceCategory> = {
   commission: "COMMISSION",
@@ -48,6 +19,7 @@ const SUFFIX_TO_CATEGORY: Record<string, FinanceCategory> = {
   oper_penalty: "PENALTY",
   deduction: "ADJUSTMENT",
   additional_payment: "COMPENSATION",
+  for_pay: "OTHER",
   acceptance: "OTHER",
 };
 
@@ -119,6 +91,15 @@ export function isMarketplaceServiceFeeCategory(category: FinanceCategory): bool
   return category === "ACQUIRING" || category === "PPVZ_REWARD" || category === "PPVZ_VW";
 }
 
+/** Categories included in Marketplace Fees (per-sale marketplace costs; excludes ADJUSTMENT and reimbursements). */
+export function isMarketplaceFeeCategory(category: FinanceCategory): boolean {
+  return (
+    category === "COMMISSION" ||
+    isMarketplaceServiceFeeCategory(category) ||
+    category === "OTHER"
+  );
+}
+
 /** Sprint 6.10 legacy rows may store supplier_oper_name in description. */
 export function legacyDescriptionAsOperName(description: string | null | undefined): string | null {
   if (!description?.trim() || description.startsWith("rrd:")) return null;
@@ -159,14 +140,11 @@ export function effectiveFinanceCategory(row: WbFinance): FinanceCategory {
 }
 
 /**
- * Profit bucket type for a row.
- * Uses persisted finance_category when set; otherwise legacy operation_type (pre-backfill parity).
+ * Profit bucket type for a row — always derived from effectiveFinanceCategory().
+ * Single categorization path for dashboard P&L, rollup, and profitability breakdown.
  */
 export function profitOperationTypeForRow(row: WbFinance): FinanceOperationType {
-  if (row.finance_category) {
-    return categoryToOperationType(row.finance_category);
-  }
-  return row.operation_type;
+  return categoryToOperationType(effectiveFinanceCategory(row));
 }
 
 export function rowMatchesFinanceCategory(

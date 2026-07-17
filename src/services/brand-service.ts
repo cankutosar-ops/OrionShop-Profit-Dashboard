@@ -21,8 +21,9 @@ export async function getBrandsForMarketplaceAccount(
 
   const byId = new Map<string, Brand>();
   for (const row of (data ?? []) as ProductBrandRow[]) {
-    if (row.brand?.id) {
-      byId.set(row.brand.id, row.brand);
+    if (row.brand?.id != null && row.brand.id !== "") {
+      const id = String(row.brand.id);
+      byId.set(id, { ...row.brand, id });
     }
   }
 

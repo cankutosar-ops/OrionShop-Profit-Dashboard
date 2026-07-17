@@ -1,0 +1,613 @@
+{
+  "metadata": {
+    "generatedAt": "2026-07-11T10:39:28.248Z",
+    "sourceFile": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\accounting-reconciliation.json",
+    "sourceMetadata": {
+      "builtAt": "2026-07-11T10:37:06.777Z",
+      "sources": {
+        "orders": {
+          "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\wb-raw-2026-06-18_2026-06-29\\orders.json",
+          "rowCount": 774,
+          "metadata": {
+            "endpointUrl": "https://statistics-api.wildberries.ru/api/v1/supplier/orders",
+            "method": "GET",
+            "requestParameters": {
+              "dateFrom": "2026-06-18T00:00:00",
+              "flag": "0",
+              "pagination": "lastChangeDate"
+            },
+            "accountId": "1",
+            "dateRange": {
+              "from": "2026-06-18",
+              "to": "2026-06-29"
+            },
+            "exportedAt": "2026-07-11T10:30:39.908Z",
+            "rowCount": 774,
+            "note": "Statistics API has no dateTo. Full paginated response from dateFrom cursor. No client-side filtering applied.",
+            "paginationPages": 1
+          }
+        },
+        "sales": {
+          "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\wb-raw-2026-06-18_2026-06-29\\sales.json",
+          "rowCount": 201,
+          "metadata": {
+            "endpointUrl": "https://statistics-api.wildberries.ru/api/v1/supplier/sales",
+            "method": "GET",
+            "requestParameters": {
+              "dateFrom": "2026-06-18T00:00:00",
+              "flag": "0",
+              "pagination": "lastChangeDate"
+            },
+            "accountId": "1",
+            "dateRange": {
+              "from": "2026-06-18",
+              "to": "2026-06-29"
+            },
+            "exportedAt": "2026-07-11T10:30:41.413Z",
+            "rowCount": 201,
+            "note": "Statistics API has no dateTo. Full paginated response from dateFrom cursor. No client-side filtering applied.",
+            "paginationPages": 1
+          }
+        },
+        "finance": {
+          "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\wb-raw-2026-06-18_2026-06-29\\finance.json",
+          "rowCount": 2687,
+          "metadata": {
+            "endpointUrl": "https://statistics-api.wildberries.ru/api/v5/supplier/reportDetailByPeriod",
+            "method": "GET",
+            "requestParameters": {
+              "dateFrom": "2026-06-18",
+              "dateTo": "2026-06-29",
+              "limit": "100000",
+              "rrdid": "0 (paginated)"
+            },
+            "accountId": "1",
+            "dateRange": {
+              "from": "2026-06-18",
+              "to": "2026-06-29"
+            },
+            "exportedAt": "2026-07-11T10:30:44.577Z",
+            "rowCount": 2687,
+            "paginationPages": 2,
+            "apiVersion": "v5 (deprecated 2026-07-15)"
+          }
+        }
+      },
+      "uniqueSridCount": 1821,
+      "financeRowsWithoutSrid": 6,
+      "note": "One record per unique SRID. Raw fields preserved. finance is always an array; order/sale are null, a single object, or an array when multiple source rows share the same SRID."
+    },
+    "datasetSummary": {
+      "uniqueSridRecords": 1821,
+      "totalFinanceRows": 2687,
+      "financeRowsWithoutSrid": 6,
+      "sridRecordsWithZeroFinanceRows": 361
+    },
+    "note": "Statistical summaries only. No profit calculations. No business logic. Attachment flags are at SRID record level (order/sale present on the joined record)."
+  },
+  "financeRowsPerSridDistribution": [
+    {
+      "financeRowCount": 0,
+      "sridCount": 361
+    },
+    {
+      "financeRowCount": 1,
+      "sridCount": 942
+    },
+    {
+      "financeRowCount": 2,
+      "sridCount": 89
+    },
+    {
+      "financeRowCount": 3,
+      "sridCount": 186
+    },
+    {
+      "financeRowCount": 4,
+      "sridCount": 221
+    },
+    {
+      "financeRowCount": 5,
+      "sridCount": 13
+    },
+    {
+      "financeRowCount": 6,
+      "sridCount": 9
+    }
+  ],
+  "supplierOperNameCounts": [
+    {
+      "supplierOperName": "Возмещение издержек по перевозке/по складским операциям с товаром",
+      "count": 1585
+    },
+    {
+      "supplierOperName": "Логистика",
+      "count": 894
+    },
+    {
+      "supplierOperName": "Продажа",
+      "count": 93
+    },
+    {
+      "supplierOperName": "Возмещение за выдачу и возврат товаров на ПВЗ",
+      "count": 73
+    },
+    {
+      "supplierOperName": "Возврат",
+      "count": 28
+    },
+    {
+      "supplierOperName": "Хранение",
+      "count": 12
+    },
+    {
+      "supplierOperName": "Удержание",
+      "count": 2
+    }
+  ],
+  "supplierOperNameStats": [
+    {
+      "supplierOperName": "Возмещение издержек по перевозке/по складским операциям с товаром",
+      "totalRows": 1585,
+      "withSale": 96,
+      "withOrder": 543,
+      "financeOnly": 1009
+    },
+    {
+      "supplierOperName": "Логистика",
+      "totalRows": 894,
+      "withSale": 121,
+      "withOrder": 684,
+      "financeOnly": 169
+    },
+    {
+      "supplierOperName": "Продажа",
+      "totalRows": 93,
+      "withSale": 93,
+      "withOrder": 65,
+      "financeOnly": 0
+    },
+    {
+      "supplierOperName": "Возмещение за выдачу и возврат товаров на ПВЗ",
+      "totalRows": 73,
+      "withSale": 3,
+      "withOrder": 4,
+      "financeOnly": 69
+    },
+    {
+      "supplierOperName": "Возврат",
+      "totalRows": 28,
+      "withSale": 28,
+      "withOrder": 15,
+      "financeOnly": 0
+    },
+    {
+      "supplierOperName": "Хранение",
+      "totalRows": 12,
+      "withSale": 0,
+      "withOrder": 0,
+      "financeOnly": 12
+    },
+    {
+      "supplierOperName": "Удержание",
+      "totalRows": 2,
+      "withSale": 0,
+      "withOrder": 0,
+      "financeOnly": 2
+    }
+  ],
+  "top50SridsByFinanceEvents": [
+    {
+      "srid": "eA7.r3856ecb992b6499e9a7c0accada975a9.0.0",
+      "financeEventCount": 6,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eAQ.i603b704f5c59cb1ea1f767e87b5f58be.0.0",
+      "financeEventCount": 6,
+      "hasOrder": false,
+      "hasSale": true
+    },
+    {
+      "srid": "eB.r6cda524f35dd4f4791afbcea90007144.5.0",
+      "financeEventCount": 6,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eB8.i84e19efdd2bb89b5b06435a323b2850a.0.0",
+      "financeEventCount": 6,
+      "hasOrder": false,
+      "hasSale": true
+    },
+    {
+      "srid": "eB8.r1d97e1ce7b114daf804dc6fb065526a6.0.0",
+      "financeEventCount": 6,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eBA.r1e550ca2355a417e9e47d333d08fe2ba.0.0",
+      "financeEventCount": 6,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "ebP.r5c257db0939d46c9b1fb1bed7be3f236.0.0",
+      "financeEventCount": 6,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eI.i01e576f0aa71ccb201af3f513797f8ba.0.0",
+      "financeEventCount": 6,
+      "hasOrder": false,
+      "hasSale": true
+    },
+    {
+      "srid": "eI.ra7b26787e90b448899fd1a0e302d7494.12.0",
+      "financeEventCount": 6,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eA1.i720b9ff6b19fed5e14a36fbce0999e6f.0.0",
+      "financeEventCount": 5,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "eA9.r92f7c8b9c26a4fcabb38762f8ad5a5b8.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eAr.58175c4a1ef8481fb9736e5ea18fa0a7.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eAR.rc7a151afe81e4daf976ee4978a665766.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eb0.r00f5bb4e10804c3f98b165cdb62a6bed.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eB8.rae865bcc5c894dae99dda0c45ab52f81.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eB8.ree30409e7fc046f7a3ebbec2d2b40ebe.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eBu.r11f655b0f62949caac4d38360ecf7a14.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eE.r8ee56088f899411eac51910578e59523.0.0",
+      "financeEventCount": 5,
+      "hasOrder": false,
+      "hasSale": true
+    },
+    {
+      "srid": "eF.i37ec4dba48b3207f66ce97c7706488d4.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eM.r5081e629b7b6463badfeefcf8a0aedfa.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eQ.r303602cfb5c5443a91a9f0fd5f5c2eec.0.0",
+      "financeEventCount": 5,
+      "hasOrder": true,
+      "hasSale": true
+    },
+    {
+      "srid": "eY.92d97229620940798c955b54492a7f44.8.0",
+      "financeEventCount": 5,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "104236795625959016.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "5031535133234112968.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "766e4a17d86b4b34b30b9a8491dcd54e",
+      "financeEventCount": 4,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "9092208665100118424.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e0.rec9a41017d8d41f8bb34c661e50987db.0.0",
+      "financeEventCount": 4,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "e3.i01de4072169319dfe3a3cfc4f156ae50.5.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e3.i4b86a3ed8122b22d43024303d2513a15.1.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e3.raea2a646fb7a4a92ae299511a32fdd23.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e5.idfadd0ec088bdd6f20601b3ac17152cd.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e5.r3c56d145840f4d058f47e1162e1eb710.0.0",
+      "financeEventCount": 4,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "e8.recccb72501854e0ca56acbdc185307f9.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e9.r6039675330194cf5811b3878d987a85a.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "e9.r9d6623d49c3346e48fe3ba0172edf33f.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA.r07af665a1b09449ea1c5124dbdbe07ac.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA.re92ac5907ada4750b1e35b9a83301b42.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA1.r94bd41c61371482c8c5543421bc9ce36.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA2.r02030b2d0aa841728591f777f8f59c67.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA2.r3cef6bf2fc864623bd18d575c096d4a1.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA2.rcfdf9f4bc9874d63be6939a5e8428ee5.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA3.r1c823efce2774986a5cabf7bbd58281a.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA4.ie3b25e82e2c3ac59a1f5cd1400e9ee47.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA4.ie687c9b319f25c351645f81db3b95e78.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA8.r81f3244483984187b9f62e51297d46cd.2.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eA9.r57ea30cea34c4a7db7de82a259361258.0.0",
+      "financeEventCount": 4,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "eA9.rbc24c4d4519e4557b648b136ba6c7777.0.0",
+      "financeEventCount": 4,
+      "hasOrder": false,
+      "hasSale": false
+    },
+    {
+      "srid": "eAB.i20b2de00291829493643f62347e74e5d.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eAB.i97810b12b3cb3e8f6b76bdde0cce9221.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": false
+    },
+    {
+      "srid": "eAB.r960bada91fc74268a0919ac8e2653339.0.0",
+      "financeEventCount": 4,
+      "hasOrder": true,
+      "hasSale": true
+    }
+  ],
+  "exampleSridsByFinanceRowCount": {
+    "1": [
+      "1005385",
+      "1034322",
+      "10544426",
+      "1103298",
+      "1103299",
+      "1110632",
+      "1110633",
+      "1110634",
+      "1110635",
+      "1110636",
+      "115397",
+      "1186377",
+      "1187464",
+      "1187465",
+      "1187466",
+      "1187467",
+      "1187468",
+      "1187469",
+      "1187470",
+      "1187471"
+    ],
+    "2": [
+      "7731544500256587797.0.0",
+      "79590740626168596.0.0",
+      "e0.raf3ad0eaf15743c59a3ba9a26c1b5378.0.0",
+      "e2.rcbddf346525340eab12e9435a7c66eb2.0.0",
+      "e35def307c0641d7a659447b3475a10a",
+      "e9.r17ae90b7b00f47fa81c8f7bfac809740.0.0",
+      "eAI.r0056243597db42e4b7e09679c68d80ea.0.0",
+      "eAM.r9d94fca4a7be4dd89a51453e2f097608.5.0",
+      "eAP.re8560a3a5a1641729b0e927301281e69.0.0",
+      "eAS.r139e82a7c4c940dc88d1c56d1a04ccfd.0.0",
+      "eAS.r412cdcd4d1c14ee791876b6cc802f728.0.0",
+      "eAT.ia2d02e0041b43792c13c256ad416be7b.0.0",
+      "eAU.r002a7e2daa42450483996710d836dc88.0.0",
+      "eAe.57391019a5064752b5b41d18621950e5.0.0",
+      "eAh.r79d3cb207de54be787cfbd9f0b970ebb.0.0",
+      "eAj.r1464c84048404add83c79d8ea53a6ae5.0.0",
+      "eAm.i30e47222f7c5c0b1ce1e87e2c3faaba0.0.0",
+      "eAp.r34036a276ef14e84bb0659acbf5ec2dd.0.0",
+      "eAr.rca7076586a15483aa4e18fa633796380.0.0",
+      "eAy.i686dca012f2177ac318dd8e906ad4d93.0.0"
+    ],
+    "3": [
+      "4713081828977071336.0.0",
+      "5339795859873137020.0.0",
+      "7643152773157854058.0.0",
+      "e1.rb36103ab03af4d0eb571046a8f32c5a8.0.0",
+      "e1.rccdd134f1be04ecb9b76839f92d24a34.0.0",
+      "e4.ra0bcc5014b49402a931572d0d3225df8.0.0",
+      "e8.r70c53dab43d9457eb9e197ef8d6a25d8.0.0",
+      "e8.rb497425ab86440c0a064246b1d2c0391.0.0",
+      "e9.re3748dbf8c4d41c09891c35ed0f27bbf.0.0",
+      "e9.rfaba8c5e94834ae6ba9a988de40f590d.0.0",
+      "eA1.r7e0076f6c2dc480db1b7bda191deef31.0.0",
+      "eA2.r0083bf2887434382909b5e78f8ab6679.0.0",
+      "eA5.ib0fd79280f6d66c5f0ac0b920194e1bf.0.0",
+      "eA9.r95835f5e1079409f9193636091fd3e78.0.0",
+      "eA9.rdf7883e5448e41499d28c0b66847990e.0.0",
+      "eAA.r35dd5da9c8324d78a45775a3c5bc5acc.0.0",
+      "eAA.r468ccde94817497aa0c87269052895fe.0.0",
+      "eAE.r7dfcabc68d3c497cb91cafe5cbfc12fa.0.0",
+      "eAH.reb401e95657b4aafac013b1854cbc2fc.1.0",
+      "eAH.reb401e95657b4aafac013b1854cbc2fc.4.0"
+    ],
+    "4": [
+      "104236795625959016.0.0",
+      "5031535133234112968.0.0",
+      "766e4a17d86b4b34b30b9a8491dcd54e",
+      "9092208665100118424.0.0",
+      "e0.rec9a41017d8d41f8bb34c661e50987db.0.0",
+      "e3.i01de4072169319dfe3a3cfc4f156ae50.5.0",
+      "e3.i4b86a3ed8122b22d43024303d2513a15.1.0",
+      "e3.raea2a646fb7a4a92ae299511a32fdd23.0.0",
+      "e5.idfadd0ec088bdd6f20601b3ac17152cd.0.0",
+      "e5.r3c56d145840f4d058f47e1162e1eb710.0.0",
+      "e8.recccb72501854e0ca56acbdc185307f9.0.0",
+      "e9.r6039675330194cf5811b3878d987a85a.0.0",
+      "e9.r9d6623d49c3346e48fe3ba0172edf33f.0.0",
+      "eA.r07af665a1b09449ea1c5124dbdbe07ac.0.0",
+      "eA.re92ac5907ada4750b1e35b9a83301b42.0.0",
+      "eA1.r94bd41c61371482c8c5543421bc9ce36.0.0",
+      "eA2.r02030b2d0aa841728591f777f8f59c67.0.0",
+      "eA2.r3cef6bf2fc864623bd18d575c096d4a1.0.0",
+      "eA2.rcfdf9f4bc9874d63be6939a5e8428ee5.0.0",
+      "eA3.r1c823efce2774986a5cabf7bbd58281a.0.0"
+    ],
+    "5+": [
+      "eA1.i720b9ff6b19fed5e14a36fbce0999e6f.0.0",
+      "eA7.r3856ecb992b6499e9a7c0accada975a9.0.0",
+      "eA9.r92f7c8b9c26a4fcabb38762f8ad5a5b8.0.0",
+      "eAQ.i603b704f5c59cb1ea1f767e87b5f58be.0.0",
+      "eAR.rc7a151afe81e4daf976ee4978a665766.0.0",
+      "eAr.58175c4a1ef8481fb9736e5ea18fa0a7.0.0",
+      "eB.r6cda524f35dd4f4791afbcea90007144.5.0",
+      "eB8.i84e19efdd2bb89b5b06435a323b2850a.0.0",
+      "eB8.r1d97e1ce7b114daf804dc6fb065526a6.0.0",
+      "eB8.rae865bcc5c894dae99dda0c45ab52f81.0.0",
+      "eB8.ree30409e7fc046f7a3ebbec2d2b40ebe.0.0",
+      "eBA.r1e550ca2355a417e9e47d333d08fe2ba.0.0",
+      "eBu.r11f655b0f62949caac4d38360ecf7a14.0.0",
+      "eE.r8ee56088f899411eac51910578e59523.0.0",
+      "eF.i37ec4dba48b3207f66ce97c7706488d4.0.0",
+      "eI.i01e576f0aa71ccb201af3f513797f8ba.0.0",
+      "eI.ra7b26787e90b448899fd1a0e302d7494.12.0",
+      "eM.r5081e629b7b6463badfeefcf8a0aedfa.0.0",
+      "eQ.r303602cfb5c5443a91a9f0fd5f5c2eec.0.0",
+      "eY.92d97229620940798c955b54492a7f44.8.0"
+    ]
+  }
+}

@@ -83,6 +83,8 @@ export function mapApiOrderToDb(
     order_date: toDateString(order.date),
     sale_date: null,
     price: order.totalPrice ?? 0,
+    price_with_disc: order.priceWithDisc ?? 0,
+    last_change_date: toDateString(order.lastChangeDate),
     quantity: 1,
     status: order.isCancel ? "cancelled" : "active",
     warehouse: order.warehouseName ?? null,
@@ -101,6 +103,8 @@ export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale,
     product_id: productId,
     sale_date: toDateString(sale.date),
     revenue: Math.abs(sale.finishedPrice ?? sale.forPay ?? 0),
+    price_with_disc: Math.abs(sale.priceWithDisc ?? 0),
+    for_pay: Math.abs(sale.forPay ?? 0),
     quantity: 1,
     is_return: isReturn,
     return_date: isReturn ? toDateString(sale.date) : null,
@@ -136,13 +140,14 @@ function buildFinanceLine(
     supplierOperName,
   });
   const operationType = categoryToOperationType(financeCategory);
+  const normalizedAmount = suffix === "for_pay" ? amount : Math.abs(amount);
 
   return {
     product_id: productId,
     nm_id: row.nm_id ?? null,
     operation_date: operationDate,
     operation_type: operationType,
-    amount: Math.abs(amount),
+    amount: normalizedAmount,
     source_key: sourceKey,
     description: null,
     srid: row.srid ?? null,
@@ -176,6 +181,15 @@ export function mapFinanceRowsFromReport(
   add(row.ppvz_reward, "ppvz_reward");
   add(row.additional_payment, "additional_payment");
   add(row.ppvz_vw, "ppvz_vw");
+
+  if (row.ppvz_for_pay && Math.abs(row.ppvz_for_pay) > 0) {
+    const isReturn =
+      row.doc_type_name === "Возврат" || row.supplier_oper_name === "Возврат";
+    const signed = isReturn ? -Math.abs(row.ppvz_for_pay) : Math.abs(row.ppvz_for_pay);
+    lines.push(
+      buildFinanceLine({ row, productId, amount: signed, suffix: "for_pay" })
+    );
+  }
 
   const operName = (row.supplier_oper_name ?? "").toLowerCase();
   if (!lines.length && operName) {

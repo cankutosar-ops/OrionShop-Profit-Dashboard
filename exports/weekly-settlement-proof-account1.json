@@ -1,0 +1,3090 @@
+{
+  "generatedAt": "2026-07-12T13:32:10.796Z",
+  "accountId": 1,
+  "weeks": [
+    {
+      "from": "2024-01-29",
+      "to": "2024-02-04",
+      "wb": {
+        "ids": [
+          "250905382"
+        ],
+        "sales": 155223,
+        "settle": 145580.78,
+        "wbFee": 9642.22,
+        "log": 8867.03,
+        "stor": 837.25,
+        "pen": 15,
+        "ded": 2716.05,
+        "totalPay": 133145.45,
+        "op": 133145.45
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-02-05",
+      "to": "2024-02-11",
+      "wb": {
+        "ids": [
+          "252412872"
+        ],
+        "sales": 87518,
+        "settle": 82980,
+        "wbFee": 4538,
+        "log": 9794.32,
+        "stor": 1436.82,
+        "pen": 360,
+        "ded": 7617,
+        "totalPay": 63771.86,
+        "op": 63771.86
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-02-12",
+      "to": "2024-02-18",
+      "wb": {
+        "ids": [
+          "255373155"
+        ],
+        "sales": 136626.89,
+        "settle": 129618.45,
+        "wbFee": 7008.44,
+        "log": 11076.71,
+        "stor": 1726.23,
+        "pen": 40,
+        "ded": 7721,
+        "totalPay": 109054.51,
+        "op": 109054.51
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-02-19",
+      "to": "2024-02-25",
+      "wb": {
+        "ids": [
+          "254596290"
+        ],
+        "sales": 157187.11,
+        "settle": 148507.01,
+        "wbFee": 8680.1,
+        "log": 12759.95,
+        "stor": 2014.42,
+        "pen": 220,
+        "ded": -2450,
+        "totalPay": 135962.64,
+        "op": 135962.64
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-02-26",
+      "to": "2024-03-03",
+      "wb": {
+        "ids": [
+          "254071243"
+        ],
+        "sales": 125177.42,
+        "settle": 116845.65,
+        "wbFee": 8331.77,
+        "log": 12304.81,
+        "stor": 2266.94,
+        "pen": 195,
+        "ded": -367,
+        "totalPay": 102445.9,
+        "op": 102445.9
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-03-04",
+      "to": "2024-03-10",
+      "wb": {
+        "ids": [
+          "256725432"
+        ],
+        "sales": 139019.47,
+        "settle": 125630.9,
+        "wbFee": 13388.57,
+        "log": 13100.6,
+        "stor": 2583.51,
+        "pen": 280,
+        "ded": -2839,
+        "totalPay": 112505.79,
+        "op": 112505.79
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-03-11",
+      "to": "2024-03-17",
+      "wb": {
+        "ids": [
+          "257821875"
+        ],
+        "sales": 119079.09,
+        "settle": 108764.16,
+        "wbFee": 10314.93,
+        "log": 10353.11,
+        "stor": 2712.94,
+        "pen": 455,
+        "ded": -3500,
+        "totalPay": 98743.11,
+        "op": 98743.11
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-03-18",
+      "to": "2024-03-24",
+      "wb": {
+        "ids": [
+          "259048716"
+        ],
+        "sales": 131782.61,
+        "settle": 123398,
+        "wbFee": 8384.61,
+        "log": 13149.54,
+        "stor": 3126.59,
+        "pen": 345,
+        "ded": -4346,
+        "totalPay": 111122.87,
+        "op": 111122.87
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-03-25",
+      "to": "2024-03-31",
+      "wb": {
+        "ids": [
+          "256305426"
+        ],
+        "sales": 181267.43,
+        "settle": 169509.62,
+        "wbFee": 11757.81,
+        "log": 13206.88,
+        "stor": 3481.08,
+        "pen": 5280,
+        "ded": -2032,
+        "totalPay": 149573.66,
+        "op": 149573.66
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-04-01",
+      "to": "2024-04-07",
+      "wb": {
+        "ids": [
+          "261413678"
+        ],
+        "sales": 205741.83,
+        "settle": 202665.68,
+        "wbFee": 3076.15,
+        "log": 21757.88,
+        "stor": 3256.96,
+        "pen": 10640,
+        "ded": -4622,
+        "totalPay": 171632.84,
+        "op": 171632.84
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-04-08",
+      "to": "2024-04-14",
+      "wb": {
+        "ids": [
+          "261283164"
+        ],
+        "sales": 211391.45,
+        "settle": 199732.54,
+        "wbFee": 11658.91,
+        "log": 18347.16,
+        "stor": 3208.61,
+        "pen": 825,
+        "ded": -5000,
+        "totalPay": 182351.77,
+        "op": 182351.77
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-04-15",
+      "to": "2024-04-21",
+      "wb": {
+        "ids": [
+          "262141019"
+        ],
+        "sales": 227016.21,
+        "settle": 211878.37,
+        "wbFee": 15137.84,
+        "log": 27278.12,
+        "stor": 2964.46,
+        "pen": 700,
+        "ded": -5000,
+        "totalPay": 185935.79,
+        "op": 185935.79
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-04-22",
+      "to": "2024-04-28",
+      "wb": {
+        "ids": [
+          "262419618"
+        ],
+        "sales": 194530.42,
+        "settle": 188653.09,
+        "wbFee": 5877.33,
+        "log": 24916,
+        "stor": 2830.07,
+        "pen": 890,
+        "ded": -4742.33,
+        "totalPay": 164759.35,
+        "op": 164759.35
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-04-29",
+      "to": "2024-05-05",
+      "wb": {
+        "ids": [
+          "262851984"
+        ],
+        "sales": 174353.22,
+        "settle": 166191.95,
+        "wbFee": 8161.27,
+        "log": 22054.33,
+        "stor": 2728.7,
+        "pen": 875,
+        "ded": 0,
+        "totalPay": 140533.92,
+        "op": 140533.92
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-05-06",
+      "to": "2024-05-12",
+      "wb": {
+        "ids": [
+          "263231729"
+        ],
+        "sales": 177720.32,
+        "settle": 170179.42,
+        "wbFee": 7540.9,
+        "log": 22471.95,
+        "stor": 2486.56,
+        "pen": 1415,
+        "ded": 0,
+        "totalPay": 143805.91,
+        "op": 143805.91
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-05-13",
+      "to": "2024-05-19",
+      "wb": {
+        "ids": [
+          "263744850",
+          "263813522"
+        ],
+        "sales": 205289.42,
+        "settle": 197470.67,
+        "wbFee": 7818.75,
+        "log": 21727.92,
+        "stor": 1748.96,
+        "pen": 1225,
+        "ded": 0,
+        "totalPay": 172768.79,
+        "op": 172768.79
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-05-20",
+      "to": "2024-05-26",
+      "wb": {
+        "ids": [
+          "264300666",
+          "264300667"
+        ],
+        "sales": 175753.02,
+        "settle": 171721.92,
+        "wbFee": 4031.1,
+        "log": 24719.01,
+        "stor": 1307.76,
+        "pen": 1035,
+        "ded": 0,
+        "totalPay": 144660.15,
+        "op": 144660.15
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-05-27",
+      "to": "2024-06-02",
+      "wb": {
+        "ids": [
+          "264990832",
+          "264990834"
+        ],
+        "sales": 186991.13,
+        "settle": 175631.17,
+        "wbFee": 11359.96,
+        "log": 15521.81,
+        "stor": 1050.03,
+        "pen": 920,
+        "ded": 1000,
+        "totalPay": 157139.33,
+        "op": 157139.33
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-06-03",
+      "to": "2024-06-09",
+      "wb": {
+        "ids": [
+          "265299393",
+          "265483863"
+        ],
+        "sales": 194888.4,
+        "settle": 179205.9,
+        "wbFee": 15682.5,
+        "log": 18041.13,
+        "stor": 847.73,
+        "pen": 600,
+        "ded": 0,
+        "totalPay": 159717.04,
+        "op": 159717.04
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-06-10",
+      "to": "2024-06-16",
+      "wb": {
+        "ids": [
+          "266097478",
+          "266137528"
+        ],
+        "sales": 234488.47,
+        "settle": 212478.58,
+        "wbFee": 22009.89,
+        "log": 30584.3,
+        "stor": 853.61,
+        "pen": 200,
+        "ded": -2700,
+        "totalPay": 183540.67,
+        "op": 183540.67
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-06-17",
+      "to": "2024-06-23",
+      "wb": {
+        "ids": [
+          "266642207",
+          "266696627"
+        ],
+        "sales": 133281.7,
+        "settle": 122598.99,
+        "wbFee": 10682.71,
+        "log": 48400.66,
+        "stor": 858.06,
+        "pen": 125,
+        "ded": 0,
+        "totalPay": 73215.27,
+        "op": 73215.27
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-06-24",
+      "to": "2024-06-30",
+      "wb": {
+        "ids": [
+          "266811047",
+          "266997824"
+        ],
+        "sales": 150364.86,
+        "settle": 142741.26,
+        "wbFee": 7623.6,
+        "log": 18025.16,
+        "stor": 1257.63,
+        "pen": 190,
+        "ded": 0,
+        "totalPay": 121448.82,
+        "op": 123268.47
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-07-01",
+      "to": "2024-07-07",
+      "wb": {
+        "ids": [
+          "267474263",
+          "267536197"
+        ],
+        "sales": 174842.01,
+        "settle": 158750.21,
+        "wbFee": 16091.8,
+        "log": 32088.35,
+        "stor": 1871.33,
+        "pen": 8545,
+        "ded": 3000,
+        "totalPay": 106255.33,
+        "op": 113245.53
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-07-08",
+      "to": "2024-07-14",
+      "wb": {
+        "ids": [
+          "268068712",
+          "268068730"
+        ],
+        "sales": 150194.07,
+        "settle": 133147.65,
+        "wbFee": 17046.42,
+        "log": 16472.26,
+        "stor": 1296.4,
+        "pen": 5349.67,
+        "ded": 0,
+        "totalPay": 110029.32,
+        "op": 110029.32
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-07-15",
+      "to": "2024-07-21",
+      "wb": {
+        "ids": [
+          "268341488",
+          "268689573"
+        ],
+        "sales": 232719,
+        "settle": 219218.2,
+        "wbFee": 13500.8,
+        "log": 19894.9,
+        "stor": 1734,
+        "pen": 2445,
+        "ded": 1832,
+        "totalPay": 193312.3,
+        "op": 193312.3
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-07-22",
+      "to": "2024-07-28",
+      "wb": {
+        "ids": [
+          "269144041",
+          "269144076"
+        ],
+        "sales": 180647.77,
+        "settle": 180113.01,
+        "wbFee": 534.76,
+        "log": 20971.76,
+        "stor": 1701.32,
+        "pen": 120,
+        "ded": 2660,
+        "totalPay": 151648.53,
+        "op": 154659.93
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-07-29",
+      "to": "2024-08-04",
+      "wb": {
+        "ids": [
+          "269322402",
+          "269325155"
+        ],
+        "sales": 162071.34,
+        "settle": 169811.41,
+        "wbFee": -7740.07,
+        "log": 20371.57,
+        "stor": 1709.74,
+        "pen": 12587.5,
+        "ded": 2472,
+        "totalPay": 132670.6,
+        "op": 132670.6
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-08-05",
+      "to": "2024-08-11",
+      "wb": {
+        "ids": [
+          "270046691",
+          "270046695"
+        ],
+        "sales": 126576.19,
+        "settle": 127277.67,
+        "wbFee": -701.48,
+        "log": 17840.74,
+        "stor": 1707.99,
+        "pen": 11690,
+        "ded": 2818,
+        "totalPay": 93220.94,
+        "op": 93220.94
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-08-12",
+      "to": "2024-08-18",
+      "wb": {
+        "ids": [
+          "270336724",
+          "270336728"
+        ],
+        "sales": 147847.86,
+        "settle": 140163.62,
+        "wbFee": 7684.24,
+        "log": 17091.9,
+        "stor": 1683.83,
+        "pen": 10,
+        "ded": 2335,
+        "totalPay": 119042.89,
+        "op": 119042.89
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-08-19",
+      "to": "2024-08-25",
+      "wb": {
+        "ids": [
+          "271047049",
+          "271362734"
+        ],
+        "sales": 114146.58,
+        "settle": 101562.83,
+        "wbFee": 12583.75,
+        "log": 14921.11,
+        "stor": 1609.23,
+        "pen": 70,
+        "ded": 1848,
+        "totalPay": 83114.49,
+        "op": 83114.49
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-08-26",
+      "to": "2024-09-01",
+      "wb": {
+        "ids": [
+          "271791124",
+          "271954547"
+        ],
+        "sales": 103200.16,
+        "settle": 97810.8,
+        "wbFee": 5389.36,
+        "log": 17047.7,
+        "stor": 1508.55,
+        "pen": 0,
+        "ded": 35,
+        "totalPay": 79219.55,
+        "op": 79219.55
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-09-02",
+      "to": "2024-09-08",
+      "wb": {
+        "ids": [
+          "272828146",
+          "272828175"
+        ],
+        "sales": 174376.64,
+        "settle": 161502.46,
+        "wbFee": 12874.18,
+        "log": 18227.41,
+        "stor": 1656.17,
+        "pen": 0,
+        "ded": 0,
+        "totalPay": 141618.88,
+        "op": 141618.88
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-09-09",
+      "to": "2024-09-15",
+      "wb": {
+        "ids": [
+          "274476571",
+          "274744931"
+        ],
+        "sales": 279878.46,
+        "settle": 252660.01,
+        "wbFee": 27218.45,
+        "log": 26403.67,
+        "stor": 1599.33,
+        "pen": 0,
+        "ded": 1000,
+        "totalPay": 223657.01,
+        "op": 223657.01
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-09-16",
+      "to": "2024-09-22",
+      "wb": {
+        "ids": [
+          "275930458",
+          "275930469"
+        ],
+        "sales": 175677.18,
+        "settle": 164174.62,
+        "wbFee": 11502.56,
+        "log": 20860.68,
+        "stor": 1531.04,
+        "pen": 90,
+        "ded": 2437,
+        "totalPay": 139255.9,
+        "op": 139255.9
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-09-23",
+      "to": "2024-09-29",
+      "wb": {
+        "ids": [
+          "277056872",
+          "277056874"
+        ],
+        "sales": 81837.28,
+        "settle": 88086,
+        "wbFee": -6248.72,
+        "log": 18170.39,
+        "stor": 1516.54,
+        "pen": 70,
+        "ded": 7544,
+        "totalPay": 60785.07,
+        "op": 60785.07
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-09-30",
+      "to": "2024-10-06",
+      "wb": {
+        "ids": [
+          "278546057",
+          "278546065"
+        ],
+        "sales": 180611.34,
+        "settle": 173179.78,
+        "wbFee": 7431.56,
+        "log": 19571.74,
+        "stor": 1648.98,
+        "pen": 10,
+        "ded": 9896,
+        "totalPay": 142053.06,
+        "op": 142053.06
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-10-07",
+      "to": "2024-10-13",
+      "wb": {
+        "ids": [
+          "279881183",
+          "280185209"
+        ],
+        "sales": 225018.97,
+        "settle": 218247.28,
+        "wbFee": 6771.69,
+        "log": 29461.19,
+        "stor": 1541.89,
+        "pen": 0,
+        "ded": 6615,
+        "totalPay": 180629.2,
+        "op": 180629.2
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-10-14",
+      "to": "2024-10-20",
+      "wb": {
+        "ids": [
+          "281190581",
+          "281562478"
+        ],
+        "sales": 225892,
+        "settle": 211811.24,
+        "wbFee": 14080.76,
+        "log": 29717.58,
+        "stor": 1766.34,
+        "pen": 10,
+        "ded": 5652,
+        "totalPay": 174665.32,
+        "op": 174665.32
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-10-21",
+      "to": "2024-10-27",
+      "wb": {
+        "ids": [
+          "282750328",
+          "282927553"
+        ],
+        "sales": 350739.51,
+        "settle": 342540.15,
+        "wbFee": 8199.36,
+        "log": 29825.05,
+        "stor": 2261.09,
+        "pen": 10,
+        "ded": 7927,
+        "totalPay": 302517.01,
+        "op": 302517.01
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-10-28",
+      "to": "2024-11-03",
+      "wb": {
+        "ids": [
+          "284028451",
+          "284319850"
+        ],
+        "sales": 194450,
+        "settle": 175078.9,
+        "wbFee": 19371.1,
+        "log": 30093.13,
+        "stor": 2773.85,
+        "pen": 0,
+        "ded": 18498,
+        "totalPay": 123653.92,
+        "op": 123713.92
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-11-04",
+      "to": "2024-11-10",
+      "wb": {
+        "ids": [
+          "285492538",
+          "285492540"
+        ],
+        "sales": 315774.81,
+        "settle": 287026.51,
+        "wbFee": 28748.3,
+        "log": 38020.03,
+        "stor": 2752.99,
+        "pen": 0,
+        "ded": 1502,
+        "totalPay": 244736.49,
+        "op": 244751.49
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-11-11",
+      "to": "2024-11-17",
+      "wb": {
+        "ids": [
+          "286824715",
+          "286824716"
+        ],
+        "sales": 319526.37,
+        "settle": 299358.03,
+        "wbFee": 20168.34,
+        "log": 46207.52,
+        "stor": 2579.02,
+        "pen": 10,
+        "ded": 3000,
+        "totalPay": 233150.09,
+        "op": 247561.49
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-11-18",
+      "to": "2024-11-24",
+      "wb": {
+        "ids": [
+          "288394679",
+          "288394680"
+        ],
+        "sales": 502461.03,
+        "settle": 464728.03,
+        "wbFee": 37733,
+        "log": 57132.23,
+        "stor": 2456.13,
+        "pen": 2500,
+        "ded": 11000,
+        "totalPay": 397139.67,
+        "op": 391639.67
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-11-25",
+      "to": "2024-12-01",
+      "wb": {
+        "ids": [
+          "289543567",
+          "289543568"
+        ],
+        "sales": 474795.69,
+        "settle": 462803.33,
+        "wbFee": 11992.36,
+        "log": 58036.03,
+        "stor": 2170.12,
+        "pen": 10,
+        "ded": 18990,
+        "totalPay": 383552.18,
+        "op": 383597.18
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-12-02",
+      "to": "2024-12-08",
+      "wb": {
+        "ids": [
+          "290695168",
+          "290695170"
+        ],
+        "sales": 591616.44,
+        "settle": 586683.77,
+        "wbFee": 4932.67,
+        "log": 80482.6,
+        "stor": 1850.82,
+        "pen": 0,
+        "ded": 4000,
+        "totalPay": 500305.35,
+        "op": 500350.35
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-12-09",
+      "to": "2024-12-15",
+      "wb": {
+        "ids": [
+          "291491350",
+          "291491354"
+        ],
+        "sales": 604229.27,
+        "settle": 592074.13,
+        "wbFee": 12155.14,
+        "log": 79017.45,
+        "stor": 1633.45,
+        "pen": 4950,
+        "ded": 5000,
+        "totalPay": 501473.23,
+        "op": 501473.23
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-12-16",
+      "to": "2024-12-22",
+      "wb": {
+        "ids": [
+          "291835737",
+          "291835738"
+        ],
+        "sales": 423827.97,
+        "settle": 414627.34,
+        "wbFee": 9200.63,
+        "log": 62905.92,
+        "stor": 1593.45,
+        "pen": 80,
+        "ded": 19000,
+        "totalPay": 331047.97,
+        "op": 331047.97
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-12-23",
+      "to": "2024-12-29",
+      "wb": {
+        "ids": [
+          "292440735",
+          "292440736"
+        ],
+        "sales": 416783.83,
+        "settle": 386937.19,
+        "wbFee": 29846.64,
+        "log": 50952.37,
+        "stor": 1878.62,
+        "pen": 0,
+        "ded": 18491,
+        "totalPay": 315600.2,
+        "op": 315615.2
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2024-12-30",
+      "to": "2025-01-05",
+      "wb": {
+        "ids": [
+          "293644702",
+          "293644703"
+        ],
+        "sales": 125728.06,
+        "settle": 112596.69,
+        "wbFee": 13131.37,
+        "log": 17126.63,
+        "stor": 2379.84,
+        "pen": 0,
+        "ded": 9000,
+        "totalPay": 84060.22,
+        "op": 84090.22
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-01-06",
+      "to": "2025-01-12",
+      "wb": {
+        "ids": [
+          "294455040",
+          "294455041"
+        ],
+        "sales": 117466.04,
+        "settle": 109828.54,
+        "wbFee": 7637.5,
+        "log": 21455.47,
+        "stor": 2376.62,
+        "pen": 30,
+        "ded": 9890,
+        "totalPay": 76076.45,
+        "op": 76076.45
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-01-13",
+      "to": "2025-01-19",
+      "wb": {
+        "ids": [
+          "295069147",
+          "295069148"
+        ],
+        "sales": 193677.89,
+        "settle": 182436.15,
+        "wbFee": 11241.74,
+        "log": 24023.52,
+        "stor": 2299.7,
+        "pen": 0,
+        "ded": 4055,
+        "totalPay": 152057.93,
+        "op": 152057.93
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-01-20",
+      "to": "2025-01-26",
+      "wb": {
+        "ids": [
+          "295546240",
+          "295546241"
+        ],
+        "sales": 235254.14,
+        "settle": 225494.89,
+        "wbFee": 9759.25,
+        "log": 31430.15,
+        "stor": 2165.39,
+        "pen": 0,
+        "ded": 354,
+        "totalPay": 191545.35,
+        "op": 191545.35
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-01-27",
+      "to": "2025-02-02",
+      "wb": {
+        "ids": [
+          "296450567",
+          "296450570"
+        ],
+        "sales": 196790.37,
+        "settle": 186876.19,
+        "wbFee": 9914.18,
+        "log": 27221.61,
+        "stor": 2321.86,
+        "pen": 70,
+        "ded": 36636,
+        "totalPay": 120626.72,
+        "op": 120626.72
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-02-03",
+      "to": "2025-02-09",
+      "wb": {
+        "ids": [
+          "297238426",
+          "297282630"
+        ],
+        "sales": 208428.97,
+        "settle": 200596.46,
+        "wbFee": 7832.51,
+        "log": 32984.92,
+        "stor": 2918.44,
+        "pen": 40,
+        "ded": 8000,
+        "totalPay": 156653.1,
+        "op": 156653.1
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-02-10",
+      "to": "2025-02-16",
+      "wb": {
+        "ids": [
+          "297717858",
+          "297717861"
+        ],
+        "sales": 232728.08,
+        "settle": 219268.44,
+        "wbFee": 13459.64,
+        "log": 41460.45,
+        "stor": 2831.18,
+        "pen": 90,
+        "ded": 19000,
+        "totalPay": 155886.81,
+        "op": 155886.81
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-02-17",
+      "to": "2025-02-23",
+      "wb": {
+        "ids": [
+          "298314473",
+          "298314474"
+        ],
+        "sales": 165348.11,
+        "settle": 157032.48,
+        "wbFee": 8315.63,
+        "log": 32776.19,
+        "stor": 2781.48,
+        "pen": 0,
+        "ded": 21000,
+        "totalPay": 100474.81,
+        "op": 100474.81
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-02-24",
+      "to": "2025-03-02",
+      "wb": {
+        "ids": [
+          "298885353",
+          "298885357"
+        ],
+        "sales": 139617.79,
+        "settle": 130621.73,
+        "wbFee": 8996.06,
+        "log": 22039.61,
+        "stor": 2797.51,
+        "pen": 30,
+        "ded": 169377,
+        "totalPay": -63622.39,
+        "op": -63622.39
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-03-03",
+      "to": "2025-03-09",
+      "wb": {
+        "ids": [
+          "300001815",
+          "300001817"
+        ],
+        "sales": 185834.19,
+        "settle": 161921.48,
+        "wbFee": 23912.71,
+        "log": 22694.88,
+        "stor": 3877.23,
+        "pen": 0,
+        "ded": 67886,
+        "totalPay": 67463.37,
+        "op": 67463.37
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-03-10",
+      "to": "2025-03-16",
+      "wb": {
+        "ids": [
+          "301464218",
+          "301464219"
+        ],
+        "sales": 127119.73,
+        "settle": 116528.71,
+        "wbFee": 10591.02,
+        "log": 32433.74,
+        "stor": 4421.03,
+        "pen": 5000,
+        "ded": 73886,
+        "totalPay": 787.94,
+        "op": 787.94
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-03-17",
+      "to": "2025-03-23",
+      "wb": {
+        "ids": [
+          "307486635",
+          "308900316"
+        ],
+        "sales": 200130.26,
+        "settle": 192771.22,
+        "wbFee": 7359.04,
+        "log": 82715.55,
+        "stor": 4589.37,
+        "pen": 0,
+        "ded": 76886,
+        "totalPay": 28580.3,
+        "op": 28580.3
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-03-24",
+      "to": "2025-03-30",
+      "wb": {
+        "ids": [
+          "318523146",
+          "318523154"
+        ],
+        "sales": 175002.76,
+        "settle": 165164.01,
+        "wbFee": 9838.75,
+        "log": 51305.89,
+        "stor": 4331.3,
+        "pen": 1080,
+        "ded": 90128.5,
+        "totalPay": 18318.32,
+        "op": 18318.32
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-03-31",
+      "to": "2025-04-06",
+      "wb": {
+        "ids": [
+          "325895489",
+          "326334878"
+        ],
+        "sales": 286896.13,
+        "settle": 282893.38,
+        "wbFee": 4002.75,
+        "log": 43369.74,
+        "stor": 4020.64,
+        "pen": 30,
+        "ded": 75386,
+        "totalPay": 160087,
+        "op": 160087
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-04-07",
+      "to": "2025-04-13",
+      "wb": {
+        "ids": [
+          "331993567",
+          "331993584"
+        ],
+        "sales": 331181.1,
+        "settle": 314886.76,
+        "wbFee": 16294.34,
+        "log": 49737.06,
+        "stor": 3715.28,
+        "pen": 0,
+        "ded": 72886,
+        "totalPay": 188533.42,
+        "op": 188548.42
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-04-14",
+      "to": "2025-04-20",
+      "wb": {
+        "ids": [
+          "338115416",
+          "338115420"
+        ],
+        "sales": 248620.17,
+        "settle": 219900.1,
+        "wbFee": 28720.07,
+        "log": 44531.53,
+        "stor": 4354.18,
+        "pen": 0,
+        "ded": 72886,
+        "totalPay": 98128.39,
+        "op": 98128.39
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-04-21",
+      "to": "2025-04-27",
+      "wb": {
+        "ids": [
+          "346370695",
+          "346370696"
+        ],
+        "sales": 229688.45,
+        "settle": 195899,
+        "wbFee": 33789.45,
+        "log": 39015.36,
+        "stor": 4332.3,
+        "pen": 0,
+        "ded": 65893,
+        "totalPay": 86658.34,
+        "op": 86658.34
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-04-28",
+      "to": "2025-05-04",
+      "wb": {
+        "ids": [
+          "351921850",
+          "351921858"
+        ],
+        "sales": 173161.41,
+        "settle": 157651.72,
+        "wbFee": 15509.69,
+        "log": 38219.08,
+        "stor": 4981.78,
+        "pen": 70,
+        "ded": 85869,
+        "totalPay": 26930.86,
+        "op": 28511.86
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-05-05",
+      "to": "2025-05-11",
+      "wb": {
+        "ids": [
+          "358368442",
+          "358368564"
+        ],
+        "sales": 174312,
+        "settle": 168357.16,
+        "wbFee": 5954.84,
+        "log": 35864.18,
+        "stor": 5093.6,
+        "pen": 0,
+        "ded": 64886,
+        "totalPay": 62513.38,
+        "op": 62513.38
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-05-12",
+      "to": "2025-05-18",
+      "wb": {
+        "ids": [
+          "366092201",
+          "366092202"
+        ],
+        "sales": 216733.07,
+        "settle": 209129.13,
+        "wbFee": 7603.94,
+        "log": 41902.57,
+        "stor": 4865.86,
+        "pen": 10,
+        "ded": 65886,
+        "totalPay": 96449.7,
+        "op": 96464.7
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-05-19",
+      "to": "2025-05-25",
+      "wb": {
+        "ids": [
+          "372291496",
+          "372291499"
+        ],
+        "sales": 208240.86,
+        "settle": 212609.48,
+        "wbFee": -4368.62,
+        "log": 50690.33,
+        "stor": 4326.84,
+        "pen": 150,
+        "ded": 62886,
+        "totalPay": 94098.93,
+        "op": 94556.31
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-05-26",
+      "to": "2025-06-01",
+      "wb": {
+        "ids": [
+          "378397400",
+          "378397401"
+        ],
+        "sales": 257016.96,
+        "settle": 275153.79,
+        "wbFee": -18136.83,
+        "log": 49248.04,
+        "stor": 4074.77,
+        "pen": 0,
+        "ded": 90689,
+        "totalPay": 131141.98,
+        "op": 131141.98
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-06-02",
+      "to": "2025-06-08",
+      "wb": {
+        "ids": [
+          "383839567",
+          "383839574"
+        ],
+        "sales": 211476.05,
+        "settle": 217384.75,
+        "wbFee": -5908.7,
+        "log": 51313.47,
+        "stor": 3968.97,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 87858.31,
+        "op": 87858.31
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-06-09",
+      "to": "2025-06-15",
+      "wb": {
+        "ids": [
+          "389399676",
+          "389399687"
+        ],
+        "sales": 265714.87,
+        "settle": 270617.84,
+        "wbFee": -4902.97,
+        "log": 47643.29,
+        "stor": 3809.94,
+        "pen": 90,
+        "ded": 74244,
+        "totalPay": 144830.61,
+        "op": 144830.61
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-06-16",
+      "to": "2025-06-22",
+      "wb": {
+        "ids": [
+          "397842938",
+          "397842939"
+        ],
+        "sales": 271069.88,
+        "settle": 269957.48,
+        "wbFee": 1112.4,
+        "log": 53513.56,
+        "stor": 3580.49,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 138619.43,
+        "op": 138619.43
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-06-23",
+      "to": "2025-06-29",
+      "wb": {
+        "ids": [
+          "405208454",
+          "408028028"
+        ],
+        "sales": 210425.67,
+        "settle": 201883.05,
+        "wbFee": 8542.62,
+        "log": 41598.15,
+        "stor": 3665.1,
+        "pen": 30,
+        "ded": 75244,
+        "totalPay": 81345.8,
+        "op": 81345.8
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-06-30",
+      "to": "2025-07-06",
+      "wb": {
+        "ids": [
+          "414330689",
+          "414330702"
+        ],
+        "sales": 205310.86,
+        "settle": 190575.09,
+        "wbFee": 14735.77,
+        "log": 38271.03,
+        "stor": 3699.95,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 74360.11,
+        "op": 74360.11
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-07-07",
+      "to": "2025-07-13",
+      "wb": {
+        "ids": [
+          "420330919",
+          "420331514"
+        ],
+        "sales": 239275.43,
+        "settle": 219860.76,
+        "wbFee": 19414.67,
+        "log": 40907.4,
+        "stor": 3558.33,
+        "pen": 110,
+        "ded": 74244,
+        "totalPay": 101041.03,
+        "op": 101041.03
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-07-14",
+      "to": "2025-07-20",
+      "wb": {
+        "ids": [
+          "425756438",
+          "425756449"
+        ],
+        "sales": 210580.81,
+        "settle": 196884.45,
+        "wbFee": 13696.36,
+        "log": 32468.43,
+        "stor": 3500.22,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 86671.8,
+        "op": 86671.8
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-07-21",
+      "to": "2025-07-27",
+      "wb": {
+        "ids": [
+          "432390135",
+          "432390147"
+        ],
+        "sales": 209574.23,
+        "settle": 193667.82,
+        "wbFee": 15906.41,
+        "log": 31213.8,
+        "stor": 3641.25,
+        "pen": 0,
+        "ded": 75798,
+        "totalPay": 82429.12,
+        "op": 83014.77
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-07-28",
+      "to": "2025-08-03",
+      "wb": {
+        "ids": [
+          "440937047",
+          "440937055"
+        ],
+        "sales": 233159.13,
+        "settle": 218337.07,
+        "wbFee": 14822.06,
+        "log": 37463.15,
+        "stor": 3569.28,
+        "pen": 90,
+        "ded": 74244,
+        "totalPay": 102970.64,
+        "op": 102970.64
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-08-04",
+      "to": "2025-08-10",
+      "wb": {
+        "ids": [
+          "449134022",
+          "449134023"
+        ],
+        "sales": 159800.21,
+        "settle": 147777.1,
+        "wbFee": 12023.11,
+        "log": 32414.33,
+        "stor": 3313.77,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 37805,
+        "op": 37805
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-08-11",
+      "to": "2025-08-17",
+      "wb": {
+        "ids": [
+          "454539736",
+          "454539798"
+        ],
+        "sales": 223950.97,
+        "settle": 204845.45,
+        "wbFee": 19105.52,
+        "log": 27693.41,
+        "stor": 3126.28,
+        "pen": 20,
+        "ded": 79244,
+        "totalPay": 94761.76,
+        "op": 94761.76
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-08-18",
+      "to": "2025-08-24",
+      "wb": {
+        "ids": [
+          "461006519",
+          "461006531"
+        ],
+        "sales": 131976,
+        "settle": 111801.5,
+        "wbFee": 20174.5,
+        "log": 22022.25,
+        "stor": 3141.53,
+        "pen": 10,
+        "ded": 74244,
+        "totalPay": 12383.72,
+        "op": 12383.72
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-08-25",
+      "to": "2025-08-31",
+      "wb": {
+        "ids": [
+          "467787668",
+          "468872485"
+        ],
+        "sales": 130872.45,
+        "settle": 103421.1,
+        "wbFee": 27451.35,
+        "log": 17797.45,
+        "stor": 3160.49,
+        "pen": 40,
+        "ded": 74244,
+        "totalPay": 8119.16,
+        "op": 8179.16
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-09-01",
+      "to": "2025-09-07",
+      "wb": {
+        "ids": [
+          "473037957",
+          "473038053"
+        ],
+        "sales": 96817.18,
+        "settle": 111906.08,
+        "wbFee": -15088.9,
+        "log": 20325.09,
+        "stor": 3031.43,
+        "pen": 0,
+        "ded": 86627,
+        "totalPay": 1817.56,
+        "op": 1922.56
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-09-08",
+      "to": "2025-09-14",
+      "wb": {
+        "ids": [
+          "480278342",
+          "481343118"
+        ],
+        "sales": 143165.1,
+        "settle": 142708.21,
+        "wbFee": 456.89,
+        "log": 27080.55,
+        "stor": 2939.04,
+        "pen": 0,
+        "ded": 61861,
+        "totalPay": 42273.31,
+        "op": 50827.62
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-09-15",
+      "to": "2025-09-21",
+      "wb": {
+        "ids": [
+          "486818632",
+          "486818688"
+        ],
+        "sales": 120648,
+        "settle": 116494.24,
+        "wbFee": 4153.76,
+        "log": 28377.66,
+        "stor": 2935.08,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 10712.5,
+        "op": 10937.5
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-09-22",
+      "to": "2025-09-28",
+      "wb": {
+        "ids": [
+          "493070300",
+          "494808882"
+        ],
+        "sales": 170091.48,
+        "settle": 172233.53,
+        "wbFee": -2142.05,
+        "log": 36512.99,
+        "stor": 2871.38,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 58455.16,
+        "op": 58605.16
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-09-29",
+      "to": "2025-10-05",
+      "wb": {
+        "ids": [
+          "498193451",
+          "501107705"
+        ],
+        "sales": 127209.64,
+        "settle": 150001.63,
+        "wbFee": -22791.99,
+        "log": 39947.62,
+        "stor": 2800.82,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 32874.19,
+        "op": 33009.19
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-10-06",
+      "to": "2025-10-12",
+      "wb": {
+        "ids": [
+          "504780112",
+          "504780117"
+        ],
+        "sales": 232599.92,
+        "settle": 232733.75,
+        "wbFee": -133.83,
+        "log": 42195.59,
+        "stor": 2748.44,
+        "pen": 1620,
+        "ded": 75244,
+        "totalPay": 110895.72,
+        "op": 110925.72
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-10-13",
+      "to": "2025-10-19",
+      "wb": {
+        "ids": [
+          "511714651",
+          "513357324"
+        ],
+        "sales": 209510.02,
+        "settle": 193025.86,
+        "wbFee": 16484.16,
+        "log": 39404.74,
+        "stor": 2724.52,
+        "pen": 0,
+        "ded": 81116.77,
+        "totalPay": 69734.83,
+        "op": 69779.83
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-10-20",
+      "to": "2025-10-26",
+      "wb": {
+        "ids": [
+          "518611088",
+          "518611089"
+        ],
+        "sales": 77837.66,
+        "settle": 72060.86,
+        "wbFee": 5776.8,
+        "log": 33250.75,
+        "stor": 2710.26,
+        "pen": 0,
+        "ded": 79244,
+        "totalPay": -43204.15,
+        "op": -43144.15
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-10-27",
+      "to": "2025-11-02",
+      "wb": {
+        "ids": [
+          "523897144",
+          "523897145"
+        ],
+        "sales": 215264.93,
+        "settle": 207855.61,
+        "wbFee": 7409.32,
+        "log": 39298.13,
+        "stor": 2706.94,
+        "pen": 10,
+        "ded": 74244,
+        "totalPay": 91596.54,
+        "op": 91596.54
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-11-03",
+      "to": "2025-11-09",
+      "wb": {
+        "ids": [
+          "531311683",
+          "531311693"
+        ],
+        "sales": 114453.06,
+        "settle": 116878.93,
+        "wbFee": -2425.87,
+        "log": 36997.23,
+        "stor": 2891.05,
+        "pen": 20,
+        "ded": 74244,
+        "totalPay": 2726.65,
+        "op": 2726.65
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-11-10",
+      "to": "2025-11-16",
+      "wb": {
+        "ids": [
+          "537105776",
+          "538535737"
+        ],
+        "sales": 123278.72,
+        "settle": 114238.99,
+        "wbFee": 9039.73,
+        "log": 34626.27,
+        "stor": 3319.36,
+        "pen": 1630,
+        "ded": 74244,
+        "totalPay": 344.36,
+        "op": 419.36
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-11-17",
+      "to": "2025-11-23",
+      "wb": {
+        "ids": [
+          "544697798",
+          "545326342"
+        ],
+        "sales": 234318.97,
+        "settle": 200474.86,
+        "wbFee": 33844.11,
+        "log": 45215.73,
+        "stor": 3175.7,
+        "pen": 1000,
+        "ded": 98170.34,
+        "totalPay": 52883.09,
+        "op": 52913.09
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-11-24",
+      "to": "2025-11-30",
+      "wb": {
+        "ids": [
+          "551492848",
+          "551492849"
+        ],
+        "sales": 181154.1,
+        "settle": 146769.18,
+        "wbFee": 34384.92,
+        "log": 40748.88,
+        "stor": 3103.29,
+        "pen": 0,
+        "ded": 112434,
+        "totalPay": -9546.99,
+        "op": -9516.99
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-12-01",
+      "to": "2025-12-07",
+      "wb": {
+        "ids": [
+          "559726252",
+          "559726253"
+        ],
+        "sales": 241141.75,
+        "settle": 203124.42,
+        "wbFee": 38017.33,
+        "log": 58159.54,
+        "stor": 2952.84,
+        "pen": 0,
+        "ded": 81643.36,
+        "totalPay": 60338.68,
+        "op": 60368.68
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-12-08",
+      "to": "2025-12-14",
+      "wb": {
+        "ids": [
+          "565698063",
+          "565698064"
+        ],
+        "sales": 397604.15,
+        "settle": 335500.51,
+        "wbFee": 62103.64,
+        "log": 87784.47,
+        "stor": 2677.39,
+        "pen": 4730,
+        "ded": 74244,
+        "totalPay": 166019.65,
+        "op": 166064.65
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-12-15",
+      "to": "2025-12-21",
+      "wb": {
+        "ids": [
+          "572166181",
+          "572166186"
+        ],
+        "sales": 402134.32,
+        "settle": 322710.94,
+        "wbFee": 79423.38,
+        "log": 81055.71,
+        "stor": 3000.63,
+        "pen": 0,
+        "ded": 74244,
+        "totalPay": 164365.6,
+        "op": 164410.6
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-12-22",
+      "to": "2025-12-28",
+      "wb": {
+        "ids": [
+          "580308866",
+          "580308867"
+        ],
+        "sales": 331489.05,
+        "settle": 255213.78,
+        "wbFee": 76275.27,
+        "log": 74005.71,
+        "stor": 3077.15,
+        "pen": 50,
+        "ded": 101244,
+        "totalPay": 76836.92,
+        "op": 76836.92
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2025-12-29",
+      "to": "2025-12-31",
+      "wb": {
+        "ids": [
+          "588275741",
+          "588275744"
+        ],
+        "sales": 100886.59,
+        "settle": 77107.53,
+        "wbFee": 23779.06,
+        "log": 22578.49,
+        "stor": 1340.23,
+        "pen": 10,
+        "ded": 74244,
+        "totalPay": -21065.19,
+        "op": -21065.19
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-01-01",
+      "to": "2026-01-04",
+      "wb": {
+        "ids": [
+          "587965723"
+        ],
+        "sales": 22894,
+        "settle": 17875.96,
+        "wbFee": 5018.04,
+        "log": 7892.64,
+        "stor": 1814.06,
+        "pen": 0,
+        "ded": 6000,
+        "totalPay": 2169.26,
+        "op": 2169.26
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-01-05",
+      "to": "2026-01-11",
+      "wb": {
+        "ids": [
+          "594361891",
+          "594361892"
+        ],
+        "sales": 79449.98,
+        "settle": 62603.35,
+        "wbFee": 16846.63,
+        "log": 16852.54,
+        "stor": 4006.24,
+        "pen": 20,
+        "ded": 0,
+        "totalPay": 41724.57,
+        "op": 41724.57
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-01-12",
+      "to": "2026-01-18",
+      "wb": {
+        "ids": [
+          "601766404",
+          "601766405"
+        ],
+        "sales": 83058.92,
+        "settle": 68065.44,
+        "wbFee": 14993.48,
+        "log": 24050.86,
+        "stor": 5045.92,
+        "pen": 5400,
+        "ded": 175324.92,
+        "totalPay": -141756.26,
+        "op": -141756.26
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-01-19",
+      "to": "2026-01-25",
+      "wb": {
+        "ids": [
+          "608241115",
+          "608241120"
+        ],
+        "sales": 47134,
+        "settle": 40431.45,
+        "wbFee": 6702.55,
+        "log": 22095.71,
+        "stor": 5147.81,
+        "pen": 20,
+        "ded": 47407.08,
+        "totalPay": -34239.15,
+        "op": -34239.15
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-01-26",
+      "to": "2026-02-01",
+      "wb": {
+        "ids": [
+          "615075925",
+          "615075926"
+        ],
+        "sales": 113976.97,
+        "settle": 107147.92,
+        "wbFee": 6829.05,
+        "log": 25601.46,
+        "stor": 5221.08,
+        "pen": 0,
+        "ded": 2258.48,
+        "totalPay": 74066.9,
+        "op": 74066.9
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-02-02",
+      "to": "2026-02-08",
+      "wb": {
+        "ids": [
+          "620930571",
+          "622515175"
+        ],
+        "sales": 166483.78,
+        "settle": 171419.24,
+        "wbFee": -4935.46,
+        "log": 36541.66,
+        "stor": 5180,
+        "pen": 0,
+        "ded": 56923.21,
+        "totalPay": 72774.37,
+        "op": 72774.37
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-02-09",
+      "to": "2026-02-15",
+      "wb": {
+        "ids": [
+          "628137550",
+          "629848619"
+        ],
+        "sales": 86410,
+        "settle": 95088.69,
+        "wbFee": -8678.69,
+        "log": 32945.68,
+        "stor": 5372.71,
+        "pen": 0,
+        "ded": 48144.37,
+        "totalPay": 8625.93,
+        "op": 8625.93
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-02-16",
+      "to": "2026-02-22",
+      "wb": {
+        "ids": [
+          "634300238",
+          "634300242"
+        ],
+        "sales": 123568.85,
+        "settle": 127496.38,
+        "wbFee": -3927.53,
+        "log": 31370.6,
+        "stor": 5328.07,
+        "pen": 60,
+        "ded": 21897.65,
+        "totalPay": 68840.06,
+        "op": 68840.06
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-02-23",
+      "to": "2026-03-01",
+      "wb": {
+        "ids": [
+          "640984211",
+          "640984225"
+        ],
+        "sales": 115377.75,
+        "settle": 117926.23,
+        "wbFee": -2548.48,
+        "log": 30497.77,
+        "stor": 5533.64,
+        "pen": 0,
+        "ded": 22358,
+        "totalPay": 59536.82,
+        "op": 59536.82
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-03-02",
+      "to": "2026-03-08",
+      "wb": {
+        "ids": [
+          "650688593",
+          "650688594"
+        ],
+        "sales": 183969.17,
+        "settle": 194262.74,
+        "wbFee": -10293.57,
+        "log": 46611.21,
+        "stor": 5476.71,
+        "pen": 0,
+        "ded": 28358,
+        "totalPay": 113801.82,
+        "op": 113816.82
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-03-09",
+      "to": "2026-03-15",
+      "wb": {
+        "ids": [
+          "657543539",
+          "658998750"
+        ],
+        "sales": 199558.65,
+        "settle": 208580.15,
+        "wbFee": -9021.5,
+        "log": 46347.05,
+        "stor": 5228.58,
+        "pen": 0,
+        "ded": 28358,
+        "totalPay": 128616.52,
+        "op": 128646.52
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-03-16",
+      "to": "2026-03-22",
+      "wb": {
+        "ids": [
+          "664575112",
+          "664575142"
+        ],
+        "sales": 158244.59,
+        "settle": 161320.58,
+        "wbFee": -3075.99,
+        "log": 47627.3,
+        "stor": 5024.76,
+        "pen": 0,
+        "ded": 25358,
+        "totalPay": 83295.52,
+        "op": 83310.52
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-03-23",
+      "to": "2026-03-29",
+      "wb": {
+        "ids": [
+          "672219426",
+          "672219427"
+        ],
+        "sales": 208912.23,
+        "settle": 217292.93,
+        "wbFee": -8380.7,
+        "log": 56274.31,
+        "stor": 4860.55,
+        "pen": 10,
+        "ded": 28358,
+        "totalPay": 127745.07,
+        "op": 127790.07
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-03-30",
+      "to": "2026-04-05",
+      "wb": {
+        "ids": [
+          "678996793",
+          "680035826"
+        ],
+        "sales": 184343.06,
+        "settle": 194963.52,
+        "wbFee": -10620.46,
+        "log": 58690.16,
+        "stor": 4614.17,
+        "pen": 0,
+        "ded": 82040.82,
+        "totalPay": 49498.37,
+        "op": 49618.37
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-04-06",
+      "to": "2026-04-12",
+      "wb": {
+        "ids": [
+          "685941634",
+          "685941636"
+        ],
+        "sales": 214509.8,
+        "settle": 218796.71,
+        "wbFee": -4286.91,
+        "log": 65787.23,
+        "stor": 4408.87,
+        "pen": 10,
+        "ded": 12000,
+        "totalPay": 136500.61,
+        "op": 136590.61
+      },
+      "db": null,
+      "aligned": null,
+      "hasDb": false,
+      "hasExport": false
+    },
+    {
+      "from": "2026-04-13",
+      "to": "2026-04-19",
+      "wb": {
+        "ids": [
+          "693134115",
+          "693424903"
+        ],
+        "sales": 156670.99,
+        "settle": 163572.97,
+        "wbFee": -6901.98,
+        "log": 80013.02,
+        "stor": 4233.18,
+        "pen": 0,
+        "ded": 15000,
+        "totalPay": 64326.77,
+        "op": 64326.77
+      },
+      "db": {
+        "revenue": 149227.37,
+        "costs": {
+          "commission": 8428.409999999998,
+          "logistics": 29068.010000000035,
+          "return_logistics": 0,
+          "storage": 1225.91,
+          "penalty": 0,
+          "other": 21129.489999999994
+        },
+        "op": 89375.55,
+        "saleRows": 49,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-04-20",
+      "to": "2026-04-26",
+      "wb": {
+        "ids": [
+          "699553616",
+          "699553618"
+        ],
+        "sales": 183532.72,
+        "settle": 186654.38,
+        "wbFee": -3121.66,
+        "log": 73016.07,
+        "stor": 4133,
+        "pen": 50,
+        "ded": 3000,
+        "totalPay": 106455.31,
+        "op": 106455.31
+      },
+      "db": {
+        "revenue": 178435.37,
+        "costs": {
+          "commission": 5033.999999999999,
+          "logistics": 21306.560000000005,
+          "return_logistics": 0,
+          "storage": 1188.28,
+          "penalty": 30,
+          "other": 14357.65
+        },
+        "op": 136518.88,
+        "saleRows": 59,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-04-27",
+      "to": "2026-05-03",
+      "wb": {
+        "ids": [
+          "706071292",
+          "706071293"
+        ],
+        "sales": 173103.71,
+        "settle": 169298.63,
+        "wbFee": 3805.08,
+        "log": 59195.26,
+        "stor": 4012.34,
+        "pen": 0,
+        "ded": 7000,
+        "totalPay": 99091.03,
+        "op": 99091.03
+      },
+      "db": {
+        "revenue": 180719.71,
+        "costs": {
+          "commission": 3412.8599999999997,
+          "logistics": 23257.519999999953,
+          "return_logistics": 0,
+          "storage": 1138.5,
+          "penalty": 0,
+          "other": 12205.730000000003
+        },
+        "op": 140705.1,
+        "saleRows": 58,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-05-04",
+      "to": "2026-05-10",
+      "wb": {
+        "ids": [
+          "712859015",
+          "714615038"
+        ],
+        "sales": 143044.97,
+        "settle": 139446.28,
+        "wbFee": 3598.69,
+        "log": 61627.86,
+        "stor": 3783.65,
+        "pen": 0,
+        "ded": 10107.14,
+        "totalPay": 63927.63,
+        "op": 63927.63
+      },
+      "db": {
+        "revenue": 143957.01,
+        "costs": {
+          "commission": 3043.3999999999996,
+          "logistics": 24409.490000000016,
+          "return_logistics": 0,
+          "storage": 1660.77,
+          "penalty": 0,
+          "other": 23094.889999999974
+        },
+        "op": 91748.46,
+        "saleRows": 45,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-05-11",
+      "to": "2026-05-17",
+      "wb": {
+        "ids": [
+          "719638118",
+          "719638120"
+        ],
+        "sales": 134847.45,
+        "settle": 128452.55,
+        "wbFee": 6394.9,
+        "log": 64811.14,
+        "stor": 3537.69,
+        "pen": 120,
+        "ded": 13738.5,
+        "totalPay": 44848.27,
+        "op": 46245.22
+      },
+      "db": {
+        "revenue": 139492.46,
+        "costs": {
+          "commission": 3854.28,
+          "logistics": 26688.41000000002,
+          "return_logistics": 0,
+          "storage": 1036.1799999999998,
+          "penalty": 120,
+          "other": 15037.570000000003
+        },
+        "op": 92756.02,
+        "saleRows": 46,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-05-18",
+      "to": "2026-05-24",
+      "wb": {
+        "ids": [
+          "727586126",
+          "727586133"
+        ],
+        "sales": 185187.79,
+        "settle": 165218.03,
+        "wbFee": 19969.76,
+        "log": 71178.23,
+        "stor": 3518.54,
+        "pen": 30,
+        "ded": 8322,
+        "totalPay": 82169.26,
+        "op": 82169.26
+      },
+      "db": {
+        "revenue": 179000.82,
+        "costs": {
+          "commission": 3069.0800000000004,
+          "logistics": 23469.610000000015,
+          "return_logistics": 0,
+          "storage": 991.1600000000001,
+          "penalty": 30,
+          "other": 11196.230000000012
+        },
+        "op": 140244.74,
+        "saleRows": 55,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-05-25",
+      "to": "2026-05-31",
+      "wb": {
+        "ids": [
+          "737125393",
+          "737125394"
+        ],
+        "sales": 187265.36,
+        "settle": 165307.73,
+        "wbFee": 21957.63,
+        "log": 66250.07,
+        "stor": 3221.63,
+        "pen": 30,
+        "ded": 23034,
+        "totalPay": 72772.03,
+        "op": 72772.03
+      },
+      "db": {
+        "revenue": 183021.39,
+        "costs": {
+          "commission": 5760.610000000001,
+          "logistics": 27390.510000000002,
+          "return_logistics": 0,
+          "storage": 954.1700000000001,
+          "penalty": 0,
+          "other": 12927.640000000005
+        },
+        "op": 135988.46,
+        "saleRows": 55,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-06-01",
+      "to": "2026-06-07",
+      "wb": {
+        "ids": [
+          "742938173",
+          "742938174"
+        ],
+        "sales": 162145.49,
+        "settle": 146953.16,
+        "wbFee": 15192.33,
+        "log": 65835.36,
+        "stor": 3145.96,
+        "pen": 415,
+        "ded": 29000,
+        "totalPay": 48556.84,
+        "op": 48556.84
+      },
+      "db": {
+        "revenue": 158562.44,
+        "costs": {
+          "commission": 6309.97,
+          "logistics": 30488.630000000016,
+          "return_logistics": 0,
+          "storage": 909.1700000000001,
+          "penalty": 355,
+          "other": 13897.35
+        },
+        "op": 106602.32,
+        "saleRows": 48,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-06-08",
+      "to": "2026-06-14",
+      "wb": {
+        "ids": [
+          "751265392",
+          "751265393"
+        ],
+        "sales": 157542.39,
+        "settle": 152237.69,
+        "wbFee": 5304.7,
+        "log": 77558.33,
+        "stor": 2998.66,
+        "pen": 0,
+        "ded": 23000,
+        "totalPay": 48680.7,
+        "op": 48680.7
+      },
+      "db": {
+        "revenue": 149228.48,
+        "costs": {
+          "commission": 4479.250000000001,
+          "logistics": 33694.96000000006,
+          "return_logistics": 0,
+          "storage": 860.28,
+          "penalty": 0,
+          "other": 12784.609999999991
+        },
+        "op": 97409.38,
+        "saleRows": 47,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-06-15",
+      "to": "2026-06-21",
+      "wb": {
+        "ids": [
+          "758291426",
+          "758291427"
+        ],
+        "sales": 138732.86,
+        "settle": 142194.58,
+        "wbFee": -3461.72,
+        "log": 86974.77,
+        "stor": 2786.94,
+        "pen": 40,
+        "ded": 26500,
+        "totalPay": 25892.87,
+        "op": 25892.87
+      },
+      "db": {
+        "revenue": 158449.26,
+        "costs": {
+          "commission": 8384.119999999999,
+          "logistics": 32769.18000000003,
+          "return_logistics": 0,
+          "storage": 799.27,
+          "penalty": 40,
+          "other": 20051.37000000001
+        },
+        "op": 96405.32,
+        "saleRows": 51,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-06-22",
+      "to": "2026-06-28",
+      "wb": {
+        "ids": [
+          "764655778",
+          "764655780"
+        ],
+        "sales": 140580.49,
+        "settle": 142655.97,
+        "wbFee": -2075.48,
+        "log": 72987.86,
+        "stor": 2760.72,
+        "pen": 0,
+        "ded": 27500,
+        "totalPay": 39407.39,
+        "op": 39407.39
+      },
+      "db": {
+        "revenue": 143867.09,
+        "costs": {
+          "commission": 4948.73,
+          "logistics": 33843.30000000004,
+          "return_logistics": 0,
+          "storage": 795.44,
+          "penalty": 0,
+          "other": 16184.41000000001
+        },
+        "op": 88095.21,
+        "saleRows": 44,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    },
+    {
+      "from": "2026-06-29",
+      "to": "2026-07-05",
+      "wb": {
+        "ids": [
+          "771254347",
+          "771254352"
+        ],
+        "sales": 108016.95,
+        "settle": 126195.58,
+        "wbFee": -18178.63,
+        "log": 62471.26,
+        "stor": 2877,
+        "pen": 0,
+        "ded": 21000,
+        "totalPay": 39847.32,
+        "op": 39847.32
+      },
+      "db": {
+        "revenue": 124315,
+        "costs": {
+          "commission": 10489.759999999998,
+          "logistics": 30096.690000000017,
+          "return_logistics": 0,
+          "storage": 1210.74,
+          "penalty": 0,
+          "other": 27516.860000000022
+        },
+        "op": 55000.95,
+        "saleRows": 36,
+        "finRows": 1000
+      },
+      "aligned": null,
+      "hasDb": true,
+      "hasExport": false
+    }
+  ]
+}

@@ -10,7 +10,7 @@ import {
 } from "@/lib/inventory-aggregation";
 import type { InventoryReport } from "@/lib/inventory-types";
 import { getDefaultDateRange } from "@/lib/utils";
-import { fetchSalesInRange } from "@/services/dashboard-service";
+import { fetchSalesInRange } from "@/services/persisted-query-service";
 import { getInventoryForAccount } from "@/services/inventory-service";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import type { Product, ScopedDateRange } from "@/types/database";

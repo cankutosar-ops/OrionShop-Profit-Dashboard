@@ -91,65 +91,6 @@ function withIds(rows) {
   return rows.map((row, index) => ({ ...row, id: String(index + 1) }));
 }
 
-function buildProfitabilityFromRows(products, orders, sales, finance, ads, costHistory, deps) {
-  const {
-    buildLatestCostByProductId,
-    buildProductFunnelMetrics,
-    buildPurchaseSridSet,
-    attributeProductFinance,
-    buildProfitBreakdown,
-  } = deps;
-
-  const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
-
-  return products
-    .map((product) => {
-      const productOrders = orders.filter((o) => String(o.product_id) === String(product.id));
-      const productSales = sales.filter((s) => String(s.product_id) === String(product.id));
-      const productFinance = finance.filter((f) => String(f.product_id) === String(product.id));
-      const productAds = ads.filter(
-        (a) =>
-          String(a.product_id) === String(product.id) ||
-          a.supplier_article === product.supplier_article
-      );
-
-      const funnel = buildProductFunnelMetrics(productOrders, productSales);
-      const purchaseSrids = buildPurchaseSridSet(productSales);
-      const {
-        financeForBreakdown,
-        purchaseLogisticsRows,
-        excludedLogisticsRows,
-        excludedLogistics,
-      } = attributeProductFinance(productFinance, purchaseSrids);
-
-      const breakdown = buildProfitBreakdown({
-        sales: productSales,
-        finance: financeForBreakdown,
-        ads: productAds,
-        costHistory: [],
-        latestCostByProductId,
-      });
-
-      return {
-        ...breakdown,
-        productId: String(product.id),
-        modelCode: product.supplier_article,
-        productName: product.name,
-        categoryName: product.category?.name ?? "Uncategorized",
-        brandName: product.brand?.name ?? "Unknown",
-        orders: funnel.orders,
-        purchases: funnel.purchases,
-        conversionPercent: funnel.conversionPercent,
-        cancelled: funnel.cancelled,
-        cancellationPercent: funnel.cancellationPercent,
-        purchaseLogistics: breakdown.logistics,
-        excludedLogistics,
-        purchaseLogisticsRows,
-        excludedLogisticsRows,
-      };
-    })
-    .filter((p) => p.orders > 0 || p.purchases > 0 || p.revenue > 0 || p.advertising > 0);
-}
 
 function extractPaMetrics(totals) {
   return {
@@ -191,21 +132,9 @@ async function main() {
     verifyProductAnalyticsV3Totals,
     verifyProductAnalyticsOperationalTotals,
   } = await import("../src/lib/product-analytics.ts");
-  const { buildLatestCostByProductId, buildProfitBreakdown } = await import(
-    "../src/lib/profit-calculator.ts"
+  const { buildProductProfitabilityRows } = await import(
+    "../src/lib/product-profitability-builder.ts"
   );
-  const { buildProductFunnelMetrics } = await import("../src/lib/product-funnel-metrics.ts");
-  const { attributeProductFinance, buildPurchaseSridSet } = await import(
-    "../src/lib/product-logistics-attribution.ts"
-  );
-
-  const deps = {
-    buildLatestCostByProductId,
-    buildProductFunnelMetrics,
-    buildPurchaseSridSet,
-    attributeProductFinance,
-    buildProfitBreakdown,
-  };
 
   const { resolveMarketplaceAccountId } = await import("../src/services/marketplace-account-service.ts");
 
@@ -370,30 +299,28 @@ async function main() {
   const expectedSales = withIds(expectedSalePayloads);
   const expectedFinance = withIds(expectedFinanceInRange);
 
-  const profitabilityBefore = buildProfitabilityFromRows(
+  const profitabilityBefore = buildProductProfitabilityRows({
     products,
-    expectedOrders,
-    expectedSales,
-    expectedFinance,
+    orders: expectedOrders,
+    sales: expectedSales,
+    finance: expectedFinance,
     ads,
     costHistory,
-    deps
-  );
+  });
   const totalsBefore = buildProductAnalyticsTotals(profitabilityBefore);
 
   const profitabilityAfter = await getProductProfitability(scope, supabase);
   const totalsAfter = buildProductAnalyticsTotals(profitabilityAfter);
   const v3After = buildProductAnalyticsV3Rows(profitabilityAfter);
 
-  const profitabilityDbRows = buildProfitabilityFromRows(
+  const profitabilityDbRows = buildProductProfitabilityRows({
     products,
-    withIds(dbOrders),
-    withIds(dbSales),
-    withIds(dbFinance),
+    orders: withIds(dbOrders),
+    sales: withIds(dbSales),
+    finance: withIds(dbFinance),
     ads,
     costHistory,
-    deps
-  );
+  });
   const totalsDbRows = buildProductAnalyticsTotals(profitabilityDbRows);
   compareMetric("PA engine self-check (commission)", totalsDbRows.commission, totalsAfter.commission);
   compareMetric("PA engine self-check (operational profit)", totalsDbRows.operationalProfit, totalsAfter.operationalProfit);

@@ -16,7 +16,9 @@ function isCancelledOrder(order: WbOrder): boolean {
 }
 
 function orderLineAmount(order: WbOrder): number {
-  return order.price * order.quantity;
+  const unit =
+    Number(order.price_with_disc ?? 0) > 0 ? Number(order.price_with_disc) : order.price;
+  return unit * order.quantity;
 }
 
 export function buildOrdersPurchasesKpis(
@@ -25,6 +27,9 @@ export function buildOrdersPurchasesKpis(
 ): OrdersPurchasesKpis {
   const activeOrders = orders.filter(isActiveOrder);
   const cancelledOrders = orders.filter(isCancelledOrder);
+
+  const ordersValue = orders.reduce((sum, order) => sum + orderLineAmount(order), 0);
+  const ordersValueCount = orders.reduce((sum, order) => sum + order.quantity, 0);
 
   const ordersCount = activeOrders.reduce((sum, order) => sum + order.quantity, 0);
   const ordersAmount = activeOrders.reduce((sum, order) => sum + orderLineAmount(order), 0);
@@ -81,6 +86,8 @@ export function buildOrdersPurchasesKpis(
   );
 
   return {
+    ordersValue,
+    ordersValueCount,
     ordersCount,
     ordersAmount,
     cancelledOrdersCount,

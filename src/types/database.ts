@@ -1,5 +1,10 @@
-import type { MarketplaceFeesPresentation } from "@/lib/marketplace-fees-presentation";
-import type { FinanceCategory } from "@/lib/finance-category";
+import type {
+  FinanceCategory,
+  FinanceNature,
+  FinanceOperationType,
+  MarketplaceFeesPresentation,
+} from "@/types/finance";
+import { FINANCE_CATEGORIES, FINANCE_OPERATION_TYPES } from "@/types/finance";
 
 export type MarketplaceType = "wildberries" | "ozon" | "lamoda";
 
@@ -93,7 +98,12 @@ export type WbOrder = {
   product_id: string;
   order_date: string;
   sale_date: string | null;
+  /** List price (WB API totalPrice). */
   price: number;
+  /** Seller-discounted price (WB API priceWithDisc) — Orders Value KPI. */
+  price_with_disc: number;
+  /** Last status change date (WB API lastChangeDate). */
+  last_change_date: string | null;
   quantity: number;
   status: string;
   warehouse: string | null;
@@ -109,6 +119,10 @@ export type WbSale = {
   product_id: string;
   sale_date: string;
   revenue: number;
+  /** Sales API priceWithDisc — commercial list price after seller discount. */
+  price_with_disc?: number;
+  /** Sales API forPay — goods settlement (netForPay building block). */
+  for_pay?: number;
   quantity: number;
   is_return: boolean;
   return_date: string | null;
@@ -116,26 +130,103 @@ export type WbSale = {
   barcode: string | null;
 };
 
-export type { FinanceCategory, FinanceNature } from "@/lib/finance-category";
-export { FINANCE_CATEGORIES } from "@/lib/finance-category";
+/** Profit Engine V3 — Model B (commercial performance layer). */
+export type ModelBProfitMetrics = {
+  grossSales: number;
+  returnedSales: number;
+  /** Sales = grossSales − returnedSales (priceWithDisc). */
+  netSales: number;
+  /** When not `ready`, dependent KPIs must not show temporary zero values. */
+  netSalesStatus: import("@/lib/sales-revenue-resolution").NetSalesStatus;
+  /** priceWithDisc − Sales API forPay (net). */
+  commission: number;
+  /** Finance acquiring_fee. */
+  acquiring: number;
+  /** Sales API forPay (net) — commercial revenue baseline before other marketplace fees. */
+  revenue: number;
+  logistics: number;
+  storage: number;
+  penalties: number;
+  /** Monthly operational adjustments (ADJUSTMENT category). */
+  adjustments: number;
+  productCost: number;
+  advertising: number;
+  /**
+   * Operating Profit = Seller Payout − Product Cost − Advertising (before tax).
+   * Kept as `netProfit` for backward compatibility.
+   */
+  netProfit: number;
+  /** Seller Payout after all marketplace deductions (excl. product cost & marketing). */
+  sellerPayout: number;
+  /** Alias of netProfit — Operating Profit before tax. */
+  operatingProfit: number;
+  /** Tax rate % applied to Seller Payout. */
+  taxPercent: number;
+  /** Estimated Tax = Seller Payout × Tax%. */
+  estimatedTax: number;
+  /** After Tax Payout = Seller Payout − Estimated Tax. */
+  afterTaxPayout: number;
+  /** Final Net Profit = After Tax Payout − Product Cost − Advertising. */
+  finalNetProfit: number;
+  /** @deprecated Legacy aggregate — not shown on Commercial Performance dashboard. */
+  marketplaceFees?: number;
+  /** @deprecated Use `adjustments`. */
+  accountAdjustments?: number;
+};
 
-export type FinanceOperationType =
-  | "commission"
-  | "logistics"
-  | "return_logistics"
-  | "storage"
-  | "penalty"
-  | "other";
+/** Profit Engine V3 — Model C (settlement layer). */
+export type ModelCProfitMetrics = {
+  /** Revenue = netForPay (goods settlement for the period). */
+  revenue: number;
+  /** Informational only — not deducted from net profit. */
+  marketplaceFees: number;
+  logistics: number;
+  storage: number;
+  penalties: number;
+  deductions: number;
+  acceptance: number;
+  productCost: number;
+  advertising: number;
+  netProfit: number;
+};
 
-/** All wb_finance operation types included in net profit. */
-export const FINANCE_OPERATION_TYPES: FinanceOperationType[] = [
-  "commission",
-  "logistics",
-  "return_logistics",
-  "storage",
-  "penalty",
-  "other",
-];
+/** WB Settlement — Wildberries payment entitlement for the selected date range. */
+export type WbSettlementDataSource = "finance_transaction" | "weekly_reports";
+
+/** Informational availability for Model C / WB Settlement (not an application error). */
+export type SettlementDataAvailability = {
+  /** False when the selected period is after the latest realization report. */
+  available: boolean;
+  /** Latest weekly realization report period end (dateTo), when known. */
+  latestRealizationReportDate: string | null;
+  selectedFrom: string;
+  selectedTo: string;
+};
+
+export type WbSettlementMetrics = {
+  netForPay: number;
+  logistics: number;
+  storage: number;
+  penalties: number;
+  deductions: number;
+  acceptance: number;
+  settlement: number;
+  dataSource: WbSettlementDataSource;
+  dataSourceNote?: string;
+  weeklyReportCount?: number;
+  /** When unavailable, UI shows an informational notice instead of zero/partial figures. */
+  availability?: SettlementDataAvailability;
+};
+
+/** Operational unit counts reused from profit breakdown. */
+export type QuantityMetrics = {
+  unitsSold: number;
+  unitsReturned: number;
+  netUnits: number;
+};
+
+export type { FinanceCategory, FinanceNature, FinanceOperationType, MarketplaceFeesPresentation };
+export { FINANCE_CATEGORIES, FINANCE_OPERATION_TYPES };
 
 export type WbFinance = {
   id: string;
@@ -296,21 +387,28 @@ export type ProfitabilityV2BreakdownLine = {
   detail?: string;
 };
 
-export type ProfitabilityV2Metrics = {
-  productCost: number;
-  grossProfit: number;
-  marketplaceFees: number;
-  marginPercent: number;
-  advertising: number;
-  breakdown: ProfitabilityV2BreakdownLine[];
-};
-
 export type ProductProfitability = ProfitBreakdown & {
   productId: string;
   modelCode: string;
   productName: string;
   categoryName: string;
   brandName: string;
+  /**
+   * Model B Net Sales (priceWithDisc net) — Customer Payment baseline.
+   * `revenue` on this row is Model B Revenue (Sales API forPay).
+   */
+  netSales: number;
+  /**
+   * Model B Final Net Profit (after tax).
+   * `netProfit` remains Operating Profit (before tax) for Smart Pricing / ops compatibility.
+   */
+  finalNetProfit: number;
+  /** Approved Marketplace Fees (COMMISSION + ACQUIRING + PPVZ + OTHER). */
+  marketplaceFees: number;
+  /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
+  accountAdjustments: number;
+  /** COMPENSATION reimbursements — separate from Marketplace Fees KPI. */
+  reimbursements: number;
   /** All wb_orders quantity in period. */
   orders: number;
   /** Completed purchase quantity (non-return wb_sales) in period. */
@@ -372,6 +470,7 @@ export type ProductAnalyticsV3Row = {
   cancelled: number;
   cancellationPercent: number;
   revenue: number;
+  marketplaceFees: number;
   commission: number;
   /** All outbound logistics (purchase + excluded). */
   totalLogistics: number;
@@ -383,7 +482,7 @@ export type ProductAnalyticsV3Row = {
   operationalProfit: number;
   /** Operational profit ÷ revenue × 100. */
   operationalMarginPercent: number;
-  /** Financial net profit (buildProfitBreakdown) — for reconciliation only. */
+  /** Financial net profit (Model B engine). */
   financialNetProfit: number;
   /** Total current stock from inventory cache — links to Inventory page. */
   currentStock: number;
@@ -403,6 +502,10 @@ export type ProductAnalyticsSkuRow = {
   currentStock: number;
   orders: number;
   purchases: number;
+  conversionPercent: number;
+  cancelled: number;
+  cancellationPercent: number;
+  revenue: number;
 };
 
 export type ProductSkuAnalyticsResponse = {
@@ -469,13 +572,27 @@ export type WbStock = {
   last_synced_at: string;
 };
 
-export type CategoryProfitability = {
-  categoryId: string;
-  categoryName: string;
+/**
+ * Dimension rollup (Category / Brand / future) from Model B product outputs.
+ * `revenue` = Model B forPay; `finalNetProfit` = Model B after-tax profit.
+ */
+export type GroupedProfitability = {
+  id: string;
+  name: string;
   revenue: number;
-  netProfit: number;
+  finalNetProfit: number;
   productCount: number;
   returnRate: number;
+};
+
+/**
+ * @deprecated Prefer GroupedProfitability. Legacy aliases kept for older call sites.
+ * `netProfit` mirrors `finalNetProfit` after Sprint 6.36.
+ */
+export type CategoryProfitability = GroupedProfitability & {
+  categoryId: string;
+  categoryName: string;
+  netProfit: number;
 };
 
 export type DailyOrdersPurchasesPoint = {
@@ -487,6 +604,9 @@ export type DailyOrdersPurchasesPoint = {
 };
 
 export type OrdersPurchasesKpis = {
+  /** Sum of price × qty for all orders in range, including cancelled. */
+  ordersValue: number;
+  ordersValueCount: number;
   ordersCount: number;
   ordersAmount: number;
   cancelledOrdersCount: number;
@@ -498,15 +618,42 @@ export type OrdersPurchasesKpis = {
   dailyOrdersPurchases: DailyOrdersPurchasesPoint[];
 };
 
+export type CashReceivedMetrics = {
+  /** Total bank transfers (bankPaymentSum) with payment date in range; null when unavailable. */
+  amount: number | null;
+  payoutCount: number;
+  unavailableReason?: string;
+};
+
+export type ExpectedWbPayoutMetrics = {
+  /** Sum of bankPaymentSum for realization reports overlapping the dashboard range. */
+  amount: number | null;
+  reportCount: number;
+  unavailableReason?: string;
+};
+
+export type WbBalanceMetrics = {
+  /** Total wallet balance (portal). */
+  current: number | null;
+  /** Available to withdraw (portal). */
+  forWithdraw: number | null;
+  currency: string | null;
+  unavailableReason?: string;
+};
+
 export type OverviewMetrics = ProfitBreakdown & {
   dailyRevenue: { date: string; revenue: number; profit: number }[];
   costBreakdown: { name: string; value: number; color: string }[];
   ordersPurchases: OrdersPurchasesKpis;
-  profitabilityV2: ProfitabilityV2Metrics;
   marketplaceFeesPresentation: MarketplaceFeesPresentation;
+  modelBProfit: ModelBProfitMetrics;
+  modelCProfit: ModelCProfitMetrics;
+  wbSettlement: WbSettlementMetrics;
+  quantityMetrics: QuantityMetrics;
+  cashReceived: CashReceivedMetrics;
+  expectedWbPayout: ExpectedWbPayoutMetrics;
+  wbBalance: WbBalanceMetrics;
 };
-
-export type { MarketplaceFeesPresentation };
 
 /** Minimal Supabase relationship entry (no FK metadata required for typed client). */
 type NoRelationships = [];

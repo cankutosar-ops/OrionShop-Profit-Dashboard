@@ -16,7 +16,6 @@ import {
   parseISO,
   startOfMonth,
   startOfWeek,
-  subDays,
   subMonths,
 } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
@@ -25,9 +24,10 @@ import {
   getAppLanguage,
   getCalendarWeekdayLabels,
 } from "@/lib/app-locale";
+import { navigateScope } from "@/lib/scope-navigation";
 import { SYNC_DATE_PARAM } from "@/lib/marketplace-sync-date";
 import { replaceUrlIfChanged } from "@/lib/dashboard-lifecycle";
-import { cn, formatDate, getDefaultDateRange } from "@/lib/utils";
+import { cn, formatDate, buildInclusiveDateRange, getDefaultDateRange } from "@/lib/utils";
 
 type ActiveField = "from" | "to";
 
@@ -35,6 +35,7 @@ const PRESETS = [
   { label: "7 days", days: 7 },
   { label: "30 days", days: 30 },
   { label: "90 days", days: 90 },
+  { label: "180 days", days: 180 },
 ] as const;
 
 function toDateString(date: Date): string {
@@ -149,6 +150,7 @@ export function DateRangePicker() {
   const currentQuery = searchParams.toString();
 
   const [open, setOpen] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
   const [draftTo, setDraftTo] = useState(to);
   const [activeField, setActiveField] = useState<ActiveField>("from");
@@ -158,6 +160,7 @@ export function DateRangePicker() {
     setDraftFrom(from);
     setDraftTo(to);
     setViewMonth(parseISO(from));
+    setApplying(false);
   }, [from, to]);
 
   useEffect(() => {
@@ -207,7 +210,21 @@ export function DateRangePicker() {
     params.set(SYNC_DATE_PARAM.manual, "1");
     params.delete(SYNC_DATE_PARAM.adjusted);
     params.delete(SYNC_DATE_PARAM.accountSwitched);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    try {
+      sessionStorage.setItem(
+        "orionshop.perf.nav",
+        JSON.stringify({
+          kind: "date_filter",
+          startedAt: Date.now(),
+          perfStart: performance.now(),
+        })
+      );
+    } catch {
+      // ignore
+    }
+    // Push URL then refresh so Server Components refetch (push alone can leave stale RSC).
+    setApplying(true);
+    navigateScope(router, `${pathname}?${params.toString()}`, "push");
     setOpen(false);
   }
 
@@ -228,13 +245,10 @@ export function DateRangePicker() {
   }
 
   function handlePreset(days: number) {
-    const end = new Date();
-    const start = subDays(end, days);
-    const nextFrom = toDateString(start);
-    const nextTo = toDateString(end);
+    const { from: nextFrom, to: nextTo } = buildInclusiveDateRange(days);
     setDraftFrom(nextFrom);
     setDraftTo(nextTo);
-    setViewMonth(start);
+    setViewMonth(parseISO(nextFrom));
     applyRange(nextFrom, nextTo);
   }
 
@@ -243,13 +257,15 @@ export function DateRangePicker() {
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm transition-colors hover:bg-card-hover"
+        disabled={applying}
+        className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm transition-colors hover:bg-card-hover disabled:opacity-60"
         aria-expanded={open}
+        aria-busy={applying}
         aria-haspopup="dialog"
       >
         <CalendarDays className="h-4 w-4 text-muted-foreground" />
         <span className="whitespace-nowrap">
-          {formatDate(from)} — {formatDate(to)}
+          {applying ? "Updating…" : `${formatDate(from)} — ${formatDate(to)}`}
         </span>
       </button>
 

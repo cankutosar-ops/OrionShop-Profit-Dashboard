@@ -7,6 +7,7 @@ import {
 import { parseSmartPricingCommissionSettings } from "@/lib/smart-pricing-settings";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
+import { measureAsync, recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { getSmartPricingInputs } from "@/services/smart-pricing-service";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +31,25 @@ function parsePercent(value: string | undefined, fallback: number): number {
 }
 
 export default async function SmartPricingPage({ searchParams }: PageProps) {
+  const started = Date.now();
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const targetMargin = parsePercent(params.margin, DEFAULT_TARGET_MARGIN_PERCENT);
   const marketing = parsePercent(params.marketing, DEFAULT_MARKETING_PERCENT);
   const commissionSettings = parseSmartPricingCommissionSettings(params);
-  const inputs = await getSmartPricingInputs(scope);
+  const inputs = await measureAsync(
+    "server.getSmartPricingInputs",
+    "server",
+    () => getSmartPricingInputs(scope),
+    { route: "/analytics/pricing" }
+  );
+  recordPerfEvent({
+    category: "server",
+    name: "server.SmartPricingPage.render",
+    durationMs: Date.now() - started,
+    route: "/analytics/pricing",
+    meta: { products: inputs?.length ?? 0 },
+  });
 
   return (
     <>
@@ -51,6 +65,7 @@ export default async function SmartPricingPage({ searchParams }: PageProps) {
       ) : (
         <SmartPricingPanel
           inputs={inputs}
+          scopeBrandId={scope.brandId}
           initialTargetMargin={targetMargin}
           initialMarketing={marketing}
           initialCommissionSettings={commissionSettings}

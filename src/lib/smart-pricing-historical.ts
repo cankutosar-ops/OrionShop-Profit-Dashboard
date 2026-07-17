@@ -2,7 +2,7 @@
  * Historical P&L-based pricing — used by Decision Simulator and Pricing Health only.
  * Smart Pricing page uses forward-looking engine in smart-pricing.ts.
  */
-import { calculateNetMarginPercent } from "@/lib/profitability-v2";
+import { calculateNetMarginPercent } from "@/lib/profit-margin";
 import {
   buildProductOperationalMetrics,
   calculateOtherMarketplaceCosts,

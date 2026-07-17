@@ -11,7 +11,11 @@ import {
 import { getDefaultDateRange } from "@/lib/utils";
 
 /**
- * Dashboard-only: one-time date clamp immediately after a marketplace account switch.
+ * Legacy safety net for URLs that still carry accountSwitched=1.
+ * Clears the flag (and clamps dates if needed) with replaceUrlIfChanged
+ * (URL update + router.refresh for RSC sync).
+ *
+ * New switches clamp dates in TenantSelectors and do not set accountSwitched.
  */
 export function MarketplaceDateScope() {
   const router = useRouter();
@@ -28,7 +32,9 @@ export function MarketplaceDateScope() {
   const currentQuery = searchParams.toString();
 
   useEffect(() => {
-    if (pathname !== "/" || !accountSwitched || dateManual || !accountId) return;
+    if (pathname !== "/" || !accountSwitched || dateManual || !accountId) {
+      return;
+    }
     if (resolvingRef.current || resolvedQueryRef.current === currentQuery) return;
 
     const defaults = getDefaultDateRange();

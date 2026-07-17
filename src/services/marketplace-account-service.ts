@@ -340,40 +340,63 @@ export async function resolveMarketplaceAccountId(
   };
 }
 
-/** Full account row with decrypted API key — admin/sync only. */
-export async function getMarketplaceAccountForSync(accountId: string) {
+/** Lightweight sync state for status polling. */
+export async function getMarketplaceAccountSyncState(accountId: string) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("marketplace_accounts")
-    .select("*")
+    .select("id, last_sync_at, last_successful_sync_at, last_sync_status")
     .eq("id", accountId)
     .maybeSingle();
 
-  if (error) throw new Error(`Failed to fetch marketplace account: ${error.message}`);
-  if (!data) throw new Error(`Marketplace account not found: ${accountId}`);
-
-  if (data.sync_enabled === false) {
-    throw new Error(`Sync is disabled for account "${data.account_name}"`);
-  }
-
-  const encrypted = data.api_key_encrypted?.trim();
-  if (!encrypted) {
-    throw new Error(`Account "${data.account_name}" has no API key configured`);
-  }
-
-  let apiKey: string;
-  try {
-    apiKey = decryptCredential(encrypted);
-  } catch {
-    throw new Error(`Failed to decrypt API key for "${data.account_name}"`);
-  }
+  if (error) throw new Error(`Failed to fetch sync state: ${error.message}`);
+  if (!data) return null;
 
   return {
-    ...data,
     id: String(data.id),
-    company_id: String(data.company_id),
-    apiKey,
+    last_sync_at: data.last_sync_at,
+    last_successful_sync_at: data.last_successful_sync_at,
+    last_sync_status: data.last_sync_status,
   };
+}
+
+/** Full account row with decrypted API key — admin/sync only. */
+export async function getMarketplaceAccountForSync(accountId: string) {
+  const { cachedExternalRequest } = await import("@/lib/wb/wb-request-cache");
+  return cachedExternalRequest(`account-for-sync:${accountId}`, async () => {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("marketplace_accounts")
+      .select("*")
+      .eq("id", accountId)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to fetch marketplace account: ${error.message}`);
+    if (!data) throw new Error(`Marketplace account not found: ${accountId}`);
+
+    if (data.sync_enabled === false) {
+      throw new Error(`Sync is disabled for account "${data.account_name}"`);
+    }
+
+    const encrypted = data.api_key_encrypted?.trim();
+    if (!encrypted) {
+      throw new Error(`Account "${data.account_name}" has no API key configured`);
+    }
+
+    let apiKey: string;
+    try {
+      apiKey = decryptCredential(encrypted);
+    } catch {
+      throw new Error(`Failed to decrypt API key for "${data.account_name}"`);
+    }
+
+    return {
+      ...data,
+      id: String(data.id),
+      company_id: String(data.company_id),
+      apiKey,
+    };
+  });
 }
 
 export async function markAccountSyncStarted(accountId: string): Promise<void> {

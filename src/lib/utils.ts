@@ -27,9 +27,14 @@ export function formatDate(date: string): string {
 }
 
 export function getDefaultDateRange(): { from: string; to: string } {
+  return buildInclusiveDateRange(30);
+}
+
+/** Last N calendar days inclusive of today (N=30 → today and the prior 29 days). */
+export function buildInclusiveDateRange(days: number): { from: string; to: string } {
   const to = new Date();
   const from = new Date();
-  from.setDate(from.getDate() - 30);
+  from.setDate(from.getDate() - (days - 1));
 
   return {
     from: from.toISOString().split("T")[0],

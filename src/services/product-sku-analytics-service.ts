@@ -16,7 +16,7 @@ import type {
   WbOrder,
   WbSale,
 } from "@/types/database";
-import { fetchProductsWithRelations } from "@/services/dashboard-service";
+import { fetchProductsWithRelations } from "@/services/persisted-query-service";
 import { fetchStockForProduct } from "@/services/stock-service";
 
 async function fetchOrdersForProduct(
@@ -79,7 +79,9 @@ export async function getProductSkuAnalytics(
   if (!env.isConfigured) return null;
 
   const client = createServerClient();
-  const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client);
+  const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
+    brandId: scope.brandId,
+  });
   const normalizedProductId = String(productId);
   const product = products.find((p) => String(p.id) === normalizedProductId);
   if (!product) return null;

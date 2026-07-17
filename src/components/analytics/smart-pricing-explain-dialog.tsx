@@ -2,11 +2,13 @@
 
 import { buildSmartPricingExplainContent } from "@/lib/smart-pricing-explain";
 import type { SmartPricingComputedRow } from "@/lib/smart-pricing";
+import { DEFAULT_TAX_PERCENT } from "@/lib/smart-pricing-constants";
 
 type SmartPricingExplainDialogProps = {
   row: SmartPricingComputedRow | null;
   targetMarginPercent: number;
   marketingPercent: number;
+  taxPercent?: number;
   testPrice?: number | null;
   onClose: () => void;
 };
@@ -15,6 +17,7 @@ export function SmartPricingExplainDialog({
   row,
   targetMarginPercent,
   marketingPercent,
+  taxPercent = DEFAULT_TAX_PERCENT,
   testPrice,
   onClose,
 }: SmartPricingExplainDialogProps) {
@@ -24,6 +27,7 @@ export function SmartPricingExplainDialog({
     row,
     targetMarginPercent,
     marketingPercent,
+    taxPercent,
     testPrice
   );
   if (!content) return null;

@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "endpointUrl": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/list",
+    "method": "POST",
+    "requestParameters": {
+      "dateFrom": "2026-06-30",
+      "dateTo": "2026-07-05",
+      "period": "weekly"
+    },
+    "accountId": "2",
+    "dateRange": {
+      "from": "2026-06-30",
+      "to": "2026-07-05"
+    },
+    "exportedAt": "2026-07-12T09:51:01.369Z",
+    "rowCount": 0,
+    "error": "HTTP 403: {\n    \"title\": \"forbidden\",\n    \"detail\": \"base token is not allowed\",\n    \"code\": \"base token is not allowed for this path\",\n    \"requestId\": \"a15bae78606d76af81088eeb0452d30e\",\n    \"origin\": \"s2s-finance\",\n    \"status\": 403,\n    \"statusText\": \"Forbidden\",\n    \"timestamp\": \"2026-07-12T09:51:01Z\"\n}\r\n",
+    "statusCode": 403,
+    "responseBodyPreview": "{\n    \"title\": \"forbidden\",\n    \"detail\": \"base token is not allowed\",\n    \"code\": \"base token is not allowed for this path\",\n    \"requestId\": \"a15bae78606d76af81088eeb0452d30e\",\n    \"origin\": \"s2s-finance\",\n    \"status\": 403,\n    \"statusText\": \"Forbidden\",\n    \"timestamp\": \"2026-07-12T09:51:01Z\"\n}\r\n"
+  },
+  "data": null
+}

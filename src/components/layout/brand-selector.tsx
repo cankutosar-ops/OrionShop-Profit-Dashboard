@@ -16,12 +16,15 @@ function BrandDropdown({
   options,
   onSelect,
   disabled,
+  statusText,
 }: {
   label: string;
   value: string;
   options: { id: string; label: string }[];
   onSelect: (id: string) => void;
   disabled?: boolean;
+  /** Transient status (Loading… / Updating…) overrides the selected brand label. */
+  statusText?: string;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +55,7 @@ function BrandDropdown({
       >
         <span className="flex items-center gap-2 truncate">
           <Tag className="h-4 w-4 shrink-0 text-primary" />
-          <span className="truncate">{active?.label ?? label}</span>
+          <span className="truncate">{statusText ?? active?.label ?? label}</span>
         </span>
       </button>
 
@@ -91,6 +94,7 @@ export function BrandSelector() {
 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,7 +112,14 @@ export function BrandSelector() {
         if (cancelled) return;
 
         if (response.ok) {
-          setBrands(data.brands ?? []);
+          const raw = (data.brands ?? []) as Brand[];
+          // API/DB may return numeric ids; URL searchParams are always strings.
+          setBrands(
+            raw.map((brand) => ({
+              ...brand,
+              id: String(brand.id),
+            }))
+          );
         } else {
           setBrands([]);
         }
@@ -126,9 +137,13 @@ export function BrandSelector() {
   }, [accountId, searchParams]);
 
   useEffect(() => {
+    setApplying(false);
+  }, [activeBrandId, accountId]);
+
+  useEffect(() => {
     if (!activeBrandId || loading) return;
 
-    const brandExists = brands.some((brand) => brand.id === activeBrandId);
+    const brandExists = brands.some((brand) => String(brand.id) === String(activeBrandId));
     if (brandExists) return;
 
     replaceUrlIfChanged(router, pathname, currentQuery, (params) => {
@@ -137,27 +152,40 @@ export function BrandSelector() {
   }, [activeBrandId, brands, currentQuery, loading, pathname, router]);
 
   function selectBrand(brandId: string) {
-    replaceUrlIfChanged(router, pathname, currentQuery, (params) => {
-      if (!brandId) {
-        params.delete(FILTER_PARAMS.brand);
-        return;
-      }
-      params.set(FILTER_PARAMS.brand, brandId);
-    });
+    const nextId = brandId ? String(brandId) : ALL_BRANDS_ID;
+    if (nextId === activeBrandId) return;
+    setApplying(true);
+    replaceUrlIfChanged(
+      router,
+      pathname,
+      currentQuery,
+      (params) => {
+        if (!nextId) {
+          params.delete(FILTER_PARAMS.brand);
+          return;
+        }
+        params.set(FILTER_PARAMS.brand, nextId);
+      },
+      "brand_filter"
+    );
   }
 
   const options = [
     { id: ALL_BRANDS_ID, label: "All Brands" },
-    ...brands.map((brand) => ({ id: brand.id, label: brand.name })),
+    ...brands.map((brand) => ({
+      id: String(brand.id),
+      label: brand.name || `Brand ${brand.id}`,
+    })),
   ];
 
   return (
     <BrandDropdown
-      label={loading ? "Loading…" : "All Brands"}
+      label="All Brands"
+      statusText={loading ? "Loading…" : applying ? "Updating…" : undefined}
       value={activeBrandId}
       options={options}
       onSelect={selectBrand}
-      disabled={loading || !accountId}
+      disabled={loading || applying || !accountId}
     />
   );
 }

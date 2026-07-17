@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-07-16T06:28:06.926Z",
+  "accountId": "2",
+  "from": "2026-01-01",
+  "to": "2026-07-13",
+  "strategy": "weekly",
+  "before": {
+    "columnsMissing": false,
+    "totalRows": 2837,
+    "nonReturns": 2553,
+    "withDisc": 2054,
+    "withForPay": 2289,
+    "netSales": 4772676.369999994,
+    "needsApiFallback": false
+  },
+  "after": {
+    "columnsMissing": false,
+    "totalRows": 3198,
+    "nonReturns": 2891,
+    "withDisc": 2890,
+    "withForPay": 3197,
+    "netSales": 7039304.210000012,
+    "needsApiFallback": false
+  },
+  "runLog": [
+    {
+      "week": "2026-04-09 → 2026-04-15",
+      "status": "completed",
+      "processed": 94,
+      "updated": 89,
+      "rateLimitAttempts": 0
+    },
+    {
+      "week": "2026-04-16 → 2026-04-22",
+      "status": "completed",
+      "processed": 97,
+      "updated": 90,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-04-23 → 2026-04-29",
+      "status": "completed",
+      "processed": 132,
+      "updated": 123,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-04-30 → 2026-05-06",
+      "status": "completed",
+      "processed": 109,
+      "updated": 105,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-05-28 → 2026-06-03",
+      "status": "completed",
+      "processed": 54,
+      "updated": 50,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-06-04 → 2026-06-10",
+      "status": "completed",
+      "processed": 91,
+      "updated": 84,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-06-11 → 2026-06-17",
+      "status": "completed",
+      "processed": 103,
+      "updated": 92,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-06-18 → 2026-06-24",
+      "status": "completed",
+      "processed": 95,
+      "updated": 88,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-06-25 → 2026-07-01",
+      "status": "completed",
+      "processed": 113,
+      "updated": 111,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-07-02 → 2026-07-08",
+      "status": "completed",
+      "processed": 122,
+      "updated": 115,
+      "rateLimitAttempts": 2
+    },
+    {
+      "week": "2026-07-09 → 2026-07-13",
+      "status": "completed",
+      "processed": 101,
+      "updated": 99,
+      "rateLimitAttempts": 2
+    }
+  ],
+  "remaining": 0,
+  "stoppedOn429": false,
+  "total429Events": 20,
+  "totalRowsUpdated": 1046,
+  "totalRowsProcessed": 1111,
+  "currentWeek": "2026-07-09 → 2026-07-13"
+}

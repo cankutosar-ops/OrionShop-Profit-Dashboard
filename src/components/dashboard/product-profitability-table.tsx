@@ -1,5 +1,4 @@
 import type { ProductProfitability } from "@/types/database";
-import { calculateMarketplaceFeesFromParts } from "@/lib/profitability-v2";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 
 type ProductProfitabilityTableProps = {
@@ -64,9 +63,7 @@ export function ProductProfitabilityTable({
                     {formatCurrency(product.netProfit)}
                   </td>
                   <td className="px-6 py-3.5 text-right text-muted-foreground">
-                    {formatCurrency(
-                      calculateMarketplaceFeesFromParts(product.commission, product.otherExpenses)
-                    )}
+                    {formatCurrency(product.marketplaceFees)}
                   </td>
                   <td className="px-6 py-3.5 text-right">{formatCurrency(product.advertising)}</td>
                   <td

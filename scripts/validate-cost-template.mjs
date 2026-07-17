@@ -23,7 +23,7 @@ const { buildCostTemplateRows, bulkImportCostRecords, fetchProductOptions } = aw
   "../src/services/cost-service.ts"
 );
 const { buildCostTemplateWorkbook, parseCostExcel } = await import("../src/lib/cost-excel.ts");
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { fetchCostHistory } = await import("../src/services/dashboard-service.ts");
 const { createAdminClient } = await import("../src/lib/supabase/admin.ts");
 

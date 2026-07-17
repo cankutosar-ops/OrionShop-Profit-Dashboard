@@ -1,9 +1,8 @@
 import {
   calculateGrossMarginPercent,
-  calculateGrossProfit,
-  calculateMarketplaceFeesFromParts,
+  calculateGrossProfitFromRow,
   calculateNetMarginPercent,
-} from "@/lib/profitability-v2";
+} from "@/lib/profit-margin";
 import { isProductAnalyticsV3Candidate } from "@/lib/product-funnel-metrics";
 import {
   buildProductOperationalMetrics,
@@ -19,7 +18,7 @@ import type {
 } from "@/types/database";
 
 export function toProductAnalyticsRow(product: ProductProfitability): ProductAnalyticsRow {
-  const grossProfit = calculateGrossProfit(product);
+  const grossProfit = calculateGrossProfitFromRow(product);
 
   return {
     productId: product.productId,
@@ -28,7 +27,7 @@ export function toProductAnalyticsRow(product: ProductProfitability): ProductAna
     revenue: product.revenue,
     quantitySold: product.unitsSold,
     productCost: product.productCost,
-    marketplaceFees: calculateMarketplaceFeesFromParts(product.commission, product.otherExpenses),
+    marketplaceFees: product.marketplaceFees,
     netProfit: product.netProfit,
     marginPercent: calculateGrossMarginPercent(product.revenue, grossProfit),
   };
@@ -47,6 +46,7 @@ export function toProductAnalyticsV3Row(product: ProductProfitability): ProductA
     cancelled: product.cancelled,
     cancellationPercent: product.cancellationPercent,
     revenue: product.revenue,
+    marketplaceFees: ops.marketplaceFees,
     commission: product.commission,
     totalLogistics: ops.totalLogistics,
     purchaseLogistics: ops.purchaseLogistics,
@@ -116,10 +116,7 @@ function sumFinancialTotals(products: ProductProfitability[]) {
       (acc, product) => {
         acc.revenue += product.revenue;
         acc.productCost += product.productCost;
-        acc.marketplaceFees += calculateMarketplaceFeesFromParts(
-          product.commission,
-          product.otherExpenses
-        );
+        acc.marketplaceFees += product.marketplaceFees;
         acc.purchaseLogistics += product.purchaseLogistics;
         acc.excludedLogistics += product.excludedLogistics;
         acc.returnLogistics += product.returnLogistics;

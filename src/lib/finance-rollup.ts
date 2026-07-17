@@ -1,26 +1,26 @@
 import {
   effectiveFinanceCategory,
-  isMarketplaceServiceFeeCategory,
+  isMarketplaceFeeCategory,
+  parseWbSourceSuffix,
   profitOperationTypeForRow,
   type FinanceCategory,
 } from "@/lib/finance-category";
-import { calculateMarketplaceFeesFromParts } from "@/lib/profitability-v2";
-import type { FinanceExpenseTotals } from "@/lib/profit-calculator";
-import type { FinanceOperationType, WbFinance } from "@/types/database";
-import { FINANCE_OPERATION_TYPES } from "@/types/database";
-
-export type MarketplaceFeesPresentation = {
-  /** Previous KPI: commission + all operation_type other. */
-  legacyMarketplaceFees: number;
-  /** Commission + acquiring / ppvz service fees only (excludes adjustments & reimbursements). */
-  marketplaceServiceFees: number;
-  /** Account-level deductions (Удержание / ADJUSTMENT category). */
-  accountAdjustments: number;
-  /** Reimbursements (COMPENSATION) — excluded from display, still in net profit via other. */
-  reimbursements: number;
-};
+import type { WbFinance } from "@/types/database";
+import type {
+  FinanceExpenseTotals,
+  FinanceOperationType,
+  MarketplaceFeesPresentation,
+} from "@/types/finance";
+import { FINANCE_OPERATION_TYPES } from "@/types/finance";
+export type { MarketplaceFeesPresentation };
 
 export type FinanceCategorySummary = Record<FinanceCategory, number>;
+
+export type ProductMarketplaceFeeParts = {
+  marketplaceFees: number;
+  accountAdjustments: number;
+  reimbursements: number;
+};
 
 function zeroCategorySummary(): FinanceCategorySummary {
   return {
@@ -43,6 +43,9 @@ export function summarizeFinanceByCategory(finance: WbFinance[]): FinanceCategor
   const summary = zeroCategorySummary();
 
   for (const row of finance) {
+    if (parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay") {
+      continue;
+    }
     const category = effectiveFinanceCategory(row);
     summary[category] += Math.abs(Number(row.amount));
   }
@@ -51,8 +54,61 @@ export function summarizeFinanceByCategory(finance: WbFinance[]): FinanceCategor
 }
 
 /**
- * Roll normalized categories into permanent operation_type profit buckets.
- * Pre-backfill rows without finance_category use operation_type directly for parity.
+ * Total Marketplace Fees from category summary.
+ * Single source of truth: all marketplace costs except reimbursements.
+ */
+export function sumMarketplaceFeesFromCategorySummary(summary: FinanceCategorySummary): number {
+  return (
+    summary.COMMISSION +
+    summary.ACQUIRING +
+    summary.PPVZ_REWARD +
+    summary.PPVZ_VW +
+    summary.OTHER
+  );
+}
+
+/** Total Marketplace Fees from finance rows (shared financial engine). */
+export function sumMarketplaceFeesFromFinance(finance: WbFinance[]): number {
+  return finance.reduce((sum, row) => {
+    if (parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay") {
+      return sum;
+    }
+    if (isMarketplaceFeeCategory(effectiveFinanceCategory(row))) {
+      return sum + Math.abs(Number(row.amount));
+    }
+    return sum;
+  }, 0);
+}
+
+/** Per-product marketplace fee parts — account adjustments tracked separately from marketplace fees. */
+export function buildProductMarketplaceFeeParts(finance: WbFinance[]): ProductMarketplaceFeeParts {
+  let marketplaceFees = 0;
+  let accountAdjustments = 0;
+  let reimbursements = 0;
+
+  for (const row of finance) {
+    const category = effectiveFinanceCategory(row);
+    const amount = Math.abs(Number(row.amount));
+
+    if (category === "COMPENSATION") {
+      reimbursements += amount;
+      continue;
+    }
+    if (category === "ADJUSTMENT") {
+      accountAdjustments += amount;
+      continue;
+    }
+    if (isMarketplaceFeeCategory(category)) {
+      marketplaceFees += amount;
+    }
+  }
+
+  return { marketplaceFees, accountAdjustments, reimbursements };
+}
+
+/**
+ * Roll effectiveFinanceCategory into permanent operation_type profit buckets.
+ * Uses profitOperationTypeForRow — same categorization engine as marketplace fees.
  */
 export function rollupCategoriesToProfitBuckets(finance: WbFinance[]): FinanceExpenseTotals {
   const byType = FINANCE_OPERATION_TYPES.reduce(
@@ -66,6 +122,9 @@ export function rollupCategoriesToProfitBuckets(finance: WbFinance[]): FinanceEx
   let unclassified = 0;
 
   for (const row of finance) {
+    if (parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay") {
+      continue;
+    }
     const opType = profitOperationTypeForRow(row);
     const amount = Math.abs(Number(row.amount));
 
@@ -81,48 +140,31 @@ export function rollupCategoriesToProfitBuckets(finance: WbFinance[]): FinanceEx
   return { ...byType, unclassified, total };
 }
 
-/**
- * Dashboard Marketplace Fees presentation from persisted categories.
- * Does not alter net profit — all other-bucket amounts remain in otherExpenses.
- */
+export function sumFinanceByType(
+  financeRecords: WbFinance[],
+  type: FinanceOperationType
+): number {
+  return financeRecords
+    .filter((row) => row.operation_type === type)
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
+}
+
+/** Marketplace Fees presentation from persisted categories — single business rule. */
 export function buildMarketplaceFeesPresentationFromFinance(
   finance: WbFinance[],
   commission: number
 ): MarketplaceFeesPresentation {
-  let serviceFeesFromOther = 0;
-  let accountAdjustments = 0;
-  let reimbursements = 0;
-
-  for (const row of finance) {
-    const category = effectiveFinanceCategory(row);
-    const amount = Math.abs(Number(row.amount));
-
-    if (category === "ADJUSTMENT") {
-      accountAdjustments += amount;
-      continue;
-    }
-
-    if (category === "COMPENSATION") {
-      reimbursements += amount;
-      continue;
-    }
-
-    if (isMarketplaceServiceFeeCategory(category)) {
-      serviceFeesFromOther += amount;
-      continue;
-    }
-  }
-
-  const otherTotal = finance.reduce((sum, row) => {
-    return profitOperationTypeForRow(row) === "other"
-      ? sum + Math.abs(Number(row.amount))
-      : sum;
-  }, 0);
+  const categorySummary = summarizeFinanceByCategory(finance);
+  const marketplaceFees = sumMarketplaceFeesFromCategorySummary(categorySummary);
 
   return {
-    legacyMarketplaceFees: calculateMarketplaceFeesFromParts(commission, otherTotal),
-    marketplaceServiceFees: commission + serviceFeesFromOther,
-    accountAdjustments,
-    reimbursements,
+    marketplaceFees,
+    commission: categorySummary.COMMISSION || commission,
+    acquiring: categorySummary.ACQUIRING,
+    ppvzReward: categorySummary.PPVZ_REWARD,
+    ppvzVw: categorySummary.PPVZ_VW,
+    otherMarketplaceExpenses: categorySummary.OTHER,
+    accountAdjustments: categorySummary.ADJUSTMENT,
+    reimbursements: categorySummary.COMPENSATION,
   };
 }

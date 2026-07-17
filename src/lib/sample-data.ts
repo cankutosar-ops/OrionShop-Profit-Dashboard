@@ -1,9 +1,63 @@
 import type {
-  CategoryProfitability,
+  GroupedProfitability,
+  ModelBProfitMetrics,
+  ModelCProfitMetrics,
   OverviewMetrics,
   ProductProfitability,
 } from "@/types/database";
-import { buildProfitabilityV2 } from "@/lib/profitability-v2";
+
+const SAMPLE_MODEL_B: ModelBProfitMetrics = (() => {
+  const revenue = 1_710_000;
+  const acquiring = 41_800;
+  const logistics = 240_700;
+  const storage = 67_800;
+  const penalties = 8_500;
+  const adjustments = 18_200;
+  const productCost = 1_124_000;
+  const advertising = 156_200;
+  const taxPercent = 6;
+  const sellerPayout =
+    revenue - acquiring - logistics - storage - penalties - adjustments;
+  const operatingProfit = sellerPayout - productCost - advertising;
+  const estimatedTax = sellerPayout > 0 ? sellerPayout * (taxPercent / 100) : 0;
+  const afterTaxPayout = sellerPayout - estimatedTax;
+  const finalNetProfit = afterTaxPayout - productCost - advertising;
+  return {
+    grossSales: 3_520_000,
+    returnedSales: 100_000,
+    netSales: 3_420_000,
+    netSalesStatus: "ready" as const,
+    commission: 1_710_000,
+    acquiring,
+    revenue,
+    logistics,
+    storage,
+    penalties,
+    adjustments,
+    productCost,
+    advertising,
+    netProfit: operatingProfit,
+    sellerPayout,
+    operatingProfit,
+    taxPercent,
+    estimatedTax,
+    afterTaxPayout,
+    finalNetProfit,
+  };
+})();
+
+const SAMPLE_MODEL_C: ModelCProfitMetrics = {
+  revenue: 950_000,
+  marketplaceFees: 328_400,
+  logistics: 240_700,
+  storage: 67_800,
+  penalties: 8_500,
+  deductions: 18_200,
+  acceptance: 0,
+  productCost: 1_124_000,
+  advertising: 156_200,
+  netProfit: -665_400,
+};
 
 const SAMPLE_BREAKDOWN_BASE = {
   revenue: 2_847_500,
@@ -15,7 +69,7 @@ const SAMPLE_BREAKDOWN_BASE = {
   advertising: 156_200,
   penalties: 8_500,
   otherExpenses: 12_400,
-  netProfit: 896_200,
+  netProfit: 1_484_700,
   returnRate: 4.2,
   unitsSold: 3840,
   unitsReturned: 168,
@@ -42,7 +96,7 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
   ],
   costBreakdown: [
     { name: "Product Cost", value: 1_124_000, color: "#ef4444" },
-    { name: "Marketplace Fees", value: 354_100, color: "#f59e0b" },
+    { name: "Marketplace Fees", value: 328_400, color: "#f59e0b" },
     { name: "Logistics", value: 198_400, color: "#6366f1" },
     { name: "Return Logistics", value: 42_300, color: "#8b5cf6" },
     { name: "Storage", value: 67_800, color: "#06b6d4" },
@@ -50,6 +104,8 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
     { name: "Penalties", value: 8_500, color: "#dc2626" },
   ],
   ordersPurchases: {
+    ordersValue: 3_348_000,
+    ordersValueCount: 4120,
     ordersCount: 3840,
     ordersAmount: 3_120_000,
     cancelledOrdersCount: 280,
@@ -76,12 +132,45 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
       { date: "2026-06-08", ordersCount: 300, ordersAmount: 225000, purchasesCount: 280, purchasesAmount: 104000 },
     ],
   },
-  profitabilityV2: buildProfitabilityV2(SAMPLE_BREAKDOWN_BASE),
+  modelBProfit: SAMPLE_MODEL_B,
+  modelCProfit: SAMPLE_MODEL_C,
+  wbSettlement: {
+    netForPay: 950_000,
+    logistics: 240_700,
+    storage: 67_800,
+    penalties: 8_500,
+    deductions: 18_200,
+    acceptance: 0,
+    settlement: 614_800,
+    dataSource: "finance_transaction",
+  },
+  quantityMetrics: {
+    unitsSold: 3840,
+    unitsReturned: 168,
+    netUnits: 3672,
+  },
   marketplaceFeesPresentation: {
-    legacyMarketplaceFees: 354_100,
-    marketplaceServiceFees: 341_700 + 12_400,
-    accountAdjustments: 0,
-    reimbursements: 0,
+    marketplaceFees: 328_400,
+    commission: 341_700,
+    acquiring: 0,
+    ppvzReward: 0,
+    ppvzVw: 0,
+    otherMarketplaceExpenses: 8_400,
+    accountAdjustments: 18_200,
+    reimbursements: 7_500,
+  },
+  cashReceived: {
+    amount: 428_500,
+    payoutCount: 4,
+  },
+  expectedWbPayout: {
+    amount: 412_800,
+    reportCount: 2,
+  },
+  wbBalance: {
+    current: 156_400,
+    forWithdraw: 142_300,
+    currency: "RUB",
   },
 };
 
@@ -93,6 +182,7 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     categoryName: "Hoodies",
     brandName: "OrionShop",
     revenue: 485_000,
+    netSales: 485_000,
     productCost: 182_000,
     commission: 58_200,
     logistics: 34_100,
@@ -101,7 +191,11 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     advertising: 28_500,
     penalties: 0,
     otherExpenses: 2_100,
+    marketplaceFees: 60_300,
+    accountAdjustments: 300,
+    reimbursements: 0,
     netProfit: 160_900,
+    finalNetProfit: 160_900,
     returnRate: 3.1,
     unitsSold: 620,
     unitsReturned: 20,
@@ -122,6 +216,7 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     categoryName: "Jackets",
     brandName: "OrionShop",
     revenue: 392_000,
+    netSales: 392_000,
     productCost: 168_000,
     commission: 47_040,
     logistics: 28_600,
@@ -130,7 +225,11 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     advertising: 22_400,
     penalties: 1_200,
     otherExpenses: 1_800,
+    marketplaceFees: 48_840,
+    accountAdjustments: 340,
+    reimbursements: 0,
     netProfit: 104_960,
+    finalNetProfit: 104_960,
     returnRate: 5.8,
     unitsSold: 480,
     unitsReturned: 30,
@@ -151,6 +250,7 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     categoryName: "Sportswear",
     brandName: "OrionShop",
     revenue: 356_000,
+    netSales: 356_000,
     productCost: 142_000,
     commission: 42_720,
     logistics: 24_800,
@@ -159,7 +259,11 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     advertising: 31_200,
     penalties: 0,
     otherExpenses: 1_500,
+    marketplaceFees: 44_220,
+    accountAdjustments: 320,
+    reimbursements: 0,
     netProfit: 99_780,
+    finalNetProfit: 99_780,
     returnRate: 2.4,
     unitsSold: 710,
     unitsReturned: 17,
@@ -180,6 +284,7 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     categoryName: "Sweaters",
     brandName: "OrionShop",
     revenue: 298_000,
+    netSales: 298_000,
     productCost: 124_000,
     commission: 35_760,
     logistics: 21_200,
@@ -188,7 +293,11 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     advertising: 18_600,
     penalties: 2_400,
     otherExpenses: 2_800,
+    marketplaceFees: 38_560,
+    accountAdjustments: 360,
+    reimbursements: 0,
     netProfit: 74_940,
+    finalNetProfit: 74_940,
     returnRate: 6.2,
     unitsSold: 380,
     unitsReturned: 25,
@@ -209,6 +318,7 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     categoryName: "Dresses",
     brandName: "OrionShop",
     revenue: 267_000,
+    netSales: 267_000,
     productCost: 98_000,
     commission: 32_040,
     logistics: 19_400,
@@ -217,7 +327,11 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
     advertising: 24_800,
     penalties: 0,
     otherExpenses: 1_200,
+    marketplaceFees: 33_240,
+    accountAdjustments: 140,
+    reimbursements: 0,
     netProfit: 79_560,
+    finalNetProfit: 79_560,
     returnRate: 3.8,
     unitsSold: 445,
     unitsReturned: 17,
@@ -233,53 +347,83 @@ export const SAMPLE_PRODUCTS: ProductProfitability[] = [
   },
 ];
 
-export const SAMPLE_CATEGORIES: CategoryProfitability[] = [
+export const SAMPLE_CATEGORIES: GroupedProfitability[] = [
   {
-    categoryId: "cat-hoodies",
-    categoryName: "Hoodies",
+    id: "category:Hoodies",
+    name: "Hoodies",
     revenue: 485_000,
-    netProfit: 160_900,
-    productCount: 3,
+    finalNetProfit: 160_900,
+    productCount: 1,
     returnRate: 3.1,
   },
   {
-    categoryId: "cat-jackets",
-    categoryName: "Jackets",
+    id: "category:Jackets",
+    name: "Jackets",
     revenue: 392_000,
-    netProfit: 104_960,
-    productCount: 2,
+    finalNetProfit: 104_960,
+    productCount: 1,
     returnRate: 5.8,
   },
   {
-    categoryId: "cat-sportswear",
-    categoryName: "Sportswear",
+    id: "category:Sportswear",
+    name: "Sportswear",
     revenue: 356_000,
-    netProfit: 99_780,
-    productCount: 4,
+    finalNetProfit: 99_780,
+    productCount: 1,
     returnRate: 2.4,
   },
   {
-    categoryId: "cat-sweaters",
-    categoryName: "Sweaters",
+    id: "category:Sweaters",
+    name: "Sweaters",
     revenue: 298_000,
-    netProfit: 74_940,
-    productCount: 2,
+    finalNetProfit: 74_940,
+    productCount: 1,
     returnRate: 6.2,
   },
   {
-    categoryId: "cat-dresses",
-    categoryName: "Dresses",
+    id: "category:Dresses",
+    name: "Dresses",
     revenue: 267_000,
-    netProfit: 79_560,
-    productCount: 3,
+    finalNetProfit: 79_560,
+    productCount: 1,
     returnRate: 3.8,
+  },
+  {
+    id: "__unallocated__",
+    name: "Unallocated",
+    revenue:
+      SAMPLE_MODEL_B.revenue -
+      (485_000 + 392_000 + 356_000 + 298_000 + 267_000),
+    finalNetProfit:
+      SAMPLE_MODEL_B.finalNetProfit -
+      (160_900 + 104_960 + 99_780 + 74_940 + 79_560),
+    productCount: 0,
+    returnRate: 0,
+  },
+];
+
+export const SAMPLE_BRANDS: GroupedProfitability[] = [
+  {
+    id: "brand:OrionShop",
+    name: "OrionShop",
+    revenue: SAMPLE_MODEL_B.revenue,
+    finalNetProfit: SAMPLE_MODEL_B.finalNetProfit,
+    productCount: SAMPLE_PRODUCTS.length,
+    returnRate:
+      (SAMPLE_PRODUCTS.reduce((sum, product) => sum + product.unitsReturned, 0) /
+        SAMPLE_PRODUCTS.reduce(
+          (sum, product) => sum + product.unitsSold + product.unitsReturned,
+          0
+        )) *
+      100,
   },
 ];
 
 export type DashboardPayload = {
   overview: OverviewMetrics;
   products: ProductProfitability[];
-  categories: CategoryProfitability[];
+  categories: GroupedProfitability[];
+  brands: GroupedProfitability[];
   isSampleData: boolean;
   /** Account has synced data but the selected date range has no activity. */
   isEmptyPeriod?: boolean;
@@ -310,6 +454,8 @@ export function getEmptyPeriodDashboard(lastSyncAt: string | null): DashboardPay
       dailyRevenue: [],
       costBreakdown: [],
       ordersPurchases: {
+        ordersValue: 0,
+        ordersValueCount: 0,
         ordersCount: 0,
         ordersAmount: 0,
         cancelledOrdersCount: 0,
@@ -320,16 +466,82 @@ export function getEmptyPeriodDashboard(lastSyncAt: string | null): DashboardPay
         returnRate: 0,
         dailyOrdersPurchases: [],
       },
-      profitabilityV2: buildProfitabilityV2(EMPTY_PERIOD_BREAKDOWN),
+      modelBProfit: {
+        grossSales: 0,
+        returnedSales: 0,
+        netSales: 0,
+        netSalesStatus: "empty",
+        commission: 0,
+        acquiring: 0,
+        revenue: 0,
+        logistics: 0,
+        storage: 0,
+        penalties: 0,
+        adjustments: 0,
+        productCost: 0,
+        advertising: 0,
+        netProfit: 0,
+        sellerPayout: 0,
+        operatingProfit: 0,
+        taxPercent: 6,
+        estimatedTax: 0,
+        afterTaxPayout: 0,
+        finalNetProfit: 0,
+      },
+      modelCProfit: {
+        revenue: 0,
+        marketplaceFees: 0,
+        logistics: 0,
+        storage: 0,
+        penalties: 0,
+        deductions: 0,
+        acceptance: 0,
+        productCost: 0,
+        advertising: 0,
+        netProfit: 0,
+      },
+      wbSettlement: {
+        netForPay: 0,
+        logistics: 0,
+        storage: 0,
+        penalties: 0,
+        deductions: 0,
+        acceptance: 0,
+        settlement: 0,
+        dataSource: "weekly_reports",
+      },
+      quantityMetrics: {
+        unitsSold: 0,
+        unitsReturned: 0,
+        netUnits: 0,
+      },
       marketplaceFeesPresentation: {
-        legacyMarketplaceFees: 0,
-        marketplaceServiceFees: 0,
+        marketplaceFees: 0,
+        commission: 0,
+        acquiring: 0,
+        ppvzReward: 0,
+        ppvzVw: 0,
+        otherMarketplaceExpenses: 0,
         accountAdjustments: 0,
         reimbursements: 0,
+      },
+      cashReceived: {
+        amount: null,
+        payoutCount: 0,
+      },
+      expectedWbPayout: {
+        amount: null,
+        reportCount: 0,
+      },
+      wbBalance: {
+        current: null,
+        forWithdraw: null,
+        currency: null,
       },
     },
     products: [],
     categories: [],
+    brands: [],
     isSampleData: false,
     isEmptyPeriod: true,
     lastSyncAt,
@@ -341,6 +553,7 @@ export function getSampleDashboard(message?: string): DashboardPayload {
     overview: SAMPLE_OVERVIEW,
     products: SAMPLE_PRODUCTS,
     categories: SAMPLE_CATEGORIES,
+    brands: SAMPLE_BRANDS,
     isSampleData: true,
     message,
   };

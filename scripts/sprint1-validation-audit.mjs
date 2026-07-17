@@ -128,7 +128,7 @@ const financeR = await fetchAll("wb_finance", "operation_date");
 const adsR = await fetchAll("wb_ads", "campaign_date");
 const costR = await fetchAll("product_cost_history");
 
-const { buildLatestCostByProductId } = await import("../src/lib/profit-calculator.ts");
+const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
 const { verifyProductAnalyticsV3Totals } = await import("../src/lib/product-analytics.ts");
 
 const prof = await getProductProfitability({ from, to });
