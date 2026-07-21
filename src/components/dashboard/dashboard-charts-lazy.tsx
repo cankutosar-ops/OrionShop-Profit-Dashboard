@@ -1,8 +1,9 @@
 "use client";
 
 import nextDynamic from "next/dynamic";
+import { ChartLoadingState } from "@/components/charts/chart-loading-state";
 
-const skeleton = () => <div className="h-64 animate-pulse rounded-xl bg-muted/30" />;
+const skeleton = () => <ChartLoadingState height={256} />;
 
 export const RevenueChartLazy = nextDynamic(
   () => import("@/components/dashboard/revenue-chart").then((m) => m.RevenueChart),

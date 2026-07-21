@@ -9,7 +9,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatCurrency, formatPercent } from "@/lib/utils";
+import { ChartEmptyState } from "@/components/charts/chart-empty-state";
+import { ChartTooltip } from "@/components/charts/chart-tooltip";
+import { useChartPalette } from "@/hooks/use-chart-palette";
+import {
+  CHART_ANIMATION_MS,
+  CHART_AXIS,
+  CHART_BAR_RADIUS,
+  CHART_GRID,
+  CHART_MARGIN,
+} from "@/lib/chart-theme";
 
 type BarChartData = {
   label: string;
@@ -23,42 +32,44 @@ type ProfitBarChartProps = {
   data: BarChartData[];
   valueLabel?: string;
   secondaryLabel?: string;
+  /** Chart token index 0–5 (preferred over hardcoded hex). */
+  colorIndex?: number;
+  secondaryColorIndex?: number;
+  /** @deprecated Prefer colorIndex — ignored when colorIndex is set. */
   color?: string;
+  /** @deprecated Prefer secondaryColorIndex. */
   secondaryColor?: string;
   valueFormat?: ValueFormat;
 };
 
-function getValueFormatter(format: ValueFormat): (value: number) => string {
-  return format === "percent" ? formatPercent : formatCurrency;
-}
-
-function CustomTooltip({
+function BarTooltip({
   active,
   payload,
   label,
   valueLabel,
   secondaryLabel,
-  formatValue,
+  valueFormat,
 }: {
   active?: boolean;
   payload?: { value: number; dataKey: string; fill: string }[];
   label?: string;
   valueLabel: string;
   secondaryLabel?: string;
-  formatValue: (value: number) => string;
+  valueFormat: ValueFormat;
 }) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-xl">
-      <p className="mb-2 text-xs text-muted-foreground">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.dataKey} className="text-sm font-medium" style={{ color: entry.fill }}>
-          {entry.dataKey === "value" ? valueLabel : secondaryLabel}:{" "}
-          {formatValue(entry.value)}
-        </p>
-      ))}
-    </div>
+    <ChartTooltip
+      active
+      label={label}
+      items={payload.map((entry) => ({
+        label: entry.dataKey === "value" ? valueLabel : (secondaryLabel ?? "Secondary"),
+        value: entry.value,
+        format: valueFormat,
+        color: entry.fill,
+      }))}
+    />
   );
 }
 
@@ -66,55 +77,77 @@ export function ProfitBarChart({
   data,
   valueLabel = "Profit",
   secondaryLabel,
-  color = "#8b5cf6",
-  secondaryColor = "#6366f1",
+  colorIndex = 0,
+  secondaryColorIndex = 2,
+  color,
+  secondaryColor,
   valueFormat = "currency",
 }: ProfitBarChartProps) {
-  const formatValue = getValueFormatter(valueFormat);
+  const palette = useChartPalette();
+  const primaryFill = color ?? palette.color(colorIndex);
+  const secondaryFill = secondaryColor ?? palette.color(secondaryColorIndex);
+
   if (!data.length) {
-    return (
-      <div className="flex h-[320px] items-center justify-center text-muted-foreground">
-        No data for selected period
-      </div>
-    );
+    return <ChartEmptyState height={320} />;
   }
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#27272f" vertical={false} />
+      <BarChart data={data} margin={CHART_MARGIN.withAngledLabels}>
+        <CartesianGrid
+          strokeDasharray={CHART_GRID.strokeDasharray}
+          stroke={palette.grid}
+          vertical={CHART_GRID.vertical}
+          strokeOpacity={0.55}
+        />
         <XAxis
           dataKey="label"
-          stroke="#71717a"
+          stroke={palette.axis}
           fontSize={11}
-          tickLine={false}
-          axisLine={false}
+          tickLine={CHART_AXIS.tickLine}
+          axisLine={CHART_AXIS.axisLine}
           angle={-35}
           textAnchor="end"
           interval={0}
           height={60}
+          tick={{ fill: palette.axis }}
         />
         <YAxis
-          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-          stroke="#71717a"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
+          tickFormatter={(v) =>
+            valueFormat === "percent" ? `${v}%` : `${(v / 1000).toFixed(0)}k`
+          }
+          stroke={palette.axis}
+          fontSize={CHART_AXIS.fontSize}
+          tickLine={CHART_AXIS.tickLine}
+          axisLine={CHART_AXIS.axisLine}
           width={50}
+          tick={{ fill: palette.axis }}
         />
         <Tooltip
           content={
-            <CustomTooltip
+            <BarTooltip
               valueLabel={valueLabel}
               secondaryLabel={secondaryLabel}
-              formatValue={formatValue}
+              valueFormat={valueFormat}
             />
           }
         />
-        <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} maxBarSize={48} />
-        {secondaryLabel && (
-          <Bar dataKey="secondary" fill={secondaryColor} radius={[6, 6, 0, 0]} maxBarSize={48} />
-        )}
+        <Bar
+          dataKey="value"
+          fill={primaryFill}
+          radius={CHART_BAR_RADIUS}
+          maxBarSize={48}
+          animationDuration={CHART_ANIMATION_MS}
+        />
+        {secondaryLabel ? (
+          <Bar
+            dataKey="secondary"
+            fill={secondaryFill}
+            radius={CHART_BAR_RADIUS}
+            maxBarSize={48}
+            animationDuration={CHART_ANIMATION_MS}
+          />
+        ) : null}
       </BarChart>
     </ResponsiveContainer>
   );

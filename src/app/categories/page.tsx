@@ -66,7 +66,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Profit by Category" description="Net profit across all categories">
-          <ProfitBarChartLazy data={profitChartData} valueLabel="Net Profit" color="#22c55e" />
+          <ProfitBarChartLazy data={profitChartData} valueLabel="Net Profit" colorIndex={2} />
         </ChartCard>
 
         <ChartCard title="Revenue by Category" description="Revenue and profit comparison">
@@ -74,8 +74,8 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
             data={revenueChartData}
             valueLabel="Revenue"
             secondaryLabel="Net Profit"
-            color="#8b5cf6"
-            secondaryColor="#22c55e"
+            colorIndex={0}
+            secondaryColorIndex={2}
           />
         </ChartCard>
       </div>

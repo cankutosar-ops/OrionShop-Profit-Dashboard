@@ -56,7 +56,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Profit by Supplier Article" description="Top 15 products by net profit">
-          <ProfitBarChartLazy data={profitChartData} valueLabel="Net Profit" color="#22c55e" />
+          <ProfitBarChartLazy data={profitChartData} valueLabel="Net Profit" colorIndex={2} />
         </ChartCard>
 
         <ChartCard title="Revenue by Supplier Article" description="Top 15 products by revenue">
@@ -64,8 +64,8 @@ export default async function ProductsPage({ searchParams }: PageProps) {
             data={revenueChartData}
             valueLabel="Revenue"
             secondaryLabel="Net Profit"
-            color="#8b5cf6"
-            secondaryColor="#22c55e"
+            colorIndex={0}
+            secondaryColorIndex={2}
           />
         </ChartCard>
 
@@ -76,7 +76,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           <ProfitBarChartLazy
             data={returnRateChartData}
             valueLabel="Return Rate"
-            color="#ef4444"
+            colorIndex={4}
             valueFormat="percent"
           />
         </ChartCard>
@@ -85,7 +85,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           title="Advertising Cost by Supplier Article"
           description="Ad spend distribution across products"
         >
-          <ProfitBarChartLazy data={adCostChartData} valueLabel="Ad Spend" color="#ec4899" />
+          <ProfitBarChartLazy data={adCostChartData} valueLabel="Ad Spend" colorIndex={3} />
         </ChartCard>
       </div>
 

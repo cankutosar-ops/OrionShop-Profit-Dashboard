@@ -1,5 +1,7 @@
 "use client";
 
+import { DonutChart } from "@/components/charts/donut-chart";
+import { formatChartValue } from "@/components/charts/chart-tooltip";
 import type { WarehouseDistributionRow } from "@/lib/inventory-intelligence-types";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
@@ -13,7 +15,7 @@ type WarehouseDistributionPanelProps = {
 };
 
 /**
- * Warehouse Distribution table + period summary totals.
+ * Warehouse Distribution — donut (existing sales share) + table.
  * Totals are summed from the provided rows only (no new server calcs).
  */
 export function WarehouseDistributionPanel({
@@ -46,6 +48,21 @@ export function WarehouseDistributionPanel({
     );
   }
 
+  const donutSlices = (() => {
+    const sorted = [...rows].sort((a, b) => b.revenue - a.revenue);
+    const top = sorted.slice(0, 5);
+    const rest = sorted.slice(5);
+    const slices = top.map((wh) => ({
+      name: formatWarehouseName(wh.warehouse),
+      value: wh.revenue,
+    }));
+    const otherRevenue = rest.reduce((sum, wh) => sum + wh.revenue, 0);
+    if (otherRevenue > 0) {
+      slices.push({ name: "Other", value: otherRevenue });
+    }
+    return slices;
+  })();
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -77,6 +94,16 @@ export function WarehouseDistributionPanel({
           </span>
         </div>
       </div>
+
+      <DonutChart
+        data={donutSlices}
+        centerLabel="Revenue"
+        centerValue={formatChartValue(revenue, "currency")}
+        valueFormat="currency"
+        height={200}
+        legendPlacement="side"
+      />
+
       <div className="overflow-x-auto rounded-xl border border-border bg-background">
         <table className="w-full min-w-[560px] text-sm">
           <thead>

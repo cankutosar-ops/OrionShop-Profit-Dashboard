@@ -1,12 +1,18 @@
+import { CHART_COLOR_FALLBACKS } from "@/lib/chart-theme";
+
+/**
+ * Cost breakdown slice colors — Wave 1 chart tokens (presentation only).
+ * Values come from dashboard Model B aggregates via buildCostBreakdown.
+ */
 const COST_COLORS = {
-  productCost: "#ef4444",
-  commission: "#f59e0b",
-  logistics: "#6366f1",
-  returnLogistics: "#8b5cf6",
-  storage: "#06b6d4",
-  advertising: "#ec4899",
-  penalties: "#dc2626",
-  otherExpenses: "#71717a",
+  productCost: CHART_COLOR_FALLBACKS[4],
+  commission: CHART_COLOR_FALLBACKS[3],
+  logistics: CHART_COLOR_FALLBACKS[0],
+  returnLogistics: CHART_COLOR_FALLBACKS[1],
+  storage: CHART_COLOR_FALLBACKS[5],
+  advertising: CHART_COLOR_FALLBACKS[2],
+  penalties: CHART_COLOR_FALLBACKS[4],
+  otherExpenses: CHART_COLOR_FALLBACKS[1],
 } as const;
 
 export type CostBreakdownSlice = {

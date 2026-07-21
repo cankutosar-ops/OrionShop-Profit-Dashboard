@@ -9,92 +9,130 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { ChartEmptyState } from "@/components/charts/chart-empty-state";
+import { ChartLegend } from "@/components/charts/chart-legend";
+import { ChartTooltip } from "@/components/charts/chart-tooltip";
+import { useChartPalette } from "@/hooks/use-chart-palette";
+import {
+  CHART_ANIMATION_MS,
+  CHART_AXIS,
+  CHART_GRID,
+  CHART_MARGIN,
+  CHART_STROKE_WIDTH,
+  chartAreaFill,
+} from "@/lib/chart-theme";
+import { formatDate } from "@/lib/utils";
 
 type RevenueChartProps = {
   data: { date: string; revenue: number; profit: number }[];
 };
 
-function CustomTooltip({
+function RevenueTooltip({
   active,
   payload,
   label,
+  colors,
 }: {
   active?: boolean;
-  payload?: { value: number; dataKey: string; color: string }[];
+  payload?: { value: number; dataKey: string }[];
   label?: string;
+  colors: { revenue: string; profit: string };
 }) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-xl">
-      <p className="mb-2 text-xs text-muted-foreground">{label ? formatDate(label) : ""}</p>
-      {payload.map((entry) => (
-        <p key={entry.dataKey} className="text-sm font-medium" style={{ color: entry.color }}>
-          {entry.dataKey === "revenue" ? "Revenue" : "Profit"}: {formatCurrency(entry.value)}
-        </p>
-      ))}
-    </div>
+    <ChartTooltip
+      active
+      label={label ? formatDate(label) : undefined}
+      items={payload.map((entry) => ({
+        label: entry.dataKey === "revenue" ? "Revenue" : "Profit",
+        value: entry.value,
+        format: "currency" as const,
+        color: entry.dataKey === "revenue" ? colors.revenue : colors.profit,
+      }))}
+    />
   );
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
+  const palette = useChartPalette();
+  const revenueColor = palette.series.primary;
+  const profitColor = palette.series.positive;
+
   if (!data.length) {
-    return (
-      <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-        No data for selected period
-      </div>
-    );
+    return <ChartEmptyState height={300} />;
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <defs>
-          <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
-            <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
-            <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#27272f" vertical={false} />
-        <XAxis
-          dataKey="date"
-          tickFormatter={(v) =>
-            new Date(v).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
-          }
-          stroke="#71717a"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-        />
-        <YAxis
-          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-          stroke="#71717a"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          width={50}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Area
-          type="monotone"
-          dataKey="revenue"
-          stroke="#8b5cf6"
-          strokeWidth={2}
-          fill="url(#revenueGradient)"
-        />
-        <Area
-          type="monotone"
-          dataKey="profit"
-          stroke="#22c55e"
-          strokeWidth={2}
-          fill="url(#profitGradient)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div>
+      <ResponsiveContainer width="100%" height={300}>
+        <AreaChart data={data} margin={CHART_MARGIN.default}>
+          <defs>
+            <linearGradient id="chartRevenueFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={chartAreaFill(0, 0.22)} stopOpacity={1} />
+              <stop offset="100%" stopColor={chartAreaFill(0, 0)} stopOpacity={1} />
+            </linearGradient>
+            <linearGradient id="chartProfitFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={chartAreaFill(2, 0.22)} stopOpacity={1} />
+              <stop offset="100%" stopColor={chartAreaFill(2, 0)} stopOpacity={1} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            strokeDasharray={CHART_GRID.strokeDasharray}
+            stroke={palette.grid}
+            vertical={CHART_GRID.vertical}
+            strokeOpacity={0.55}
+          />
+          <XAxis
+            dataKey="date"
+            tickFormatter={(v) =>
+              new Date(v).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
+            }
+            stroke={palette.axis}
+            fontSize={CHART_AXIS.fontSize}
+            tickLine={CHART_AXIS.tickLine}
+            axisLine={CHART_AXIS.axisLine}
+            tick={{ fill: palette.axis }}
+          />
+          <YAxis
+            tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+            stroke={palette.axis}
+            fontSize={CHART_AXIS.fontSize}
+            tickLine={CHART_AXIS.tickLine}
+            axisLine={CHART_AXIS.axisLine}
+            width={50}
+            tick={{ fill: palette.axis }}
+          />
+          <Tooltip
+            content={
+              <RevenueTooltip colors={{ revenue: revenueColor, profit: profitColor }} />
+            }
+          />
+          <Area
+            type="monotone"
+            dataKey="revenue"
+            stroke={revenueColor}
+            strokeWidth={CHART_STROKE_WIDTH}
+            fill="url(#chartRevenueFill)"
+            animationDuration={CHART_ANIMATION_MS}
+          />
+          <Area
+            type="monotone"
+            dataKey="profit"
+            stroke={profitColor}
+            strokeWidth={CHART_STROKE_WIDTH}
+            fill="url(#chartProfitFill)"
+            animationDuration={CHART_ANIMATION_MS}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      <ChartLegend
+        className="mt-4"
+        items={[
+          { label: "Revenue", color: revenueColor },
+          { label: "Gross Profit (daily)", color: profitColor },
+        ]}
+      />
+    </div>
   );
 }

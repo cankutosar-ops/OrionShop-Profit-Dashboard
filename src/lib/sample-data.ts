@@ -5,6 +5,7 @@ import type {
   OverviewMetrics,
   ProductProfitability,
 } from "@/types/database";
+import { CHART_COLOR_FALLBACKS } from "@/lib/chart-theme";
 
 const SAMPLE_MODEL_B: ModelBProfitMetrics = (() => {
   const revenue = 1_710_000;
@@ -95,13 +96,13 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
     { date: "2026-06-08", revenue: 104000, profit: 32200 },
   ],
   costBreakdown: [
-    { name: "Product Cost", value: 1_124_000, color: "#ef4444" },
-    { name: "Marketplace Fees", value: 328_400, color: "#f59e0b" },
-    { name: "Logistics", value: 198_400, color: "#6366f1" },
-    { name: "Return Logistics", value: 42_300, color: "#8b5cf6" },
-    { name: "Storage", value: 67_800, color: "#06b6d4" },
-    { name: "Advertising", value: 156_200, color: "#ec4899" },
-    { name: "Penalties", value: 8_500, color: "#dc2626" },
+    { name: "Product Cost", value: 1_124_000, color: CHART_COLOR_FALLBACKS[4] },
+    { name: "Marketplace Fees", value: 328_400, color: CHART_COLOR_FALLBACKS[3] },
+    { name: "Logistics", value: 198_400, color: CHART_COLOR_FALLBACKS[0] },
+    { name: "Return Logistics", value: 42_300, color: CHART_COLOR_FALLBACKS[1] },
+    { name: "Storage", value: 67_800, color: CHART_COLOR_FALLBACKS[5] },
+    { name: "Advertising", value: 156_200, color: CHART_COLOR_FALLBACKS[2] },
+    { name: "Penalties", value: 8_500, color: CHART_COLOR_FALLBACKS[4] },
   ],
   ordersPurchases: {
     ordersValue: 3_348_000,

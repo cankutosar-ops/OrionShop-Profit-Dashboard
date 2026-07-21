@@ -110,16 +110,6 @@ async function DashboardCoreSection({
           className="lg:col-span-2"
         >
           <RevenueChartLazy data={overview.dailyRevenue} />
-          <div className="mt-4 flex items-center gap-6 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-              <span className="text-muted-foreground">Revenue</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2.5 w-2.5 rounded-full bg-success" />
-              <span className="text-muted-foreground">Gross Profit (daily)</span>
-            </div>
-          </div>
         </ChartCard>
 
         <ChartCard title="Cost Breakdown" description="Where your revenue goes">
