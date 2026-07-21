@@ -1,4 +1,5 @@
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import { buildPortfolioConcentration } from "@/lib/reports/product-report-concentration";
 import type {
   ProductReportExecutiveData,
   ProductReportPerformanceRow,
@@ -10,6 +11,8 @@ type PriorSnapshot = {
   productsWithSales: number;
   negativeProfitCount: number;
   totalRevenue: number;
+  /** Optional — only when already supplied by the caller; never invented. */
+  top5ProfitSharePercent?: number;
 };
 
 /**
@@ -46,6 +49,40 @@ export function buildProductExecutiveInsights(input: {
     insights.push(
       `Top five products by profit accounted for ${share.toFixed(0)}% of absolute period profit (${formatCurrency(fiveSum, currency)}).`
     );
+  }
+
+  const concentration = buildPortfolioConcentration(performanceRows);
+  if (concentration) {
+    if (concentration.top5RevenueSharePercent >= 60) {
+      insights.push(
+        `Revenue is highly concentrated in a small number of products (top 5 generate ${concentration.top5RevenueSharePercent.toFixed(1)}% of total revenue).`
+      );
+    } else if (
+      concentration.top5RevenueSharePercent > 0 &&
+      concentration.top5RevenueSharePercent <= 40 &&
+      performanceRows.length >= 8
+    ) {
+      insights.push(
+        `Revenue is well diversified across the portfolio (top 5 generate ${concentration.top5RevenueSharePercent.toFixed(1)}% of total revenue).`
+      );
+    }
+
+    if (
+      prior?.top5ProfitSharePercent != null &&
+      Number.isFinite(prior.top5ProfitSharePercent)
+    ) {
+      const current = concentration.top5ProfitSharePercent;
+      const previous = prior.top5ProfitSharePercent;
+      if (current > previous + 0.5) {
+        insights.push(
+          `Profit concentration increased compared to the previous period (${previous.toFixed(1)}% → ${current.toFixed(1)}% in the top 5).`
+        );
+      } else if (current < previous - 0.5) {
+        insights.push(
+          `Profit concentration decreased compared to the previous period (${previous.toFixed(1)}% → ${current.toFixed(1)}% in the top 5).`
+        );
+      }
+    }
   }
 
   const negativeCount = profitability.negativeProfit.length;

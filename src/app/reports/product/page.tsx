@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { ExportProductReportButton } from "@/components/reports/export-business-report-button";
+import { ProductReportMarketplaceCostPanel } from "@/components/reports/product-report-marketplace-cost-panel";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import {
   type PageScopeSearchParamsInput,
@@ -10,9 +11,11 @@ import {
 import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
+import { buildPortfolioConcentration } from "@/lib/reports/product-report-concentration";
 import { provideProductReportSections } from "@/lib/reports/product-report-providers";
 import type {
   ProductReportExecutiveData,
+  ProductReportMarketplaceCostData,
   ProductReportPerformanceData,
   ProductReportPortfolioData,
   ProductReportProfitabilityData,
@@ -44,6 +47,10 @@ export default async function ProductReportPreviewPage({
     ?.data as ProductReportProfitabilityData | undefined;
   const portfolio = sections.find((s) => s.id === "product-portfolio")
     ?.data as ProductReportPortfolioData | undefined;
+  const marketplaceCost = sections.find((s) => s.id === "product-marketplace-cost")
+    ?.data as ProductReportMarketplaceCostData | undefined;
+
+  const concentration = buildPortfolioConcentration(performance?.rows ?? []);
 
   return (
     <>
@@ -103,6 +110,68 @@ export default async function ProductReportPreviewPage({
                   icon={KPI_ICONS.inventory}
                 />
               </div>
+
+              {concentration ? (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium">Portfolio Concentration</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Shares from Product Performance rows already in this report
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <MetricCard
+                      size="compact"
+                      title="Top 5 Revenue"
+                      value={formatKpiPercent(concentration.top5RevenueSharePercent)}
+                      icon={KPI_ICONS.revenue}
+                    />
+                    <MetricCard
+                      size="compact"
+                      title="Top 5 Profit"
+                      value={formatKpiPercent(concentration.top5ProfitSharePercent)}
+                      icon={KPI_ICONS.profit}
+                    />
+                    <MetricCard
+                      size="compact"
+                      title="Top Product Revenue"
+                      value={formatKpiPercent(
+                        concentration.topProductRevenueSharePercent
+                      )}
+                      icon={KPI_ICONS.revenue}
+                    />
+                    <MetricCard
+                      size="compact"
+                      title="Top Product Profit"
+                      value={formatKpiPercent(
+                        concentration.topProductProfitSharePercent
+                      )}
+                      icon={KPI_ICONS.profit}
+                    />
+                  </div>
+                  <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+                    <li>
+                      Top 5 products generate{" "}
+                      {formatKpiPercent(concentration.top5RevenueSharePercent)} of
+                      total revenue.
+                    </li>
+                    <li>
+                      Top 5 products generate{" "}
+                      {formatKpiPercent(concentration.top5ProfitSharePercent)} of
+                      total profit.
+                    </li>
+                    <li>
+                      Top revenue product contributes{" "}
+                      {formatKpiPercent(concentration.topProductRevenueSharePercent)}{" "}
+                      of portfolio revenue.
+                    </li>
+                    <li>
+                      Top profit product contributes{" "}
+                      {formatKpiPercent(concentration.topProductProfitSharePercent)} of
+                      portfolio profit.
+                    </li>
+                  </ul>
+                </div>
+              ) : null}
+
               {executive.insights.length > 0 ? (
                 <div className="mt-5">
                   <h3 className="text-sm font-medium">Executive Insights</h3>
@@ -169,6 +238,13 @@ export default async function ProductReportPreviewPage({
               ) : null}
             </ul>
           </section>
+        ) : null}
+
+        {marketplaceCost ? (
+          <ProductReportMarketplaceCostPanel
+            data={marketplaceCost}
+            currency={currency}
+          />
         ) : null}
 
         {profitability ? (

@@ -1,5 +1,9 @@
 import * as XLSX from "xlsx";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import {
+  buildMarketplaceCostComposition,
+  buildPortfolioConcentration,
+} from "@/lib/reports/product-report-concentration";
 import type {
   ProductReportAppendixData,
   ProductReportCostRow,
@@ -74,11 +78,14 @@ function highlightLine(
 
 function buildExecutiveSheet(
   data: ProductReportExecutiveData | undefined,
-  currency: string
+  currency: string,
+  performanceRows: ProductReportPerformanceRow[] = []
 ): SheetCell[][] {
   if (!data) {
     return [["Executive Summary"], [], ["No executive metrics available."]];
   }
+
+  const concentration = buildPortfolioConcentration(performanceRows);
 
   const rows: SheetCell[][] = [
     ["Executive Summary"],
@@ -122,9 +129,51 @@ function buildExecutiveSheet(
     highlightLine("Lowest Performing Product", data.lowestPerformingProduct, (v) =>
       money(v, currency)
     ),
-    [],
-    ["Executive Insights"],
   ];
+
+  if (concentration) {
+    rows.push(
+      [],
+      ["Portfolio Concentration"],
+      ["Derived from Product Performance rows (share of period totals)"],
+      [],
+      ["Metric", "Value"],
+      ["Top 5 Revenue Contribution", pct(concentration.top5RevenueSharePercent)],
+      ["Top 5 Profit Contribution", pct(concentration.top5ProfitSharePercent)],
+      ["Top Product Revenue Share", pct(concentration.topProductRevenueSharePercent)],
+      ["Top Product Profit Share", pct(concentration.topProductProfitSharePercent)],
+      [],
+      ["Top 5 Products"],
+      ["SKU", "Product", "Revenue", "Revenue %", "Profit", "Profit %"]
+    );
+    for (const product of concentration.top5Products) {
+      rows.push([
+        product.sku,
+        product.productName,
+        money(product.revenue, currency),
+        pct(product.revenueSharePercent),
+        money(product.profit, currency),
+        pct(product.profitSharePercent),
+      ]);
+    }
+    rows.push(
+      [],
+      [
+        `Top 5 products generate ${concentration.top5RevenueSharePercent.toFixed(1)}% of total revenue.`,
+      ],
+      [
+        `Top 5 products generate ${concentration.top5ProfitSharePercent.toFixed(1)}% of total profit.`,
+      ],
+      [
+        `Top revenue product contributes ${concentration.topProductRevenueSharePercent.toFixed(1)}% of portfolio revenue.`,
+      ],
+      [
+        `Top profit product contributes ${concentration.topProductProfitSharePercent.toFixed(1)}% of portfolio profit.`,
+      ]
+    );
+  }
+
+  rows.push([], ["Executive Insights"]);
 
   if (data.insights.length === 0) {
     rows.push(["No comparative insights available for this period."]);
@@ -297,11 +346,27 @@ function buildMarketplaceCostSheet(
     return [["Marketplace Cost Analysis"], [], ["No marketplace cost metrics available."]];
   }
 
+  const composition = buildMarketplaceCostComposition(data.totals);
+  const compositionTotal = composition.reduce((sum, slice) => sum + slice.value, 0);
+
   const rows: SheetCell[][] = [
     ["Marketplace Cost Analysis"],
     ["Marketplace cost components by product (existing Model B fields)"],
     [],
-    ["Totals"],
+    ["Cost Composition"],
+    ["Category", "Amount", "Share %"],
+  ];
+
+  for (const slice of composition) {
+    const share =
+      compositionTotal === 0 ? 0 : (slice.value / Math.abs(compositionTotal)) * 100;
+    rows.push([slice.name, money(slice.value, currency), pct(share)]);
+  }
+
+  rows.push(
+    ["Total Marketplace Cost", money(data.totals.totalMarketplaceCost, currency), pct(100)],
+    [],
+    ["Totals (detail)"],
     ["Commission", money(data.totals.commission, currency)],
     ["Logistics", money(data.totals.logistics, currency)],
     ["Return Logistics", money(data.totals.returnLogistics, currency)],
@@ -310,8 +375,8 @@ function buildMarketplaceCostSheet(
     ["Other Marketplace Costs", money(data.totals.otherMarketplaceCosts, currency)],
     ["Total Marketplace Cost", money(data.totals.totalMarketplaceCost, currency)],
     [],
-    costHeader(),
-  ];
+    costHeader()
+  );
 
   if (data.rows.length === 0) {
     rows.push(["—", "No products"]);
@@ -511,12 +576,12 @@ export function buildProductReportWorkbook(payload: ReportPayload): ArrayBuffer 
 
   const workbook = XLSX.utils.book_new();
   appendSheet(workbook, "Cover", buildCoverSheet(payload), [38, 52]);
-  appendSheet(workbook, "Executive Summary", buildExecutiveSheet(executive, currency), [
-    32,
-    18,
-    40,
-    22,
-  ]);
+  appendSheet(
+    workbook,
+    "Executive Summary",
+    buildExecutiveSheet(executive, currency, performance?.rows ?? []),
+    [32, 18, 40, 22, 14, 12]
+  );
   appendSheet(
     workbook,
     "Product Performance",
