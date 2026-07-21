@@ -17,7 +17,10 @@ import {
   DEFAULT_TARGET_MARGIN_PERCENT,
 } from "@/lib/smart-pricing-constants";
 import type { ProductPricingHealthRow } from "@/services/smart-pricing-service";
-import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { formatKpiCount, formatKpiPercent } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
+import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 
 type SortKey = "health" | "margin" | "price30" | "difference" | "recovery";
 
@@ -43,16 +46,6 @@ const HEALTH_STATUS_VARIANT: Record<HealthScoreStatus, string> = {
   poor: "text-warning",
   critical: "text-danger",
 };
-
-function SummaryCard({ label, value, subtitle }: { label: string; value: string; subtitle?: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card-hover px-3 py-2.5">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums tracking-tight">{value}</p>
-      {subtitle && <p className="mt-1 text-[11px] text-muted-foreground">{subtitle}</p>}
-    </div>
-  );
-}
 
 function formatPrice(value: number | null): string {
   if (value === null) return "—";
@@ -225,28 +218,46 @@ export function PricingHealthPanel({
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-        <SummaryCard
-          label="Average Health Score"
+        <MetricCard
+          size="compact"
+          title="Average Health Score"
           value={Math.round(summary.averageHealthScore).toString()}
           subtitle="0–100 composite"
+          icon={KPI_ICONS.conversion}
         />
-        <SummaryCard
-          label="At-risk SKUs"
-          value={formatNumber(summary.atRiskCount)}
+        <MetricCard
+          size="compact"
+          title="At-risk SKUs"
+          value={formatKpiCount(summary.atRiskCount)}
           subtitle="Poor or critical health"
+          icon={KPI_ICONS.inventory}
+          variant="warning"
         />
-        <SummaryCard label="Products analyzed" value={formatNumber(summary.productsAnalyzed)} />
-        <SummaryCard
-          label="Average required increase"
-          value={formatPercent(summary.averageRequiredIncreasePercent)}
+        <MetricCard
+          size="compact"
+          title="Products analyzed"
+          value={formatKpiCount(summary.productsAnalyzed)}
+          icon={KPI_ICONS.units}
         />
-        <SummaryCard
-          label="Already above target"
-          value={formatNumber(summary.productsAboveTarget)}
+        <MetricCard
+          size="compact"
+          title="Average required increase"
+          value={formatKpiPercent(summary.averageRequiredIncreasePercent)}
+          icon={KPI_ICONS.pricing}
         />
-        <SummaryCard
-          label="Needing &gt;20% increase"
-          value={formatNumber(summary.productsNeedingOver20Percent)}
+        <MetricCard
+          size="compact"
+          title="Already above target"
+          value={formatKpiCount(summary.productsAboveTarget)}
+          icon={KPI_ICONS.profit}
+          variant="success"
+        />
+        <MetricCard
+          size="compact"
+          title="Needing >20% increase"
+          value={formatKpiCount(summary.productsNeedingOver20Percent)}
+          icon={KPI_ICONS.pricing}
+          variant="warning"
         />
       </div>
 

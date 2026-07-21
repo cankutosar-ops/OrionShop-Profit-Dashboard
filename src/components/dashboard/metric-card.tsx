@@ -1,29 +1,77 @@
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import {
+  buildMetricTrend,
+  type MetricTrendDisplay,
+  type MetricTrendInput,
+} from "@/lib/kpi-format";
+
+export type MetricCardTrend = MetricTrendInput;
 
 type MetricCardProps = {
   title: string;
-  value: string;
-  subtitle?: string;
+  value: ReactNode;
+  subtitle?: ReactNode;
   icon: LucideIcon;
-  trend?: { value: number; label: string };
-  variant?: "default" | "success" | "warning" | "danger";
+  /**
+   * Optional comparison trend. Omit entirely when no comparison data exists.
+   * Never pass invented values.
+   */
+  trend?: MetricCardTrend | null;
+  variant?: "default" | "success" | "warning" | "danger" | "muted";
   /** Override icon gradient (Model B commercial palette). */
   iconClassName?: string;
   hint?: string;
   /** Card wrapper classes (e.g. Net Profit emphasis). */
   className?: string;
-  /** Enlarge value typography (~25% for primary KPI). */
-  size?: "default" | "hero";
+  /**
+   * default — standard dashboard KPI
+   * hero — primary emphasis
+   * compact — dense module grids / strips (same language, tighter spacing)
+   */
+  size?: "default" | "hero" | "compact";
 };
 
-const variantStyles = {
+const variantIconStyles = {
   default: "from-primary/20 to-primary/5 text-primary",
   success: "from-success/20 to-success/5 text-success",
   warning: "from-warning/20 to-warning/5 text-warning",
   danger: "from-danger/20 to-danger/5 text-danger",
+  muted: "from-muted/40 to-muted/10 text-muted-foreground",
 };
 
+const variantValueStyles = {
+  default: "",
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-danger",
+  muted: "text-muted-foreground",
+};
+
+function TrendLine({ trend }: { trend: MetricTrendDisplay }) {
+  return (
+    <p
+      className={cn(
+        "text-xs font-medium tabular-nums",
+        trend.direction === "up" && "text-success",
+        trend.direction === "down" && "text-danger",
+        trend.direction === "stable" && "text-muted-foreground"
+      )}
+    >
+      <span aria-hidden>{trend.symbol}</span>{" "}
+      {trend.direction === "stable"
+        ? "stable"
+        : `${trend.value > 0 ? "+" : ""}${trend.value}%`}{" "}
+      <span className="font-normal text-muted-foreground">{trend.label}</span>
+    </p>
+  );
+}
+
+/**
+ * Canonical KPI presentation for WB Dashboard.
+ * All modules should reuse this language.
+ */
 export function MetricCard({
   title,
   value,
@@ -36,47 +84,47 @@ export function MetricCard({
   size = "default",
   hint,
 }: MetricCardProps) {
+  const compact = size === "compact";
+  const trendDisplay = trend ? buildMetricTrend(trend) : null;
+
   return (
     <div
       title={hint}
       className={cn(
-        "group relative overflow-hidden border border-border bg-card p-6 transition-ui hover:border-primary/30 hover:bg-card-hover",
+        "group relative overflow-hidden border border-border bg-card transition-ui hover:border-primary/30 hover:bg-card-hover",
         "rounded-[var(--radius-card)]",
+        compact ? "p-3" : "p-6",
         className
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-kpi-label">{title}</p>
-          <p
+      <div className="flex items-start justify-between gap-3">
+        <div className={cn("min-w-0", compact ? "space-y-1" : "space-y-2")}>
+          <p className={cn("text-kpi-label", compact && "text-xs")}>{title}</p>
+          <div
             className={cn(
               "text-kpi-value",
-              size === "hero" ? "text-3xl leading-none" : "text-2xl"
+              size === "hero" && "text-3xl leading-none",
+              size === "default" && "text-2xl",
+              size === "compact" && "text-lg leading-tight",
+              variantValueStyles[variant]
             )}
           >
             {value}
-          </p>
-          {subtitle && <p className="text-secondary-label text-muted">{subtitle}</p>}
-          {trend && (
-            <p
-              className={cn(
-                "text-xs font-medium",
-                trend.value >= 0 ? "text-success" : "text-danger"
-              )}
-            >
-              {trend.value >= 0 ? "+" : ""}
-              {trend.value}% {trend.label}
-            </p>
-          )}
+          </div>
+          {subtitle ? (
+            <div className="text-secondary-label text-muted">{subtitle}</div>
+          ) : null}
+          {trendDisplay ? <TrendLine trend={trendDisplay} /> : null}
         </div>
         <div
           className={cn(
-            "flex h-11 w-11 items-center justify-center bg-gradient-to-br",
+            "flex shrink-0 items-center justify-center bg-gradient-to-br",
             "rounded-[var(--radius-control)]",
-            iconClassName ?? variantStyles[variant]
+            compact ? "h-8 w-8" : "h-11 w-11",
+            iconClassName ?? variantIconStyles[variant]
           )}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className={compact ? "h-4 w-4" : "h-5 w-5"} />
         </div>
       </div>
     </div>

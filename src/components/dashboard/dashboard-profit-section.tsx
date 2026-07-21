@@ -1,29 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  AlertTriangle,
-  CircleMinus,
-  CreditCard,
-  DollarSign,
-  Megaphone,
-  Package,
-  Percent,
-  Receipt,
-  RotateCcw,
-  ShoppingBag,
-  ShoppingCart,
-  TrendingUp,
-  Truck,
-  Warehouse,
-} from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
+import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import {
   shareOfNetSalesPercent,
 } from "@/lib/profit-engine-model-b";
 import { isNetSalesReady } from "@/lib/sales-revenue-resolution";
 import { sanitizeUnavailableReason, TEMPORARILY_UNAVAILABLE } from "@/lib/user-facing-errors";
-import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 import type {
   ModelBProfitMetrics,
   OrdersPurchasesKpis,
@@ -79,17 +64,17 @@ export function DashboardProfitSection({
   const emptyValue = "—";
   const revenueReady = isNetSalesReady(modelB.netSalesStatus);
 
-  const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatCurrency(value));
-  const formatRate = (value: number) => (isEmptyPeriod ? emptyValue : formatPercent(value));
+  const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiCurrency(value));
+  const formatRate = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiPercent(value));
   const formatMoneyOrPending = (value: number) => {
     if (isEmptyPeriod) return emptyValue;
     if (!revenueReady) return TEMPORARILY_UNAVAILABLE;
-    return formatCurrency(value);
+    return formatKpiCurrency(value);
   };
 
   const shareOfNetSales = (amount: number) => {
     if (isEmptyPeriod || !revenueReady || modelB.netSales <= 0) return emptyValue;
-    return formatPercent(shareOfNetSalesPercent(modelB.netSales, amount));
+    return formatKpiPercent(shareOfNetSalesPercent(modelB.netSales, amount));
   };
 
   const operationalMetrics = (
@@ -100,28 +85,28 @@ export function DashboardProfitSection({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Units Sold"
-          value={formatNumber(quantities.unitsSold)}
-          icon={ShoppingBag}
+          value={formatKpiCount(quantities.unitsSold)}
+          icon={KPI_ICONS.purchases}
           variant="success"
         />
         <MetricCard
           title="Returned Units"
-          value={formatNumber(quantities.unitsReturned)}
-          icon={RotateCcw}
+          value={formatKpiCount(quantities.unitsReturned)}
+          icon={KPI_ICONS.returns}
           variant={quantities.unitsReturned > 0 ? "warning" : "default"}
         />
         <MetricCard
           title="Net Units"
-          value={formatNumber(quantities.netUnits)}
+          value={formatKpiCount(quantities.netUnits)}
           subtitle={`Return rate ${formatRate(kpis.returnRate)}`}
-          icon={Package}
+          icon={KPI_ICONS.units}
           variant="default"
         />
         <MetricCard
           title="Orders"
-          value={formatNumber(totalOrdersCount)}
-          subtitle={`${formatNumber(kpis.ordersCount)} non-cancelled`}
-          icon={ShoppingCart}
+          value={formatKpiCount(totalOrdersCount)}
+          subtitle={`${formatKpiCount(kpis.ordersCount)} non-cancelled`}
+          icon={KPI_ICONS.orders}
           variant="default"
         />
       </div>
@@ -140,10 +125,10 @@ export function DashboardProfitSection({
             value={formatMoneyOrPending(modelB.netSales)}
             subtitle={
               revenueReady
-                ? `${formatNumber(quantities.unitsSold)} units sold`
+                ? `${formatKpiCount(quantities.unitsSold)} units sold`
                 : sanitizeUnavailableReason(undefined, "Awaiting sales data")
             }
-            icon={ShoppingBag}
+            icon={KPI_ICONS.purchases}
             variant="default"
           />
           <MetricCard
@@ -151,7 +136,7 @@ export function DashboardProfitSection({
             value={formatMoneyOrPending(modelB.commission)}
             subtitle={`${shareOfNetSales(modelB.commission)} of sales`}
             hint="Wildberries marketplace sales commission."
-            icon={Percent}
+            icon={KPI_ICONS.commission}
             iconClassName={MODEL_B_ICON.commission}
             variant="warning"
           />
@@ -160,7 +145,7 @@ export function DashboardProfitSection({
             value={formatMoneyOrPending(modelB.revenue)}
             subtitle={`${shareOfNetSales(modelB.revenue)} of sales`}
             hint="Commercial revenue after marketplace commission."
-            icon={DollarSign}
+            icon={KPI_ICONS.revenue}
             iconClassName={MODEL_B_ICON.revenue}
             variant="default"
           />
@@ -168,7 +153,7 @@ export function DashboardProfitSection({
             title="Logistics"
             value={formatMoney(modelB.logistics)}
             subtitle={`${shareOfNetSales(modelB.logistics)} of sales`}
-            icon={Truck}
+            icon={KPI_ICONS.logistics}
             iconClassName={MODEL_B_ICON.logistics}
             variant="warning"
           />
@@ -176,7 +161,7 @@ export function DashboardProfitSection({
             title="Storage"
             value={formatMoney(modelB.storage)}
             subtitle={`${shareOfNetSales(modelB.storage)} of sales`}
-            icon={Warehouse}
+            icon={KPI_ICONS.storage}
             iconClassName={MODEL_B_ICON.storage}
             variant="default"
           />
@@ -184,7 +169,7 @@ export function DashboardProfitSection({
             title="Penalties"
             value={formatMoney(modelB.penalties)}
             subtitle={`${shareOfNetSales(modelB.penalties)} of sales`}
-            icon={AlertTriangle}
+            icon={KPI_ICONS.penalties}
             iconClassName={MODEL_B_ICON.penalties}
             variant="danger"
           />
@@ -193,7 +178,7 @@ export function DashboardProfitSection({
             value={formatMoney(modelB.adjustments)}
             subtitle={`${shareOfNetSales(modelB.adjustments)} of sales`}
             hint="Monthly operational adjustments allocated to the selected reporting period."
-            icon={CircleMinus}
+            icon={KPI_ICONS.adjustments}
             iconClassName={MODEL_B_ICON.adjustments}
             variant="warning"
           />
@@ -201,7 +186,7 @@ export function DashboardProfitSection({
             title="Product Cost"
             value={formatMoney(modelB.productCost)}
             subtitle={`${shareOfNetSales(modelB.productCost)} of sales`}
-            icon={Package}
+            icon={KPI_ICONS.cost}
             iconClassName={MODEL_B_ICON.productCost}
             variant="default"
           />
@@ -209,7 +194,7 @@ export function DashboardProfitSection({
             title="Advertising"
             value={formatMoney(modelB.advertising)}
             subtitle={`${shareOfNetSales(modelB.advertising)} of sales`}
-            icon={Megaphone}
+            icon={KPI_ICONS.advertising}
             variant="default"
           />
           <MetricCard
@@ -217,7 +202,7 @@ export function DashboardProfitSection({
             value={formatMoney(modelB.acquiring)}
             subtitle={`${shareOfNetSales(modelB.acquiring)} of sales`}
             hint="Payment processing fee — included in Seller Payout (deducted before tax)."
-            icon={CreditCard}
+            icon={KPI_ICONS.acquiring}
             iconClassName={MODEL_B_ICON.acquiring}
             variant="default"
           />
@@ -230,7 +215,7 @@ export function DashboardProfitSection({
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
             hint="Seller Payout − Product Cost − Advertising (before tax)."
-            icon={TrendingUp}
+            icon={KPI_ICONS.profit}
             variant={
               isEmptyPeriod || !revenueReady
                 ? "default"
@@ -250,7 +235,7 @@ export function DashboardProfitSection({
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
             hint="Tax = Seller Payout × Tax%. Product Cost and Marketing do not affect the tax base."
-            icon={Receipt}
+            icon={KPI_ICONS.tax}
             variant="default"
           />
           <MetricCard
@@ -262,7 +247,7 @@ export function DashboardProfitSection({
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
             hint="After Tax Payout − Product Cost − Advertising."
-            icon={TrendingUp}
+            icon={KPI_ICONS.profit}
             size="hero"
             className="ring-1 ring-primary/30"
             variant={

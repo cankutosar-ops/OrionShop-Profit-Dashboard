@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
-import { Banknote, ShoppingCart, Wallet } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { WbSettlementWidget } from "@/components/dashboard/wb-settlement-widget";
+import { formatKpiCount, formatKpiCurrency } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import { sanitizeUnavailableReason } from "@/lib/user-facing-errors";
-import { formatCurrency, formatNumber } from "@/lib/utils";
 import { loadDashboardWbStrip } from "@/services/dashboard-service";
 import type { ScopedDateRange } from "@/types/database";
-
 function KpiSection({
   title,
   description,
@@ -43,7 +42,7 @@ export async function DashboardWbDeferredSection({
 }) {
   const strip = await loadDashboardWbStrip(scope);
   const emptyValue = "—";
-  const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatCurrency(value));
+  const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiCurrency(value));
 
   if (!strip) {
     return null;
@@ -53,7 +52,7 @@ export async function DashboardWbDeferredSection({
   const expectedWbPayoutValue =
     isEmptyPeriod || expectedWbPayout.amount === null
       ? emptyValue
-      : formatCurrency(expectedWbPayout.amount);
+      : formatKpiCurrency(expectedWbPayout.amount);
   const expectedWbPayoutSubtitle =
     isEmptyPeriod || expectedWbPayout.amount === null
       ? sanitizeUnavailableReason(
@@ -68,17 +67,17 @@ export async function DashboardWbDeferredSection({
   const wbBalanceValue =
     isEmptyPeriod || wbBalance.current === null
       ? emptyValue
-      : formatCurrency(wbBalance.current);
+      : formatKpiCurrency(wbBalance.current);
   const wbBalanceSubtitle =
     isEmptyPeriod || wbBalance.current === null
       ? sanitizeUnavailableReason(wbBalance.unavailableReason, "Wildberries wallet balance")
       : wbBalance.forWithdraw !== null
-        ? `Available to withdraw ${formatCurrency(wbBalance.forWithdraw)}`
+        ? `Available to withdraw ${formatKpiCurrency(wbBalance.forWithdraw)}`
         : "Total wallet balance (WB Finance API)";
 
   const ordersValueSubtitle = isEmptyPeriod
     ? emptyValue
-    : `${formatNumber(totalOrdersCount)} orders incl. cancelled · ${formatNumber(ordersValueCount)} items`;
+    : `${formatKpiCount(totalOrdersCount)} orders incl. cancelled · ${formatKpiCount(ordersValueCount)} items`;
 
   return (
     <div className="space-y-8">
@@ -91,14 +90,14 @@ export async function DashboardWbDeferredSection({
             title="Orders Value"
             value={formatMoney(strip.ordersValue)}
             subtitle={ordersValueSubtitle}
-            icon={ShoppingCart}
+            icon={KPI_ICONS.orders}
             variant="default"
           />
           <MetricCard
             title="Expected WB Payout"
             value={expectedWbPayoutValue}
             subtitle={expectedWbPayoutSubtitle}
-            icon={Banknote}
+            icon={KPI_ICONS.settlement}
             variant={
               isEmptyPeriod || expectedWbPayout.amount === null
                 ? "default"
@@ -111,7 +110,7 @@ export async function DashboardWbDeferredSection({
             title="Wallet Balance"
             value={wbBalanceValue}
             subtitle={wbBalanceSubtitle}
-            icon={Wallet}
+            icon={KPI_ICONS.wallet}
             variant={
               isEmptyPeriod || wbBalance.current === null
                 ? "default"

@@ -5,24 +5,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { InventoryFilters } from "@/components/inventory/inventory-filters";
 import { InventoryModelDetailPanel } from "@/components/inventory/inventory-model-detail";
 import { InventoryModelList } from "@/components/inventory/inventory-model-list";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { FILTER_PARAMS } from "@/lib/filter-params";
 import type { InventoryReport } from "@/lib/inventory-types";
+import { formatKpiCount } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import { formatLastSyncTimestamp } from "@/lib/marketplace-sync-date";
-import { formatNumber } from "@/lib/utils";
 
 type InventoryWorkspaceProps = {
   report: InventoryReport;
   initialProductId: string | null;
 };
-
-function SummaryStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-[7.5rem] flex-1">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{value}</p>
-    </div>
-  );
-}
 
 export function InventoryWorkspace({
   report,
@@ -120,18 +113,42 @@ export function InventoryWorkspace({
       />
 
       <div
-        className="flex flex-wrap items-stretch gap-4 rounded-2xl border border-border bg-card px-4 py-3"
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
         role="group"
         aria-label="Inventory summary"
       >
-        <SummaryStat label="Total Models" value={formatNumber(summary.totalModels)} />
-        <SummaryStat label="Total Units" value={formatNumber(summary.totalUnits)} />
-        <SummaryStat label="Low Stock Models" value={formatNumber(summary.lowStockModels)} />
-        <SummaryStat
-          label="Out of Stock Models"
-          value={formatNumber(summary.outOfStockModels)}
+        <MetricCard
+          size="compact"
+          title="Total Models"
+          value={formatKpiCount(summary.totalModels)}
+          icon={KPI_ICONS.units}
         />
-        <SummaryStat label="Last Inventory Sync" value={lastSyncLabel} />
+        <MetricCard
+          size="compact"
+          title="Total Units"
+          value={formatKpiCount(summary.totalUnits)}
+          icon={KPI_ICONS.inventory}
+        />
+        <MetricCard
+          size="compact"
+          title="Low Stock Models"
+          value={formatKpiCount(summary.lowStockModels)}
+          icon={KPI_ICONS.inventory}
+          variant="warning"
+        />
+        <MetricCard
+          size="compact"
+          title="Out of Stock Models"
+          value={formatKpiCount(summary.outOfStockModels)}
+          icon={KPI_ICONS.inventory}
+          variant="danger"
+        />
+        <MetricCard
+          size="compact"
+          title="Last Inventory Sync"
+          value={lastSyncLabel}
+          icon={KPI_ICONS.inventory}
+        />
       </div>
 
       <div className="grid h-[calc(100vh-14rem)] min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,38%)_minmax(0,1fr)]">

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ArrowLeft, Search } from "lucide-react";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { FILTER_PARAMS } from "@/lib/filter-params";
 import {
   isEmptyWarehouseName,
@@ -12,8 +13,10 @@ import {
   type WarehouseSalesRow,
   type WarehouseSalesTotals,
 } from "@/lib/warehouse-sales-analytics";
+import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
-import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type WarehouseSalesAnalyticsTableProps = {
   rows: WarehouseSalesRow[];
@@ -161,22 +164,46 @@ export function WarehouseSalesAnalyticsTable({
       </div>
 
       <div
-        className="flex flex-wrap items-stretch gap-4 rounded-2xl border border-border bg-card px-4 py-3"
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
         role="group"
         aria-label="Warehouse sales summary"
       >
-        <SummaryStat label="Warehouses" value={formatNumber(filtered.length)} />
-        <SummaryStat label="Orders" value={formatNumber(totals.orders)} />
-        <SummaryStat label="Units" value={formatNumber(totals.units)} />
-        <SummaryStat label="Revenue" value={formatCurrency(totals.revenue)} />
-        <SummaryStat
-          label="Order Share Σ"
-          value={formatPercent(orderShareTotal)}
+        <MetricCard
+          size="compact"
+          title="Warehouses"
+          value={formatKpiCount(filtered.length)}
+          icon={KPI_ICONS.inventory}
+        />
+        <MetricCard
+          size="compact"
+          title="Orders"
+          value={formatKpiCount(totals.orders)}
+          icon={KPI_ICONS.orders}
+        />
+        <MetricCard
+          size="compact"
+          title="Units"
+          value={formatKpiCount(totals.units)}
+          icon={KPI_ICONS.units}
+        />
+        <MetricCard
+          size="compact"
+          title="Revenue"
+          value={formatKpiCurrency(totals.revenue)}
+          icon={KPI_ICONS.revenue}
+        />
+        <MetricCard
+          size="compact"
+          title="Order Share Σ"
+          value={formatKpiPercent(orderShareTotal)}
+          icon={KPI_ICONS.conversion}
           hint="All warehouses, 1 decimal"
         />
-        <SummaryStat
-          label="Revenue Share Σ"
-          value={formatPercent(revenueShareTotal)}
+        <MetricCard
+          size="compact"
+          title="Revenue Share Σ"
+          value={formatKpiPercent(revenueShareTotal)}
+          icon={KPI_ICONS.conversion}
           hint="All warehouses, 1 decimal"
         />
       </div>
@@ -276,25 +303,6 @@ export function WarehouseSalesAnalyticsTable({
         {" · "}
         Order Share uses Orders, never Units
       </p>
-    </div>
-  );
-}
-
-function SummaryStat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="min-w-[7.5rem] flex-1">
-      <p className="text-xs font-medium text-muted-foreground" title={hint}>
-        {label}
-      </p>
-      <p className={cn("mt-0.5 text-sm font-semibold tabular-nums text-foreground")}>{value}</p>
     </div>
   );
 }

@@ -8,6 +8,9 @@ import {
 import type { InventoryShipmentEntry } from "@/lib/inventory-shipment-history";
 import type { InventoryModelDetail } from "@/lib/inventory-types";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { formatKpiCount } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
 
 type TabId = "overview" | "sku" | "warehouses" | "history";
@@ -18,15 +21,6 @@ const tabs: { id: TabId; label: string }[] = [
   { id: "warehouses", label: "Warehouses" },
   { id: "history", label: "History" },
 ];
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-background px-4 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
-    </div>
-  );
-}
 
 function OverviewTab({ detail }: { detail: InventoryModelDetail }) {
   const { overview } = detail;
@@ -39,18 +33,47 @@ function OverviewTab({ detail }: { detail: InventoryModelDetail }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Current Stock" value={formatNumber(overview.currentStock)} />
-        <MetricCard label="Available Stock" value={formatNumber(overview.availableStock)} />
-        <MetricCard label="Reserved Stock" value={formatNumber(overview.reservedStock)} />
-        <MetricCard label="30 Day Sales" value={formatNumber(overview.purchases30Day)} />
         <MetricCard
-          label="Daily Sales"
-          value={overview.dailySales > 0 ? overview.dailySales.toFixed(2) : "0"}
+          size="compact"
+          title="Current Stock"
+          value={formatKpiCount(overview.currentStock)}
+          icon={KPI_ICONS.inventory}
         />
-        <MetricCard label="Days Left" value={formatDaysLeft(overview.daysLeft)} />
         <MetricCard
-          label="Last Sync"
+          size="compact"
+          title="Available Stock"
+          value={formatKpiCount(overview.availableStock)}
+          icon={KPI_ICONS.inventory}
+        />
+        <MetricCard
+          size="compact"
+          title="Reserved Stock"
+          value={formatKpiCount(overview.reservedStock)}
+          icon={KPI_ICONS.storage}
+        />
+        <MetricCard
+          size="compact"
+          title="30 Day Sales"
+          value={formatKpiCount(overview.purchases30Day)}
+          icon={KPI_ICONS.purchases}
+        />
+        <MetricCard
+          size="compact"
+          title="Daily Sales"
+          value={overview.dailySales > 0 ? overview.dailySales.toFixed(2) : "0"}
+          icon={KPI_ICONS.purchases}
+        />
+        <MetricCard
+          size="compact"
+          title="Days Left"
+          value={formatDaysLeft(overview.daysLeft)}
+          icon={KPI_ICONS.inventory}
+        />
+        <MetricCard
+          size="compact"
+          title="Last Sync"
           value={overview.lastSync ? formatDate(overview.lastSync) : "—"}
+          icon={KPI_ICONS.inventory}
         />
       </div>
     </div>

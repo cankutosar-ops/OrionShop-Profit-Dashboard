@@ -1,39 +1,12 @@
 import type { ReactNode } from "react";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import type { ProductAnalyticsTotals } from "@/types/database";
-import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type ProductAnalyticsTotalsSectionProps = {
   totals: ProductAnalyticsTotals;
 };
-
-function MetricCard({
-  label,
-  value,
-  subtitle,
-  variant = "default",
-}: {
-  label: string;
-  value: string;
-  subtitle?: string;
-  variant?: "default" | "success" | "danger" | "muted";
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card-hover px-3 py-2.5">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-1 text-lg font-semibold tabular-nums tracking-tight",
-          variant === "success" && "text-success",
-          variant === "danger" && "text-danger",
-          variant === "muted" && "text-muted-foreground"
-        )}
-      >
-        {value}
-      </p>
-      {subtitle && <p className="mt-1 text-[11px] text-muted-foreground">{subtitle}</p>}
-    </div>
-  );
-}
 
 function SectionShell({
   title,
@@ -62,15 +35,42 @@ function ProductAnalyticsFunnelSection({ totals }: { totals: ProductAnalyticsTot
       description="Order flow — volume and conversion, separate from unit economics"
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <MetricCard label="Orders" value={formatNumber(totals.orders)} />
-        <MetricCard label="Purchases" value={formatNumber(totals.purchases)} />
-        <MetricCard label="Conversion %" value={formatPercent(totals.conversionPercent)} />
-        <MetricCard label="Cancelled Orders" value={formatNumber(totals.cancelled)} />
-        <MetricCard label="Cancellation %" value={formatPercent(totals.cancellationPercent)} />
         <MetricCard
-          label="Lost Orders"
-          value={formatNumber(totals.lostOrders)}
+          size="compact"
+          title="Orders"
+          value={formatKpiCount(totals.orders)}
+          icon={KPI_ICONS.orders}
+        />
+        <MetricCard
+          size="compact"
+          title="Purchases"
+          value={formatKpiCount(totals.purchases)}
+          icon={KPI_ICONS.purchases}
+        />
+        <MetricCard
+          size="compact"
+          title="Conversion %"
+          value={formatKpiPercent(totals.conversionPercent)}
+          icon={KPI_ICONS.conversion}
+        />
+        <MetricCard
+          size="compact"
+          title="Cancelled Orders"
+          value={formatKpiCount(totals.cancelled)}
+          icon={KPI_ICONS.returns}
+        />
+        <MetricCard
+          size="compact"
+          title="Cancellation %"
+          value={formatKpiPercent(totals.cancellationPercent)}
+          icon={KPI_ICONS.conversion}
+        />
+        <MetricCard
+          size="compact"
+          title="Lost Orders"
+          value={formatKpiCount(totals.lostOrders)}
           subtitle="Orders − purchases"
+          icon={KPI_ICONS.orders}
         />
       </div>
     </SectionShell>
@@ -86,28 +86,61 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
       description="Unit economics for SKU decisions — total logistics and marketing included"
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
-        <MetricCard label="Revenue" value={formatCurrency(totals.revenue)} />
-        <MetricCard label="Product Cost" value={formatCurrency(totals.productCost)} />
-        <MetricCard label="Commission" value={formatCurrency(totals.commission)} />
         <MetricCard
-          label="Total Logistics"
-          value={formatCurrency(totals.totalLogistics)}
-          subtitle={`Purchase ${formatCurrency(totals.purchaseLogistics)} · Excluded ${formatCurrency(totals.excludedLogistics)}`}
-        />
-        <MetricCard label="Return Logistics" value={formatCurrency(totals.returnLogistics)} />
-        <MetricCard label="Marketing" value={formatCurrency(totals.marketing)} />
-        <MetricCard
-          label="Other Marketplace"
-          value={formatCurrency(totals.otherMarketplaceCosts)}
+          size="compact"
+          title="Revenue"
+          value={formatKpiCurrency(totals.revenue)}
+          icon={KPI_ICONS.revenue}
         />
         <MetricCard
-          label="Operational Profit"
-          value={formatCurrency(totals.operationalProfit)}
+          size="compact"
+          title="Product Cost"
+          value={formatKpiCurrency(totals.productCost)}
+          icon={KPI_ICONS.cost}
+        />
+        <MetricCard
+          size="compact"
+          title="Commission"
+          value={formatKpiCurrency(totals.commission)}
+          icon={KPI_ICONS.commission}
+        />
+        <MetricCard
+          size="compact"
+          title="Total Logistics"
+          value={formatKpiCurrency(totals.totalLogistics)}
+          subtitle={`Purchase ${formatKpiCurrency(totals.purchaseLogistics)} · Excluded ${formatKpiCurrency(totals.excludedLogistics)}`}
+          icon={KPI_ICONS.logistics}
+        />
+        <MetricCard
+          size="compact"
+          title="Return Logistics"
+          value={formatKpiCurrency(totals.returnLogistics)}
+          icon={KPI_ICONS.returns}
+        />
+        <MetricCard
+          size="compact"
+          title="Marketing"
+          value={formatKpiCurrency(totals.marketing)}
+          icon={KPI_ICONS.advertising}
+        />
+        <MetricCard
+          size="compact"
+          title="Other Marketplace"
+          value={formatKpiCurrency(totals.otherMarketplaceCosts)}
+          icon={KPI_ICONS.settlement}
+        />
+        <MetricCard
+          size="compact"
+          title="Operational Profit"
+          value={formatKpiCurrency(totals.operationalProfit)}
+          icon={KPI_ICONS.profit}
           variant={operationalVariant}
         />
         <MetricCard
-          label="Operational Margin %"
-          value={formatPercent(totals.operationalMarginPercent)}
+          size="compact"
+          title="Operational Margin %"
+          value={formatKpiPercent(totals.operationalMarginPercent)}
+          icon={KPI_ICONS.conversion}
         />
       </div>
     </SectionShell>
@@ -127,22 +160,33 @@ function ProductAnalyticsFinancialSection({ totals }: { totals: ProductAnalytics
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="Financial Net Profit"
-          value={formatCurrency(totals.netProfit)}
+          size="compact"
+          title="Financial Net Profit"
+          value={formatKpiCurrency(totals.netProfit)}
           subtitle="Dashboard engine · purchase logistics only"
+          icon={KPI_ICONS.profit}
           variant={financialVariant}
         />
-        <MetricCard label="Financial Margin %" value={formatPercent(totals.marginPercent)} />
         <MetricCard
-          label="Financial − Operational"
-          value={formatCurrency(financialVsOperational)}
+          size="compact"
+          title="Financial Margin %"
+          value={formatKpiPercent(totals.marginPercent)}
+          icon={KPI_ICONS.conversion}
+        />
+        <MetricCard
+          size="compact"
+          title="Financial − Operational"
+          value={formatKpiCurrency(financialVsOperational)}
           subtitle="≈ excluded logistics (per SKU sum)"
+          icon={KPI_ICONS.cost}
           variant="muted"
         />
         <MetricCard
-          label="Purchase Logistics (detail)"
-          value={formatCurrency(totals.purchaseLogistics)}
+          size="compact"
+          title="Purchase Logistics (detail)"
+          value={formatKpiCurrency(totals.purchaseLogistics)}
           subtitle={`${purchaseRows.toLocaleString("ru-RU")} rows · ${excludedRows.toLocaleString("ru-RU")} excluded`}
+          icon={KPI_ICONS.logistics}
           variant="muted"
         />
       </div>

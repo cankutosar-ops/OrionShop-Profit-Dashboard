@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { ExportBusinessReportButton } from "@/components/reports/export-business-report-button";
-import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import {
+  formatKpiCount,
+  formatKpiCurrency,
+  formatKpiPercent,
+  percentChange,
+  type MetricTrendInput,
+} from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 
 type KpiSnapshot = {
   revenue: number;
@@ -11,6 +19,13 @@ type KpiSnapshot = {
   currency: string;
 };
 
+type KpiTrends = {
+  revenue?: MetricTrendInput | null;
+  profit?: MetricTrendInput | null;
+  orders?: MetricTrendInput | null;
+  conversion?: MetricTrendInput | null;
+};
+
 type BusinessReportCardProps = {
   previewHref: string;
   periodLabel: string;
@@ -18,18 +33,9 @@ type BusinessReportCardProps = {
   lastGeneratedLabel: string;
   brandLabel?: string | null;
   kpis: KpiSnapshot | null;
+  /** Honest prior-period trends — omit when comparison data is missing. */
+  kpiTrends?: KpiTrends | null;
 };
-
-function KpiTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border/70 bg-background px-3 py-2">
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold tabular-nums">{value}</p>
-    </div>
-  );
-}
 
 export function BusinessReportCard({
   previewHref,
@@ -38,6 +44,7 @@ export function BusinessReportCard({
   lastGeneratedLabel,
   brandLabel,
   kpis,
+  kpiTrends,
 }: BusinessReportCardProps) {
   return (
     <article className="rounded-2xl border border-border bg-card p-5 sm:p-6">
@@ -87,18 +94,34 @@ export function BusinessReportCard({
             Period snapshot
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <KpiTile
-              label="Revenue"
-              value={formatCurrency(kpis.revenue, kpis.currency)}
+            <MetricCard
+              size="compact"
+              title="Revenue"
+              value={formatKpiCurrency(kpis.revenue, kpis.currency)}
+              icon={KPI_ICONS.revenue}
+              trend={kpiTrends?.revenue}
             />
-            <KpiTile
-              label="Profit"
-              value={formatCurrency(kpis.profit, kpis.currency)}
+            <MetricCard
+              size="compact"
+              title="Profit"
+              value={formatKpiCurrency(kpis.profit, kpis.currency)}
+              icon={KPI_ICONS.profit}
+              variant={kpis.profit >= 0 ? "success" : "danger"}
+              trend={kpiTrends?.profit}
             />
-            <KpiTile label="Orders" value={formatNumber(kpis.orders)} />
-            <KpiTile
-              label="Conversion"
-              value={formatPercent(kpis.conversion)}
+            <MetricCard
+              size="compact"
+              title="Orders"
+              value={formatKpiCount(kpis.orders)}
+              icon={KPI_ICONS.orders}
+              trend={kpiTrends?.orders}
+            />
+            <MetricCard
+              size="compact"
+              title="Conversion"
+              value={formatKpiPercent(kpis.conversion)}
+              icon={KPI_ICONS.conversion}
+              trend={kpiTrends?.conversion}
             />
           </div>
         </div>
@@ -146,4 +169,32 @@ export function ComingSoonReportCard({ name, description }: ComingSoonCardProps)
       </div>
     </article>
   );
+}
+
+/** Build honest KPI trends from current vs prior overview snapshots. */
+export function buildKpiTrendsFromOverview(
+  current: {
+    revenue: number;
+    profit: number;
+    orders: number;
+    conversion: number;
+  },
+  prior: {
+    revenue: number;
+    profit: number;
+    orders: number;
+    conversion: number;
+  } | null
+): KpiTrends | null {
+  if (!prior) return null;
+  const label = "vs prior period";
+  return {
+    revenue: { percentChange: percentChange(current.revenue, prior.revenue), label },
+    profit: { percentChange: percentChange(current.profit, prior.profit), label },
+    orders: { percentChange: percentChange(current.orders, prior.orders), label },
+    conversion: {
+      percentChange: percentChange(current.conversion, prior.conversion),
+      label,
+    },
+  };
 }

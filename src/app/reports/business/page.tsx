@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { ExportBusinessReportButton } from "@/components/reports/export-business-report-button";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import {
   type PageScopeSearchParamsInput,
   scopeParamsToSearchParams,
 } from "@/lib/filter-params";
+import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { provideBusinessReportSections } from "@/lib/reports/report-providers";
-import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 import { getCompanyById } from "@/services/marketplace-account-service";
 import type {
   BusinessExecutiveSummaryData,
@@ -65,21 +67,30 @@ export default async function BusinessReportPreviewPage({
           {executive ? (
             <>
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <PreviewKpi
-                  label="Revenue"
-                  value={formatCurrency(executive.revenue, currency)}
+                <MetricCard
+                  size="compact"
+                  title="Revenue"
+                  value={formatKpiCurrency(executive.revenue, currency)}
+                  icon={KPI_ICONS.revenue}
                 />
-                <PreviewKpi
-                  label="Profit"
-                  value={formatCurrency(executive.netProfit, currency)}
+                <MetricCard
+                  size="compact"
+                  title="Profit"
+                  value={formatKpiCurrency(executive.netProfit, currency)}
+                  icon={KPI_ICONS.profit}
+                  variant={executive.netProfit >= 0 ? "success" : "danger"}
                 />
-                <PreviewKpi
-                  label="Orders"
-                  value={formatNumber(executive.orders)}
+                <MetricCard
+                  size="compact"
+                  title="Orders"
+                  value={formatKpiCount(executive.orders)}
+                  icon={KPI_ICONS.orders}
                 />
-                <PreviewKpi
-                  label="Conversion"
-                  value={formatPercent(executive.conversionRate)}
+                <MetricCard
+                  size="compact"
+                  title="Conversion"
+                  value={formatKpiPercent(executive.conversionRate)}
+                  icon={KPI_ICONS.conversion}
                 />
               </div>
               {executive.insights.length > 0 ? (
@@ -125,21 +136,32 @@ export default async function BusinessReportPreviewPage({
           <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Inventory Health</h2>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <PreviewKpi
-                label="Healthy"
-                value={formatNumber(inventory.health.healthy)}
+              <MetricCard
+                size="compact"
+                title="Healthy"
+                value={formatKpiCount(inventory.health.healthy)}
+                icon={KPI_ICONS.inventory}
+                variant="success"
               />
-              <PreviewKpi
-                label="Low Stock"
-                value={formatNumber(inventory.health.lowStock)}
+              <MetricCard
+                size="compact"
+                title="Low Stock"
+                value={formatKpiCount(inventory.health.lowStock)}
+                icon={KPI_ICONS.inventory}
+                variant="warning"
               />
-              <PreviewKpi
-                label="Out of Stock"
-                value={formatNumber(inventory.health.outOfStock)}
+              <MetricCard
+                size="compact"
+                title="Out of Stock"
+                value={formatKpiCount(inventory.health.outOfStock)}
+                icon={KPI_ICONS.inventory}
+                variant="danger"
               />
-              <PreviewKpi
-                label="Warehouse Coverage"
-                value={formatNumber(inventory.health.warehouseCoverage)}
+              <MetricCard
+                size="compact"
+                title="Warehouse Coverage"
+                value={formatKpiCount(inventory.health.warehouseCoverage)}
+                icon={KPI_ICONS.storage}
               />
             </div>
           </section>
@@ -150,16 +172,5 @@ export default async function BusinessReportPreviewPage({
         </Suspense>
       </div>
     </>
-  );
-}
-
-function PreviewKpi({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border/70 bg-background px-3 py-2">
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold tabular-nums">{value}</p>
-    </div>
   );
 }

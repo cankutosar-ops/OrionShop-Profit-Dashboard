@@ -11,14 +11,17 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { ProductHeroImage } from "@/components/inventory/product-hero-image";
 import { StockHealthBadge } from "@/components/inventory/stock-health-badge";
 import { WarehouseDistributionPanel } from "@/components/inventory/warehouse-distribution-panel";
 import { useProductSkuAnalytics } from "@/hooks/use-product-sku-analytics";
 import { totalsFromDistribution } from "@/lib/inventory-intelligence-excel";
 import type { InventoryIntelligenceSkuRow } from "@/lib/inventory-intelligence-types";
+import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
+import { KPI_ICONS } from "@/lib/kpi-icons";
 import { buildProductIntelligenceQuickActions } from "@/lib/product-intelligence-nav";
-import { cn, formatCurrency, formatDate, formatNumber, formatPercent } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 type ProductIntelligenceDrawerProps = {
   row: InventoryIntelligenceSkuRow | null;
@@ -219,25 +222,41 @@ function InventorySummarySection({ row }: { row: InventoryIntelligenceSkuRow }) 
   return (
     <section aria-labelledby="pi-inventory-heading">
       <SectionHeading id="pi-inventory-heading">Inventory</SectionHeading>
-      <dl className="mt-3 grid grid-cols-2 gap-3">
-        <MetricTile label="Current Stock" value={formatNumber(row.currentStock)} />
-        <MetricTile label="Warehouse Count" value={formatNumber(row.warehouseCount)} />
-        <MetricTile
-          label="Stock Health"
-          valueNode={<StockHealthBadge status={row.stockHealth} />}
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <MetricCard
+          size="compact"
+          title="Current Stock"
+          value={formatKpiCount(row.currentStock)}
+          icon={KPI_ICONS.inventory}
         />
-        <MetricTile
-          label="Last Sale Date"
+        <MetricCard
+          size="compact"
+          title="Warehouse Count"
+          value={formatKpiCount(row.warehouseCount)}
+          icon={KPI_ICONS.storage}
+        />
+        <MetricCard
+          size="compact"
+          title="Stock Health"
+          value={<StockHealthBadge status={row.stockHealth} />}
+          icon={KPI_ICONS.inventory}
+        />
+        <MetricCard
+          size="compact"
+          title="Last Sale Date"
           value={row.lastSaleDate ? formatDate(row.lastSaleDate) : "—"}
+          icon={KPI_ICONS.purchases}
         />
-        <MetricTile
-          label="Days Since Last Sale"
+        <MetricCard
+          size="compact"
+          title="Days Since Last Sale"
           value={
-            row.daysSinceLastSale == null ? "—" : formatNumber(row.daysSinceLastSale)
+            row.daysSinceLastSale == null ? "—" : formatKpiCount(row.daysSinceLastSale)
           }
+          icon={KPI_ICONS.inventory}
           className="col-span-2 sm:col-span-1"
         />
-      </dl>
+      </div>
     </section>
   );
 }
@@ -272,33 +291,41 @@ function ProductEngagementSection({
           ? " · Sales Conversion = purchases ÷ orders"
           : ""}
       </p>
-      <dl className="mt-3 grid grid-cols-3 gap-3">
-        <MetricTile
-          label="Add to Favorites"
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <MetricCard
+          size="compact"
+          title="Add to Favorites"
           value="—"
           subtitle="Not synced"
+          icon={KPI_ICONS.engagement}
+          variant="muted"
         />
-        <MetricTile
-          label="Add to Cart"
+        <MetricCard
+          size="compact"
+          title="Add to Cart"
           value="—"
           subtitle="Not synced"
+          icon={KPI_ICONS.orders}
+          variant="muted"
         />
-        <MetricTile
-          label="Sales Conversion"
+        <MetricCard
+          size="compact"
+          title="Sales Conversion"
           value={
             loading
               ? "…"
               : error || !funnel
                 ? "—"
-                : formatNumber(funnel.purchases)
+                : formatKpiCount(funnel.purchases)
           }
           subtitle={
             loading || error || !funnel || !hasOrders
               ? undefined
-              : formatPercent(funnel.conversionPercent)
+              : formatKpiPercent(funnel.conversionPercent)
           }
+          icon={KPI_ICONS.conversion}
         />
-      </dl>
+      </div>
     </section>
   );
 }
@@ -318,11 +345,26 @@ function SalesSummarySection({
       <p className="mt-1 text-xs text-muted-foreground">
         Period totals from warehouse distribution (same as table / export)
       </p>
-      <dl className="mt-3 grid grid-cols-3 gap-3">
-        <MetricTile label="Total Orders" value={formatNumber(orders)} />
-        <MetricTile label="Total Units Sold" value={formatNumber(units)} />
-        <MetricTile label="Total Revenue" value={formatCurrency(revenue)} />
-      </dl>
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <MetricCard
+          size="compact"
+          title="Total Orders"
+          value={formatKpiCount(orders)}
+          icon={KPI_ICONS.orders}
+        />
+        <MetricCard
+          size="compact"
+          title="Total Units Sold"
+          value={formatKpiCount(units)}
+          icon={KPI_ICONS.units}
+        />
+        <MetricCard
+          size="compact"
+          title="Total Revenue"
+          value={formatKpiCurrency(revenue)}
+          icon={KPI_ICONS.revenue}
+        />
+      </div>
     </section>
   );
 }
@@ -356,32 +398,6 @@ function InfoRow({
       >
         {value}
       </dd>
-    </div>
-  );
-}
-
-function MetricTile({
-  label,
-  value,
-  valueNode,
-  subtitle,
-  className,
-}: {
-  label: string;
-  value?: string;
-  valueNode?: ReactNode;
-  subtitle?: string;
-  className?: string;
-}) {
-  return (
-    <div className={cn("rounded-xl border border-border bg-background px-3 py-2.5", className)}>
-      <dt className="text-[11px] font-medium text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-        {valueNode ?? value}
-      </dd>
-      {subtitle ? (
-        <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">{subtitle}</p>
-      ) : null}
     </div>
   );
 }
