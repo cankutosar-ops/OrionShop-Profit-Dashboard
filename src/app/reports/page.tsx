@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { ExportBusinessReportButton } from "@/components/reports/export-business-report-button";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import {
   type PageScopeSearchParamsInput,
@@ -14,6 +16,10 @@ type ReportRoadmapSection = {
 };
 
 const REPORT_ROADMAP: ReportRoadmapSection[] = [
+  {
+    title: "Business Reports",
+    items: [{ title: "Business Report (Sprint 7.1 foundation)" }],
+  },
   {
     title: "Financial Reports",
     items: [
@@ -51,6 +57,21 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       />
 
       <div className="space-y-6">
+        <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+          <h2 className="text-lg font-semibold">Sprint 7.1 — Report Engine</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Temporary export action to validate ReportPayload → Template → Excel
+            using the current dashboard period and trusted overview KPIs.
+          </p>
+          <Suspense
+            fallback={
+              <p className="mt-4 text-sm text-muted-foreground">Loading export…</p>
+            }
+          >
+            <ExportBusinessReportButton className="mt-4" />
+          </Suspense>
+        </section>
+
         {REPORT_ROADMAP.map((section) => (
           <section
             key={section.title}
@@ -64,7 +85,10 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                   className="flex items-center justify-between gap-4 rounded-lg border border-border/70 bg-background px-3 py-2 text-sm"
                 >
                   {item.href ? (
-                    <Link href={hrefWithScope(item.href)} className="font-medium text-primary hover:underline">
+                    <Link
+                      href={hrefWithScope(item.href)}
+                      className="font-medium text-primary hover:underline"
+                    >
                       {item.title}
                     </Link>
                   ) : (
@@ -73,6 +97,10 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                   {item.href ? (
                     <span className="text-xs font-medium uppercase tracking-wide text-success">
                       Available
+                    </span>
+                  ) : item.title.startsWith("Business Report") ? (
+                    <span className="text-xs font-medium uppercase tracking-wide text-success">
+                      Engine Ready
                     </span>
                   ) : (
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
