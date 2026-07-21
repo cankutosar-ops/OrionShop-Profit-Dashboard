@@ -1,15 +1,17 @@
 import type {
-  ReportPeriodPreset,
   ReportTemplateId,
   ReportTemplateStatus,
   ReportTemplateVersion,
 } from "@/lib/reports/report-engine-types";
 import {
   isBusinessReportEmpty,
-  provideBusinessReportKpis,
+  provideBusinessReportSections,
 } from "@/lib/reports/report-providers";
 import type { ScopedDateRange } from "@/types/database";
-import type { ReportSection } from "@/lib/reports/report-engine-types";
+import type {
+  BusinessExecutiveSummaryData,
+  ReportSection,
+} from "@/lib/reports/report-engine-types";
 
 export type RegisteredReportTemplate = {
   templateId: ReportTemplateId;
@@ -21,32 +23,46 @@ export type RegisteredReportTemplate = {
   isEmpty: (sections: ReportSection[]) => boolean;
 };
 
-const BUSINESS_REPORT_V1: RegisteredReportTemplate = {
+const BUSINESS_REPORT_V2: RegisteredReportTemplate = {
   templateId: "business-report",
-  version: 1,
+  version: 2,
   createdAt: "2026-07-21",
   status: "active",
   reportName: "Business Report",
   async buildSections(scope) {
-    const kpis = await provideBusinessReportKpis(scope);
-    return [kpis];
+    return provideBusinessReportSections(scope);
   },
   isEmpty(sections) {
-    const kpis = sections.find((s) => s.id === "business-kpis");
-    if (!kpis) return true;
-    return isBusinessReportEmpty(kpis.data as Parameters<typeof isBusinessReportEmpty>[0]);
+    const executive = sections.find((s) => s.id === "executive-summary");
+    if (!executive) return true;
+    return isBusinessReportEmpty(
+      executive.data as BusinessExecutiveSummaryData
+    );
   },
 };
 
-const REGISTRY: RegisteredReportTemplate[] = [BUSINESS_REPORT_V1];
+/** Sprint 7.1 foundation template — retained for version pinning. */
+const BUSINESS_REPORT_V1: RegisteredReportTemplate = {
+  templateId: "business-report",
+  version: 1,
+  createdAt: "2026-07-21",
+  status: "deprecated",
+  reportName: "Business Report",
+  async buildSections(scope) {
+    return provideBusinessReportSections(scope);
+  },
+  isEmpty(sections) {
+    return BUSINESS_REPORT_V2.isEmpty(sections);
+  },
+};
+
+const REGISTRY: RegisteredReportTemplate[] = [BUSINESS_REPORT_V2, BUSINESS_REPORT_V1];
 
 export function getReportTemplate(
   templateId: ReportTemplateId,
   templateVersion?: ReportTemplateVersion
 ): RegisteredReportTemplate {
-  const matches = REGISTRY.filter(
-    (entry) => entry.templateId === templateId && entry.status !== "deprecated"
-  );
+  const matches = REGISTRY.filter((entry) => entry.templateId === templateId);
 
   if (matches.length === 0) {
     throw new Error(`Unknown report template: ${templateId}`);
@@ -77,17 +93,7 @@ export function listReportTemplates(): RegisteredReportTemplate[] {
   return [...REGISTRY];
 }
 
-export function parsePeriodPreset(value: string | null | undefined): ReportPeriodPreset | undefined {
-  if (!value) return undefined;
-  const allowed: ReportPeriodPreset[] = [
-    "weekly",
-    "monthly",
-    "quarterly",
-    "last_6_months",
-    "yearly",
-    "custom",
-  ];
-  return allowed.includes(value as ReportPeriodPreset)
-    ? (value as ReportPeriodPreset)
-    : undefined;
-}
+export {
+  inferPeriodPreset,
+  parsePeriodPreset,
+} from "@/lib/reports/report-period";

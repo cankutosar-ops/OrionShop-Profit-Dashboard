@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
 import { FILTER_PARAMS } from "@/lib/filter-params";
+import { inferPeriodPreset } from "@/lib/reports/report-period";
 import { cn } from "@/lib/utils";
 
 type ExportBusinessReportButtonProps = {
@@ -11,8 +12,8 @@ type ExportBusinessReportButtonProps = {
 };
 
 /**
- * Temporary Sprint 7.1 action — downloads Business Report for the current scope.
- * No report configuration screen.
+ * Downloads Business Report for the current dashboard scope / period.
+ * Period presets are inferred from from/to for Cover metadata only.
  */
 export function ExportBusinessReportButton({
   className,
@@ -30,6 +31,11 @@ export function ExportBusinessReportButton({
       for (const key of Object.values(FILTER_PARAMS)) {
         const value = searchParams.get(key);
         if (value) query.set(key, value);
+      }
+      const from = searchParams.get(FILTER_PARAMS.from);
+      const to = searchParams.get(FILTER_PARAMS.to);
+      if (from && to) {
+        query.set("periodPreset", inferPeriodPreset(from, to));
       }
 
       const response = await fetch(`/api/reports/generate?${query.toString()}`);

@@ -18,7 +18,7 @@ type ReportRoadmapSection = {
 const REPORT_ROADMAP: ReportRoadmapSection[] = [
   {
     title: "Business Reports",
-    items: [{ title: "Business Report (Sprint 7.1 foundation)" }],
+    items: [{ title: "Business Report" }],
   },
   {
     title: "Financial Reports",
@@ -58,10 +58,11 @@ export default async function ReportsPage({ searchParams }: PageProps) {
 
       <div className="space-y-6">
         <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-          <h2 className="text-lg font-semibold">Sprint 7.1 — Report Engine</h2>
+          <h2 className="text-lg font-semibold">Business Report</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Temporary export action to validate ReportPayload → Template → Excel
-            using the current dashboard period and trusted overview KPIs.
+            Management workbook for the selected period — Cover, Executive,
+            Financial, Product, and Inventory summaries from trusted dashboard
+            services.
           </p>
           <Suspense
             fallback={
@@ -98,9 +99,9 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                     <span className="text-xs font-medium uppercase tracking-wide text-success">
                       Available
                     </span>
-                  ) : item.title.startsWith("Business Report") ? (
+                  ) : item.title === "Business Report" ? (
                     <span className="text-xs font-medium uppercase tracking-wide text-success">
-                      Engine Ready
+                      Available
                     </span>
                   ) : (
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

@@ -86,10 +86,85 @@ export type ReportExportSuccess = {
 
 export type ReportExportResult = ReportExportSuccess | ReportNoDataResult;
 
-/** Minimal Business Report KPI section (Sprint 7.1). */
+/** @deprecated Sprint 7.1 thin KPI shape — kept for emptiness helper compatibility. */
 export type BusinessReportKpiData = {
   revenue: number;
   profit: number;
   orders: number;
   purchases: number;
+};
+
+export type BusinessExecutiveSummaryData = {
+  revenue: number;
+  netProfit: number;
+  orders: number;
+  purchases: number;
+  conversionRate: number;
+  returnRate: number;
+  marketplaceCosts: number;
+  unitsSold: number;
+  unitsReturned: number;
+};
+
+export type BusinessFinancialSummaryData = {
+  revenue: number;
+  productCost: number;
+  marketplaceFees: number;
+  commission: number;
+  logistics: number;
+  returnLogistics: number;
+  storage: number;
+  advertising: number;
+  penalties: number;
+  otherExpenses: number;
+  netProfit: number;
+  wbSettlement: {
+    available: boolean;
+    netForPay: number;
+    logistics: number;
+    storage: number;
+    penalties: number;
+    deductions: number;
+    acceptance: number;
+    settlement: number;
+    dataSource: string;
+  };
+};
+
+export type BusinessProductRankRow = {
+  rank: number;
+  sku: string;
+  productName: string;
+  value: number;
+};
+
+export type BusinessProductSummaryData = {
+  topRevenue: BusinessProductRankRow[];
+  topProfit: BusinessProductRankRow[];
+  bestConversion: BusinessProductRankRow[];
+  mostReturned: BusinessProductRankRow[];
+  mostSold: BusinessProductRankRow[];
+};
+
+export type BusinessInventoryStockRow = {
+  sku: string;
+  productName: string;
+  currentStock: number;
+  daysLeft: number | null;
+  status: string;
+};
+
+export type BusinessWarehouseRow = {
+  warehouse: string;
+  orders: number;
+  units: number;
+  revenue: number;
+  orderSharePercent: number;
+  revenueSharePercent: number;
+};
+
+export type BusinessInventorySummaryData = {
+  stockRows: BusinessInventoryStockRow[];
+  warehouseDistribution: BusinessWarehouseRow[];
+  notes: string[];
 };

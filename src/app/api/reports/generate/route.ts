@@ -1,5 +1,5 @@
+import { parsePeriodPreset } from "@/lib/reports/report-period";
 import { exportReport } from "@/lib/reports/report-engine";
-import { parsePeriodPreset } from "@/lib/reports/report-template-registry";
 import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
 
 export const dynamic = "force-dynamic";
