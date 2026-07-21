@@ -7,20 +7,24 @@ import { FILTER_PARAMS } from "@/lib/filter-params";
 import { inferPeriodPreset } from "@/lib/reports/report-period";
 import { cn } from "@/lib/utils";
 
-type ExportBusinessReportButtonProps = {
+type ExportReportButtonProps = {
+  templateId: "business-report" | "product-report";
   className?: string;
   label?: string;
   variant?: "primary" | "secondary";
+  ariaLabel?: string;
 };
 
 /**
- * Downloads Business Report for the current dashboard scope / period.
+ * Downloads a registered report template for the current dashboard scope.
  */
-export function ExportBusinessReportButton({
+export function ExportReportButton({
+  templateId,
   className,
   label = "Export Excel",
   variant = "primary",
-}: ExportBusinessReportButtonProps) {
+  ariaLabel,
+}: ExportReportButtonProps) {
   const searchParams = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +34,7 @@ export function ExportBusinessReportButton({
     setError(null);
     try {
       const query = new URLSearchParams();
-      query.set("templateId", "business-report");
+      query.set("templateId", templateId);
       for (const key of Object.values(FILTER_PARAMS)) {
         const value = searchParams.get(key);
         if (value) query.set(key, value);
@@ -58,7 +62,7 @@ export function ExportBusinessReportButton({
       const blob = await response.blob();
       const disposition = response.headers.get("Content-Disposition") ?? "";
       const match = /filename="([^"]+)"/.exec(disposition);
-      const filename = match?.[1] ?? "Business_Report.xlsx";
+      const filename = match?.[1] ?? `${templateId}.xlsx`;
 
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -88,7 +92,7 @@ export function ExportBusinessReportButton({
             : "border border-border bg-background hover:bg-card-hover",
           busy && "cursor-not-allowed opacity-50"
         )}
-        aria-label="Export Business Report Excel"
+        aria-label={ariaLabel ?? `Export ${templateId} Excel`}
       >
         <Download className="h-4 w-4" />
         {busy ? "Generating…" : label}
@@ -99,5 +103,30 @@ export function ExportBusinessReportButton({
         </p>
       ) : null}
     </div>
+  );
+}
+
+/** Back-compat wrapper for Business Report export. */
+export function ExportBusinessReportButton(
+  props: Omit<ExportReportButtonProps, "templateId">
+) {
+  return (
+    <ExportReportButton
+      {...props}
+      templateId="business-report"
+      ariaLabel="Export Business Report Excel"
+    />
+  );
+}
+
+export function ExportProductReportButton(
+  props: Omit<ExportReportButtonProps, "templateId">
+) {
+  return (
+    <ExportReportButton
+      {...props}
+      templateId="product-report"
+      ariaLabel="Export Product Report Excel"
+    />
   );
 }

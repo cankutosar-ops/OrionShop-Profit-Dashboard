@@ -7,11 +7,15 @@ import {
   isBusinessReportEmpty,
   provideBusinessReportSections,
 } from "@/lib/reports/report-providers";
-import type { ScopedDateRange } from "@/types/database";
+import {
+  isProductReportEmpty,
+  provideProductReportSections,
+} from "@/lib/reports/product-report-providers";
 import type {
   BusinessExecutiveSummaryData,
   ReportSection,
 } from "@/lib/reports/report-engine-types";
+import type { ScopedDateRange } from "@/types/database";
 
 export type RegisteredReportTemplate = {
   templateId: ReportTemplateId;
@@ -56,7 +60,25 @@ const BUSINESS_REPORT_V1: RegisteredReportTemplate = {
   },
 };
 
-const REGISTRY: RegisteredReportTemplate[] = [BUSINESS_REPORT_V2, BUSINESS_REPORT_V1];
+const PRODUCT_REPORT_V1: RegisteredReportTemplate = {
+  templateId: "product-report",
+  version: 1,
+  createdAt: "2026-07-21",
+  status: "active",
+  reportName: "Product Report",
+  async buildSections(scope) {
+    return provideProductReportSections(scope);
+  },
+  isEmpty(sections) {
+    return isProductReportEmpty(sections);
+  },
+};
+
+const REGISTRY: RegisteredReportTemplate[] = [
+  BUSINESS_REPORT_V2,
+  BUSINESS_REPORT_V1,
+  PRODUCT_REPORT_V1,
+];
 
 export function getReportTemplate(
   templateId: ReportTemplateId,

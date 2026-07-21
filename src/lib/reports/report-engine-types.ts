@@ -189,3 +189,129 @@ export type BusinessInventorySummaryData = {
   warehouseDistribution: BusinessWarehouseRow[];
   notes: string[];
 };
+
+/** ── Product Report (Sprint 7.3) ───────────────────────────────────── */
+
+export type ProductReportRankRow = {
+  rank: number;
+  sku: string;
+  productName: string;
+  brandName: string;
+  categoryName: string;
+  value: number;
+};
+
+export type ProductReportPerformanceRow = {
+  productId: string;
+  sku: string;
+  productName: string;
+  brandName: string;
+  categoryName: string;
+  revenue: number;
+  profit: number;
+  marginPercent: number;
+  orders: number;
+  purchases: number;
+  conversionPercent: number;
+  unitsSold: number;
+  inventory: number;
+  marketplaceFees: number;
+  advertising: number;
+  status: string;
+};
+
+export type ProductReportCostRow = {
+  sku: string;
+  productName: string;
+  commission: number;
+  logistics: number;
+  returnLogistics: number;
+  storage: number;
+  advertising: number;
+  otherMarketplaceCosts: number;
+  totalMarketplaceCost: number;
+};
+
+export type ProductReportPortfolioGroup = {
+  name: string;
+  productCount: number;
+  revenue: number;
+  profit: number;
+  revenueSharePercent: number;
+  profitSharePercent: number;
+};
+
+export type ProductReportExecutiveData = {
+  totalProducts: number;
+  activeProducts: number;
+  productsWithSales: number;
+  topRevenueProduct: ProductReportRankRow | null;
+  topProfitProduct: ProductReportRankRow | null;
+  highestMarginProduct: ProductReportRankRow | null;
+  highestConversionProduct: ProductReportRankRow | null;
+  highestReturnProduct: ProductReportRankRow | null;
+  lowestPerformingProduct: ProductReportRankRow | null;
+  averageMarginPercent: number | null;
+  averageSellingPrice: number | null;
+  /** Sum of current stock units from inventory report (not a monetary valuation). */
+  inventoryUnits: number | null;
+  /**
+   * Monetary inventory value is not exposed by current dashboard services —
+   * always null; shown as "—" in the workbook.
+   */
+  inventoryValue: number | null;
+  insights: string[];
+};
+
+export type ProductReportPerformanceData = {
+  rows: ProductReportPerformanceRow[];
+};
+
+export type ProductReportProfitabilityData = {
+  topProfit: ProductReportRankRow[];
+  bottomProfit: ProductReportRankRow[];
+  highestMargin: ProductReportRankRow[];
+  lowestMargin: ProductReportRankRow[];
+  negativeProfit: ProductReportRankRow[];
+};
+
+export type ProductReportMarketplaceCostData = {
+  rows: ProductReportCostRow[];
+  totals: {
+    commission: number;
+    logistics: number;
+    returnLogistics: number;
+    storage: number;
+    advertising: number;
+    otherMarketplaceCosts: number;
+    totalMarketplaceCost: number;
+  };
+};
+
+export type ProductReportInventoryData = {
+  health: {
+    healthy: number;
+    lowStock: number;
+    outOfStock: number;
+    /** Intelligence "At Risk" count when available — closest existing critical signal. */
+    atRisk: number | null;
+  };
+  stockRows: BusinessInventoryStockRow[];
+  warehouseDistribution: BusinessWarehouseRow[];
+  notes: string[];
+};
+
+export type ProductReportPortfolioData = {
+  byBrand: ProductReportPortfolioGroup[];
+  byCategory: ProductReportPortfolioGroup[];
+  byStatus: ProductReportPortfolioGroup[];
+  largestBrand: ProductReportPortfolioGroup | null;
+  largestCategory: ProductReportPortfolioGroup | null;
+  highestRevenueCategory: ProductReportPortfolioGroup | null;
+  highestProfitCategory: ProductReportPortfolioGroup | null;
+};
+
+export type ProductReportAppendixData = {
+  rows: ProductReportPerformanceRow[];
+  costRows: ProductReportCostRow[];
+};

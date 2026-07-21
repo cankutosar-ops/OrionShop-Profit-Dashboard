@@ -3,11 +3,13 @@ import {
   BusinessReportCard,
   ComingSoonReportCard,
 } from "@/components/reports/business-report-card";
+import { ProductReportCard } from "@/components/reports/product-report-card";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import {
   type PageScopeSearchParamsInput,
   scopeParamsToSearchParams,
 } from "@/lib/filter-params";
+import { calculateModelBMarginPercent } from "@/lib/profit-engine-model-b";
 import {
   inferPeriodPreset,
   periodPresetLabel,
@@ -15,7 +17,10 @@ import {
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { formatLastSyncTimestamp } from "@/lib/marketplace-sync-date";
 import { getBrandsForMarketplaceAccount } from "@/services/brand-service";
-import { getOverviewMetrics } from "@/services/dashboard-service";
+import {
+  getOverviewMetrics,
+  getProductProfitability,
+} from "@/services/dashboard-service";
 import {
   getCompanyById,
   getMarketplaceAccountSyncState,
@@ -34,8 +39,9 @@ export default async function ReportsPage({ searchParams }: PageProps) {
     scopeQuery ? `${href}?${scopeQuery}` : href;
 
   const scope = await resolveScopedDateRange(params);
-  const [overview, company, syncState, brands] = await Promise.all([
+  const [overview, products, company, syncState, brands] = await Promise.all([
     getOverviewMetrics(scope).catch(() => null),
+    getProductProfitability(scope).catch(() => []),
     getCompanyById(scope.companyId),
     getMarketplaceAccountSyncState(scope.marketplaceAccountId),
     scope.brandId
@@ -59,6 +65,21 @@ export default async function ReportsPage({ searchParams }: PageProps) {
     (overview.revenue !== 0 ||
       overview.netProfit !== 0 ||
       overview.ordersPurchases.ordersCount !== 0);
+
+  const productsWithSales = products.filter(
+    (p) => p.purchases > 0 || p.revenue > 0 || p.unitsSold > 0
+  ).length;
+  const margins = products.filter((p) => p.revenue > 0).map((p) =>
+    calculateModelBMarginPercent(p.revenue, p.finalNetProfit)
+  );
+  const averageMargin =
+    margins.length > 0
+      ? margins.reduce((sum, m) => sum + m, 0) / margins.length
+      : null;
+  const productRevenue = products.reduce((sum, p) => sum + p.revenue, 0);
+  const hasProductKpis =
+    products.length > 0 &&
+    (productRevenue !== 0 || productsWithSales !== 0);
 
   return (
     <>
@@ -93,15 +114,36 @@ export default async function ReportsPage({ searchParams }: PageProps) {
           />
         </Suspense>
 
+        <Suspense
+          fallback={
+            <div className="h-64 animate-pulse rounded-2xl border border-border bg-card" />
+          }
+        >
+          <ProductReportCard
+            previewHref={hrefWithScope("/reports/product")}
+            periodLabel={periodLabel}
+            lastSyncLabel={lastSyncLabel}
+            lastGeneratedLabel="On export"
+            brandLabel={brandLabel}
+            kpis={
+              hasProductKpis
+                ? {
+                    products: products.length,
+                    productsWithSales,
+                    revenue: productRevenue,
+                    averageMargin,
+                    currency,
+                  }
+                : null
+            }
+          />
+        </Suspense>
+
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Upcoming reports
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <ComingSoonReportCard
-              name="Product Report"
-              description="Product-level decision metrics from Product Analytics."
-            />
             <ComingSoonReportCard
               name="Financial Report"
               description="Settlement, Model B, and finance category packs."
