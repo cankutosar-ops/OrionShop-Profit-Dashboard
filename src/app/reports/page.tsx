@@ -69,14 +69,12 @@ export default async function ReportsPage({ searchParams }: PageProps) {
   const productsWithSales = products.filter(
     (p) => p.purchases > 0 || p.revenue > 0 || p.unitsSold > 0
   ).length;
-  const margins = products.filter((p) => p.revenue > 0).map((p) =>
-    calculateModelBMarginPercent(p.revenue, p.finalNetProfit)
-  );
-  const averageMargin =
-    margins.length > 0
-      ? margins.reduce((sum, m) => sum + m, 0) / margins.length
-      : null;
   const productRevenue = products.reduce((sum, p) => sum + p.revenue, 0);
+  const productProfit = products.reduce((sum, p) => sum + p.finalNetProfit, 0);
+  const averageMargin =
+    productRevenue > 0
+      ? calculateModelBMarginPercent(productRevenue, productProfit)
+      : null;
   const hasProductKpis =
     products.length > 0 &&
     (productRevenue !== 0 || productsWithSales !== 0);

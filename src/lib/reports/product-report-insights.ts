@@ -98,7 +98,7 @@ export function buildProductExecutiveInsights(input: {
 
   if (executive.averageMarginPercent != null) {
     insights.push(
-      `Average product margin (Final Net Profit ÷ Revenue) was ${formatPercent(executive.averageMarginPercent)}.`
+      `Portfolio margin (Final Net Profit ÷ Revenue) was ${formatPercent(executive.averageMarginPercent)}.`
     );
   }
 

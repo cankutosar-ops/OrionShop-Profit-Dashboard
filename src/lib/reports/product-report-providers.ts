@@ -308,10 +308,10 @@ export async function provideProductReportSections(
 
   const unitsSoldTotal = products.reduce((sum, p) => sum + p.unitsSold, 0);
   const revenueTotal = products.reduce((sum, p) => sum + p.revenue, 0);
-  const margins = products.filter((p) => p.revenue > 0).map(marginOf);
+  const profitTotal = products.reduce((sum, p) => sum + p.finalNetProfit, 0);
   const averageMarginPercent =
-    margins.length > 0
-      ? margins.reduce((sum, m) => sum + m, 0) / margins.length
+    revenueTotal > 0
+      ? calculateModelBMarginPercent(revenueTotal, profitTotal)
       : analytics?.totals.marginPercent ?? null;
 
   const inventoryUnits =
