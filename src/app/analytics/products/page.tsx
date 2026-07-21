@@ -1,6 +1,7 @@
 import { ProductAnalyticsTotalsSection } from "@/components/analytics/product-analytics-totals";
 import { ProductAnalyticsV8Table } from "@/components/analytics/product-analytics-v8-table";
 import { ProductAnalyticsV3Table } from "@/components/analytics/product-analytics-v3-table";
+import { ProductContextBannerSection } from "@/components/layout/product-context-banner-section";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
@@ -24,6 +25,8 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
         title="Product Analytics"
         description="Operational funnel and unit economics by SKU — decision support, not financial reporting"
       />
+
+      <ProductContextBannerSection />
 
       {!report ? (
         <div className="rounded-2xl border border-border bg-card px-6 py-12 text-center text-muted-foreground">

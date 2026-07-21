@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
 import type { CostManagementRow } from "@/types/database";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 
@@ -173,13 +175,31 @@ function PurchasePriceCell({
 }
 
 export function CostManagementTable({ rows, scopeQuery, onRowUpdated }: CostManagementTableProps) {
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const skuParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku)?.trim() ?? "";
+  const productParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.product)?.trim() ?? "";
+  const [search, setSearch] = useState(() => skuParam);
+
+  useEffect(() => {
+    setSearch(skuParam);
+  }, [skuParam]);
 
   const displayRows = useMemo(() => {
-    const sorted = sortCostManagementRows(rows);
-    return filterCostManagementRows(sorted, search);
-  }, [rows, search]);
+    let filtered = sortCostManagementRows(rows);
+    if (productParam) {
+      filtered = filtered.filter((row) => row.productId === productParam);
+    } else if (skuParam) {
+      const skuLower = skuParam.toLowerCase();
+      const exact = filtered.filter(
+        (row) => row.supplierArticle.toLowerCase() === skuLower
+      );
+      filtered = exact.length > 0 ? exact : filterCostManagementRows(filtered, skuParam);
+    } else {
+      filtered = filterCostManagementRows(filtered, search);
+    }
+    return filtered;
+  }, [rows, search, skuParam, productParam]);
 
   function updateSingleRow(updated: CostManagementRow) {
     onRowUpdated(rows.map((row) => (row.productId === updated.productId ? updated : row)));

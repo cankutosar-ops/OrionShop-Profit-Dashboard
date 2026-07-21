@@ -1,4 +1,5 @@
 import { CostManagementManager } from "@/components/costs/cost-management-manager";
+import { ProductContextBannerSection } from "@/components/layout/product-context-banner-section";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
@@ -51,6 +52,7 @@ export default async function CostManagementPage({ searchParams }: PageProps) {
         description="Edit purchase prices inline — updates cost history only"
         showFilters={true}
       />
+      <ProductContextBannerSection />
       <CostManagementManager initialRows={rows} />
     </>
   );

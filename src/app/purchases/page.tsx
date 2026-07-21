@@ -1,4 +1,5 @@
 import { PurchasesManager } from "@/components/purchases/purchases-manager";
+import { ProductContextBannerSection } from "@/components/layout/product-context-banner-section";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
@@ -44,6 +45,7 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
         description="Purchase history and cost imports — not inventory"
         showFilters={true}
       />
+      <ProductContextBannerSection />
       <PurchasesManager purchases={purchases} productCount={products.length} />
     </>
   );

@@ -1,4 +1,5 @@
 import { SmartPricingPanel } from "@/components/analytics/smart-pricing-panel";
+import { ProductContextBannerSection } from "@/components/layout/product-context-banner-section";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   DEFAULT_MARKETING_PERCENT,
@@ -57,6 +58,8 @@ export default async function SmartPricingPage({ searchParams }: PageProps) {
         title="Smart Pricing"
         description="Forward-looking target price — purchase cost, purchase logistics, and configured commission"
       />
+
+      <ProductContextBannerSection />
 
       {!inputs ? (
         <div className="rounded-2xl border border-border bg-card px-6 py-12 text-center text-muted-foreground">

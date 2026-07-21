@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/layout/sidebar-context";
-import { copyScopeQueryParams } from "@/lib/filter-params";
 import { markNavigationStart } from "@/lib/perf/perf-client";
+import { buildNavHrefWithContext } from "@/lib/product-context";
 import { cn } from "@/lib/utils";
 
 function navKindForHref(href: string): string | null {
@@ -60,11 +60,8 @@ function isNavItemActive(pathname: string, href: string): boolean {
   return pathname.startsWith(href);
 }
 
-function hrefWithScopeParams(base: string, searchParams: Pick<URLSearchParams, "get">): string {
-  const params = new URLSearchParams();
-  copyScopeQueryParams(params, searchParams);
-  const query = params.toString();
-  return query ? `${base}?${query}` : base;
+function hrefWithNavParams(base: string, searchParams: Pick<URLSearchParams, "get">): string {
+  return buildNavHrefWithContext(base, searchParams);
 }
 
 function SidebarNavLinks({
@@ -133,7 +130,7 @@ function SidebarNavWithScope({
   return (
     <SidebarNavLinks
       pathname={pathname}
-      hrefForItem={(base) => hrefWithScopeParams(base, searchParams)}
+      hrefForItem={(base) => hrefWithNavParams(base, searchParams)}
       collapsed={collapsed}
     />
   );
@@ -170,7 +167,7 @@ function SidebarFooterWithScope({ collapsed }: { collapsed: boolean }) {
   const searchParams = useSearchParams();
   return (
     <SidebarFooterLink
-      href={hrefWithScopeParams("/settings/companies", searchParams)}
+      href={hrefWithNavParams("/settings/companies", searchParams)}
       collapsed={collapsed}
     />
   );

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Download, FileSpreadsheet, Search } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
-import { useScopeQueryString } from "@/hooks/use-scope-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useProductContextQueryString } from "@/hooks/use-product-context-query";
+import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
 import type { PurchaseCurrency, PurchaseListItem } from "@/types/database";
 import { PURCHASE_CURRENCIES } from "@/types/database";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
@@ -32,27 +33,44 @@ const defaultHeader = (): ImportHeaderState => ({
 
 export function PurchasesManager({ purchases, productCount }: PurchasesManagerProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(
+    () => searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku) ?? ""
+  );
+  const skuParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku)?.trim() ?? "";
   const [header, setHeader] = useState<ImportHeaderState>(defaultHeader);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const scopeQuery = useScopeQueryString();
+  const scopeQuery = useProductContextQueryString();
+
+  useEffect(() => {
+    setSearch(skuParam);
+  }, [skuParam]);
 
   const filteredPurchases = useMemo(() => {
+    if (skuParam) {
+      const skuLower = skuParam.toLowerCase();
+      const exact = purchases.filter((purchase) =>
+        purchase.supplierArticles.some((article) => article.toLowerCase() === skuLower)
+      );
+      if (exact.length > 0) return exact;
+    }
+
     const query = search.trim().toLowerCase();
     if (!query) return purchases;
     return purchases.filter(
       (purchase) =>
         purchase.supplier.toLowerCase().includes(query) ||
         purchase.notes?.toLowerCase().includes(query) ||
-        purchase.currency.toLowerCase().includes(query)
+        purchase.currency.toLowerCase().includes(query) ||
+        purchase.supplierArticles.some((article) => article.toLowerCase().includes(query))
     );
-  }, [purchases, search]);
+  }, [purchases, search, skuParam]);
 
   function purchaseHref(purchaseId: string) {
     const base = `/purchases/${purchaseId}`;
@@ -304,7 +322,7 @@ export function PurchasesManager({ purchases, productCount }: PurchasesManagerPr
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by supplier or notes…"
+            placeholder="Search by supplier, notes, or SKU/article…"
             className="w-full rounded-xl border border-border bg-card py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
           />
         </div>
