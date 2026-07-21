@@ -104,6 +104,10 @@ export type BusinessExecutiveSummaryData = {
   marketplaceCosts: number;
   unitsSold: number;
   unitsReturned: number;
+  /** Purchases amount ÷ purchases count from existing OrdersPurchases KPIs (display only). */
+  averageSellingPrice: number | null;
+  /** Rule-based factual observations — presentation only. */
+  insights: string[];
 };
 
 export type BusinessFinancialSummaryData = {
@@ -138,12 +142,21 @@ export type BusinessProductRankRow = {
   value: number;
 };
 
+export type BusinessProductHighlight = {
+  label: string;
+  sku: string;
+  productName: string;
+  valueLabel: string;
+};
+
 export type BusinessProductSummaryData = {
+  highlights: BusinessProductHighlight[];
   topRevenue: BusinessProductRankRow[];
   topProfit: BusinessProductRankRow[];
   bestConversion: BusinessProductRankRow[];
   mostReturned: BusinessProductRankRow[];
   mostSold: BusinessProductRankRow[];
+  bestSellingBrand: { name: string; revenue: number } | null;
 };
 
 export type BusinessInventoryStockRow = {
@@ -163,7 +176,15 @@ export type BusinessWarehouseRow = {
   revenueSharePercent: number;
 };
 
+export type BusinessInventoryHealth = {
+  healthy: number;
+  lowStock: number;
+  outOfStock: number;
+  warehouseCoverage: number;
+};
+
 export type BusinessInventorySummaryData = {
+  health: BusinessInventoryHealth;
   stockRows: BusinessInventoryStockRow[];
   warehouseDistribution: BusinessWarehouseRow[];
   notes: string[];

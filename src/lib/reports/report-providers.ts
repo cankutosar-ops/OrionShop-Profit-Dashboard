@@ -1,11 +1,21 @@
-import { getOverviewMetrics, getProductProfitability } from "@/services/dashboard-service";
+import {
+  getDashboardListData,
+  getOverviewMetrics,
+  getProductProfitability,
+} from "@/services/dashboard-service";
 import { getInventoryReport } from "@/services/inventory-report-service";
 import { getWarehouseSalesAnalytics } from "@/services/warehouse-sales-analytics-service";
+import {
+  buildExecutiveInsights,
+  buildPriorPeriodScope,
+} from "@/lib/reports/business-report-insights";
+import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 import type { ProductProfitability, ScopedDateRange } from "@/types/database";
 import type {
   BusinessExecutiveSummaryData,
   BusinessFinancialSummaryData,
   BusinessInventorySummaryData,
+  BusinessProductHighlight,
   BusinessProductRankRow,
   BusinessProductSummaryData,
   BusinessReportKpiData,
@@ -38,19 +48,25 @@ function topBy(
 
 type OverviewMetrics = Awaited<ReturnType<typeof getOverviewMetrics>>;
 
-function mapExecutiveSummary(
-  overview: OverviewMetrics
-): BusinessExecutiveSummaryData {
+function mapExecutiveBase(overview: OverviewMetrics): Omit<
+  BusinessExecutiveSummaryData,
+  "insights"
+> {
+  const purchases = overview.ordersPurchases.purchasesCount;
+  const purchasesAmount = overview.ordersPurchases.purchasesAmount;
+
   return {
     revenue: overview.revenue,
     netProfit: overview.netProfit,
     orders: overview.ordersPurchases.ordersCount,
-    purchases: overview.ordersPurchases.purchasesCount,
+    purchases,
     conversionRate: overview.ordersPurchases.conversionRate,
     returnRate: overview.ordersPurchases.returnRate,
     marketplaceCosts: overview.marketplaceFeesPresentation.marketplaceFees,
     unitsSold: overview.unitsSold,
     unitsReturned: overview.unitsReturned,
+    averageSellingPrice:
+      purchases > 0 ? purchasesAmount / purchases : null,
   };
 }
 
@@ -86,47 +102,75 @@ function mapFinancialSummary(
   };
 }
 
-export async function provideBusinessExecutiveSummary(
-  scope: ScopedDateRange
-): Promise<ReportSection<BusinessExecutiveSummaryData>> {
-  const overview = await getOverviewMetrics(scope);
-  return {
-    id: "executive-summary",
-    titleKey: "report.business.executiveSummary",
-    data: mapExecutiveSummary(overview),
+function buildProductHighlights(
+  data: Omit<BusinessProductSummaryData, "highlights">,
+  currency: string
+): BusinessProductHighlight[] {
+  const highlights: BusinessProductHighlight[] = [];
+  const push = (
+    label: string,
+    row: BusinessProductRankRow | undefined,
+    format: (v: number) => string
+  ) => {
+    if (!row) return;
+    highlights.push({
+      label,
+      sku: row.sku,
+      productName: row.productName,
+      valueLabel: format(row.value),
+    });
   };
-}
 
-export async function provideBusinessFinancialSummary(
-  scope: ScopedDateRange
-): Promise<ReportSection<BusinessFinancialSummaryData>> {
-  const overview = await getOverviewMetrics(scope);
-  return {
-    id: "financial-summary",
-    titleKey: "report.business.financialSummary",
-    data: mapFinancialSummary(overview),
-  };
+  push("Top Revenue Product", data.topRevenue[0], (v) => formatCurrency(v, currency));
+  push("Top Profit Product", data.topProfit[0], (v) => formatCurrency(v, currency));
+  push("Highest Conversion", data.bestConversion[0], (v) => formatPercent(v));
+  push("Most Returned", data.mostReturned[0], (v) => formatNumber(v));
+  push("Most Sold", data.mostSold[0], (v) => formatNumber(v));
+
+  if (data.bestSellingBrand) {
+    highlights.push({
+      label: "Best Selling Brand",
+      sku: data.bestSellingBrand.name,
+      productName: "Brand revenue leader",
+      valueLabel: formatCurrency(data.bestSellingBrand.revenue, currency),
+    });
+  }
+
+  return highlights;
 }
 
 export async function provideBusinessProductSummary(
-  scope: ScopedDateRange
+  scope: ScopedDateRange,
+  currency = "RUB"
 ): Promise<ReportSection<BusinessProductSummaryData>> {
-  // Same profitability owner as Product Analytics — no report-owned formulas.
-  const products = await getProductProfitability(scope);
+  const [products, listData] = await Promise.all([
+    getProductProfitability(scope),
+    getDashboardListData(scope),
+  ]);
+
+  const topBrand = [...listData.brands].sort((a, b) => b.revenue - a.revenue)[0];
+
+  const base: Omit<BusinessProductSummaryData, "highlights"> = {
+    topRevenue: topBy(products, (p) => p.revenue, TOP_N),
+    topProfit: topBy(products, (p) => p.finalNetProfit, TOP_N),
+    bestConversion: topBy(
+      products.filter((p) => p.orders > 0),
+      (p) => p.conversionPercent,
+      TOP_N
+    ),
+    mostReturned: topBy(products, (p) => p.unitsReturned, TOP_N),
+    mostSold: topBy(products, (p) => p.purchases, TOP_N),
+    bestSellingBrand: topBrand
+      ? { name: topBrand.name, revenue: topBrand.revenue }
+      : null,
+  };
 
   return {
     id: "product-summary",
     titleKey: "report.business.productSummary",
     data: {
-      topRevenue: topBy(products, (p) => p.revenue, TOP_N),
-      topProfit: topBy(products, (p) => p.finalNetProfit, TOP_N),
-      bestConversion: topBy(
-        products.filter((p) => p.orders > 0),
-        (p) => p.conversionPercent,
-        TOP_N
-      ),
-      mostReturned: topBy(products, (p) => p.unitsReturned, TOP_N),
-      mostSold: topBy(products, (p) => p.purchases, TOP_N),
+      ...base,
+      highlights: buildProductHighlights(base, currency),
     },
   };
 }
@@ -147,14 +191,21 @@ export async function provideBusinessInventorySummary(
     "Incoming shipments are not included — no account-level shipment aggregate exists in dashboard services yet."
   );
 
-  const stockRows =
-    inventory?.models.slice(0, STOCK_ROWS).map((model) => ({
-      sku: model.supplierArticle,
-      productName: model.productName,
-      currentStock: model.currentStock,
-      daysLeft: model.daysLeft,
-      status: model.status,
-    })) ?? [];
+  const models = inventory?.models ?? [];
+  const health = {
+    healthy: models.filter((m) => m.status === "Healthy").length,
+    lowStock: models.filter((m) => m.status === "Low Stock").length,
+    outOfStock: models.filter((m) => m.status === "Out of Stock").length,
+    warehouseCoverage: warehouseSales?.rows.length ?? 0,
+  };
+
+  const stockRows = models.slice(0, STOCK_ROWS).map((model) => ({
+    sku: model.supplierArticle,
+    productName: model.productName,
+    currentStock: model.currentStock,
+    daysLeft: model.daysLeft,
+    status: model.status,
+  }));
 
   const warehouseDistribution =
     warehouseSales?.rows.slice(0, 20).map((row) => ({
@@ -174,6 +225,7 @@ export async function provideBusinessInventorySummary(
     id: "inventory-summary",
     titleKey: "report.business.inventorySummary",
     data: {
+      health,
       stockRows,
       warehouseDistribution,
       notes,
@@ -185,16 +237,37 @@ export async function provideBusinessInventorySummary(
 export async function provideBusinessReportSections(
   scope: ScopedDateRange
 ): Promise<ReportSection[]> {
-  const [overview, product, inventory] = await Promise.all([
+  const priorScope = buildPriorPeriodScope(scope);
+
+  const [overview, priorOverview, product, inventory] = await Promise.all([
     getOverviewMetrics(scope),
+    getOverviewMetrics(priorScope).catch(() => null),
     provideBusinessProductSummary(scope),
     provideBusinessInventorySummary(scope),
   ]);
 
+  // Re-run product highlights with company currency once known from overview path —
+  // currency comes from identity later; RUB default matches dashboard formatters.
+  const executiveBase = mapExecutiveBase(overview);
+  const productData = product.data;
+  const insights = buildExecutiveInsights({
+    current: { ...executiveBase, insights: [] },
+    prior: priorOverview
+      ? {
+          revenue: priorOverview.revenue,
+          netProfit: priorOverview.netProfit,
+          conversionRate: priorOverview.ordersPurchases.conversionRate,
+          returnRate: priorOverview.ordersPurchases.returnRate,
+        }
+      : null,
+    product: productData,
+    currency: "RUB",
+  });
+
   const executive: ReportSection<BusinessExecutiveSummaryData> = {
     id: "executive-summary",
     titleKey: "report.business.executiveSummary",
-    data: mapExecutiveSummary(overview),
+    data: { ...executiveBase, insights },
   };
   const financial: ReportSection<BusinessFinancialSummaryData> = {
     id: "financial-summary",
@@ -203,6 +276,28 @@ export async function provideBusinessReportSections(
   };
 
   return [executive, financial, product, inventory];
+}
+
+export async function provideBusinessExecutiveSummary(
+  scope: ScopedDateRange
+): Promise<ReportSection<BusinessExecutiveSummaryData>> {
+  const sections = await provideBusinessReportSections(scope);
+  const executive = sections.find((s) => s.id === "executive-summary");
+  if (!executive) {
+    throw new Error("Executive summary section missing");
+  }
+  return executive as ReportSection<BusinessExecutiveSummaryData>;
+}
+
+export async function provideBusinessFinancialSummary(
+  scope: ScopedDateRange
+): Promise<ReportSection<BusinessFinancialSummaryData>> {
+  const overview = await getOverviewMetrics(scope);
+  return {
+    id: "financial-summary",
+    titleKey: "report.business.financialSummary",
+    data: mapFinancialSummary(overview),
+  };
 }
 
 /** @deprecated Sprint 7.1 helper — prefer executive summary. */

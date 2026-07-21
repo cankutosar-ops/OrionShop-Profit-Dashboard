@@ -17,6 +17,19 @@ export function parsePeriodPreset(
     : undefined;
 }
 
+const PRESET_LABELS: Record<ReportPeriodPreset, string> = {
+  weekly: "Weekly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  last_6_months: "Last 6 Months",
+  yearly: "Yearly",
+  custom: "Custom Date Range",
+};
+
+export function periodPresetLabel(preset?: ReportPeriodPreset): string | undefined {
+  return preset ? PRESET_LABELS[preset] : undefined;
+}
+
 /** Infer preset label from inclusive day span (metadata only — does not change data). */
 export function inferPeriodPreset(from: string, to: string): ReportPeriodPreset {
   const start = new Date(`${from}T00:00:00Z`);

@@ -9,14 +9,17 @@ import { cn } from "@/lib/utils";
 
 type ExportBusinessReportButtonProps = {
   className?: string;
+  label?: string;
+  variant?: "primary" | "secondary";
 };
 
 /**
  * Downloads Business Report for the current dashboard scope / period.
- * Period presets are inferred from from/to for Cover metadata only.
  */
 export function ExportBusinessReportButton({
   className,
+  label = "Export Excel",
+  variant = "primary",
 }: ExportBusinessReportButtonProps) {
   const searchParams = useSearchParams();
   const [busy, setBusy] = useState(false);
@@ -79,15 +82,16 @@ export function ExportBusinessReportButton({
         onClick={handleExport}
         disabled={busy}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium transition-colors",
-          busy
-            ? "cursor-not-allowed opacity-50"
-            : "hover:bg-card-hover hover:text-foreground"
+          "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+          variant === "primary"
+            ? "bg-primary text-primary-foreground hover:opacity-90"
+            : "border border-border bg-background hover:bg-card-hover",
+          busy && "cursor-not-allowed opacity-50"
         )}
         aria-label="Export Business Report Excel"
       >
         <Download className="h-4 w-4" />
-        {busy ? "Generating…" : "Export Business Report"}
+        {busy ? "Generating…" : label}
       </button>
       {error ? (
         <p className="mt-2 text-sm text-destructive" role="alert">

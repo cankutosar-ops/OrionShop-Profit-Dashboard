@@ -39,24 +39,22 @@ function appendSheet(
 function buildCoverSheet(payload: ReportPayload): SheetCell[][] {
   const identity = payload.identity;
   return [
-    ["Business Report"],
+    ["ORION SHOP"],
+    ["Business Performance Report"],
     [],
-    ["Report Name", identity.reportName],
+    [`${identity.marketplace} Marketplace`],
+    [],
+    ["Reporting Period", `${identity.reportingPeriod.from} → ${identity.reportingPeriod.to}`],
+    ["Period", identity.reportingPeriod.presetLabel ?? "Custom Date Range"],
     ["Company", identity.company],
-    ["Marketplace", identity.marketplace],
     ["Account", identity.account],
-    [
-      "Reporting Period",
-      `${identity.reportingPeriod.from} → ${identity.reportingPeriod.to}`,
-    ],
-    ["Period Preset", identity.reportingPeriod.presetLabel ?? "Custom Date Range"],
+    ["Marketplace", identity.marketplace],
     ["Currency", identity.currency],
     ["Generated At", identity.generatedAt],
-    [
-      "Last Successful Synchronization",
-      identity.lastSuccessfulSyncAt ?? "—",
-    ],
+    ["Last Successful Synchronization", identity.lastSuccessfulSyncAt ?? "—"],
     ["Template Version", identity.templateVersion],
+    [],
+    ["Prepared automatically by", "WB Dashboard"],
   ];
 }
 
@@ -68,20 +66,42 @@ function buildExecutiveSheet(
     return [["Executive Summary"], [], ["No executive metrics available."]];
   }
 
-  return [
+  const rows: SheetCell[][] = [
     ["Executive Summary"],
+    ["CEO snapshot for the selected reporting period"],
     [],
+    ["Performance"],
     ["Metric", "Value"],
     ["Revenue", money(data.revenue, currency)],
-    ["Net Profit", money(data.netProfit, currency)],
+    ["Profit", money(data.netProfit, currency)],
     ["Orders", qty(data.orders)],
     ["Purchases", qty(data.purchases)],
     ["Conversion", pct(data.conversionRate)],
-    ["Return Rate", pct(data.returnRate)],
     ["Marketplace Costs", money(data.marketplaceCosts, currency)],
+    ["Return Rate", pct(data.returnRate)],
+    [
+      "Average Selling Price",
+      data.averageSellingPrice == null
+        ? "—"
+        : money(data.averageSellingPrice, currency),
+    ],
+    [],
+    ["Volume"],
     ["Units Sold", qty(data.unitsSold)],
     ["Units Returned", qty(data.unitsReturned)],
+    [],
+    ["Executive Insights"],
   ];
+
+  if (data.insights.length === 0) {
+    rows.push(["No comparative insights available for this period."]);
+  } else {
+    for (const insight of data.insights) {
+      rows.push([insight]);
+    }
+  }
+
+  return rows;
 }
 
 function buildFinancialSheet(
@@ -95,6 +115,7 @@ function buildFinancialSheet(
   const rows: SheetCell[][] = [
     ["Financial Summary"],
     [],
+    ["P&L Structure"],
     ["Metric", "Value"],
     ["Revenue", money(data.revenue, currency)],
     ["Product Cost", money(data.productCost, currency)],
@@ -156,6 +177,21 @@ function buildProductSheet(
     return [["Product Summary"], [], ["No product metrics available."]];
   }
 
+  const rows: SheetCell[][] = [
+    ["Product Summary"],
+    [],
+    ["Business Highlights"],
+    ["Insight", "SKU / Brand", "Detail", "Value"],
+  ];
+
+  if (data.highlights.length === 0) {
+    rows.push(["—", "—", "No highlights", "—"]);
+  } else {
+    for (const h of data.highlights) {
+      rows.push([h.label, h.sku, h.productName, h.valueLabel]);
+    }
+  }
+
   const blocks = [
     rankTable("Top Revenue", data.topRevenue, "Revenue", (v) => money(v, currency)),
     [[]],
@@ -168,7 +204,7 @@ function buildProductSheet(
     rankTable("Most Sold", data.mostSold, "Purchases", qty),
   ];
 
-  return [["Product Summary"], [], ...blocks.flat()];
+  return [...rows, [], ...blocks.flat()];
 }
 
 function buildInventorySheet(
@@ -182,7 +218,14 @@ function buildInventorySheet(
   const rows: SheetCell[][] = [
     ["Inventory Summary"],
     [],
-    ["Stock Overview (from Inventory module)"],
+    ["Inventory Health"],
+    ["Status", "Models"],
+    ["Healthy Inventory", qty(data.health.healthy)],
+    ["Low Stock", qty(data.health.lowStock)],
+    ["Out of Stock", qty(data.health.outOfStock)],
+    ["Warehouse Coverage", qty(data.health.warehouseCoverage)],
+    [],
+    ["Stock Detail"],
     ["SKU", "Product", "Current Stock", "Days of Inventory", "Status"],
   ];
 
@@ -194,7 +237,7 @@ function buildInventorySheet(
         row.sku,
         row.productName,
         qty(row.currentStock),
-        row.daysLeft == null ? "—" : qty(row.daysLeft),
+        row.daysLeft == null ? "—" : qty(Math.round(row.daysLeft)),
         row.status,
       ]);
     }
@@ -202,7 +245,7 @@ function buildInventorySheet(
 
   rows.push(
     [],
-    ["Warehouse Distribution (from Warehouse Sales)"],
+    ["Warehouse Distribution"],
     [
       "Warehouse",
       "Orders",
@@ -239,8 +282,8 @@ function buildInventorySheet(
 }
 
 /**
- * Sprint 7.2 Business Report workbook — multi-sheet management pack.
- * Presentation only; values come from ReportPayload sections.
+ * Business Report workbook — professional management presentation.
+ * Values come from ReportPayload sections only.
  */
 export function buildBusinessReportWorkbook(payload: ReportPayload): ArrayBuffer {
   const currency = payload.identity.currency || "RUB";
@@ -254,17 +297,17 @@ export function buildBusinessReportWorkbook(payload: ReportPayload): ArrayBuffer
     ?.data as BusinessInventorySummaryData | undefined;
 
   const workbook = XLSX.utils.book_new();
-  appendSheet(workbook, "Cover", buildCoverSheet(payload), [36, 48]);
+  appendSheet(workbook, "Cover", buildCoverSheet(payload), [38, 52]);
   appendSheet(workbook, "Executive Summary", buildExecutiveSheet(executive, currency), [
     28,
-    24,
+    56,
   ]);
   appendSheet(workbook, "Financial Summary", buildFinancialSheet(financial, currency), [
     28,
     24,
   ]);
   appendSheet(workbook, "Product Summary", buildProductSheet(product, currency), [
-    8,
+    22,
     18,
     40,
     18,
