@@ -14,14 +14,18 @@ import {
 import { ProductHeroImage } from "@/components/inventory/product-hero-image";
 import { StockHealthBadge } from "@/components/inventory/stock-health-badge";
 import { WarehouseDistributionPanel } from "@/components/inventory/warehouse-distribution-panel";
+import { useProductSkuAnalytics } from "@/hooks/use-product-sku-analytics";
 import { totalsFromDistribution } from "@/lib/inventory-intelligence-excel";
 import type { InventoryIntelligenceSkuRow } from "@/lib/inventory-intelligence-types";
 import { buildProductIntelligenceQuickActions } from "@/lib/product-intelligence-nav";
-import { cn, formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatNumber, formatPercent } from "@/lib/utils";
 
 type ProductIntelligenceDrawerProps = {
   row: InventoryIntelligenceSkuRow | null;
   onClose: () => void;
+  /** Scoped period — same as Intelligence page / Product Analytics. */
+  rangeFrom: string;
+  rangeTo: string;
 };
 
 /**
@@ -33,10 +37,18 @@ type ProductIntelligenceDrawerProps = {
  */
 const QUICK_ACTION_ICONS: LucideIcon[] = [LineChart, Tag, Receipt, Coins];
 
-export function ProductIntelligenceDrawer({ row, onClose }: ProductIntelligenceDrawerProps) {
+export function ProductIntelligenceDrawer({
+  row,
+  onClose,
+  rangeFrom,
+  rangeTo,
+}: ProductIntelligenceDrawerProps) {
   const titleId = useId();
   const searchParams = useSearchParams();
   const [entered, setEntered] = useState(false);
+
+  const productId = row?.productId ?? null;
+  const skuAnalytics = useProductSkuAnalytics(productId, rangeFrom, rangeTo, Boolean(row));
 
   const quickActions = useMemo(() => {
     if (!row) return [];
@@ -69,6 +81,7 @@ export function ProductIntelligenceDrawer({ row, onClose }: ProductIntelligenceD
   if (!row) return null;
 
   const sales = totalsFromDistribution(row);
+  const funnel = skuAnalytics.data?.funnel ?? null;
 
   return (
     <div className="fixed inset-0 z-50" role="presentation">
@@ -118,6 +131,11 @@ export function ProductIntelligenceDrawer({ row, onClose }: ProductIntelligenceD
           <div className="space-y-6">
             <ProductHeaderSection row={row} />
             <InventorySummarySection row={row} />
+            <ProductEngagementSection
+              funnel={funnel}
+              loading={skuAnalytics.isLoading}
+              error={skuAnalytics.isError}
+            />
             <SalesSummarySection
               orders={sales.orders}
               units={sales.units}
@@ -133,12 +151,6 @@ export function ProductIntelligenceDrawer({ row, onClose }: ProductIntelligenceD
                 compactTitle
               />
             </section>
-
-            {/* Future Product 360° sections (do not implement in 6.46.4):
-                - Estimated Cover
-                - Shipment History
-                - Pricing / Margin
-                - Alerts */}
           </div>
         </div>
 
@@ -230,6 +242,67 @@ function InventorySummarySection({ row }: { row: InventoryIntelligenceSkuRow }) 
   );
 }
 
+/**
+ * Product Analytics funnel for the scoped period.
+ * Sales Conversion = purchases ÷ orders (same as Product Analytics).
+ * Favorites / Cart are not in the persisted PA pipeline — show placeholder until
+ * WB Sales Funnel analytics is synced (future).
+ */
+function ProductEngagementSection({
+  funnel,
+  loading,
+  error,
+}: {
+  funnel: {
+    orders: number;
+    purchases: number;
+    conversionPercent: number;
+  } | null;
+  loading: boolean;
+  error: boolean;
+}) {
+  const hasOrders = (funnel?.orders ?? 0) > 0;
+
+  return (
+    <section aria-labelledby="pi-engagement-heading">
+      <SectionHeading id="pi-engagement-heading">Product Engagement</SectionHeading>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Period funnel from Product Analytics
+        {hasOrders
+          ? " · Sales Conversion = purchases ÷ orders"
+          : ""}
+      </p>
+      <dl className="mt-3 grid grid-cols-3 gap-3">
+        <MetricTile
+          label="Add to Favorites"
+          value="—"
+          subtitle="Not synced"
+        />
+        <MetricTile
+          label="Add to Cart"
+          value="—"
+          subtitle="Not synced"
+        />
+        <MetricTile
+          label="Sales Conversion"
+          value={
+            loading
+              ? "…"
+              : error || !funnel
+                ? "—"
+                : formatNumber(funnel.purchases)
+          }
+          subtitle={
+            loading || error || !funnel || !hasOrders
+              ? undefined
+              : formatPercent(funnel.conversionPercent)
+          }
+        />
+      </dl>
+    </section>
+  );
+}
+
 function SalesSummarySection({
   orders,
   units,
@@ -291,11 +364,13 @@ function MetricTile({
   label,
   value,
   valueNode,
+  subtitle,
   className,
 }: {
   label: string;
   value?: string;
   valueNode?: ReactNode;
+  subtitle?: string;
   className?: string;
 }) {
   return (
@@ -304,6 +379,9 @@ function MetricTile({
       <dd className="mt-1 text-sm font-semibold tabular-nums text-foreground">
         {valueNode ?? value}
       </dd>
+      {subtitle ? (
+        <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">{subtitle}</p>
+      ) : null}
     </div>
   );
 }

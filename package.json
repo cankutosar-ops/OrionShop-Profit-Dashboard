@@ -13,6 +13,7 @@
     "verify:api-coverage": "npx tsx scripts/verify-api-coverage.mjs",
     "apply:finance-category-migration": "node scripts/apply-finance-category-migration.mjs",
     "apply:wb-sales-revenue-migration": "npx tsx scripts/apply-wb-sales-revenue-migration.mjs",
+    "apply:wb-sales-warehouse-migration": "npx tsx scripts/apply-wb-sales-warehouse-migration.mjs",
     "backfill:sales-revenue": "npx tsx scripts/backfill-sales-revenue-fields.mjs",
     "backfill:sales-history": "npx tsx scripts/backfill-sales-history.mjs",
     "backfill:sales-resume": "npx tsx scripts/resume-sales-backfill.mjs",

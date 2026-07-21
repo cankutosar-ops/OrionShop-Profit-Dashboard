@@ -126,6 +126,8 @@ export type WbSale = {
   quantity: number;
   is_return: boolean;
   return_date: string | null;
+  /** Sales API warehouseName — fulfilling warehouse (same pattern as wb_orders.warehouse). */
+  warehouse?: string | null;
   tech_size: string | null;
   barcode: string | null;
 };
@@ -332,6 +334,8 @@ export type PurchaseWithLines = Purchase & {
 
 export type PurchaseListItem = Purchase & {
   line_count: number;
+  /** Distinct supplier_article values from purchase lines (deep-link search). */
+  supplierArticles: string[];
 };
 
 export type PurchaseImportResult = {
@@ -512,6 +516,18 @@ export type ProductSkuAnalyticsResponse = {
   productId: string;
   supplierArticle: string;
   skus: ProductAnalyticsSkuRow[];
+  /**
+   * Product-level funnel for the scoped period — same `buildProductFunnelMetrics`
+   * used by Product Analytics (orders → purchases → conversion).
+   * Favorites / cart counts are not in this pipeline (WB Sales Funnel API, unsynced).
+   */
+  funnel: {
+    orders: number;
+    purchases: number;
+    conversionPercent: number;
+    cancelled: number;
+    cancellationPercent: number;
+  };
   loadTimeMs: number;
 };
 

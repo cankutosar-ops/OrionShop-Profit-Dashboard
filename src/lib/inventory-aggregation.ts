@@ -12,7 +12,11 @@ import type {
   InventoryStockTotals,
   InventoryWarehouseRow,
 } from "@/lib/inventory-types";
-import type { Product, WbSale } from "@/types/database";
+import type { Category, Product, WbSale } from "@/types/database";
+
+type ProductForModelRow = Product & {
+  category?: Pick<Category, "id" | "name"> | null;
+};
 
 export const LOW_STOCK_DAYS_THRESHOLD = 14;
 
@@ -248,7 +252,7 @@ export function buildHistoryEntries(
 }
 
 export function buildModelRow(
-  product: Product,
+  product: ProductForModelRow,
   stock: ReturnType<typeof sumInventoryRows>,
   purchases30Day: number
 ): InventoryModelRow {
@@ -260,10 +264,17 @@ export function buildModelRow(
     stock.lastSync
   );
 
+  const categoryId = String(product.category_id ?? product.category?.id ?? "");
+  const categoryName =
+    product.category?.name?.trim() || (categoryId ? `Category ${categoryId}` : "—");
+
   return {
     productId: String(product.id),
     supplierArticle: product.supplier_article,
     productName: product.name,
+    brandId: String(product.brand_id ?? ""),
+    categoryId,
+    categoryName,
     currentStock: totals.currentStock,
     daysLeft: totals.daysLeft,
     status: classifyDisplayStatus(totals.currentStock, totals.daysLeft),
@@ -274,9 +285,7 @@ export function buildModelDetail(
   product: Product,
   productRows: InventoryStockRow[],
   purchases30Day: number,
-  purchasesBySize: Map<string, number>,
-  productSales: WbSale[],
-  accountLastSync: string | null
+  purchasesBySize: Map<string, number>
 ): InventoryModelDetail {
   const stock = sumInventoryRows(productRows);
   const overviewTotals = buildStockTotals(
@@ -297,7 +306,8 @@ export function buildModelDetail(
     },
     skus: buildSkuRows(productRows, purchasesBySize),
     warehouses: buildWarehouseRows(productRows),
-    history: buildHistoryEntries(productRows, productSales, accountLastSync),
+    // Sprint 6.44 — History tab loads inbound shipments live; do not fabricate sync/sales timeline.
+    history: [],
   };
 }
 

@@ -56,10 +56,23 @@ export type InventoryModelRow = {
   productId: string;
   supplierArticle: string;
   productName: string;
+  /** Passthrough for UI filters — not used in stock calculations. */
+  brandId: string;
+  /** Passthrough for UI filters — not used in stock calculations. */
+  categoryId: string;
+  /** Display label for Category filter — not used in stock calculations. */
+  categoryName: string;
   currentStock: number;
   daysLeft: number | null;
   status: InventoryDisplayStatus;
 };
+
+/** Client-side Models list sort — does not affect inventory calculations. */
+export type InventoryModelSort =
+  | "stock_desc"
+  | "stock_asc"
+  | "name_asc"
+  | "name_desc";
 
 export type InventorySkuRow = InventoryStockTotals & {
   size: string;
@@ -74,6 +87,7 @@ export type InventoryWarehouseRow = {
   reservedStock: number;
 };
 
+/** @deprecated Sync/sales timeline — replaced by inbound Shipment History (Sprint 6.44). */
 export type InventoryHistoryEntry = {
   id: string;
   type: "sync" | "stock_update" | "sale";
@@ -90,6 +104,7 @@ export type InventoryModelDetail = {
   overview: InventoryStockTotals & { status: InventoryDisplayStatus };
   skus: InventorySkuRow[];
   warehouses: InventoryWarehouseRow[];
+  /** Kept empty — History tab loads inbound shipments live via API. */
   history: InventoryHistoryEntry[];
 };
 
@@ -98,6 +113,7 @@ export type InventoryReport = {
   detailsByProductId: Record<string, InventoryModelDetail>;
   accountLastSync: string | null;
   accountSyncStatus: string | null;
+  marketplaceAccountId: string;
 };
 
 export type InventoryStatusFilter = "all" | "low" | "out" | "healthy";

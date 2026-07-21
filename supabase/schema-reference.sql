@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS wb_sales (
   quantity INT NOT NULL DEFAULT 1,
   is_return BOOLEAN NOT NULL DEFAULT false,
   return_date DATE,
+  warehouse TEXT,
   tech_size TEXT,
   barcode TEXT
 );

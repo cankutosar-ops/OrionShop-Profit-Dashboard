@@ -15,16 +15,23 @@ import { getInventoryForAccount } from "@/services/inventory-service";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import type { Product, ScopedDateRange } from "@/types/database";
 
-async function fetchProductsForAccount(marketplaceAccountId: string): Promise<Product[]> {
+type ProductWithCategory = Product & {
+  category?: { id: string; name: string } | null;
+};
+
+async function fetchProductsForAccount(
+  marketplaceAccountId: string
+): Promise<ProductWithCategory[]> {
   const client = createServerClient();
+  // Same products query as before; category join is UI metadata only (filter labels).
   const { data, error } = await client
     .from("products")
-    .select("*")
+    .select("*, category:categories(id, name)")
     .eq("marketplace_account_id", marketplaceAccountId)
     .order("supplier_article");
 
   if (error) throw new Error(`Failed to fetch products: ${error.message}`);
-  return (data ?? []) as Product[];
+  return (data ?? []) as unknown as ProductWithCategory[];
 }
 
 function buildLast30Scope(scope: ScopedDateRange): ScopedDateRange {
@@ -57,15 +64,6 @@ export async function getInventoryReport(scope: ScopedDateRange): Promise<Invent
   const stockByProduct = aggregateStockByProduct(inventoryRows);
   const purchasesByProduct = countPurchasesByProduct(sales);
   const purchasesByProductAndSize = countPurchasesByProductAndSize(sales);
-  const salesByProduct = new Map<string, typeof sales>();
-
-  for (const sale of sales) {
-    if (!sale.product_id) continue;
-    const productId = String(sale.product_id);
-    const list = salesByProduct.get(productId) ?? [];
-    list.push(sale);
-    salesByProduct.set(productId, list);
-  }
 
   const rowsByProduct = new Map<string, typeof inventoryRows>();
   for (const row of inventoryRows) {
@@ -97,9 +95,7 @@ export async function getInventoryReport(scope: ScopedDateRange): Promise<Invent
       product,
       productRows,
       purchases30Day,
-      purchasesByProductAndSize.get(productId) ?? new Map(),
-      salesByProduct.get(productId) ?? [],
-      accountLastSync
+      purchasesByProductAndSize.get(productId) ?? new Map()
     );
   }
 
@@ -108,6 +104,7 @@ export async function getInventoryReport(scope: ScopedDateRange): Promise<Invent
     detailsByProductId,
     accountLastSync,
     accountSyncStatus: account.last_sync_status,
+    marketplaceAccountId: scope.marketplaceAccountId,
   };
 }
 

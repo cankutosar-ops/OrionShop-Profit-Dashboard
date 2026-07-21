@@ -47,7 +47,9 @@ function loadEnv() {
 function isNonFatalSalesWarning(message) {
   return (
     message.includes("price_with_disc column missing") ||
-    message.includes("apply-wb-sales-revenue-migration")
+    message.includes("apply-wb-sales-revenue-migration") ||
+    message.includes("warehouse column missing") ||
+    message.includes("apply-wb-sales-warehouse-migration")
   );
 }
 

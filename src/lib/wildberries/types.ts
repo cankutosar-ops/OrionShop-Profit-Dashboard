@@ -131,3 +131,64 @@ export type WbApiCardsResponse = {
     total?: number;
   };
 };
+
+/** FBW supply list row — POST /api/v1/supplies (supplies-api). */
+export type WbApiSupplyListItem = {
+  supplyID?: number | null;
+  preorderID?: number | null;
+  createDate?: string;
+  supplyDate?: string;
+  factDate?: string;
+  updatedDate?: string;
+  /** 1–6: not planned … unloaded at gates. 5 = Accepted. */
+  statusID?: number;
+  boxTypeID?: number;
+  isBoxOnPallet?: boolean;
+  phone?: string;
+};
+
+/** FBW supply details — GET /api/v1/supplies/{ID}. */
+export type WbApiSupplyDetails = {
+  statusID?: number;
+  statusName?: string;
+  createDate?: string;
+  supplyDate?: string;
+  factDate?: string;
+  updatedDate?: string;
+  warehouseID?: number;
+  warehouseName?: string;
+  actualWarehouseID?: number;
+  actualWarehouseName?: string;
+  transitWarehouseID?: number | null;
+  transitWarehouseName?: string;
+  quantity?: number;
+  readyForSaleQuantity?: number;
+  acceptedQuantity?: number;
+  unloadingQuantity?: number;
+  depersonalizedQuantity?: number;
+  boxTypeID?: number;
+  isBoxOnPallet?: boolean;
+};
+
+/** Product line inside a supply — GET /api/v1/supplies/{ID}/goods. */
+export type WbApiSupplyGood = {
+  barcode?: string;
+  vendorCode?: string;
+  nmID?: number;
+  techSize?: string;
+  color?: string;
+  quantity?: number;
+  readyForSaleQuantity?: number;
+  acceptedQuantity?: number;
+  unloadingQuantity?: number;
+  supplierBoxAmount?: number;
+};
+
+export type WbSupplyListRequest = {
+  dates?: Array<{
+    from: string;
+    till: string;
+    type: "factDate" | "createDate" | "supplyDate" | "updatedDate";
+  }>;
+  statusIDs?: number[];
+};

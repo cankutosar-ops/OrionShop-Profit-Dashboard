@@ -1,4 +1,12 @@
-import { WB_CONTENT_API, WB_FINANCE_API, WB_FINANCE_PAGE_DELAY_MS, WB_RATE_LIMIT_MAX_RETRIES, WB_RATE_LIMIT_MS, WB_STATISTICS_API } from "./constants";
+import {
+  WB_CONTENT_API,
+  WB_FINANCE_API,
+  WB_FINANCE_PAGE_DELAY_MS,
+  WB_RATE_LIMIT_MAX_RETRIES,
+  WB_RATE_LIMIT_MS,
+  WB_STATISTICS_API,
+  WB_SUPPLIES_API,
+} from "./constants";
 import { recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { syncLog } from "./sync-log";
 import type {
@@ -8,8 +16,12 @@ import type {
   WbApiProductCard,
   WbApiSale,
   WbApiStockRow,
+  WbApiSupplyDetails,
+  WbApiSupplyGood,
+  WbApiSupplyListItem,
   WbAccountBalance,
   WbSalesReportListItem,
+  WbSupplyListRequest,
 } from "./types";
 
 export type WbApiConfig = {
@@ -358,5 +370,72 @@ export class WbApiClient {
 
     const cards = response.cards ?? [];
     return cards.find((card) => card.vendorCode === vendorCode) ?? cards[0] ?? null;
+  }
+
+  /**
+   * FBW inbound supplies list (warehouse shipments).
+   * Requires Supplies-scoped token. Dates must be YYYY-MM-DD.
+   */
+  async listSupplies(
+    body: WbSupplyListRequest = {},
+    options?: { limit?: number; offset?: number }
+  ): Promise<WbApiSupplyListItem[]> {
+    const limit = options?.limit ?? 1000;
+    const offset = options?.offset ?? 0;
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    syncLog("wb-api", "Supplies list START", { limit, offset, body });
+    const rows = await this.request<WbApiSupplyListItem[]>(
+      WB_SUPPLIES_API,
+      `/api/v1/supplies?${params.toString()}`,
+      { method: "POST", body: JSON.stringify(body) }
+    );
+    syncLog("wb-api", "Supplies list END", { count: rows.length });
+    return rows;
+  }
+
+  /** FBW supply header details (warehouse, accepted qty, status). */
+  async fetchSupplyDetails(
+    supplyId: number,
+    isPreorderID = false
+  ): Promise<WbApiSupplyDetails> {
+    const params = new URLSearchParams({
+      isPreorderID: String(isPreorderID),
+    });
+    return this.request<WbApiSupplyDetails>(
+      WB_SUPPLIES_API,
+      `/api/v1/supplies/${supplyId}?${params.toString()}`
+    );
+  }
+
+  /** Product lines inside a supply — paginated. */
+  async fetchSupplyGoods(
+    supplyId: number,
+    options?: { isPreorderID?: boolean; limit?: number }
+  ): Promise<WbApiSupplyGood[]> {
+    const isPreorderID = options?.isPreorderID ?? false;
+    const pageSize = options?.limit ?? 1000;
+    const all: WbApiSupplyGood[] = [];
+    let offset = 0;
+
+    while (true) {
+      const params = new URLSearchParams({
+        limit: String(pageSize),
+        offset: String(offset),
+        isPreorderID: String(isPreorderID),
+      });
+      const batch = await this.request<WbApiSupplyGood[]>(
+        WB_SUPPLIES_API,
+        `/api/v1/supplies/${supplyId}/goods?${params.toString()}`
+      );
+      if (!batch.length) break;
+      all.push(...batch);
+      if (batch.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    return all;
   }
 }

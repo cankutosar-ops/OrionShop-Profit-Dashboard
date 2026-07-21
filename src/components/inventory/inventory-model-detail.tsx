@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   formatDaysLeft,
   InventoryStatusBadge,
 } from "@/components/inventory/inventory-status-badge";
+import type { InventoryShipmentEntry } from "@/lib/inventory-shipment-history";
 import type { InventoryModelDetail } from "@/lib/inventory-types";
+import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
 
 type TabId = "overview" | "sku" | "warehouses" | "history";
@@ -80,16 +82,18 @@ function SkuTab({ detail }: { detail: InventoryModelDetail }) {
             </tr>
           ) : (
             detail.skus.map((sku) => (
-              <tr key={sku.size} className="border-b border-border/50">
+              <tr key={`${sku.size}-${sku.barcode ?? ""}`} className="border-b border-border/50">
                 <td className="px-3 py-2.5 font-medium">{sku.size}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums">{formatNumber(sku.currentStock)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums">
+                  {formatNumber(sku.currentStock)}
+                </td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
                   {formatNumber(sku.availableStock)}
                 </td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
                   {formatNumber(sku.reservedStock)}
                 </td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
+                <td className="px-3 py-2.5 text-right tabular-nums">
                   {formatNumber(sku.purchases30Day)}
                 </td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
@@ -132,8 +136,12 @@ function WarehousesTab({ detail }: { detail: InventoryModelDetail }) {
           ) : (
             detail.warehouses.map((row) => (
               <tr key={row.warehouse} className="border-b border-border/50">
-                <td className="px-3 py-2.5 font-medium">{row.warehouse}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums">{formatNumber(row.currentStock)}</td>
+                <td className="px-3 py-2.5 font-medium">
+                  {formatWarehouseName(row.warehouse)}
+                </td>
+                <td className="px-3 py-2.5 text-right tabular-nums">
+                  {formatNumber(row.currentStock)}
+                </td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
                   {formatNumber(row.availableStock)}
                 </td>
@@ -149,35 +157,139 @@ function WarehousesTab({ detail }: { detail: InventoryModelDetail }) {
   );
 }
 
-function HistoryTab({ detail }: { detail: InventoryModelDetail }) {
+function ShipmentHistoryTab({
+  productId,
+  marketplaceAccountId,
+}: {
+  productId: string;
+  marketplaceAccountId: string;
+}) {
+  const [shipments, setShipments] = useState<InventoryShipmentEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      setShipments(null);
+
+      try {
+        const params = new URLSearchParams({
+          marketplaceAccountId,
+          productId,
+        });
+        const response = await fetch(`/api/inventory/shipment-history?${params}`, {
+          signal: controller.signal,
+        });
+        const body = (await response.json().catch(() => ({}))) as {
+          shipments?: InventoryShipmentEntry[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(body.error || `HTTP ${response.status}`);
+        }
+
+        if (!cancelled) {
+          setShipments(body.shipments ?? []);
+        }
+      } catch (err) {
+        if (cancelled || (err instanceof DOMException && err.name === "AbortError")) return;
+        setError(err instanceof Error ? err.message : "Failed to load shipment history");
+        setShipments([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [marketplaceAccountId, productId]);
+
+  if (loading) {
+    return (
+      <div className="space-y-1 py-8 text-center">
+        <p className="text-sm text-muted-foreground">Loading inbound shipment history…</p>
+        <p className="text-xs text-muted-foreground">
+          First load per account may take up to a couple of minutes (WB Supplies rate limits).
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2 py-6 text-center">
+        <p className="text-sm font-medium text-foreground">Shipment history unavailable</p>
+        <p className="text-xs text-muted-foreground">{error}</p>
+        <p className="text-xs text-muted-foreground">
+          Requires a Wildberries API token with the Supplies category.
+        </p>
+      </div>
+    );
+  }
+
+  if (!shipments?.length) {
+    return (
+      <div className="space-y-1 py-8 text-center">
+        <p className="text-sm text-muted-foreground">No inbound shipments found for this model</p>
+        <p className="text-xs text-muted-foreground">
+          Shows warehouse receipts from Wildberries FBW supplies only — not sales or stock
+          snapshots.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {detail.history.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">No history entries yet</p>
-      ) : (
-        detail.history.map((entry) => (
-          <div
-            key={entry.id}
-            className="flex items-start justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3"
-          >
-            <div>
-              <p className="text-sm font-medium">{entry.label}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{entry.detail}</p>
-            </div>
-            <div className="text-right text-xs text-muted-foreground">
-              <p>{formatDate(entry.occurredAt)}</p>
-              {entry.quantity !== undefined && (
-                <p className="mt-0.5 tabular-nums">{formatNumber(entry.quantity)} units</p>
-              )}
-            </div>
+      <p className="text-xs text-muted-foreground">
+        Inbound warehouse shipments (newest first) — quantity received at WB warehouses.
+      </p>
+      {shipments.map((entry) => (
+        <div
+          key={entry.id}
+          className="flex items-start justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {formatWarehouseName(entry.warehouse)}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {[
+                entry.supplyId != null ? `Supply ${entry.supplyId}` : null,
+                entry.status,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "Inbound shipment"}
+            </p>
           </div>
-        ))
-      )}
+          <div className="shrink-0 text-right text-xs text-muted-foreground">
+            <p>{formatDate(entry.shipmentDate)}</p>
+            <p className="mt-0.5 tabular-nums text-sm font-medium text-foreground">
+              {formatNumber(entry.quantityReceived)} received
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-export function InventoryModelDetailPanel({ detail }: { detail: InventoryModelDetail | null }) {
+export function InventoryModelDetailPanel({
+  detail,
+  marketplaceAccountId,
+}: {
+  detail: InventoryModelDetail | null;
+  marketplaceAccountId: string;
+}) {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   if (!detail) {
@@ -187,7 +299,7 @@ export function InventoryModelDetailPanel({ detail }: { detail: InventoryModelDe
           <p className="text-sm font-medium">Select a model</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose a model from the list to view stock overview, SKU breakdown, warehouses, and
-            history.
+            shipment history.
           </p>
         </div>
       </div>
@@ -225,7 +337,12 @@ export function InventoryModelDetailPanel({ detail }: { detail: InventoryModelDe
         {activeTab === "overview" && <OverviewTab detail={detail} />}
         {activeTab === "sku" && <SkuTab detail={detail} />}
         {activeTab === "warehouses" && <WarehousesTab detail={detail} />}
-        {activeTab === "history" && <HistoryTab detail={detail} />}
+        {activeTab === "history" && (
+          <ShipmentHistoryTab
+            productId={detail.productId}
+            marketplaceAccountId={marketplaceAccountId}
+          />
+        )}
       </div>
     </div>
   );

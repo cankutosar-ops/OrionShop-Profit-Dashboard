@@ -2,6 +2,7 @@ import {
   buildSkuDisplayRows,
   collectCatalogVariantGroups,
 } from "@/lib/product-sku-analytics";
+import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
 import {
   buildBarcodeToTechSizeMap,
   dedupeVariantsBySize,
@@ -99,11 +100,14 @@ export async function getProductSkuAnalytics(
 
   const groups = collectCatalogVariantGroups(variants);
   const skus = buildSkuDisplayRows(groups, orders, sales, stockRows);
+  // Same pure funnel builder as Product Analytics / profitability rows — no new math.
+  const funnel = buildProductFunnelMetrics(orders, sales);
 
   return {
     productId: normalizedProductId,
     supplierArticle: product.supplier_article,
     skus,
+    funnel,
     loadTimeMs: Date.now() - startedAt,
   };
 }

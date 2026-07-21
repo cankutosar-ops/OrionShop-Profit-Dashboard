@@ -545,6 +545,8 @@ export function InventoryIntelligenceTable({
       <ProductIntelligenceDrawer
         row={selectedRow}
         onClose={() => setSelectedProductId(null)}
+        rangeFrom={rangeFrom}
+        rangeTo={rangeTo}
       />
     </div>
   );

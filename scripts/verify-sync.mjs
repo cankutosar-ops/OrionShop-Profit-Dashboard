@@ -28,7 +28,7 @@ const EXPECTED = {
   categories: ["id", "name", "parent_id", "created_at"],
   products: ["id", "supplier_article", "nm_id", "name", "brand_id", "category_id", "barcode", "created_at"],
   wb_orders: ["id", "srid", "nm_id", "product_id", "order_date", "sale_date", "price", "quantity", "status", "warehouse"],
-  wb_sales: ["id", "srid", "nm_id", "product_id", "sale_date", "revenue", "quantity", "is_return", "return_date"],
+  wb_sales: ["id", "srid", "nm_id", "product_id", "sale_date", "revenue", "quantity", "is_return", "return_date", "warehouse"],
   wb_finance: ["id", "product_id", "nm_id", "operation_date", "operation_type", "amount", "source_key", "description", "srid"],
 };
 

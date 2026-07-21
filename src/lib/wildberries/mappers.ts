@@ -108,6 +108,7 @@ export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale,
     quantity: 1,
     is_return: isReturn,
     return_date: isReturn ? toDateString(sale.date) : null,
+    warehouse: sale.warehouseName ?? null,
     tech_size: sale.techSize ?? null,
     barcode: sale.barcode ?? null,
   };

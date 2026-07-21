@@ -220,22 +220,33 @@ function dedupeSalesPayloads(rows: Array<Omit<WbSale, "id">>): Array<Omit<WbSale
 }
 
 const SALES_REVENUE_FIELDS = ["price_with_disc", "for_pay"] as const;
+const SALES_WAREHOUSE_FIELD = "warehouse" as const;
 
 async function salesSchemaHasRevenueColumns(supabase: AdminClient): Promise<boolean> {
   const { error } = await supabase.from("wb_sales").select("price_with_disc").limit(1);
   return !error;
 }
 
+async function salesSchemaHasWarehouseColumn(supabase: AdminClient): Promise<boolean> {
+  const { error } = await supabase.from("wb_sales").select("warehouse").limit(1);
+  return !error;
+}
+
 function toSalesUpsertRow(
   row: Omit<WbSale, "id">,
-  includeRevenueColumns: boolean
+  includeRevenueColumns: boolean,
+  includeWarehouseColumn: boolean
 ): Omit<WbSale, "id"> {
-  if (includeRevenueColumns) return row;
-  const legacy = { ...row };
-  for (const field of SALES_REVENUE_FIELDS) {
-    delete legacy[field];
+  const next = { ...row };
+  if (!includeRevenueColumns) {
+    for (const field of SALES_REVENUE_FIELDS) {
+      delete next[field];
+    }
   }
-  return legacy;
+  if (!includeWarehouseColumn) {
+    delete next[SALES_WAREHOUSE_FIELD];
+  }
+  return next;
 }
 
 async function batchUpsertSales(
@@ -243,7 +254,8 @@ async function batchUpsertSales(
   rows: Array<Omit<WbSale, "id">>,
   batchSize: number,
   onBatch: (batchRowCount: number) => void,
-  includeRevenueColumns: boolean
+  includeRevenueColumns: boolean,
+  includeWarehouseColumn: boolean
 ): Promise<{ dbRequests: number; errors: string[] }> {
   let dbRequests = 0;
   const errors: string[] = [];
@@ -251,7 +263,7 @@ async function batchUpsertSales(
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows
       .slice(i, i + batchSize)
-      .map((row) => toSalesUpsertRow(row, includeRevenueColumns));
+      .map((row) => toSalesUpsertRow(row, includeRevenueColumns, includeWarehouseColumn));
     dbRequests += 1;
     const { error } = await supabase.from("wb_sales").upsert(batch, {
       onConflict: "marketplace_account_id,srid",
@@ -613,6 +625,14 @@ export class WbSyncService {
         );
       }
 
+      const includeWarehouseColumn = await salesSchemaHasWarehouseColumn(supabase);
+      if (!includeWarehouseColumn) {
+        syncLog("sales", "warehouse column missing — upserting without warehouse", {});
+        result.errors.push(
+          "warehouse column missing on wb_sales — run npx tsx scripts/apply-wb-sales-warehouse-migration.mjs"
+        );
+      }
+
       console.log("[SYNC] sales upsert start");
       syncLog("sales", "Supabase batch upsert START", { saleCount: filtered.length });
 
@@ -660,7 +680,8 @@ export class WbSyncService {
         (count) => {
           result.recordsUpdated += count;
         },
-        includeRevenueColumns
+        includeRevenueColumns,
+        includeWarehouseColumn
       );
       result.errors.push(...batchErrors);
 

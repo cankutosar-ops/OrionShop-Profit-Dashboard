@@ -1,12 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ArrowUpDown, Search } from "lucide-react";
 import {
   formatDaysLeft,
   InventoryStatusBadge,
 } from "@/components/inventory/inventory-status-badge";
-import type { InventoryModelRow, InventoryStatusFilter } from "@/lib/inventory-types";
+import type {
+  InventoryModelRow,
+  InventoryModelSort,
+  InventoryStatusFilter,
+} from "@/lib/inventory-types";
 import { cn, formatNumber } from "@/lib/utils";
 
 type InventoryModelListProps = {
@@ -15,11 +19,18 @@ type InventoryModelListProps = {
   onSelect: (productId: string) => void;
 };
 
-const filters: { id: InventoryStatusFilter; label: string }[] = [
+const statusFilters: { id: InventoryStatusFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "low", label: "Low Stock" },
   { id: "out", label: "Out of Stock" },
   { id: "healthy", label: "Healthy" },
+];
+
+const sortOptions: { id: InventoryModelSort; label: string }[] = [
+  { id: "stock_desc", label: "Current Stock (High → Low)" },
+  { id: "stock_asc", label: "Current Stock (Low → High)" },
+  { id: "name_asc", label: "Model Name (A → Z)" },
+  { id: "name_desc", label: "Model Name (Z → A)" },
 ];
 
 function matchesFilter(model: InventoryModelRow, filter: InventoryStatusFilter): boolean {
@@ -29,6 +40,21 @@ function matchesFilter(model: InventoryModelRow, filter: InventoryStatusFilter):
   return model.status === "Healthy";
 }
 
+function modelNameKey(model: InventoryModelRow): string {
+  return `${model.supplierArticle} ${model.productName}`.trim().toLowerCase();
+}
+
+function sortModels(models: InventoryModelRow[], sort: InventoryModelSort): InventoryModelRow[] {
+  const sorted = [...models];
+  sorted.sort((a, b) => {
+    if (sort === "stock_desc") return b.currentStock - a.currentStock;
+    if (sort === "stock_asc") return a.currentStock - b.currentStock;
+    if (sort === "name_asc") return modelNameKey(a).localeCompare(modelNameKey(b));
+    return modelNameKey(b).localeCompare(modelNameKey(a));
+  });
+  return sorted;
+}
+
 export function InventoryModelList({
   models,
   selectedProductId,
@@ -36,10 +62,11 @@ export function InventoryModelList({
 }: InventoryModelListProps) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<InventoryStatusFilter>("all");
+  const [sort, setSort] = useState<InventoryModelSort>("stock_desc");
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return models.filter((model) => {
+    const matched = models.filter((model) => {
       if (!matchesFilter(model, statusFilter)) return false;
       if (!normalized) return true;
       return (
@@ -47,7 +74,8 @@ export function InventoryModelList({
         model.productName.toLowerCase().includes(normalized)
       );
     });
-  }, [models, query, statusFilter]);
+    return sortModels(matched, sort);
+  }, [models, query, statusFilter, sort]);
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card">
@@ -68,8 +96,27 @@ export function InventoryModelList({
           />
         </div>
 
+        <label className="flex flex-col gap-1.5">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            Sort
+          </span>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as InventoryModelSort)}
+            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary/50"
+            aria-label="Sort models"
+          >
+            {sortOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <div className="flex flex-wrap gap-1.5">
-          {filters.map((filter) => (
+          {statusFilters.map((filter) => (
             <button
               key={filter.id}
               type="button"
