@@ -12,14 +12,15 @@ export function ChartCard({ title, description, children, className, action }: C
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-card p-6 transition-colors hover:border-border/80",
+        "border border-border bg-card p-6 transition-ui hover:border-border/80",
+        "rounded-[var(--radius-card)]",
         className
       )}
     >
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h3 className="text-base font-semibold">{title}</h3>
-          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+          <h3 className="text-card-title">{title}</h3>
+          {description && <p className="text-kpi-label mt-1">{description}</p>}
         </div>
         {action}
       </div>

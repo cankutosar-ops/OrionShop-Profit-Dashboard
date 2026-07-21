@@ -16,7 +16,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <main
         className={cn(
-          "min-h-screen transition-[padding] duration-200 ease-out",
+          "min-h-screen transition-[padding] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
           hydrated ? (collapsed ? "pl-16" : "pl-64") : "pl-64"
         )}
       >

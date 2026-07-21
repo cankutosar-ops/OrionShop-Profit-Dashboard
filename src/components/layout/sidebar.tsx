@@ -11,7 +11,6 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Receipt,
   Settings,
   ShoppingBag,
   Tag,
@@ -43,25 +42,77 @@ export type SidebarNavItem = {
   icon: LucideIcon;
 };
 
-export const SIDEBAR_NAVIGATION: SidebarNavItem[] = [
+/** Primary nav — workflow order (UX Refresh v1.0). */
+export const SIDEBAR_PRIMARY_NAVIGATION: SidebarNavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Reports", href: "/reports", icon: FileText },
   { name: "Product Analytics", href: "/analytics/products", icon: LineChart },
-  { name: "Cost Management", href: "/costs", icon: Coins },
-  { name: "Inventory", href: "/inventory", icon: Warehouse },
   { name: "Smart Pricing", href: "/analytics/pricing", icon: Tag },
-  { name: "Purchases", href: "/purchases", icon: Receipt },
+  { name: "Inventory", href: "/inventory", icon: Warehouse },
+  { name: "Purchases", href: "/purchases", icon: ShoppingBag },
+  { name: "Cost Management", href: "/costs", icon: Coins },
+  { name: "Reports", href: "/reports", icon: FileText },
+];
+
+/** Settings stays separated from operational workflow. */
+export const SIDEBAR_SETTINGS_NAVIGATION: SidebarNavItem[] = [
   { name: "Settings", href: "/settings/companies", icon: Settings },
+];
+
+/** Flat list for consumers that need every item (tests / audits). */
+export const SIDEBAR_NAVIGATION: SidebarNavItem[] = [
+  ...SIDEBAR_PRIMARY_NAVIGATION,
+  ...SIDEBAR_SETTINGS_NAVIGATION,
 ];
 
 function isNavItemActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   if (href === "/settings/companies") return pathname.startsWith("/settings");
+  if (href === "/inventory") return pathname.startsWith("/inventory");
   return pathname.startsWith(href);
 }
 
 function hrefWithNavParams(base: string, searchParams: Pick<URLSearchParams, "get">): string {
   return buildNavHrefWithContext(base, searchParams);
+}
+
+function SidebarNavItemLink({
+  item,
+  pathname,
+  hrefForItem,
+  collapsed,
+}: {
+  item: SidebarNavItem;
+  pathname: string;
+  hrefForItem: (base: string) => string;
+  collapsed: boolean;
+}) {
+  const isActive = isNavItemActive(pathname, item.href);
+
+  return (
+    <Link
+      href={hrefForItem(item.href)}
+      prefetch
+      title={collapsed ? item.name : undefined}
+      onClick={() => markSidebarNav(item.href)}
+      className={cn(
+        "relative flex items-center text-sm font-medium transition-ui",
+        "rounded-[var(--radius-control)]",
+        collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
+        isActive
+          ? "bg-primary/12 text-primary"
+          : "text-muted-foreground hover:bg-card-hover hover:text-foreground"
+      )}
+    >
+      {isActive && (
+        <span
+          aria-hidden
+          className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-primary"
+        />
+      )}
+      <item.icon className="h-4 w-4 shrink-0" />
+      {!collapsed && <span className="truncate">{item.name}</span>}
+    </Link>
+  );
 }
 
 function SidebarNavLinks({
@@ -75,29 +126,33 @@ function SidebarNavLinks({
 }) {
   return (
     <>
-      {SIDEBAR_NAVIGATION.map((item) => {
-        const isActive = isNavItemActive(pathname, item.href);
+      {SIDEBAR_PRIMARY_NAVIGATION.map((item) => (
+        <SidebarNavItemLink
+          key={item.name}
+          item={item}
+          pathname={pathname}
+          hrefForItem={hrefForItem}
+          collapsed={collapsed}
+        />
+      ))}
 
-        return (
-          <Link
-            key={item.name}
-            href={hrefForItem(item.href)}
-            prefetch
-            title={collapsed ? item.name : undefined}
-            onClick={() => markSidebarNav(item.href)}
-            className={cn(
-              "flex items-center rounded-xl text-sm font-medium transition-all",
-              collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-card-hover hover:text-foreground"
-            )}
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="truncate">{item.name}</span>}
-          </Link>
-        );
-      })}
+      <div
+        role="separator"
+        className={cn(
+          "my-2 border-t border-border",
+          collapsed ? "mx-1" : "mx-1"
+        )}
+      />
+
+      {SIDEBAR_SETTINGS_NAVIGATION.map((item) => (
+        <SidebarNavItemLink
+          key={item.name}
+          item={item}
+          pathname={pathname}
+          hrefForItem={hrefForItem}
+          collapsed={collapsed}
+        />
+      ))}
     </>
   );
 }
@@ -143,18 +198,19 @@ function SidebarFooterLink({ href, collapsed }: { href: string; collapsed: boole
       prefetch
       title={collapsed ? "Marketplaces" : undefined}
       className={cn(
-        "flex items-center rounded-xl bg-card-hover transition-colors hover:bg-card-hover/80",
+        "flex items-center transition-ui hover:bg-card-hover/80",
+        "rounded-[var(--radius-control)] bg-card-hover",
         collapsed ? "justify-center p-2" : "gap-3 px-3 py-2.5"
       )}
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success/10">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-success/10">
         <TrendingUp className="h-4 w-4 text-success" />
       </div>
       {!collapsed && (
         <>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium">Marketplaces</p>
-            <p className="text-[10px] text-muted-foreground">Company & account sync</p>
+            <p className="text-secondary-label">Company & account sync</p>
           </div>
           <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
         </>
@@ -180,7 +236,8 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border bg-card transition-[width] duration-200 ease-out",
+        "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border bg-card",
+        "transition-[width] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
         collapsed ? "w-16" : "w-64",
         !hydrated && "w-64"
       )}
@@ -193,8 +250,8 @@ export function Sidebar() {
       >
         {!collapsed && (
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent">
-              <ShoppingBag className="h-4 w-4 text-white" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-gradient-to-br from-primary to-accent">
+              <ShoppingBag className="h-4 w-4 text-primary-foreground" />
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-sm font-bold tracking-tight">OrionShop</h1>
@@ -207,7 +264,10 @@ export function Sidebar() {
         <button
           type="button"
           onClick={toggle}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-card-hover hover:text-foreground"
+          className={cn(
+            "inline-flex h-9 w-9 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground",
+            "rounded-[var(--radius-control)] transition-ui hover:bg-card-hover hover:text-foreground"
+          )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -242,7 +302,8 @@ export function SidebarMenuButton({ className }: { className?: string }) {
       type="button"
       onClick={toggle}
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-card-hover hover:text-foreground",
+        "inline-flex h-9 w-9 items-center justify-center border border-border bg-card text-muted-foreground",
+        "rounded-[var(--radius-control)] transition-ui hover:bg-card-hover hover:text-foreground",
         className
       )}
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}

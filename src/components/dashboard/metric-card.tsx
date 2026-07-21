@@ -40,22 +40,23 @@ export function MetricCard({
     <div
       title={hint}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:bg-card-hover",
+        "group relative overflow-hidden border border-border bg-card p-6 transition-ui hover:border-primary/30 hover:bg-card-hover",
+        "rounded-[var(--radius-card)]",
         className
       )}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-kpi-label">{title}</p>
           <p
             className={cn(
-              "font-bold tracking-tight",
+              "text-kpi-value",
               size === "hero" ? "text-3xl leading-none" : "text-2xl"
             )}
           >
             {value}
           </p>
-          {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+          {subtitle && <p className="text-secondary-label text-muted">{subtitle}</p>}
           {trend && (
             <p
               className={cn(
@@ -70,7 +71,8 @@ export function MetricCard({
         </div>
         <div
           className={cn(
-            "flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br",
+            "flex h-11 w-11 items-center justify-center bg-gradient-to-br",
+            "rounded-[var(--radius-control)]",
             iconClassName ?? variantStyles[variant]
           )}
         >

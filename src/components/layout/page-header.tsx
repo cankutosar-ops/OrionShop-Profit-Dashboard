@@ -35,9 +35,9 @@ export function PageHeader({
         <div className="flex min-w-0 items-start gap-2">
           <SidebarMenuButton className="mt-0.5 shrink-0" />
           <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>
+            <h1 className="text-page-title">{title}</h1>
             {description && (
-              <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+              <p className="text-kpi-label mt-0.5">{description}</p>
             )}
           </div>
         </div>
