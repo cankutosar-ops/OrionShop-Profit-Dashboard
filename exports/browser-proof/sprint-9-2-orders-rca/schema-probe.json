@@ -1,0 +1,16 @@
+{
+  "wb_orders_price_with_disc": {
+    "exists": false,
+    "msg": "column wb_orders.price_with_disc does not exist"
+  },
+  "wb_orders_last_change_date": {
+    "exists": false,
+    "msg": "column wb_orders.last_change_date does not exist"
+  },
+  "wb_sales_price_with_disc": {
+    "exists": true
+  },
+  "wb_sales_for_pay": {
+    "exists": true
+  }
+}

@@ -14,7 +14,7 @@ export type DashboardSyncResponse = {
   results?: DashboardSyncResult[];
 };
 
-export const OPERATIONAL_SYNC_ENTITIES: WbSyncEntity[] = ["orders", "sales"];
+export const OPERATIONAL_SYNC_ENTITIES: WbSyncEntity[] = ["orders", "sales", "finance"];
 
 type SyncListener = (inFlight: boolean) => void;
 

@@ -1,9 +1,13 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { formatChartValue } from "@/components/charts/chart-tooltip";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import type { WarehouseDistributionRow } from "@/lib/inventory-intelligence-types";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type WarehouseDistributionPanelProps = {
@@ -14,15 +18,44 @@ type WarehouseDistributionPanelProps = {
   compactTitle?: boolean;
 };
 
+type SortKey = "warehouse" | "orders" | "units" | "revenue" | "share";
+
+const DEFAULT_SORT = { key: "revenue" as const, direction: "desc" as const };
+
+function sortValue(row: WarehouseDistributionRow, key: SortKey): SortValue {
+  switch (key) {
+    case "warehouse":
+      return formatWarehouseName(row.warehouse);
+    case "orders":
+      return row.orders;
+    case "units":
+      return row.unitsSold;
+    case "revenue":
+      return row.revenue;
+    case "share":
+      return row.salesSharePercent;
+  }
+}
+
 /**
- * Warehouse Distribution — donut (existing sales share) + table.
- * Totals are summed from the provided rows only (no new server calcs).
+ * Warehouse Sales attribution panel — orders / units / sales by warehouse.
+ * Not Warehouse Distribution (stock geography).
  */
 export function WarehouseDistributionPanel({
   rows,
   sku,
   compactTitle = false,
 }: WarehouseDistributionPanelProps) {
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortKey>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: WarehouseDistributionRow, key: SortKey) => sortValue(row, key),
+    []
+  );
+  const sortedRows = useMemo(
+    () => sortRowsBySpec(rows, sort, getValue),
+    [rows, sort, getValue]
+  );
+
   let orders = 0;
   let units = 0;
   let revenue = 0;
@@ -35,9 +68,9 @@ export function WarehouseDistributionPanel({
 
   const title = sku
     ? compactTitle
-      ? "Warehouse Distribution"
-      : `Warehouse Distribution · ${sku}`
-    : "Warehouse Distribution";
+      ? "Warehouse Sales"
+      : `Warehouse Sales · ${sku}`
+    : "Warehouse Sales";
 
   if (rows.length === 0) {
     return (
@@ -81,7 +114,7 @@ export function WarehouseDistributionPanel({
             </span>
           </span>
           <span>
-            Total Revenue{" "}
+            Total Sales{" "}
             <span className="font-semibold tabular-nums text-foreground">
               {formatCurrency(revenue)}
             </span>
@@ -97,7 +130,7 @@ export function WarehouseDistributionPanel({
 
       <DonutChart
         data={donutSlices}
-        centerLabel="Revenue"
+        centerLabel="Sales"
         centerValue={formatChartValue(revenue, "currency")}
         valueFormat="currency"
         height={200}
@@ -108,15 +141,49 @@ export function WarehouseDistributionPanel({
         <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-3 py-2 font-medium">Warehouse</th>
-              <th className="px-3 py-2 text-right font-medium">Orders</th>
-              <th className="px-3 py-2 text-right font-medium">Units Sold</th>
-              <th className="px-3 py-2 text-right font-medium">Revenue</th>
-              <th className="px-3 py-2 text-right font-medium">Sales Share</th>
+              <SortableTh
+                label="Warehouse"
+                active={isActive("warehouse")}
+                direction={directionFor("warehouse")}
+                onClick={() => onSort("warehouse")}
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Orders"
+                active={isActive("orders")}
+                direction={directionFor("orders")}
+                onClick={() => onSort("orders")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Units Sold"
+                active={isActive("units")}
+                direction={directionFor("units")}
+                onClick={() => onSort("units")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Sales"
+                active={isActive("revenue")}
+                direction={directionFor("revenue")}
+                onClick={() => onSort("revenue")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Order Share"
+                active={isActive("share")}
+                direction={directionFor("share")}
+                onClick={() => onSort("share")}
+                align="right"
+                className="px-3 py-2"
+              />
             </tr>
           </thead>
           <tbody>
-            {rows.map((wh) => (
+            {sortedRows.map((wh) => (
               <tr key={wh.warehouse} className="border-t border-border/50">
                 <td
                   className="px-3 py-2 font-medium"

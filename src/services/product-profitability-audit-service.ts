@@ -21,7 +21,7 @@ export async function getProductProfitabilityAudit(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const products = await getProductProfitability(scope, client);
   const rows = buildProductProfitabilityAuditRows(products, limit);
   const totals = sumProductProfitabilityAuditRows(rows);

@@ -1,0 +1,335 @@
+{
+  "id": "1dedafe8-8d2d-4de5-b8e3-a422510ef4e4",
+  "marketplace_account_id": "1",
+  "expected_as_of": "2026-07-29",
+  "health_score": 64,
+  "overall_result": "WARNING",
+  "schema_status": "PASS",
+  "orders_status": "healthy",
+  "sales_status": "healthy",
+  "finance_status": "healthy",
+  "inventory_status": "critical",
+  "sync_status": "warning",
+  "sync_request_id": "1f1208ca",
+  "sync_duration_ms": 61440,
+  "snapshot": {
+    "version": 1,
+    "verifiedAt": "2026-07-29T11:34:02.712Z",
+    "marketplaceAccountId": "1",
+    "healthScore": 64,
+    "schemaStatus": "PASS",
+    "overallResult": "WARNING",
+    "orders": {
+      "entity": "orders",
+      "label": "Orders",
+      "latestApiDate": "2026-07-29",
+      "latestDbDate": "2026-07-29",
+      "gapDays": 0,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 3322
+    },
+    "sales": {
+      "entity": "sales",
+      "label": "Sales",
+      "latestApiDate": "2026-07-29",
+      "latestDbDate": "2026-07-29",
+      "gapDays": 0,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 1592
+    },
+    "finance": {
+      "entity": "finance",
+      "label": "Finance",
+      "latestApiDate": "2026-07-29",
+      "latestDbDate": "2026-07-26",
+      "gapDays": 3,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 68344
+    },
+    "inventory": {
+      "entity": "inventory",
+      "label": "Inventory",
+      "latestApiDate": null,
+      "latestDbDate": "2026-07-09",
+      "gapDays": null,
+      "coverageStatus": "critical",
+      "status": "critical",
+      "recordCount": 1077
+    },
+    "synchronization": {
+      "durationMs": 61440,
+      "rowsInserted": 0,
+      "rowsUpdated": 3592,
+      "errors": [
+        "WB API error 404: {\n    \"title\": \"disabled, PLUG-404-20260720\",\n    \"detail\": \"This method is deprecated. Link: https://dev.wildberries.ru/release-notes?id=494\",\n    \"code\": \"461a0b83d6bd 7a89cd0c8d54\",\n    \"requestId\": \"6d44b95502f42fc6fc6f4fcd81b3d13c\",\n    \"origin\": \"s2s-api-auth-stat\",\n    \"status\": 404,\n    \"sta",
+        "warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration",
+        "warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs"
+      ],
+      "warnings": [],
+      "finalStatus": "warning"
+    },
+    "operationalAlerts": [
+      {
+        "id": "coverage-inventory",
+        "severity": "critical",
+        "title": "Inventory behind API freshness target",
+        "detail": "Database latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+        "entity": "inventory"
+      },
+      {
+        "id": "sync-partial",
+        "severity": "warning",
+        "title": "Partial sync",
+        "detail": "Last sync completed with partial/warning status.",
+        "entity": "sync"
+      },
+      {
+        "id": "sync-entity-stock",
+        "severity": "warning",
+        "title": "Sync errors: stock",
+        "detail": "WB API error 404: {\n    \"title\": \"disabled, PLUG-404-20260720\",\n    \"detail\": \"This method is deprecated. Link: https://dev.wildberries.ru/release-notes?id=494\",\n    \"code\": \"461a0b83d6bd 7a89cd0c8d54\",\n    \"requestId\": \"6d44b95502f42fc6fc6f4fcd81b3d13c\",\n    \"origin\": \"s2s-api-auth-stat\",\n    \"status\": 404,\n    \"sta",
+        "entity": "sync"
+      },
+      {
+        "id": "sync-entity-finance",
+        "severity": "warning",
+        "title": "Sync errors: finance",
+        "detail": "warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration · warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs",
+        "entity": "sync"
+      }
+    ],
+    "failures": [
+      {
+        "category": "inventory_stale",
+        "affectedEntity": "inventory",
+        "reason": "Inventory DB latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+        "detectedAt": "2026-07-29T11:34:02.712Z",
+        "recommendedAction": "Run a full Sync including stock, or investigate deprecated stocks API coverage."
+      },
+      {
+        "category": "partial_sync",
+        "affectedEntity": "sync",
+        "reason": "Synchronization completed with partial or warning status.",
+        "detectedAt": "2026-07-29T11:34:02.712Z",
+        "recommendedAction": "Review entity-level sync errors and re-run affected entities only."
+      }
+    ],
+    "productionHealth": {
+      "marketplaceAccountId": "1",
+      "generatedAt": "2026-07-29T11:33:00.172Z",
+      "expectedAsOf": "2026-07-29",
+      "lastAccountSyncAt": "2026-07-29T11:32:59.967+00:00",
+      "lastAccountSyncStatus": "partial",
+      "freshness": [
+        {
+          "entity": "orders",
+          "label": "Orders",
+          "latestDbDate": "2026-07-29",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 0,
+          "recordCount": 3322,
+          "status": "healthy"
+        },
+        {
+          "entity": "sales",
+          "label": "Sales",
+          "latestDbDate": "2026-07-29",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 0,
+          "recordCount": 1592,
+          "status": "healthy"
+        },
+        {
+          "entity": "finance",
+          "label": "Finance",
+          "latestDbDate": "2026-07-26",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 3,
+          "recordCount": 68344,
+          "status": "healthy"
+        },
+        {
+          "entity": "inventory",
+          "label": "Inventory",
+          "latestDbDate": "2026-07-09",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 20,
+          "recordCount": 1077,
+          "status": "critical"
+        }
+      ],
+      "coverage": [
+        {
+          "entity": "orders",
+          "label": "Orders",
+          "databaseLatestDate": "2026-07-29",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 0,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "sales",
+          "label": "Sales",
+          "databaseLatestDate": "2026-07-29",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 0,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "finance",
+          "label": "Finance",
+          "databaseLatestDate": "2026-07-26",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 3,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "inventory",
+          "label": "Inventory",
+          "databaseLatestDate": "2026-07-09",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 20,
+          "status": "critical",
+          "behindApi": true
+        }
+      ],
+      "syncExecution": {
+        "overallStatus": "warning",
+        "startedAt": "2026-07-29T11:31:58.731Z",
+        "finishedAt": "2026-07-29T11:33:00.172Z",
+        "requestId": "1f1208ca",
+        "error": null,
+        "entities": [
+          {
+            "entity": "products",
+            "startedAt": "2026-07-29T11:31:58.731Z",
+            "finishedAt": "2026-07-29T11:33:00.172Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 91,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "success"
+          },
+          {
+            "entity": "orders",
+            "startedAt": "2026-07-29T11:31:58.731Z",
+            "finishedAt": "2026-07-29T11:33:00.172Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 760,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "success"
+          },
+          {
+            "entity": "sales",
+            "startedAt": "2026-07-29T11:31:58.731Z",
+            "finishedAt": "2026-07-29T11:33:00.172Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 159,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "success"
+          },
+          {
+            "entity": "stock",
+            "startedAt": "2026-07-29T11:31:58.731Z",
+            "finishedAt": "2026-07-29T11:33:00.172Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 0,
+            "rowsSkipped": null,
+            "errors": [
+              "WB API error 404: {\n    \"title\": \"disabled, PLUG-404-20260720\",\n    \"detail\": \"This method is deprecated. Link: https://dev.wildberries.ru/release-notes?id=494\",\n    \"code\": \"461a0b83d6bd 7a89cd0c8d54\",\n    \"requestId\": \"6d44b95502f42fc6fc6f4fcd81b3d13c\",\n    \"origin\": \"s2s-api-auth-stat\",\n    \"status\": 404,\n    \"sta"
+            ],
+            "warnings": [],
+            "result": "partial"
+          },
+          {
+            "entity": "finance",
+            "startedAt": "2026-07-29T11:31:58.731Z",
+            "finishedAt": "2026-07-29T11:33:00.172Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 2582,
+            "rowsSkipped": null,
+            "errors": [
+              "warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration",
+              "warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs"
+            ],
+            "warnings": [],
+            "result": "partial"
+          }
+        ]
+      },
+      "schema": {
+        "status": "PASS",
+        "checkedAt": "2026-07-29T11:33:01.041Z",
+        "missing": []
+      },
+      "alerts": [
+        {
+          "id": "coverage-inventory",
+          "severity": "critical",
+          "title": "Inventory behind API freshness target",
+          "detail": "Database latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+          "entity": "inventory"
+        },
+        {
+          "id": "sync-partial",
+          "severity": "warning",
+          "title": "Partial sync",
+          "detail": "Last sync completed with partial/warning status.",
+          "entity": "sync"
+        },
+        {
+          "id": "sync-entity-stock",
+          "severity": "warning",
+          "title": "Sync errors: stock",
+          "detail": "WB API error 404: {\n    \"title\": \"disabled, PLUG-404-20260720\",\n    \"detail\": \"This method is deprecated. Link: https://dev.wildberries.ru/release-notes?id=494\",\n    \"code\": \"461a0b83d6bd 7a89cd0c8d54\",\n    \"requestId\": \"6d44b95502f42fc6fc6f4fcd81b3d13c\",\n    \"origin\": \"s2s-api-auth-stat\",\n    \"status\": 404,\n    \"sta",
+          "entity": "sync"
+        },
+        {
+          "id": "sync-entity-finance",
+          "severity": "warning",
+          "title": "Sync errors: finance",
+          "detail": "warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration · warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs",
+          "entity": "sync"
+        }
+      ],
+      "score": {
+        "value": 64,
+        "label": "Needs Attention"
+      }
+    }
+  },
+  "failures": [
+    {
+      "category": "inventory_stale",
+      "affectedEntity": "inventory",
+      "reason": "Inventory DB latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+      "detectedAt": "2026-07-29T11:34:02.712Z",
+      "recommendedAction": "Run a full Sync including stock, or investigate deprecated stocks API coverage."
+    },
+    {
+      "category": "partial_sync",
+      "affectedEntity": "sync",
+      "reason": "Synchronization completed with partial or warning status.",
+      "detectedAt": "2026-07-29T11:34:02.712Z",
+      "recommendedAction": "Review entity-level sync errors and re-run affected entities only."
+    }
+  ],
+  "verified_at": "2026-07-29T11:34:02.712Z",
+  "created_at": "2026-07-29T11:34:02.712Z"
+}

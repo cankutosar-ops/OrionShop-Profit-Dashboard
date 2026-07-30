@@ -1,11 +1,36 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import type { CostManagementRow } from "@/types/database";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
+
+type CostSortKey =
+  | "supplierArticle"
+  | "productName"
+  | "currentStock"
+  | "currentSalePrice"
+  | "currentPurchasePrice";
+
+function costSortValue(row: CostManagementRow, key: CostSortKey): SortValue {
+  switch (key) {
+    case "supplierArticle":
+      return row.supplierArticle;
+    case "productName":
+      return row.productName;
+    case "currentStock":
+      return row.currentStock;
+    case "currentSalePrice":
+      return row.currentSalePrice;
+    case "currentPurchasePrice":
+      return row.currentPurchasePrice;
+  }
+}
 
 type CostManagementTableProps = {
   rows: CostManagementRow[];
@@ -180,13 +205,18 @@ export function CostManagementTable({ rows, scopeQuery, onRowUpdated }: CostMana
   const skuParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku)?.trim() ?? "";
   const productParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.product)?.trim() ?? "";
   const [search, setSearch] = useState(() => skuParam);
+  const { sort, onSort, directionFor, isActive } = useCycleSort<CostSortKey>(null);
+  const getValue = useCallback(
+    (row: CostManagementRow, key: CostSortKey) => costSortValue(row, key),
+    []
+  );
 
   useEffect(() => {
     setSearch(skuParam);
   }, [skuParam]);
 
   const displayRows = useMemo(() => {
-    let filtered = sortCostManagementRows(rows);
+    let filtered = rows;
     if (productParam) {
       filtered = filtered.filter((row) => row.productId === productParam);
     } else if (skuParam) {
@@ -198,8 +228,11 @@ export function CostManagementTable({ rows, scopeQuery, onRowUpdated }: CostMana
     } else {
       filtered = filterCostManagementRows(filtered, search);
     }
-    return filtered;
-  }, [rows, search, skuParam, productParam]);
+    if (sort) {
+      return sortRowsBySpec(filtered, sort, getValue);
+    }
+    return sortCostManagementRows(filtered);
+  }, [rows, search, skuParam, productParam, sort, getValue]);
 
   function updateSingleRow(updated: CostManagementRow) {
     onRowUpdated(rows.map((row) => (row.productId === updated.productId ? updated : row)));
@@ -237,11 +270,44 @@ export function CostManagementTable({ rows, scopeQuery, onRowUpdated }: CostMana
           <table className="w-full min-w-[880px] text-sm">
             <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))] text-muted-foreground">
               <tr className="border-b border-border">
-                <th className="px-4 py-2.5 text-left font-medium">Model Code</th>
-                <th className="px-3 py-2.5 text-left font-medium">Product Name</th>
-                <th className="px-3 py-2.5 text-right font-medium">Current Stock</th>
-                <th className="px-3 py-2.5 text-right font-medium">Current Sale Price</th>
-                <th className="px-4 py-2.5 text-right font-medium">Current Purchase Price</th>
+                <SortableTh
+                  label="Model Code"
+                  active={isActive("supplierArticle")}
+                  direction={directionFor("supplierArticle")}
+                  onClick={() => onSort("supplierArticle")}
+                  className="px-4 py-2.5"
+                />
+                <SortableTh
+                  label="Product Name"
+                  active={isActive("productName")}
+                  direction={directionFor("productName")}
+                  onClick={() => onSort("productName")}
+                  className="px-3 py-2.5"
+                />
+                <SortableTh
+                  label="Current Stock"
+                  active={isActive("currentStock")}
+                  direction={directionFor("currentStock")}
+                  onClick={() => onSort("currentStock")}
+                  align="right"
+                  className="px-3 py-2.5"
+                />
+                <SortableTh
+                  label="Current Sale Price"
+                  active={isActive("currentSalePrice")}
+                  direction={directionFor("currentSalePrice")}
+                  onClick={() => onSort("currentSalePrice")}
+                  align="right"
+                  className="px-3 py-2.5"
+                />
+                <SortableTh
+                  label="Current Purchase Price"
+                  active={isActive("currentPurchasePrice")}
+                  direction={directionFor("currentPurchasePrice")}
+                  onClick={() => onSort("currentPurchasePrice")}
+                  align="right"
+                  className="px-4 py-2.5"
+                />
               </tr>
             </thead>
             <tbody>

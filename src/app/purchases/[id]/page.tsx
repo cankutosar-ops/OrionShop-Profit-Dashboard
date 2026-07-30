@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { PurchaseLinesTable } from "@/components/purchases/purchase-lines-table";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { scopeParamsToSearchParams, type PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -88,47 +89,7 @@ export default async function PurchaseDetailPage({ params, searchParams }: PageP
           </div>
         )}
 
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="border-b border-border px-6 py-4">
-            <p className="text-sm text-muted-foreground">
-              {purchase.lines.length} imported product lines
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="px-6 py-3 font-medium">Supplier Article</th>
-                  <th className="px-6 py-3 font-medium">Product Name</th>
-                  <th className="px-6 py-3 font-medium">Quantity</th>
-                  <th className="px-6 py-3 font-medium">Unit Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchase.lines.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                      No lines imported for this purchase.
-                    </td>
-                  </tr>
-                ) : (
-                  purchase.lines.map((line) => (
-                    <tr key={line.id} className="border-b border-border/50">
-                      <td className="px-6 py-3.5 font-mono text-xs font-medium text-primary">
-                        {line.supplier_article}
-                      </td>
-                      <td className="px-6 py-3.5">{line.product_name ?? "—"}</td>
-                      <td className="px-6 py-3.5">{formatNumber(line.quantity)}</td>
-                      <td className="px-6 py-3.5 font-medium">
-                        {formatCurrency(line.unit_cost, purchase.currency)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <PurchaseLinesTable lines={purchase.lines} currency={purchase.currency} />
       </div>
     </>
   );

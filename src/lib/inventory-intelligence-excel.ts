@@ -46,7 +46,7 @@ function buildIntelligenceSheetRows(rows: InventoryIntelligenceSkuRow[]) {
       "Warehouse Count": row.warehouseCount,
       "Total Orders": totals.orders,
       "Total Units": totals.units,
-      "Total Revenue": Math.round(totals.revenue * 100) / 100,
+      "Total Sales": Math.round(totals.revenue * 100) / 100,
       "Last Sale Date": row.lastSaleDate ?? "",
       "Days Since Last Sale": row.daysSinceLastSale ?? "",
       "Stock Health": row.stockHealth,
@@ -63,8 +63,8 @@ function buildDistributionSheetRows(rows: InventoryIntelligenceSkuRow[]) {
         Warehouse: formatWarehouseName(wh.warehouse),
         Orders: wh.orders,
         Units: wh.unitsSold,
-        Revenue: Math.round(wh.revenue * 100) / 100,
-        "Sales Share": Math.round(wh.salesSharePercent * 100) / 100,
+        Sales: Math.round(wh.revenue * 100) / 100,
+        "Order Share": Math.round(wh.salesSharePercent * 100) / 100,
       });
     }
   }
@@ -81,7 +81,7 @@ export function buildInventoryIntelligenceWorkbook(
   XLSX.utils.book_append_sheet(workbook, sheet1, "Inventory Intelligence");
 
   const sheet2 = XLSX.utils.json_to_sheet(buildDistributionSheetRows(rows));
-  XLSX.utils.book_append_sheet(workbook, sheet2, "Warehouse Distribution");
+  XLSX.utils.book_append_sheet(workbook, sheet2, "Warehouse Sales");
 
   return XLSX.write(workbook, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
 }

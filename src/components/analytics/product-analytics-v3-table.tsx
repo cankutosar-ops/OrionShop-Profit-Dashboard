@@ -1,6 +1,12 @@
+"use client";
+
+import { useCallback, useMemo } from "react";
 import type { ProductAnalyticsV3Row } from "@/types/database";
 import { LogisticsBreakdownHint } from "@/components/analytics/logistics-breakdown-hint";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { getOperationalMarginBand } from "@/lib/product-operational-metrics";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type ProductAnalyticsV3TableProps = {
@@ -11,12 +17,54 @@ type ProductAnalyticsV3TableProps = {
   layout?: "full" | "compact";
 };
 
+type SortKey =
+  | "sku"
+  | "product"
+  | "orders"
+  | "purchases"
+  | "conversion"
+  | "revenue"
+  | "commission"
+  | "logistics"
+  | "productCost"
+  | "operProfit"
+  | "operMargin";
+
+const DEFAULT_SORT = { key: "revenue" as const, direction: "desc" as const };
+
 function operationalVariant(marginPercent: number): "success" | "warning" | "danger" | "muted" {
   const band = getOperationalMarginBand(marginPercent);
   if (band === "strong") return "success";
   if (band === "healthy") return "muted";
   if (band === "weak") return "warning";
   return "danger";
+}
+
+function sortValue(row: ProductAnalyticsV3Row, key: SortKey): SortValue {
+  switch (key) {
+    case "sku":
+      return row.supplierArticle;
+    case "product":
+      return row.productName;
+    case "orders":
+      return row.orders;
+    case "purchases":
+      return row.purchases;
+    case "conversion":
+      return row.conversionPercent;
+    case "revenue":
+      return row.revenue;
+    case "commission":
+      return row.commission;
+    case "logistics":
+      return row.totalLogistics;
+    case "productCost":
+      return row.productCost;
+    case "operProfit":
+      return row.operationalProfit;
+    case "operMargin":
+      return row.operationalMarginPercent;
+  }
 }
 
 const stickySkuHeader =
@@ -31,9 +79,19 @@ export function ProductAnalyticsV3Table({
   layout = "compact",
 }: ProductAnalyticsV3TableProps) {
   const isFull = layout === "full";
-  const colSpan = isFull ? 13 : 12;
+  const colSpan = isFull ? 11 : 10;
   const cellPad = isFull ? "px-3 py-2" : "px-4 py-2.5";
   const headPad = isFull ? "px-3 py-2" : "px-4 py-2.5";
+
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortKey>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: ProductAnalyticsV3Row, key: SortKey) => sortValue(row, key),
+    []
+  );
+  const sorted = useMemo(
+    () => sortRowsBySpec(rows, sort, getValue),
+    [rows, sort, getValue]
+  );
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-border bg-card">
@@ -44,28 +102,101 @@ export function ProductAnalyticsV3Table({
         )}
       </div>
       <div className="overflow-x-auto">
-        <table className={cn("w-full text-sm", isFull && "min-w-full table-fixed", !isFull && "min-w-[960px]")}>
+        <table className={cn("w-full text-sm", isFull && "min-w-full table-fixed", !isFull && "min-w-[840px]")}>
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className={cn(headPad, "font-medium", stickySkuHeader)}>SKU</th>
+              <SortableTh
+                label="SKU"
+                active={isActive("sku")}
+                direction={directionFor("sku")}
+                onClick={() => onSort("sku")}
+                className={cn(headPad, stickySkuHeader)}
+              />
               {isFull && (
-                <th className={cn(headPad, "w-[16%] font-medium")}>Product</th>
+                <SortableTh
+                  label="Product"
+                  active={isActive("product")}
+                  direction={directionFor("product")}
+                  onClick={() => onSort("product")}
+                  className={cn(headPad, "w-[16%]")}
+                />
               )}
-              <th className={cn(headPad, "w-[6%] text-right font-medium")}>Orders</th>
-              <th className={cn(headPad, "w-[6%] text-right font-medium")}>Purchases</th>
-              <th className={cn(headPad, "w-[6%] text-right font-medium")}>Conv. %</th>
-              <th className={cn(headPad, "w-[6%] text-right font-medium")}>Cancelled</th>
-              <th className={cn(headPad, "w-[6%] text-right font-medium")}>Cancel. %</th>
-              <th className={cn(headPad, "w-[8%] text-right font-medium")}>Revenue</th>
-              <th className={cn(headPad, "w-[8%] text-right font-medium")}>Commission</th>
-              <th className={cn(headPad, "w-[8%] text-right font-medium")}>Total Logistics</th>
-              <th className={cn(headPad, "w-[8%] text-right font-medium")}>Product Cost</th>
-              <th className={cn(headPad, "w-[8%] text-right font-medium")}>Oper. Profit</th>
-              <th className={cn(headPad, "w-[5%] text-right font-medium")}>Oper. Margin</th>
+              <SortableTh
+                label="Orders"
+                active={isActive("orders")}
+                direction={directionFor("orders")}
+                onClick={() => onSort("orders")}
+                align="right"
+                className={cn(headPad, "w-[7%]")}
+              />
+              <SortableTh
+                label="Buyout"
+                active={isActive("purchases")}
+                direction={directionFor("purchases")}
+                onClick={() => onSort("purchases")}
+                align="right"
+                className={cn(headPad, "w-[7%]")}
+              />
+              <SortableTh
+                label="Conv. %"
+                active={isActive("conversion")}
+                direction={directionFor("conversion")}
+                onClick={() => onSort("conversion")}
+                align="right"
+                className={cn(headPad, "w-[7%]")}
+              />
+              <SortableTh
+                label="Revenue"
+                active={isActive("revenue")}
+                direction={directionFor("revenue")}
+                onClick={() => onSort("revenue")}
+                align="right"
+                className={cn(headPad, "w-[9%]")}
+              />
+              <SortableTh
+                label="Commission"
+                active={isActive("commission")}
+                direction={directionFor("commission")}
+                onClick={() => onSort("commission")}
+                align="right"
+                className={cn(headPad, "w-[9%]")}
+              />
+              <SortableTh
+                label="Total Logistics"
+                active={isActive("logistics")}
+                direction={directionFor("logistics")}
+                onClick={() => onSort("logistics")}
+                align="right"
+                className={cn(headPad, "w-[9%]")}
+              />
+              <SortableTh
+                label="Product Cost"
+                active={isActive("productCost")}
+                direction={directionFor("productCost")}
+                onClick={() => onSort("productCost")}
+                align="right"
+                className={cn(headPad, "w-[9%]")}
+              />
+              <SortableTh
+                label="Oper. Profit"
+                active={isActive("operProfit")}
+                direction={directionFor("operProfit")}
+                onClick={() => onSort("operProfit")}
+                align="right"
+                className={cn(headPad, "w-[9%]")}
+              />
+              <SortableTh
+                label="Oper. Margin"
+                active={isActive("operMargin")}
+                direction={directionFor("operMargin")}
+                onClick={() => onSort("operMargin")}
+                align="right"
+                className={cn(headPad, "w-[6%]")}
+              />
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {sorted.length === 0 ? (
               <tr>
                 <td
                   colSpan={colSpan}
@@ -75,7 +206,7 @@ export function ProductAnalyticsV3Table({
                 </td>
               </tr>
             ) : (
-              rows.map((row) => {
+              sorted.map((row) => {
                 const variant = operationalVariant(row.operationalMarginPercent);
                 return (
                   <tr
@@ -106,12 +237,6 @@ export function ProductAnalyticsV3Table({
                     </td>
                     <td className={cn(cellPad, "text-right text-muted-foreground tabular-nums")}>
                       {formatPercent(row.conversionPercent)}
-                    </td>
-                    <td className={cn(cellPad, "text-right text-muted-foreground tabular-nums")}>
-                      {formatNumber(row.cancelled)}
-                    </td>
-                    <td className={cn(cellPad, "text-right text-muted-foreground tabular-nums")}>
-                      {formatPercent(row.cancellationPercent)}
                     </td>
                     <td className={cn(cellPad, "text-right font-medium tabular-nums")}>
                       {formatCurrency(row.revenue)}

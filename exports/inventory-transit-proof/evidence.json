@@ -1,0 +1,296 @@
+{
+  "api": {
+    "sumTo": 101,
+    "sumFrom": 113,
+    "itemCount": 657,
+    "sample": {
+      "nmId": 150060261,
+      "chrtId": 251681599,
+      "warehouseId": 0,
+      "warehouseName": "Остальные",
+      "regionName": "Центральный",
+      "quantity": 0,
+      "inWayToClient": 0,
+      "inWayFromClient": 1
+    }
+  },
+  "database_daily": {
+    "date": "2026-07-26",
+    "rows": 655,
+    "sumTo": 102,
+    "sumFrom": 114,
+    "samples": [
+      {
+        "seller_article": "ZARALACIVERT01",
+        "size": "54-56",
+        "warehouse_name": "Остальные",
+        "quantity": 0,
+        "in_way_to_client": 0,
+        "in_way_from_client": 1,
+        "barcode": "04627121466735"
+      },
+      {
+        "seller_article": "ZARASIYAH01",
+        "size": "50-52",
+        "warehouse_name": "Остальные",
+        "quantity": 0,
+        "in_way_to_client": 3,
+        "in_way_from_client": 1,
+        "barcode": "04627121466780"
+      },
+      {
+        "seller_article": "ZARASIYAH01",
+        "size": "50-52",
+        "warehouse_name": "Коледино",
+        "quantity": 10,
+        "in_way_to_client": 1,
+        "in_way_from_client": 0,
+        "barcode": "04627121466780"
+      },
+      {
+        "seller_article": "ZARASIYAH01",
+        "size": "50-52",
+        "warehouse_name": "Котовск",
+        "quantity": 0,
+        "in_way_to_client": 0,
+        "in_way_from_client": 1,
+        "barcode": "04627121466780"
+      },
+      {
+        "seller_article": "ZARASIYAH01",
+        "size": "54-56",
+        "warehouse_name": "Махачкала Сепараторная",
+        "quantity": 0,
+        "in_way_to_client": 0,
+        "in_way_from_client": 1,
+        "barcode": "04627121466773"
+      }
+    ]
+  },
+  "database_historical_csv_dates": {
+    "2026-07-25": {
+      "date": "2026-07-25",
+      "rows": 761,
+      "sumTo": 0,
+      "sumFrom": 0,
+      "samples": []
+    },
+    "2026-07-20": {
+      "date": "2026-07-20",
+      "rows": 761,
+      "sumTo": 0,
+      "sumFrom": 0,
+      "samples": []
+    },
+    "2026-07-17": {
+      "date": "2026-07-17",
+      "rows": 761,
+      "sumTo": 0,
+      "sumFrom": 0,
+      "samples": []
+    }
+  },
+  "csv": {
+    "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\historical-inventory\\account-1\\_source\\STOCK_HISTORY_DAILY_wide.csv",
+    "header": "VendorCode,Name,NmID,SubjectName,BrandName,SizeName,ChrtID,OfficeName,17.07.2026,18.07.2026,19.07.2026,20.07.2026,21.07.2026,22.07.2026,23.07.2026,24.07.2026,25.07.2026,26.07.2026",
+    "hasInWayToClient": false,
+    "hasInWayFromClient": false
+  },
+  "historyApi": {
+    "status": 200,
+    "rowCount": 655,
+    "sumTo": 102,
+    "sumFrom": 114,
+    "sample": [
+      {
+        "id": 46814,
+        "snapshot_date": "2026-07-26",
+        "marketplace_account_id": 1,
+        "warehouse_name": "Владимир WB",
+        "brand": "GVOnly",
+        "subject": "Платья",
+        "seller_article": "SONNABORDO",
+        "nm_id": 172997223,
+        "barcode": "04627121466568",
+        "size": "58-60",
+        "quantity": 0,
+        "created_at": "2026-07-26T13:31:30.47037+00:00",
+        "in_way_to_client": 1,
+        "in_way_from_client": 0
+      },
+      {
+        "id": 47134,
+        "snapshot_date": "2026-07-26",
+        "marketplace_account_id": 1,
+        "warehouse_name": "Владимир WB",
+        "brand": "GVOnly",
+        "subject": "Платья",
+        "seller_article": "ZARASAMPANYA",
+        "nm_id": 233025595,
+        "barcode": "04650372580158",
+        "size": "46-48",
+        "quantity": 1,
+        "created_at": "2026-07-26T13:31:30.726356+00:00",
+        "in_way_to_client": 1,
+        "in_way_from_client": 0
+      },
+      {
+        "id": 46675,
+        "snapshot_date": "2026-07-26",
+        "marketplace_account_id": 1,
+        "warehouse_name": "Волгоград",
+        "brand": "GVOnly",
+        "subject": "Платья",
+        "seller_article": "LILYSIYAH01",
+        "nm_id": 150064437,
+        "barcode": "04627121466438",
+        "size": "46-48",
+        "quantity": 0,
+        "created_at": "2026-07-26T13:31:30.47037+00:00",
+        "in_way_to_client": 1,
+        "in_way_from_client": 0
+      }
+    ]
+  },
+  "aggregation": {
+    "size": {
+      "rows": 135,
+      "total": 1487,
+      "toCustomer": 102,
+      "fromCustomer": 114,
+      "top": [
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "LILYSIYAH01",
+          "size": "46-48",
+          "total": 1,
+          "toCustomer": 11,
+          "fromCustomer": 4
+        },
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "ALEXASIYAH01",
+          "size": "46-48",
+          "total": 57,
+          "toCustomer": 5,
+          "fromCustomer": 5
+        },
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "ZARASAMPANYA",
+          "size": "46-48",
+          "total": 5,
+          "toCustomer": 5,
+          "fromCustomer": 2
+        }
+      ]
+    },
+    "model": {
+      "rows": 42,
+      "total": 1487,
+      "toCustomer": 102,
+      "fromCustomer": 114,
+      "top": [
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "LILYSIYAH01",
+          "size": "",
+          "total": 4,
+          "toCustomer": 17,
+          "fromCustomer": 10
+        },
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "ZARASAMPANYA",
+          "size": "",
+          "total": 22,
+          "toCustomer": 15,
+          "fromCustomer": 13
+        },
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "ALEXASIYAH01",
+          "size": "",
+          "total": 111,
+          "toCustomer": 10,
+          "fromCustomer": 16
+        }
+      ]
+    },
+    "category": {
+      "rows": 4,
+      "total": 1487,
+      "toCustomer": 102,
+      "fromCustomer": 114,
+      "top": [
+        {
+          "brand": "GVOnly",
+          "category": "Платья",
+          "model": "",
+          "size": "",
+          "total": 1457,
+          "toCustomer": 102,
+          "fromCustomer": 114
+        },
+        {
+          "brand": "GVOnly",
+          "category": "Водолазки",
+          "model": "",
+          "size": "",
+          "total": 5,
+          "toCustomer": 0,
+          "fromCustomer": 0
+        },
+        {
+          "brand": "TiffanyBaby",
+          "category": "Комбинезоны нательные для малышей",
+          "model": "",
+          "size": "",
+          "total": 7,
+          "toCustomer": 0,
+          "fromCustomer": 0
+        }
+      ]
+    },
+    "brand": {
+      "rows": 2,
+      "total": 1487,
+      "toCustomer": 102,
+      "fromCustomer": 114,
+      "top": [
+        {
+          "brand": "GVOnly",
+          "category": "",
+          "model": "",
+          "size": "",
+          "total": 1480,
+          "toCustomer": 102,
+          "fromCustomer": 114
+        },
+        {
+          "brand": "TiffanyBaby",
+          "category": "",
+          "model": "",
+          "size": "",
+          "total": 7,
+          "toCustomer": 0,
+          "fromCustomer": 0
+        }
+      ]
+    }
+  },
+  "parity": {
+    "api_vs_db_to": false,
+    "api_vs_db_from": false,
+    "db_vs_historyApi_to": true,
+    "db_vs_historyApi_from": true,
+    "historyApi_vs_sizeAgg_to": true,
+    "historyApi_vs_brandAgg_to": true
+  }
+}

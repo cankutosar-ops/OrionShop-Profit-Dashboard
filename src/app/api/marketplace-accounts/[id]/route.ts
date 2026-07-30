@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDefaultDateRange } from "@/lib/utils";
+import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 import {
   deleteMarketplaceAccount,
   listCompanies,
@@ -14,11 +15,17 @@ import {
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
+    const authz = await authorize(request, { marketplaceAccountId: id });
+    if (isAuthzFailure(authz)) return authz;
+
     const companies = await listCompanies();
     for (const company of companies) {
+      if (!authz.isInternalService && !authz.companyIds.includes(company.id)) {
+        continue;
+      }
       const account = company.accounts.find((row) => row.id === id);
       if (account) {
         return NextResponse.json({ account, companyId: company.id });
@@ -34,6 +41,9 @@ export async function GET(_request: Request, context: RouteContext) {
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
+    const authz = await authorize(request, { marketplaceAccountId: id });
+    if (isAuthzFailure(authz)) return authz;
+
     const body = await request.json();
     const account = await updateMarketplaceAccount(id, body);
     return NextResponse.json({ account });
@@ -43,9 +53,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
+    const authz = await authorize(request, { marketplaceAccountId: id });
+    if (isAuthzFailure(authz)) return authz;
+
     await deleteMarketplaceAccount(id);
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -57,11 +70,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
 export async function POST(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
+    const authz = await authorize(request, { marketplaceAccountId: id });
+    if (isAuthzFailure(authz)) return authz;
+
+    const marketplaceAccountId = authz.marketplaceAccountId!;
     const url = new URL(request.url);
     const action = url.searchParams.get("action");
 
     if (action === "test") {
-      const result = await testMarketplaceAccountConnection(id);
+      const result = await testMarketplaceAccountConnection(marketplaceAccountId);
       return NextResponse.json(result, { status: result.ok ? 200 : 400 });
     }
 
@@ -76,7 +93,7 @@ export async function POST(request: Request, context: RouteContext) {
       const blocking = (body as { blocking?: boolean }).blocking ?? false;
 
       const syncRequest = {
-        marketplaceAccountId: id,
+        marketplaceAccountId,
         dateFrom,
         dateTo,
         entities: entities as ("products" | "orders" | "sales" | "finance" | "stock")[],
@@ -99,9 +116,9 @@ export async function POST(request: Request, context: RouteContext) {
           accepted: true,
           mode: "background",
           requestId: scheduled.requestId,
-          marketplaceAccountId: id,
+          marketplaceAccountId,
           lastSyncStatus: "running",
-          statusUrl: `/api/sync/status?marketplaceAccountId=${id}`,
+          statusUrl: `/api/sync/status?marketplaceAccountId=${marketplaceAccountId}`,
         },
         { status: 202 }
       );

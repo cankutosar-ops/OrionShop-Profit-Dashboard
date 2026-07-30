@@ -1,0 +1,270 @@
+{
+  "period": {
+    "from": "2026-01-01",
+    "to": "2026-07-19",
+    "accountId": "1"
+  },
+  "excelGroundTruth": {
+    "filter": "Тип отчета = Основной only (29 weeks); exclude По выкупам",
+    "n": 29,
+    "prodazha": 3775137.73,
+    "k": 3801642.41,
+    "logistics": 1380075.56,
+    "storage": 118902.85,
+    "acceptance": 315,
+    "other": 809036.73,
+    "penalties": 6205,
+    "totalPay": 1485710.32,
+    "vvAdj": 1396.95,
+    "loyaltyCost": 0,
+    "loyaltyPoints": 0,
+    "oneTime": 0,
+    "impliedFee": -26504.68,
+    "formulaTotal": 1487107.27,
+    "formulaTotalPlusExtras": 1485710.32,
+    "delta_total_vs_formula": -1396.95,
+    "delta_total_vs_formulaPlus": 0,
+    "identity": "Итого = К перечислению − logistics − storage − acceptance − other − penalties − VV_adj (Δ=0)"
+  },
+  "database": {
+    "netSales_priceWithDisc": 4979563.05,
+    "grossSales": 6414588.18,
+    "returnedSales": 1435025.13,
+    "salesForPay": 3185290.45,
+    "modelBCommission": 1794272.6,
+    "finishedPrice_net": 3028601.27,
+    "finance": {
+      "COMMISSION": 402753.32,
+      "ACQUIRING": 206469.7,
+      "PPVZ_REWARD": 128143.11,
+      "PPVZ_VW": 537030.02,
+      "OTHER": 315,
+      "ADJUSTMENT": 791988.17,
+      "COMPENSATION": 1396.95,
+      "LOGISTICS": 1391105.41,
+      "RETURN_LOGISTICS": 101554.61,
+      "logistics_total": 1492660.02,
+      "STORAGE": 113272.48,
+      "PENALTY": 6205,
+      "marketplaceFees_display": 1274711.15,
+      "financeNetForPay_signed": 3831458.84,
+      "financeForPayAbs": 5680589.86
+    },
+    "weeklyReports": {
+      "count": 0,
+      "forPaySum": 0,
+      "details": []
+    },
+    "acceptanceDb": 315,
+    "sellerPayout": 574695.08
+  },
+  "reconciliation": [
+    {
+      "metric": "Sales — Excel Продажа",
+      "excel": 3775137.73,
+      "db": 4979563.05,
+      "diff": 1204425.32,
+      "explanation": "Excel Продажа = realized retail in weekly report. DB priceWithDisc net is catalog-after-seller-discount, not Excel Продажа.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "Sales — DB finishedPrice/revenue net (vs Excel Продажа)",
+      "excel": 3775137.73,
+      "db": 3028601.27,
+      "diff": -746536.46,
+      "explanation": "Closer than priceWithDisc but still not Excel Продажа (SPP/returns/week edges).",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "К перечислению за товар (Excel goods settlement / WB Revenue base)",
+      "excel": 3801642.41,
+      "db": 3831458.84,
+      "diff": 29816.43,
+      "explanation": "DB Σ signed wb_finance amount where suffix=for_pay, operation_date in range. Gap from week vs operation_date axis / sync coverage.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "Dashboard Commercial Revenue (Sales API forPay)",
+      "excel": 3801642.41,
+      "db": 3185290.45,
+      "diff": -616351.96,
+      "explanation": "Dashboard Revenue uses wb_sales.for_pay on sale_date — NOT Excel К перечислению. This is the primary Revenue mismatch.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "Logistics",
+      "excel": 1380075.56,
+      "db": 1492660.02,
+      "diff": 112584.46,
+      "explanation": "DB LOGISTICS+RETURN_LOGISTICS by operation_date. Excel «Стоимость логистики» on Основной weeks only (excludes По выкупам logistics).",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "Storage",
+      "excel": 118902.85,
+      "db": 113272.48,
+      "diff": -5630.37,
+      "explanation": "Same concept; residual from date-axis / classification.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "Acceptance",
+      "excel": 315,
+      "db": 315,
+      "diff": 0,
+      "explanation": "MATCH — suffix acceptance.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "Penalties",
+      "excel": 6205,
+      "db": 6205,
+      "diff": 0,
+      "explanation": "MATCH",
+      "status": "MATCH"
+    },
+    {
+      "metric": "Adjustments / Прочие удержания",
+      "excel": 809036.73,
+      "db": 791988.17,
+      "diff": -17048.56,
+      "explanation": "Near — ADJUSTMENT vs Excel other holds column.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "VV adjustment / Compensation",
+      "excel": 1396.95,
+      "db": 1396.95,
+      "diff": 0,
+      "explanation": "MATCH amount — Excel «Корректировка ВВ»; DB COMPENSATION.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "Acquiring",
+      "excel": null,
+      "db": 206469.7,
+      "diff": null,
+      "explanation": "No separate Excel weekly column. Embedded inside Продажа → К перечислению.",
+      "status": "NO EXCEL COLUMN"
+    },
+    {
+      "metric": "Commission (Finance abs) / Model B Sales spread",
+      "excel": null,
+      "db_finance_commission": 402753.32,
+      "db_modelB_commission": 1794272.6,
+      "diff": null,
+      "explanation": "Excel has no separate Commission column. Model B commission is Sales−forPay spread, not finance commission.",
+      "status": "NO EXCEL COLUMN"
+    },
+    {
+      "metric": "Итого к оплате (Excel settlement result)",
+      "excel": 1485710.32,
+      "db_settlement_like": 1425621.22,
+      "dashboard_sellerPayout": 574695.08,
+      "diff_settlement_like": -60089.1,
+      "diff_sellerPayout": -911015.24,
+      "explanation": "Excel identity: К − log − stor − accept − other − pen − VV_adj = Итого (exact). Dashboard Seller Payout starts from Sales forPay and is not Excel Итого.",
+      "status_settlement_like": "MISMATCH",
+      "status": "NO EXCEL COLUMN"
+    }
+  ],
+  "revenueWaterfall": {
+    "excel": [
+      {
+        "step": "Продажа",
+        "amount": 3775137.73
+      },
+      {
+        "step": "→ (platform goods settlement effect)",
+        "amount": 26504.68
+      },
+      {
+        "step": "= К перечислению за товар  << Excel Revenue/goods base",
+        "amount": 3801642.41
+      },
+      {
+        "step": "− Logistics",
+        "amount": -1380075.56
+      },
+      {
+        "step": "− Storage",
+        "amount": -118902.85
+      },
+      {
+        "step": "− Acceptance",
+        "amount": -315
+      },
+      {
+        "step": "− Прочие удержания",
+        "amount": -809036.73
+      },
+      {
+        "step": "− Penalties",
+        "amount": -6205
+      },
+      {
+        "step": "− Корректировка ВВ",
+        "amount": -1396.95
+      },
+      {
+        "step": "= Итого к оплате",
+        "amount": 1485710.32
+      }
+    ],
+    "dashboardCommercial": [
+      {
+        "step": "Sales priceWithDisc net",
+        "amount": 4979563.05
+      },
+      {
+        "step": "− Commission (Sales−forPay)",
+        "amount": -1794272.6
+      },
+      {
+        "step": "= Revenue (Sales forPay)",
+        "amount": 3185290.45
+      },
+      {
+        "step": "− Acquiring",
+        "amount": -206469.7
+      },
+      {
+        "step": "− Logistics",
+        "amount": -1492660.02
+      },
+      {
+        "step": "− Storage",
+        "amount": -113272.48
+      },
+      {
+        "step": "− Penalties",
+        "amount": -6205
+      },
+      {
+        "step": "− Adjustments",
+        "amount": -791988.17
+      },
+      {
+        "step": "= Seller Payout",
+        "amount": 574695.08
+      }
+    ],
+    "gapAtRevenueBase": {
+      "excel_K": 3801642.41,
+      "dashboard_salesForPay": 3185290.45,
+      "finance_for_pay": 3831458.84,
+      "salesForPay_minus_excelK": -616351.96,
+      "financeForPay_minus_excelK": 29816.43
+    }
+  },
+  "sql": {
+    "sales": "SELECT * FROM wb_sales WHERE marketplace_account_id='1' AND sale_date BETWEEN '2026-01-01' AND '2026-07-19'",
+    "finance": "SELECT * FROM wb_finance WHERE marketplace_account_id='1' AND operation_date BETWEEN '2026-01-01' AND '2026-07-19'",
+    "acquiring": "SUM(ABS(amount)) WHERE suffix=acquiring_fee (via source_key/wb_source_suffix)",
+    "for_pay_finance": "SUM(amount) signed WHERE suffix=for_pay",
+    "sales_for_pay": "SUM(for_pay) purchases − SUM(for_pay) returns on wb_sales"
+  },
+  "followUp_DO_NOT_IMPLEMENT": {
+    "estimatedTax": "Change later: 6% tax from customer sale amount (Sales / WB selling price), NOT Seller Payout or Revenue."
+  }
+}

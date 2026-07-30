@@ -1,0 +1,177 @@
+{
+  "range": {
+    "accountId": "1",
+    "from": "2026-06-23",
+    "to": "2026-07-22"
+  },
+  "totals": {
+    "salesApiForPay": 393651.48,
+    "financeNetForPay": 239628.51,
+    "delta": 154022.97
+  },
+  "categories": [
+    {
+      "id": "A",
+      "name": "Realization timing — sale in window, no finance rows yet",
+      "contribution": 205063.75,
+      "count": 71
+    },
+    {
+      "id": "B",
+      "name": "Realization timing — finance events without for_pay (e.g. logistics only)",
+      "contribution": 4323,
+      "count": 1
+    },
+    {
+      "id": "C",
+      "name": "Matched SRID amount gap — Sales forPay > Finance for_pay",
+      "contribution": 17229.66,
+      "count": 73
+    },
+    {
+      "id": "D",
+      "name": "Return recognition mismatch — matched SRID with returns (Sales < Finance)",
+      "contribution": -72593.44,
+      "count": 27
+    },
+    {
+      "id": "E",
+      "name": "Matched SRID amount gap — Sales forPay < Finance for_pay (non-return)",
+      "contribution": 0,
+      "count": 0
+    },
+    {
+      "id": "F",
+      "name": "Finance for_pay without sale in window",
+      "contribution": 0,
+      "count": 0
+    },
+    {
+      "id": "G",
+      "name": "Null/empty SRID residuals",
+      "contribution": 0,
+      "count": 0
+    }
+  ],
+  "reconciliation": {
+    "sumCategories": 154022.97,
+    "residual": 0,
+    "exact": true
+  },
+  "examples": {
+    "A": [
+      {
+        "srid": "eAz.44aad8705e344e518422f490aaa3c33e.0.0",
+        "salesForPay": 4323,
+        "meaning": "sale in window; zero finance rows in window"
+      },
+      {
+        "srid": "ebt.rb13a3bac0cf14238bbc2af6e07603954.0.0",
+        "salesForPay": 4323,
+        "meaning": "sale in window; zero finance rows in window"
+      },
+      {
+        "srid": "eS.r15413b77b8c24edb8c0fcf6e6f133a4e.0.0",
+        "salesForPay": 4323,
+        "meaning": "sale in window; zero finance rows in window"
+      },
+      {
+        "srid": "eBj.i9b686edcd432f520b808271555958b76.0.0",
+        "salesForPay": 4323,
+        "meaning": "sale in window; zero finance rows in window"
+      },
+      {
+        "srid": "eA7.icc6dc54efbf46a80cda92613ce9732be.0.0",
+        "salesForPay": 4323,
+        "meaning": "sale in window; zero finance rows in window"
+      }
+    ],
+    "B": [
+      {
+        "srid": "ebX.r1ac6df3fc1c34444b5ed86e7bcf88fd6.0.0",
+        "salesForPay": 4323,
+        "suffixes": [
+          "return_logistics",
+          "ppvz_vw"
+        ],
+        "meaning": "sale in window; finance rows exist but no for_pay line"
+      }
+    ],
+    "C": [
+      {
+        "srid": "em.rf5517e48468d4cd59204a0e5ff989e28.0.0",
+        "sales": 3379.8,
+        "finance": 3356.95,
+        "gap": 22.85
+      },
+      {
+        "srid": "e1.rccdd134f1be04ecb9b76839f92d24a34.0.0",
+        "sales": 3379.8,
+        "finance": 3206.56,
+        "gap": 173.24
+      },
+      {
+        "srid": "es.rb3490ba58c7d4c5a82c8ccba58e280c8.0.0",
+        "sales": 3379.81,
+        "finance": 3280.07,
+        "gap": 99.74
+      },
+      {
+        "srid": "eAy.i686dca012f2177ac318dd8e906ad4d93.0.0",
+        "sales": 3379.8,
+        "finance": 3251.12,
+        "gap": 128.68
+      },
+      {
+        "srid": "eAz.r93ea7a8c873248ed84344b878c3db929.0.0",
+        "sales": 3458.4,
+        "finance": 3290.19,
+        "gap": 168.21
+      }
+    ],
+    "D": [
+      {
+        "srid": "eE.r8ee56088f899411eac51910578e59523.0.0",
+        "sales": -3684.37,
+        "finance": -3547.34,
+        "gap": -137.03,
+        "purchases": 0,
+        "returns": 1
+      },
+      {
+        "srid": "eB8.r1d97e1ce7b114daf804dc6fb065526a6.0.0",
+        "sales": -3301.2,
+        "finance": 0,
+        "gap": -3301.2,
+        "purchases": 0,
+        "returns": 1
+      },
+      {
+        "srid": "eBN.r2057660b44f64c80a6e6fe46755dfa7b.0.0",
+        "sales": -3537,
+        "finance": -3403.36,
+        "gap": -133.64,
+        "purchases": 0,
+        "returns": 1
+      },
+      {
+        "srid": "eBA.r1e550ca2355a417e9e47d333d08fe2ba.0.0",
+        "sales": -3602.5,
+        "finance": 0,
+        "gap": -3602.5,
+        "purchases": 0,
+        "returns": 1
+      },
+      {
+        "srid": "eI.i01e576f0aa71ccb201af3f513797f8ba.0.0",
+        "sales": -3379.8,
+        "finance": -3207.83,
+        "gap": -171.97,
+        "purchases": 0,
+        "returns": 1
+      }
+    ],
+    "E": [],
+    "F": []
+  }
+}

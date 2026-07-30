@@ -1,0 +1,169 @@
+{
+  "investigatedAt": "2026-07-22T15:00:00Z",
+  "scope": {
+    "accountId": "1",
+    "symptom": "wb_finance max operation_date=2026-07-05; week 2026-07-13→19 = 0 rows",
+    "constraints": "Investigation only. No code changes. No sync writes."
+  },
+  "step1_lastSuccessfulFinanceSync": {
+    "persistentJobTable": "NONE — no sync_runs/sync_logs tables",
+    "accountRow": {
+      "id": 1,
+      "account_name": "Wildberries Default",
+      "marketplace": "wildberries",
+      "is_active": true,
+      "sync_enabled": true,
+      "api_key_encrypted": "present (len=610)",
+      "last_sync_at": "2026-07-21T14:55:43.512+00:00",
+      "last_successful_sync_at": "2026-07-20T11:29:37.089+00:00",
+      "last_sync_status": "running",
+      "note": "last_successful_sync_at updates for ANY entity set including orders+sales-only auto-sync; it is NOT proof that finance ran."
+    },
+    "lastFinanceBackfillArtifact": {
+      "file": "exports/finance-backfill/progress.json",
+      "lastCompletedAt": "2026-07-12T19:28:52.615Z",
+      "completedWindows": {
+        "2026-01-01:2026-01-31": true,
+        "2026-02-01:2026-02-28": true,
+        "2026-03-01:2026-03-31": true,
+        "2026-04-01:2026-04-30": true,
+        "2026-05-01:2026-05-31": true,
+        "2026-06-01:2026-06-30": true,
+        "2026-07-01:2026-07-12": true
+      },
+      "noWindowAfter": "2026-07-12"
+    },
+    "lastImportedOperationDate": "2026-07-05",
+    "lastImportedTransaction": {
+      "id": 187354,
+      "operation_date": "2026-07-05",
+      "operation_type": "logistics",
+      "amount": 61.4,
+      "srid": "eAc.id4164b2adc29a4aad7e30ddce7d827c4.0.0",
+      "source_key": "rrd:3129137813177:logistics",
+      "rrd_id_from_source_key": "3129137813177"
+    },
+    "lastReportEvidenceInDb": "Only report covering through 2026-07-05 is present. Report create_dt for Jul 6–12 week is 2026-07-13 (after backfill completion)."
+  },
+  "step2_pipeline": {
+    "path": [
+      "Entry: Sync button / Settings / POST /api/sync / scripts/backfill-finance-history.mjs",
+      "executeDashboardSync OR runFinanceHistoryBackfill",
+      "WbSyncService.syncFinance(dateFrom,dateTo)",
+      "WbApiClient.fetchFinanceReport → GET statistics-api /api/v5/supplier/reportDetailByPeriod (rrdid cursor)",
+      "mapFinanceRowsFromReport",
+      "batchUpsertFinance → wb_finance",
+      "markAccountSyncFinished / progress.json"
+    ],
+    "whereStoppedForMissingWeek": "BEFORE fetchFinanceReport for 2026-07-13→19 (and for 2026-07-06→12 after report publication). Data never entered transform/upsert.",
+    "dashboardAutoSyncBypass": {
+      "file": "src/lib/dashboard-sync-client.ts",
+      "constant": "OPERATIONAL_SYNC_ENTITIES = [\"orders\", \"sales\"]",
+      "caller": "src/components/dashboard/dashboard-operational-sync.tsx",
+      "effect": "Daily dashboard refresh never calls finance."
+    }
+  },
+  "step3_apiProbe_readOnly": {
+    "file": "exports/finance-sync-api-probe-evidence.json",
+    "v5_GET_reportDetailByPeriod": [
+      {
+        "period": "2026-07-01→05",
+        "status": 200,
+        "rowsFirstPage": 861,
+        "max_rr_dt": "2026-07-05",
+        "rateLimitRemaining": "9"
+      },
+      {
+        "period": "2026-07-06→12",
+        "status": 200,
+        "rowsFirstPage": 1000,
+        "max_rr_dt": "2026-07-12",
+        "realizationreport_id_sample": 778300185,
+        "create_dt_in_payload": "2026-07-13",
+        "rateLimitRemaining": "8"
+      },
+      {
+        "period": "2026-07-13→19",
+        "status": 200,
+        "rowsFirstPage": 916,
+        "max_rr_dt": "2026-07-19",
+        "realizationreport_id": 786182326,
+        "create_dt_in_payload": "2026-07-20",
+        "rateLimitRemaining": "7",
+        "note": "Same official report number as Excel audit. API has the data; DB does not."
+      }
+    ],
+    "v1_POST_sales_reports_detailed": {
+      "period": "2026-07-13→19",
+      "status": 200,
+      "rows": 916
+    },
+    "conclusion": "NOT an API outage, NOT empty response, NOT rate-limit block for these probes. Data disappeared nowhere in the pipeline — it was never fetched into syncFinance after 2026-07-12."
+  },
+  "step4_database": {
+    "account1_total_rows": 63165,
+    "max_operation_date": "2026-07-05",
+    "rows_after_2026_07_05": 0,
+    "rows_2026_07_13_to_19": 0,
+    "daily_jul": {
+      "2026-07-01": 342,
+      "2026-07-02": 332,
+      "2026-07-03": 273,
+      "2026-07-04": 263,
+      "2026-07-05": 295
+    },
+    "insertionStopped": true,
+    "upsertFailureEvidenceForMissingWeek": "None — no matching source_keys attempted; gap is absence of sync, not failed upsert.",
+    "dedupRemovingNewRows": "Not applicable — no new rows reached upsert.",
+    "salesStillAdvancing": {
+      "newest_sale_date": "2026-07-20",
+      "sales_rows_after_jul5": 76,
+      "sales_rows_jul13_19": 34,
+      "proves": "Token and general sync path still work for non-finance entities."
+    }
+  },
+  "step5_syncLogic": {
+    "financeHasNoDbWatermarkIncremental": "syncFinance uses caller-provided dateFrom/dateTo only.",
+    "backfillProgressSkipsCompletedWindows": true,
+    "julyWindowHardStop": {
+      "script": "scripts/backfill-finance-history.mjs",
+      "MONTHS_July_to": "2026-07-12",
+      "progressKey": "2026-07-01:2026-07-12"
+    },
+    "prematureCompletionEvidence": {
+      "backfillCompletedAt": "2026-07-12T19:28:52.615Z",
+      "jul6_12_report_create_dt": "2026-07-13",
+      "implication": "Window marked complete before WB published the Jul 6–12 realization report; resume never re-fetches that window; DB stuck at Jul 5."
+    },
+    "defaultSyncButtonRange": "last 30 days via getDefaultDateRange — WOULD cover missing week IF finance entity runs AND sync is not blocked"
+  },
+  "step6_accountState": {
+    "apiTokenValid": true,
+    "evidence": "Live v5/v1 finance probes HTTP 200; sales sync through 2026-07-20",
+    "financeScopeEnabled": true,
+    "accountActive": true,
+    "syncEnabled": true,
+    "syncDisabled": false,
+    "partialSyncByDesign": "DashboardOperationalSync intentionally omits finance",
+    "lastSyncStatus": "running (STALE since 2026-07-21T14:55:43Z)",
+    "blocker": "assertSyncNotRunning in sync-job-service.ts throws SyncAlreadyRunningError when last_sync_status==='running' — blocks new full syncs including finance"
+  },
+  "verdict": {
+    "q1_whyStopped": "Finance ingestion stopped because (1) the last finance backfill completed the Jul 1–12 window on 2026-07-12 before the Jul 6–12 WB report existed (create_dt 2026-07-13), leaving DB at max operation_date 2026-07-05; (2) no subsequent finance job ran for Jul 13+; (3) dashboard auto-sync never includes finance; (4) account last_sync_status stuck at running since 2026-07-21 blocks new sync attempts.",
+    "q2_exactStopPoint": "Process/scheduler layer BEFORE WbApiClient.fetchFinanceReport for post-2026-07-05 periods. Primary artifacts: exports/finance-backfill/progress.json resume skip; DashboardOperationalSync → OPERATIONAL_SYNC_ENTITIES; assertSyncNotRunning gate. Not inside mapFinanceRowsFromReport or batchUpsertFinance for the missing week.",
+    "q3_classification": [
+      "Scheduler / process gap (no continuous finance sync) — PRIMARY",
+      "Wrong incremental / resume date logic (premature completed window) — PRIMARY for Jul 6–12 hole",
+      "Partial sync by design (auto-sync excludes finance) — CONTRIBUTING",
+      "Stuck sync lock (last_sync_status=running) — CONTRIBUTING since 2026-07-21"
+    ],
+    "ruledOut": [
+      "API problem (v5 returns 916 rows for audit week incl. report 786182326)",
+      "Rate limit (probes 200, remaining 7–9)",
+      "Token problem",
+      "Database upsert bug for this week (no insert attempted)",
+      "Filtering bug deleting the week",
+      "Pagination bug for this week (fetch never started for that range after report publish)"
+    ]
+  }
+}

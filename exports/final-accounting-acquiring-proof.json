@@ -1,0 +1,47 @@
+{
+  "q2_103k_interpretation": {
+    "option_A_MarketplaceFees_30d": {
+      "value": 106519.37,
+      "parts": {
+        "marketplaceFeesTotal": 106519.37,
+        "commission": 34902.8,
+        "acquiring": 14821.46,
+        "ppvzReward": 8692.1,
+        "ppvzVw": 48103.01,
+        "otherMarketplaceExpenses": 0,
+        "sumParts": 106519.37,
+        "feesWithoutAcquiring": 91697.91,
+        "acquiringCountedInMarketplaceFees": true,
+        "acquiringAlsoInModelBSellerPayout": true,
+        "note": "Marketplace Fees KPI includes acquiring once as a component. Model B deducts acquiring once in sellerPayout. Same ACQUIRING category — not added twice into Operating Profit.",
+        "proof_operatingProfit_uses_acquiring_once": "operatingProfit = (salesForPay - acquiring - logistics - storage - penalties - adjustments) - productCost - advertising"
+      },
+      "note": "Dashboard Marketplace Fees KPI for 30d audit window ≈ 106.5k (NOT acquiring alone)"
+    },
+    "option_B_Acquiring_90d": {
+      "value": 97207.52,
+      "note": "Acquiring for 90d window ≈ 97.2k — closest pure-acquiring figure to ~103k"
+    },
+    "actual_acquiring_30d_audit_window": 14821.46
+  },
+  "transactionExports": [
+    {
+      "name": "30d",
+      "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\acquiring-transactions-30d.json",
+      "count": 116,
+      "total": 14821.46
+    },
+    {
+      "name": "90d",
+      "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\acquiring-transactions-90d.json",
+      "count": 772,
+      "total": 97207.52
+    },
+    {
+      "name": "may",
+      "path": "C:\\Projects\\OrionShop-Profit-Dashboard\\exports\\acquiring-transactions-may.json",
+      "count": 319,
+      "total": 41038.56
+    }
+  ]
+}

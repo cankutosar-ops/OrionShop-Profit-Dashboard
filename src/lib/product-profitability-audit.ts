@@ -23,7 +23,7 @@ export function toProductProfitabilityAuditRow(
     deductions: calculateDeductions(product.otherExpenses),
     productCost: product.productCost,
     grossProfit,
-    netProfit: product.netProfit,
+    netProfit: product.finalNetProfit,
     marginPercent,
   };
 }

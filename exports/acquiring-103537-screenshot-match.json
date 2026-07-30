@@ -1,0 +1,57 @@
+{
+  "targetSales": 2373070,
+  "targetAcq": 103537,
+  "top": [
+    {
+      "accountId": "1",
+      "from": "2026-04-20",
+      "end": "2026-07-20",
+      "days": 92,
+      "netSales": 2385655.02,
+      "salesForPay": 0,
+      "commissionSpread": 2385655.02,
+      "ACQUIRING": 103536.55,
+      "COMMISSION": 153122,
+      "PPVZ_REWARD": 59963.23,
+      "PPVZ_VW": 204256.3,
+      "marketplaceFees": 520878.08,
+      "financeTriple": 417341.53,
+      "salesDiff": 12585.02,
+      "acqDiff": 0.45
+    },
+    {
+      "accountId": "1",
+      "from": "2026-04-20",
+      "end": "2026-07-21",
+      "days": 93,
+      "netSales": 2385655.02,
+      "salesForPay": 0,
+      "commissionSpread": 2385655.02,
+      "ACQUIRING": 103536.55,
+      "COMMISSION": 153122,
+      "PPVZ_REWARD": 59963.23,
+      "PPVZ_VW": 204256.3,
+      "marketplaceFees": 520878.08,
+      "financeTriple": 417341.53,
+      "salesDiff": 12585.02,
+      "acqDiff": 0.45
+    },
+    {
+      "accountId": "1",
+      "from": "2026-04-20",
+      "end": "2026-07-22",
+      "days": 94,
+      "netSales": 2385655.02,
+      "salesForPay": 0,
+      "commissionSpread": 2385655.02,
+      "ACQUIRING": 103536.55,
+      "COMMISSION": 153122,
+      "PPVZ_REWARD": 59963.23,
+      "PPVZ_VW": 204256.3,
+      "marketplaceFees": 520878.08,
+      "financeTriple": 417341.53,
+      "salesDiff": 12585.02,
+      "acqDiff": 0.45
+    }
+  ]
+}

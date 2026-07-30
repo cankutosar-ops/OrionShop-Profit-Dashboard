@@ -1,5 +1,5 @@
 /**
- * Verify Sprint 6.31 — Model B commercial architecture.
+ * Verify Commercial Performance Engine V4.
  * Usage: npx tsx scripts/verify-model-b-profit.mjs [accountId] [from] [to]
  */
 import { readFileSync } from "fs";
@@ -12,16 +12,23 @@ import {
 } from "../src/lib/finance-rollup.ts";
 import {
   buildModelBProfitMetrics,
-  shareOfNetSalesPercent,
+  verifyModelBFinalProfitArithmetic,
   verifyModelBProfitArithmetic,
 } from "../src/lib/profit-engine-model-b.ts";
 import { buildModelCProfitMetrics } from "../src/lib/profit-engine-model-c.ts";
 import { computeProductCost } from "../src/lib/product-cost.ts";
 import {
+  buildNetFinishedPriceFromDb,
   buildNetForPayFromDb,
   buildNetSalesFromDb,
 } from "../src/lib/sales-revenue-resolution.ts";
-import { buildWbSettlementFromSources, resolveNetForPay } from "../src/lib/wb-settlement.ts";
+import { calculateEstimatedTax } from "../src/lib/financial-engine-tax.ts";
+import {
+  buildWbSettlementFromSources,
+  resolveNetForPay,
+  sumAcceptanceFromFinance,
+  sumNetForPayFromFinance,
+} from "../src/lib/wb-settlement.ts";
 import { buildLatestCostByProductId } from "../src/lib/cost-history-resolution.ts";
 
 function loadEnv() {
@@ -89,20 +96,29 @@ async function main() {
   const categorySummary = summarizeFinanceByCategory(finance);
   const productCost = computeProductCost(sales, costHistory, latestCostByProductId);
   const advertising = ads.reduce((sum, ad) => sum + ad.spend, 0);
-  const presentation = buildMarketplaceFeesPresentationFromFinance(finance, financeTotals.commission);
+  const presentation = buildMarketplaceFeesPresentationFromFinance(
+    finance,
+    financeTotals.commission
+  );
   const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
   const netSalesFromDb = buildNetSalesFromDb(sales);
   const salesForPay = buildNetForPayFromDb(sales);
+  const financeNetForPay = sumNetForPayFromFinance(finance);
+  const acceptance = sumAcceptanceFromFinance(finance);
+  const customerPaid = buildNetFinishedPriceFromDb(sales);
 
   const modelB = buildModelBProfitMetrics(netSalesFromDb, {
     salesForPay,
+    financeNetForPay,
     acquiring: categorySummary.ACQUIRING,
     logistics: totalLogistics,
     storage: financeTotals.storage,
     penalties: financeTotals.penalty,
     adjustments: presentation.accountAdjustments,
+    acceptance,
     productCost,
     advertising,
+    customerPaid,
   });
 
   const netForPayResolution = resolveNetForPay({ finance, scopeFrom: from, scopeTo: to });
@@ -119,45 +135,73 @@ async function main() {
     advertising,
   });
 
-  const arithDiff = verifyModelBProfitArithmetic(modelB);
-  const revenueIsSalesForPay = Math.abs(modelB.revenue - salesForPay) < 0.01;
-  const commissionCheck =
+  const opDiff = verifyModelBProfitArithmetic(modelB);
+  const npDiff = verifyModelBFinalProfitArithmetic(modelB);
+  const revenueIsFinanceForPay = Math.abs(modelB.revenue - financeNetForPay) < 0.01;
+  const revenueNotSalesForPay = Math.abs(modelB.revenue - salesForPay) >= 0.01 || salesForPay === financeNetForPay;
+  const feeCheck =
     Math.abs(netSalesFromDb.netSales - salesForPay - modelB.commission) < 0.02;
-  const manualNp =
-    modelB.revenue -
-    modelB.acquiring -
-    modelB.logistics -
-    modelB.storage -
-    modelB.penalties -
-    modelB.adjustments -
-    modelB.productCost -
-    modelB.advertising;
+  const acquiringNotInNp =
+    Math.abs(
+      modelB.finalNetProfit -
+        (modelB.revenue -
+          modelB.productCost -
+          modelB.logistics -
+          modelB.storage -
+          modelB.acceptance -
+          modelB.penalties -
+          modelB.adjustments -
+          modelB.advertising -
+          modelB.estimatedTax)
+    ) < 0.02;
 
-  console.log("Sprint 6.31 — Model B Architecture Verification");
+  console.log("Commercial Performance Engine V4 — Verification");
   console.log(`Account: ${accountId}  Period: ${from} → ${to}\n`);
 
-  console.log("1. Model B Revenue = Sales API forPay");
-  console.log(`   salesForPay:     ${fmt(salesForPay)}`);
-  console.log(`   modelB.revenue:  ${fmt(modelB.revenue)}`);
-  console.log(`   PASS: ${revenueIsSalesForPay ? "YES" : "NO"}\n`);
+  console.log("1. Revenue = Finance ppvz_for_pay (NOT Sales API forPay)");
+  console.log(`   financeNetForPay: ${fmt(financeNetForPay)}`);
+  console.log(`   salesForPay:      ${fmt(salesForPay)}`);
+  console.log(`   modelB.revenue:   ${fmt(modelB.revenue)}`);
+  console.log(`   PASS revenue=finance: ${revenueIsFinanceForPay ? "YES" : "NO"}`);
+  console.log(
+    `   revenue≠salesForPay (or equal only if coincidental): Δ=${(modelB.revenue - salesForPay).toFixed(2)}\n`
+  );
 
-  console.log("2. Acquiring separate from Revenue; deducted in Net Profit only");
-  console.log(`   Revenue widget:  ${fmt(modelB.revenue)} (forPay)`);
-  console.log(`   Acquiring KPI:   ${fmt(modelB.acquiring)}`);
-  console.log(`   Revenue ≠ forPay−acq unless coincidental: ${Math.abs(modelB.revenue - (salesForPay - modelB.acquiring)) < 0.01 ? "equal" : "separate"}\n`);
+  console.log("2. Marketplace Fee = Sales − Sales API forPay (not ppvz_*)");
+  console.log(`   Fee: ${fmt(modelB.marketplaceFee ?? modelB.commission)}`);
+  console.log(`   PASS: ${feeCheck ? "YES" : "NO"}\n`);
 
-  console.log("3. Net Profit starts from Revenue (forPay)");
-  console.log(`   ${fmt(modelB.revenue)} − ${fmt(modelB.acquiring)} − costs = ${fmt(manualNp)}`);
-  console.log(`   Engine netProfit: ${fmt(modelB.netProfit)}`);
-  console.log(`   Arithmetic diff:  ${arithDiff.toFixed(4)} (${Math.abs(arithDiff) < 0.01 ? "PASS" : "FAIL"})\n`);
+  console.log("3. Net Profit excludes Marketplace Fee & Acquiring");
+  console.log(`   Acquiring KPI: ${fmt(modelB.acquiring)} (informational)`);
+  console.log(`   Net Profit:    ${fmt(modelB.finalNetProfit)}`);
+  console.log(`   Op arith Δ:    ${opDiff.toFixed(4)} (${Math.abs(opDiff) < 0.01 ? "PASS" : "FAIL"})`);
+  console.log(`   NP arith Δ:    ${npDiff.toFixed(4)} (${Math.abs(npDiff) < 0.01 ? "PASS" : "FAIL"})`);
+  console.log(`   NP identity:   ${acquiringNotInNp ? "PASS" : "FAIL"}\n`);
 
-  console.log("4. Model C breakdown engine (unchanged)");
-  console.log(`   Model C revenue (netForPay): ${fmt(modelC.revenue)}`);
-  console.log(`   Model C netProfit:           ${fmt(modelC.netProfit)}`);
-  console.log(`   Model B revenue ≠ Model C revenue (expected): ${Math.abs(modelB.revenue - modelC.revenue) < 0.01 ? "SAME" : "DIFFERENT"}\n`);
+  const expectedTax = calculateEstimatedTax(customerPaid, 6);
+  const taxOk = Math.abs(modelB.estimatedTax - expectedTax) < 0.02;
+  console.log("4. Estimated Tax = 6% × Σ finishedPrice");
+  console.log(`   customerPaid:  ${fmt(customerPaid)}`);
+  console.log(`   estimatedTax:  ${fmt(modelB.estimatedTax)}`);
+  console.log(`   PASS: ${taxOk ? "YES" : "NO"}\n`);
 
-  console.log("5. Commission = Sales − forPay");
-  console.log(`   PASS: ${commissionCheck ? "YES" : "NO"}`);
+  console.log("5. Model C unchanged (settlement)");
+  console.log(`   Model C revenue: ${fmt(modelC.revenue)}`);
+  console.log(`   Model B revenue: ${fmt(modelB.revenue)}`);
+  console.log(
+    `   Same base expected when both use finance for_pay: ${
+      Math.abs(modelB.revenue - modelC.revenue) < 0.01 ? "SAME" : "DIFFERENT"
+    }\n`
+  );
+
+  const failed =
+    !revenueIsFinanceForPay ||
+    !feeCheck ||
+    Math.abs(opDiff) >= 0.01 ||
+    Math.abs(npDiff) >= 0.01 ||
+    !acquiringNotInNp ||
+    !taxOk;
+  if (failed) process.exit(1);
 }
 
 main().catch((err) => {

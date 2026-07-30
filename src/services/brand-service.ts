@@ -9,7 +9,7 @@ type ProductBrandRow = {
 export async function getBrandsForMarketplaceAccount(
   marketplaceAccountId: string
 ): Promise<Brand[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("products")
     .select("brand:brands(id, name, created_at)")

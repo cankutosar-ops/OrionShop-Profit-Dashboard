@@ -1,0 +1,89 @@
+{
+  "sprint": "8.0",
+  "generatedAt": "2026-07-23T13:05:00.000Z",
+  "workbook": "business-intelligence-workbook.xlsx",
+  "engine": "report-document",
+  "sheetOrder": [
+    "01 Cover",
+    "02 Executive Summary",
+    "03 Financial Summary",
+    "04 Brand Analysis",
+    "05 Product Analysis",
+    "06 Marketplace Costs",
+    "07 Settlement",
+    "08 Inventory Summary",
+    "09 Appendix"
+  ],
+  "legacyVsNew": {
+    "legacySource": "ReportPayload + xlsx (SheetJS)",
+    "legacySheets": [
+      "Cover",
+      "Executive Summary",
+      "Financial Summary",
+      "Product Summary (Top-N boards)",
+      "Inventory Summary"
+    ],
+    "newSource": "ReportDocument + exceljs",
+    "newSheets": [
+      "01 Cover",
+      "02 Executive Summary",
+      "03 Financial Summary",
+      "04 Brand Analysis",
+      "05 Product Analysis (full portfolio)",
+      "06 Marketplace Costs",
+      "07 Settlement",
+      "08 Inventory Summary",
+      "09 Appendix"
+    ],
+    "removed": [
+      "Product Summary Top-N boards as the primary product sheet"
+    ],
+    "added": [
+      "04 Brand Analysis",
+      "05 Product Analysis full portfolio",
+      "06 Marketplace Costs",
+      "07 Settlement Reconciliation",
+      "09 Appendix"
+    ],
+    "parity": "Same ReportDocument as Business Intelligence Workspace — no duplicated calculations",
+    "apiHeader": "X-Report-Engine: report-document"
+  },
+  "reusableComponents": [
+    {
+      "name": "workbook-kit.ts",
+      "exports": [
+        "writeSheetIntro",
+        "addSectionHeader",
+        "addKpiBlock",
+        "writeExcelTable",
+        "freezeAtRow",
+        "applyColumnWidths",
+        "asExcelPercent",
+        "asNumber",
+        "NUM_FMT",
+        "FONT",
+        "FILL",
+        "NOT_AVAILABLE",
+        "findSectionData"
+      ],
+      "role": "Shared presentation primitives for any ReportDocument → Excel renderer"
+    },
+    {
+      "name": "render-business-workbook.ts",
+      "exports": [
+        "renderBusinessReportWorkbook",
+        "buildBusinessWorkbookFilename",
+        "isBusinessDocumentEmpty",
+        "BUSINESS_WORKBOOK_SHEETS"
+      ],
+      "role": "Business Intelligence 9-sheet workbook orchestrator"
+    }
+  ],
+  "excelStandards": [
+    "Freeze panes",
+    "Native Excel Tables + AutoFilter on Brand / Product / Costs / Inventory / Definitions",
+    "Currency / percent / integer number formats",
+    "Consistent Calibri typography and column widths",
+    "Bold section headers and KPI blocks"
+  ]
+}

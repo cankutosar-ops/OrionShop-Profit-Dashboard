@@ -49,7 +49,7 @@ function OrdersPurchasesTooltip({
         {formatNumber(point.ordersCount)} · {formatCurrency(point.ordersAmount)}
       </p>
       <p className="text-sm font-medium tabular-nums text-foreground">
-        <span className="text-muted-foreground">Purchases: </span>
+        <span className="text-muted-foreground">Buyout: </span>
         {formatNumber(point.purchasesCount)} · {formatCurrency(point.purchasesAmount)}
       </p>
     </ChartTooltip>
@@ -146,9 +146,9 @@ export function OrdersPurchasesChart({ data }: OrdersPurchasesChartProps) {
         className="mt-4"
         items={[
           { label: "Orders (qty)", color: palette.series.primary },
-          { label: "Purchases (qty)", color: palette.series.positive },
+          { label: "Buyout (qty)", color: palette.series.positive },
           { label: "Orders (₽)", color: palette.series.secondary },
-          { label: "Purchases (₽)", color: palette.series.info },
+          { label: "Buyout (₽)", color: palette.series.info },
         ]}
       />
     </div>

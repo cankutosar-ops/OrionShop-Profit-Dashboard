@@ -1,0 +1,133 @@
+{
+  "windows": [
+    {
+      "from": "2026-06-23",
+      "to": "2026-07-22",
+      "ACQUIRING": 14973.26,
+      "COMMISSION": 35620.77,
+      "PPVZ_REWARD": 8773.34,
+      "PPVZ_VW": 48635.15,
+      "OTHER": 0,
+      "marketplaceFees": 108002.52,
+      "serviceFees_A_R_VW": 72381.75,
+      "C_A_R_VW": 108002.52,
+      "C_plus_A": 50594.03,
+      "nearest": [
+        "marketplaceFees",
+        4465.520000000033
+      ]
+    },
+    {
+      "from": "2026-04-23",
+      "to": "2026-07-22",
+      "ACQUIRING": 99011,
+      "COMMISSION": 145152.02,
+      "PPVZ_REWARD": 57188.19,
+      "PPVZ_VW": 192268.21,
+      "OTHER": 0,
+      "marketplaceFees": 493619.42,
+      "serviceFees_A_R_VW": 348467.4,
+      "C_A_R_VW": 493619.42,
+      "C_plus_A": 244163.02,
+      "nearest": [
+        "ACQUIRING",
+        4526.000000000015
+      ]
+    },
+    {
+      "from": "2026-05-01",
+      "to": "2026-07-22",
+      "ACQUIRING": 86748.56,
+      "COMMISSION": 128190.17,
+      "PPVZ_REWARD": 50576.14,
+      "PPVZ_VW": 166992.29,
+      "OTHER": 0,
+      "marketplaceFees": 432507.16,
+      "serviceFees_A_R_VW": 304316.99,
+      "C_A_R_VW": 432507.16,
+      "C_plus_A": 214938.73,
+      "nearest": [
+        "ACQUIRING",
+        16788.439999999915
+      ]
+    },
+    {
+      "from": "2026-05-23",
+      "to": "2026-07-22",
+      "ACQUIRING": 59305.52,
+      "COMMISSION": 101120.97,
+      "PPVZ_REWARD": 35219.7,
+      "PPVZ_VW": 125358.33,
+      "OTHER": 0,
+      "marketplaceFees": 321004.52,
+      "serviceFees_A_R_VW": 219883.55,
+      "C_A_R_VW": 321004.52,
+      "C_plus_A": 160426.49,
+      "nearest": [
+        "ACQUIRING",
+        44231.480000000076
+      ]
+    },
+    {
+      "from": "2026-06-01",
+      "to": "2026-07-22",
+      "ACQUIRING": 45710,
+      "COMMISSION": 79014.01,
+      "PPVZ_REWARD": 27159.21,
+      "PPVZ_VW": 103931.24,
+      "OTHER": 0,
+      "marketplaceFees": 255814.46,
+      "serviceFees_A_R_VW": 176800.45,
+      "C_A_R_VW": 255814.46,
+      "C_plus_A": 124724.01,
+      "nearest": [
+        "C+A",
+        21187.00999999995
+      ]
+    },
+    {
+      "from": "2026-01-01",
+      "to": "2026-07-22",
+      "ACQUIRING": 206469.7,
+      "COMMISSION": 402753.32,
+      "PPVZ_REWARD": 128143.11,
+      "PPVZ_VW": 537030.02,
+      "OTHER": 315,
+      "marketplaceFees": 1274711.15,
+      "serviceFees_A_R_VW": 871642.83,
+      "C_A_R_VW": 1274396.15,
+      "C_plus_A": 609223.02,
+      "nearest": [
+        "ACQUIRING",
+        102932.6999999996
+      ]
+    },
+    {
+      "from": "2026-07-01",
+      "to": "2026-07-22",
+      "ACQUIRING": 4372.31,
+      "COMMISSION": 15709.96,
+      "PPVZ_REWARD": 2537.56,
+      "PPVZ_VW": 20247.21,
+      "OTHER": 0,
+      "marketplaceFees": 42867.04,
+      "serviceFees_A_R_VW": 27157.08,
+      "C_A_R_VW": 42867.04,
+      "C_plus_A": 20082.27,
+      "nearest": [
+        "marketplaceFees",
+        60669.95999999999
+      ]
+    }
+  ],
+  "closest": [
+    {
+      "days": 94,
+      "from": "2026-04-20",
+      "end": "2026-07-22",
+      "name": "ACQUIRING",
+      "val": 103536.55,
+      "delta": 0.45
+    }
+  ]
+}

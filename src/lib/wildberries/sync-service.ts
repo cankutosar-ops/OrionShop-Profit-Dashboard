@@ -82,21 +82,39 @@ const FINANCE_EXTENDED_FIELDS = [
   "finance_nature",
 ] as const;
 
+const FINANCE_REPORT_IDENTITY_FIELDS = [
+  "realizationreport_id",
+  "rrd_id",
+  "rr_dt",
+] as const;
+
 async function financeSchemaHasExtendedColumns(supabase: AdminClient): Promise<boolean> {
   const { error } = await supabase.from("wb_finance").select("finance_category").limit(1);
   return !error;
 }
 
+async function financeSchemaHasReportIdentity(supabase: AdminClient): Promise<boolean> {
+  const { error } = await supabase.from("wb_finance").select("realizationreport_id").limit(1);
+  return !error;
+}
+
 function toFinanceUpsertRow(
   row: Omit<WbFinance, "id">,
-  includeExtendedColumns: boolean
+  includeExtendedColumns: boolean,
+  includeReportIdentity: boolean
 ): Omit<WbFinance, "id"> {
-  if (includeExtendedColumns) return row;
-  const legacy = { ...row };
-  for (const field of FINANCE_EXTENDED_FIELDS) {
-    delete legacy[field];
+  const next = { ...row };
+  if (!includeExtendedColumns) {
+    for (const field of FINANCE_EXTENDED_FIELDS) {
+      delete next[field];
+    }
   }
-  return legacy;
+  if (!includeReportIdentity) {
+    for (const field of FINANCE_REPORT_IDENTITY_FIELDS) {
+      delete next[field];
+    }
+  }
+  return next;
 }
 
 type FinancePersistStrategy =
@@ -150,7 +168,8 @@ async function batchUpsertFinance(
   rows: Array<Omit<WbFinance, "id">>,
   batchSize: number,
   onBatch: (batchRowCount: number) => void,
-  includeExtendedColumns: boolean
+  includeExtendedColumns: boolean,
+  includeReportIdentity: boolean
 ): Promise<{ dbRequests: number; errors: string[] }> {
   let dbRequests = 0;
   const errors: string[] = [];
@@ -159,7 +178,7 @@ async function batchUpsertFinance(
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows
       .slice(i, i + batchSize)
-      .map((row) => toFinanceUpsertRow(row, includeExtendedColumns));
+      .map((row) => toFinanceUpsertRow(row, includeExtendedColumns, includeReportIdentity));
     const batchNum = Math.floor(i / batchSize) + 1;
 
     if (strategy.mode === "replace_insert") {
@@ -289,6 +308,11 @@ export class WbSyncService {
   constructor(client: WbApiClient, marketplaceAccountId: string) {
     this.client = client;
     this.marketplaceAccountId = marketplaceAccountId;
+  }
+
+  /** Exposed for Finance Sync V2 report discovery. */
+  getApiClient(): WbApiClient {
+    return this.client;
   }
 
   async syncAll(options: WbSyncOptions): Promise<WbSyncResult[]> {
@@ -743,10 +767,17 @@ export class WbSyncService {
       syncLog("finance", "Supabase select END: buildProductLookup", { productCount: lookup.size });
 
       const includeExtendedColumns = await financeSchemaHasExtendedColumns(supabase);
+      const includeReportIdentity = await financeSchemaHasReportIdentity(supabase);
       if (!includeExtendedColumns) {
         syncLog("finance", "finance_category column missing — upserting legacy columns only", {});
         result.errors.push(
           "finance_category column missing on wb_finance — run npm run apply:finance-category-migration"
+        );
+      }
+      if (!includeReportIdentity) {
+        syncLog("finance", "realizationreport_id column missing — run Finance Sync V2 migration", {});
+        result.errors.push(
+          "realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs"
         );
       }
 
@@ -755,17 +786,29 @@ export class WbSyncService {
 
       timer?.startPhase("finance_map");
       const financeLines: Array<Omit<WbFinance, "id">> = [];
+      const reportIdSet = new Set<number>();
+      let minOp: string | null = null;
+      let maxOp: string | null = null;
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         try {
+          if (row.realizationreport_id != null && Number.isFinite(row.realizationreport_id)) {
+            reportIdSet.add(Number(row.realizationreport_id));
+          }
           const productId = row.nm_id ? lookup.get(row.nm_id) ?? null : null;
-          financeLines.push(
-            ...mapFinanceRowsFromReport(row, productId).map((line) => ({
-              ...line,
-              marketplace_account_id: this.marketplaceAccountId,
-            }))
-          );
+          const mapped = mapFinanceRowsFromReport(row, productId).map((line) => ({
+            ...line,
+            marketplace_account_id: this.marketplaceAccountId,
+          }));
+          for (const line of mapped) {
+            const op = line.operation_date?.slice(0, 10);
+            if (op) {
+              if (!minOp || op < minOp) minOp = op;
+              if (!maxOp || op > maxOp) maxOp = op;
+            }
+          }
+          financeLines.push(...mapped);
         } catch (err) {
           result.errors.push(
             `Finance rrd:${row.rrd_id}: ${err instanceof Error ? err.message : "unknown error"}`
@@ -777,6 +820,9 @@ export class WbSyncService {
         }
       }
       timer?.endPhase("finance_map");
+      result.reportIds = [...reportIdSet].sort((a, b) => a - b);
+      result.returnedFrom = minOp;
+      result.returnedTo = maxOp;
 
       timer?.startPhase("finance_db");
       const persistenceStarted = Date.now();
@@ -787,7 +833,8 @@ export class WbSyncService {
         (count) => {
           result.recordsUpdated += count;
         },
-        includeExtendedColumns
+        includeExtendedColumns,
+        includeReportIdentity
       );
       result.errors.push(...batchErrors);
 

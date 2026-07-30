@@ -112,6 +112,7 @@ export function deriveProductPricingInputs(
   }
 
   const q = unitsSold;
+  const sales = product.netSales > 0 ? product.netSales : product.revenue;
   const revenue = product.revenue;
   const ops = buildProductOperationalMetrics(product);
   const totalLogistics = calculateTotalLogistics(product);
@@ -123,10 +124,11 @@ export function deriveProductPricingInputs(
     productName: product.productName,
     unitsSold: q,
     orders: product.orders,
-    currentAvgPrice: revenue / q,
-    currentNetMarginPercent: calculateNetMarginPercent(revenue, product.netProfit),
+    currentAvgPrice: sales / q,
+    currentNetMarginPercent: calculateNetMarginPercent(revenue, product.finalNetProfit),
     currentOperationalMarginPercent: ops.operationalMarginPercent,
-    commissionRate: product.commission / revenue,
+    /** Marketplace Fee ÷ Sales (priceWithDisc) — V4 fee rate. */
+    commissionRate: sales > 0 ? product.marketplaceFees / sales : 0,
     unitProductCost: product.productCost / q,
     unitPurchaseLogistics: product.purchaseLogistics / q,
     unitTotalLogistics: totalLogistics / q,

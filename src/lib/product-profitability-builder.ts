@@ -7,12 +7,17 @@ import {
 import { attributeProductFinance, buildPurchaseSridSet } from "@/lib/product-logistics-attribution";
 import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
 import { computeProductCost } from "@/lib/product-cost";
-import { calculateModelBNetProfit } from "@/lib/profit-engine-model-b";
+import { calculateModelBNetProfit } from "@/lib/financial-engine";
 import { aggregateSalesMetrics } from "@/lib/sales-metrics";
 import {
+  buildNetFinishedPriceFromDb,
   buildNetForPayFromDb,
   buildNetSalesFromDb,
 } from "@/lib/sales-revenue-resolution";
+import {
+  sumAcceptanceFromFinance,
+  sumNetForPayFromFinance,
+} from "@/lib/wb-settlement";
 import type {
   ProductCostHistory,
   ProductProfitability,
@@ -115,6 +120,7 @@ export function buildProductProfitabilityRows(
       const salesMetrics = aggregateSalesMetrics(productSales);
       const netSales = buildNetSalesFromDb(productSales);
       const salesForPay = buildNetForPayFromDb(productSales);
+      const financeNetForPay = sumNetForPayFromFinance(financeForBreakdown);
       const productCost = computeProductCost(productSales, [], latestCostByProductId);
       const financeTotals = rollupCategoriesToProfitBuckets(financeForBreakdown);
       const categorySummary = summarizeFinanceByCategory(financeForBreakdown);
@@ -127,34 +133,41 @@ export function buildProductProfitabilityRows(
         netSales: netSales.netSales,
         netSalesStatus: "ready",
         salesForPay,
+        financeNetForPay,
         acquiring: categorySummary.ACQUIRING,
         logistics: totalLogistics,
         storage: financeTotals.storage,
         penalties: financeTotals.penalty,
         adjustments: feeParts.accountAdjustments,
+        acceptance: sumAcceptanceFromFinance(financeForBreakdown),
         productCost,
         advertising,
+        customerPaid: buildNetFinishedPriceFromDb(productSales),
       });
 
       return {
-        /** Model B Revenue = Sales API forPay (net). */
+        /** Commercial Performance Revenue = Finance ppvz_for_pay (net). */
         revenue: modelB.revenue,
         productCost,
-        commission: financeTotals.commission,
+        /** Marketplace Fee = Sales − Sales API forPay (V4 engine). */
+        commission: modelB.marketplaceFee ?? modelB.commission,
         logistics: financeTotals.logistics,
         returnLogistics: financeTotals.return_logistics,
         storage: financeTotals.storage,
         advertising,
         penalties: financeTotals.penalty,
         otherExpenses: financeTotals.other + financeTotals.unclassified,
-        /** Operating Profit (before tax) — Smart Pricing / ops compatibility. */
+        /** Operating Profit (before tax). */
         netProfit: modelB.netProfit,
         netSales: modelB.netSales,
         finalNetProfit: modelB.finalNetProfit,
         returnRate: salesMetrics.returnRate,
         unitsSold: salesMetrics.unitsSold,
         unitsReturned: salesMetrics.unitsReturned,
-        ...feeParts,
+        /** Marketplace Fee (V4) — same as commission; not finance ppvz_* bundle. */
+        marketplaceFees: modelB.marketplaceFee ?? modelB.commission,
+        accountAdjustments: feeParts.accountAdjustments,
+        reimbursements: feeParts.reimbursements,
         productId: String(product.id),
         modelCode: product.supplier_article,
         productName: product.name,

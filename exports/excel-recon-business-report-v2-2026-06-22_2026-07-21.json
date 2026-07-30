@@ -1,0 +1,210 @@
+{
+  "objective": "Identify first divergence — evidence only; Financial Engine not modified",
+  "excelFile": "c:/Users/User/Downloads/Business_Report_v2_2026-06-22_2026-07-21_2026-07-21.xlsx",
+  "excelIdentity": {
+    "reportName": "Business Report",
+    "company": "Orion Shop",
+    "account": "Orion shop",
+    "period": "2026-06-22 → 2026-07-21",
+    "generatedAt": "2026-07-21T13:38:07.534Z",
+    "lastSync": "2026-07-16T22:12:11.075+00:00",
+    "templateVersion": 2,
+    "settlementSource": "weekly_reports"
+  },
+  "period": {
+    "from": "2026-06-22",
+    "to": "2026-07-21",
+    "accountId": "1"
+  },
+  "counts": {
+    "salesRows": 179,
+    "financeRows": 1000,
+    "adsRows": 0,
+    "overlappingWeeklyReports": 0
+  },
+  "overlappingWeeklyReports": [],
+  "dashboard": {
+    "grossSales": 871339.85,
+    "returnedSales_finishedPrice": 124558.58,
+    "netSales_display": 746781.27,
+    "netSales_engine_priceWithDisc": 666689.54,
+    "returnedSales_engine_priceWithDisc": 204650.31,
+    "revenue": 91403.45,
+    "marketplaceFee": 249716.79,
+    "logistics": 31787.19,
+    "storage": 795.44,
+    "acceptance": 0,
+    "penalties": 0,
+    "other": 0,
+    "estimatedTax": 22553.44,
+    "productCost": 182400,
+    "advertising": 0,
+    "acquiring": 4272.04,
+    "netProfit": -146132.62,
+    "operatingProfit": -123579.18,
+    "presentationMarketplaceFees": 19249.62,
+    "salesForPay": 416972.75,
+    "financeNetForPay": 91403.45
+  },
+  "excelMetrics": {
+    "revenue": 728613,
+    "productCost": 390023,
+    "marketplaceFees": 0,
+    "commission": 0,
+    "logistics": 0,
+    "returnLogistics": 0,
+    "storage": 0,
+    "advertising": 0,
+    "penalties": 0,
+    "otherExpenses": 0,
+    "netProfit": 284886,
+    "settlementNetForPay": 0,
+    "acceptance": 0,
+    "settlement": 0,
+    "unitsSold": 308,
+    "unitsReturned": 35,
+    "grossSales": null,
+    "returnedSales": null,
+    "netSales": null,
+    "estimatedTax": null
+  },
+  "reconciliation": [
+    {
+      "metric": "1. Gross Sales",
+      "dashboard": 871339.85,
+      "excel": null,
+      "diff": null,
+      "source": "Sales API / DB price_with_disc (purchases)",
+      "explanation": "Business Report v2 template has no Gross Sales line.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "2. Returned Sales",
+      "dashboard": 124558.58,
+      "excel": null,
+      "diff": null,
+      "source": "Sales API / DB revenue=finishedPrice (returns)",
+      "explanation": "Business Report v2 template has no Returned Sales line.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "3. Net Sales (display KPI)",
+      "dashboard": 746781.27,
+      "excel": null,
+      "diff": null,
+      "source": "Display only: Gross − Returned finishedPrice",
+      "explanation": "Not in Excel; not an accounting input.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "4. Revenue (ppvz_for_pay)",
+      "dashboard": 91403.45,
+      "excel": 728613,
+      "diff": -637209.55,
+      "source": "Finance API signed for_pay Σ (operation_date)",
+      "explanation": "Excel Revenue came from overview at export time (2026-07-21). Live DB may differ after later syncs.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "5. Marketplace Fee (V4)",
+      "dashboard": 249716.79,
+      "excel": 0,
+      "diff": 249716.79,
+      "source": "Sales API: priceWithDisc net − forPay",
+      "explanation": "Excel Commission=0. Report maps overview.commission; export shows zeros for fee/costs.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "5b. Marketplace Fees (Excel label / presentation)",
+      "dashboard": 19249.62,
+      "excel": 0,
+      "diff": 19249.62,
+      "source": "Finance presentation bundle",
+      "explanation": "Excel Marketplace Fees=0 while live presentation fee is non-zero.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "6. Logistics (outbound+return)",
+      "dashboard": 31787.19,
+      "excel": 0,
+      "diff": 31787.19,
+      "source": "Finance API logistics + return_logistics",
+      "explanation": "Excel Logistics and Return Logistics both 0.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "7. Storage",
+      "dashboard": 795.44,
+      "excel": 0,
+      "diff": 795.44,
+      "source": "Finance API storage",
+      "explanation": "Excel Storage=0.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "8. Acceptance",
+      "dashboard": 0,
+      "excel": 0,
+      "diff": 0,
+      "source": "Finance API acceptance",
+      "explanation": "Excel Acceptance (settlement block)=0.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "9. Penalties",
+      "dashboard": 0,
+      "excel": 0,
+      "diff": 0,
+      "source": "Finance API penalty",
+      "explanation": "Excel Penalties=0.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "10. Other Marketplace Expenses",
+      "dashboard": 0,
+      "excel": 0,
+      "diff": 0,
+      "source": "Finance ADJUSTMENT (accountAdjustments)",
+      "explanation": "Excel Other Expenses=0.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "11. Estimated Tax",
+      "dashboard": 22553.44,
+      "excel": null,
+      "diff": null,
+      "source": "Tax% × Σ finishedPrice",
+      "explanation": "Not present in Business Report v2 Financial Summary.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "12. Product Cost",
+      "dashboard": 182400,
+      "excel": 390023,
+      "diff": -207623,
+      "source": "DB product_cost_history × sales",
+      "explanation": "Present in Excel; compare live vs export timestamp.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "13. Net Profit",
+      "dashboard": -146132.62,
+      "excel": 284886,
+      "diff": -431018.62,
+      "source": "V4 engine finalNetProfit",
+      "explanation": "Excel NP with zeroed cost lines cannot equal full V4 identity.",
+      "status": "MISMATCH"
+    }
+  ],
+  "answers": {
+    "firstDivergingKpi": "4. Revenue (ppvz_for_pay)",
+    "cause": "This file is NOT the official WB weekly settlement Excel. It is Orion Shop Business Report v2. Within it, the first concrete numeric break vs live Dashboard is Marketplace Fees/Commission/Logistics (Excel=0, Dashboard≠0) — caused by export/settlement payload zeros + report mapping (presentation fees / overview fields), not by wrong V4 formulas. Gross/Returned/Net Sales are absent from the Excel (template gap).",
+    "categories": [
+      "different aggregation logic (Business Report mapping ≠ V4 KPI set)",
+      "missing/zeroed finance+settlement amounts in the exported workbook",
+      "not wrong V4 Marketplace Fee formula",
+      "date axis secondary (export generated 2026-07-21; last sync 2026-07-16; live DB may include later sync)"
+    ],
+    "weeklyReportsWouldEliminateDifference": "No for THIS file: it already claims Data Source=weekly_reports but all settlement amounts are 0. To reconcile Commercial Performance to WB settlement ground truth, use official «Еженедельный отчет» (Тип отчета=Основной) for overlapping weeks — not Business Report v2."
+  }
+}

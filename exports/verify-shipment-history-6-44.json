@@ -1,0 +1,102 @@
+{
+  "accountId": "1",
+  "article": "ALEXAMOR",
+  "productId": "22",
+  "nmId": 172996093,
+  "durationMs": 93781,
+  "shipments": [
+    {
+      "id": "supply-40275667-172996093",
+      "shipmentDate": "2026-07-14T16:40:27+03:00",
+      "warehouse": "Электросталь",
+      "quantityReceived": 15,
+      "supplyId": 40275667,
+      "preorderId": 52231991,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-40412692-172996093",
+      "shipmentDate": "2026-07-14T15:57:12+03:00",
+      "warehouse": "Обухово",
+      "quantityReceived": 29,
+      "supplyId": 40412692,
+      "preorderId": 52377538,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-35424639-172996093",
+      "shipmentDate": "2026-01-26T13:40:06+03:00",
+      "warehouse": "Электросталь",
+      "quantityReceived": 10,
+      "supplyId": 35424639,
+      "preorderId": 47297174,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-34796463-172996093",
+      "shipmentDate": "2025-12-23T15:31:12+03:00",
+      "warehouse": "Коледино",
+      "quantityReceived": 5,
+      "supplyId": 34796463,
+      "preorderId": 46661075,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-28626005-172996093",
+      "shipmentDate": "2025-04-13T16:15:09+03:00",
+      "warehouse": "Коледино",
+      "quantityReceived": 12,
+      "supplyId": 28626005,
+      "preorderId": 36883607,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-27410398-172996093",
+      "shipmentDate": "2025-03-14T15:51:05+03:00",
+      "warehouse": "Электросталь",
+      "quantityReceived": 59,
+      "supplyId": 27410398,
+      "preorderId": 35532882,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-27464697-172996093",
+      "shipmentDate": "2025-03-14T10:30:00+03:00",
+      "warehouse": "Электросталь",
+      "quantityReceived": 1,
+      "supplyId": 27464697,
+      "preorderId": 35603272,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-26506884-172996093",
+      "shipmentDate": "2025-01-31T14:13:14+03:00",
+      "warehouse": "Электросталь",
+      "quantityReceived": 80,
+      "supplyId": 26506884,
+      "preorderId": 34502075,
+      "status": "Accepted",
+      "statusId": 5
+    },
+    {
+      "id": "supply-25431127-172996093",
+      "shipmentDate": "2024-12-23T15:10:32+03:00",
+      "warehouse": "Электросталь",
+      "quantityReceived": 3,
+      "supplyId": 25431127,
+      "preorderId": 33200105,
+      "status": "Accepted",
+      "statusId": 5
+    }
+  ],
+  "suppliesScanned": 22,
+  "cached": false,
+  "source": "wb_supplies_api"
+}

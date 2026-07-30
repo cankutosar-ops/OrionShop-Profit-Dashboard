@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 import {
   buildPerfReport,
   clearPerfEvents,
@@ -10,6 +11,9 @@ export const dynamic = "force-dynamic";
 
 /** Generate / return the performance report. */
 export async function GET(request: Request) {
+  const authz = await authorize(request);
+  if (isAuthzFailure(authz)) return authz;
+
   const url = new URL(request.url);
   const clear = url.searchParams.get("clear") === "1";
   const events = loadAllPerfEvents();

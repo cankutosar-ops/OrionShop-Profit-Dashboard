@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  assertCompanyInAuthz,
+  authorize,
+  isAuthzFailure,
+} from "@/lib/security/authorize";
+import {
   deleteCompany,
   getCompanyById,
   updateCompany,
@@ -7,9 +12,15 @@ import {
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
+    const authz = await authorize(request);
+    if (isAuthzFailure(authz)) return authz;
+
     const { id } = await context.params;
+    const forbidden = assertCompanyInAuthz(authz, id);
+    if (forbidden) return forbidden;
+
     const company = await getCompanyById(id);
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
@@ -23,7 +34,13 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const authz = await authorize(request);
+    if (isAuthzFailure(authz)) return authz;
+
     const { id } = await context.params;
+    const forbidden = assertCompanyInAuthz(authz, id);
+    if (forbidden) return forbidden;
+
     const body = await request.json();
     const company = await updateCompany(id, body);
     return NextResponse.json({ company });
@@ -33,9 +50,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
+    const authz = await authorize(request);
+    if (isAuthzFailure(authz)) return authz;
+
     const { id } = await context.params;
+    const forbidden = assertCompanyInAuthz(authz, id);
+    if (forbidden) return forbidden;
+
     await deleteCompany(id);
     return NextResponse.json({ success: true });
   } catch (error) {

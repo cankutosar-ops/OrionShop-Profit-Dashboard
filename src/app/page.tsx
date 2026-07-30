@@ -83,14 +83,16 @@ async function DashboardCoreSection({
             totalOrdersCount={totalOrdersCount}
             ordersCount={kpis.ordersCount}
             ordersValueCount={kpis.ordersValueCount}
+            estimatedTax={overview.modelBProfit.estimatedTax}
+            taxPercent={overview.modelBProfit.taxPercent}
           />
         </Suspense>
       </div>
 
       <div className="mt-8">
         <ChartCard
-          title="Orders vs Purchases"
-          description="Daily quantity (bars) and amount (lines) over selected period"
+          title="Orders vs Buyout"
+          description="Demand (orders) vs completed buyout — quantity (bars) and amount (lines)"
         >
           <OrdersPurchasesChartLazy data={kpis.dailyOrdersPurchases} />
         </ChartCard>
@@ -105,14 +107,14 @@ async function DashboardCoreSection({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <ChartCard
-          title="Revenue & Profit Trend"
-          description="Daily performance over selected period"
+          title="Sales & Profit Trend"
+          description="Daily merchandise sales (Gross Sales base) over selected period"
           className="lg:col-span-2"
         >
           <RevenueChartLazy data={overview.dailyRevenue} />
         </ChartCard>
 
-        <ChartCard title="Cost Breakdown" description="Where your revenue goes">
+        <ChartCard title="Cost Breakdown" description="Where your commercial costs go">
           <CostBreakdownChartLazy data={overview.costBreakdown} />
         </ChartCard>
       </div>
@@ -154,11 +156,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Sales, profitability, and settlement for the selected period"
-        headerExtras={<DashboardHeaderExtras />}
-      />
+      <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
 
       <Suspense fallback={null}>
         <DashboardOperationalSync />

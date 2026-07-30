@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@/lib/supabase/server";
 import {
   decryptCredential,
   encryptCredential,
@@ -8,14 +8,29 @@ import type {
   Company,
   CompanyWithAccounts,
   MarketplaceAccountPublic,
+  SyncLifecycleStatus,
   SyncStatus,
 } from "@/types/database";
 
 const ACCOUNT_PUBLIC_COLUMNS =
+  "id, company_id, marketplace, account_name, seller_id, is_active, is_default, sync_enabled, last_sync_at, last_successful_sync_at, last_sync_status, created_at, updated_at";
+
+/** Includes ciphertext only for server-side has_api_key derivation — never returned in JSON. */
+const ACCOUNT_COLUMNS_WITH_SECRET_FLAG =
   "id, company_id, marketplace, account_name, seller_id, api_key_encrypted, is_active, is_default, sync_enabled, last_sync_at, last_successful_sync_at, last_sync_status, created_at, updated_at";
 
-function getClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+const ACCOUNT_PUBLIC_COLUMNS_V2 =
+  "id, company_id, marketplace, account_name, seller_id, is_active, is_default, sync_enabled, last_sync_at, last_successful_sync_at, last_sync_status, finance_lookback_days, finance_gap_warn_days, finance_latest_operation_date, finance_latest_report_id, finance_gap_days, finance_recovery_needed, sync_lifecycle_status, finance_backfill_error, created_at, updated_at";
+
+const ACCOUNT_COLUMNS_WITH_SECRET_FLAG_V2 =
+  "id, company_id, marketplace, account_name, seller_id, api_key_encrypted, is_active, is_default, sync_enabled, last_sync_at, last_successful_sync_at, last_sync_status, finance_lookback_days, finance_gap_warn_days, finance_latest_operation_date, finance_latest_report_id, finance_gap_days, finance_recovery_needed, sync_lifecycle_status, finance_backfill_error, created_at, updated_at";
+
+/** RUNNING lock TTL — refreshed by heartbeat. */
+export const SYNC_LOCK_TTL_MS = 10 * 60 * 1000;
+
+async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  // marketplace_accounts ciphertext is service_role-only (Sprint 7.1.D).
+  return client ?? createAdminClient();
 }
 
 function toPublicAccount(
@@ -25,13 +40,21 @@ function toPublicAccount(
     marketplace: MarketplaceAccountPublic["marketplace"];
     account_name: string;
     seller_id: string | null;
-    api_key_encrypted: string;
+    api_key_encrypted?: string | null;
     is_active: boolean;
     is_default: boolean;
     sync_enabled: boolean;
     last_sync_at: string | null;
     last_successful_sync_at: string | null;
     last_sync_status: SyncStatus | null;
+    finance_lookback_days?: number | null;
+    finance_gap_warn_days?: number | null;
+    finance_latest_operation_date?: string | null;
+    finance_latest_report_id?: number | null;
+    finance_gap_days?: number | null;
+    finance_recovery_needed?: boolean | null;
+    sync_lifecycle_status?: SyncLifecycleStatus | null;
+    finance_backfill_error?: string | null;
     created_at: string;
     updated_at: string;
   }
@@ -49,6 +72,14 @@ function toPublicAccount(
     last_successful_sync_at: row.last_successful_sync_at,
     last_sync_status: row.last_sync_status,
     has_api_key: Boolean(row.api_key_encrypted?.trim()),
+    finance_lookback_days: row.finance_lookback_days ?? undefined,
+    finance_gap_warn_days: row.finance_gap_warn_days ?? undefined,
+    finance_latest_operation_date: row.finance_latest_operation_date ?? null,
+    finance_latest_report_id: row.finance_latest_report_id ?? null,
+    finance_gap_days: row.finance_gap_days ?? null,
+    finance_recovery_needed: row.finance_recovery_needed ?? false,
+    sync_lifecycle_status: row.sync_lifecycle_status ?? undefined,
+    finance_backfill_error: row.finance_backfill_error ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -72,7 +103,8 @@ async function clearOtherDefaultAccounts(companyId: string, accountId: string): 
 }
 
 export async function listCompanies(client?: SupabaseClient): Promise<CompanyWithAccounts[]> {
-  const supabase = getClient(client);
+  // Credential presence (api_key_encrypted) requires service_role column privilege.
+  const supabase = client ?? createAdminClient();
   const { data: companies, error: companyError } = await supabase
     .from("companies")
     .select("*")
@@ -80,10 +112,16 @@ export async function listCompanies(client?: SupabaseClient): Promise<CompanyWit
 
   if (companyError) throw new Error(`Failed to list companies: ${companyError.message}`);
 
-  const { data: accounts, error: accountError } = await supabase
+  let { data: accounts, error: accountError } = await supabase
     .from("marketplace_accounts")
-    .select(ACCOUNT_PUBLIC_COLUMNS)
+    .select(ACCOUNT_COLUMNS_WITH_SECRET_FLAG_V2)
     .order("account_name");
+  if (accountError) {
+    ({ data: accounts, error: accountError } = await supabase
+      .from("marketplace_accounts")
+      .select(ACCOUNT_COLUMNS_WITH_SECRET_FLAG)
+      .order("account_name"));
+  }
 
   if (accountError) throw new Error(`Failed to list marketplace accounts: ${accountError.message}`);
 
@@ -202,7 +240,7 @@ export async function deleteCompany(companyId: string): Promise<void> {
 }
 
 export async function getDefaultCompanyId(client?: SupabaseClient): Promise<string> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const { data, error } = await supabase
     .from("companies")
     .select("id")
@@ -222,8 +260,15 @@ export async function resolveCompanyId(
   client?: SupabaseClient
 ): Promise<string> {
   if (companyParam) {
-    const company = await getCompanyById(companyParam, client);
-    if (company) return company.id;
+    // Direct id lookup — avoid listCompanies (full tenant graph) on every scope resolve.
+    const supabase = await getClient(client);
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id")
+      .eq("id", companyParam)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to resolve company: ${error.message}`);
+    if (data?.id) return String(data.id);
   }
   return getDefaultCompanyId(client);
 }
@@ -299,10 +344,9 @@ export async function resolveMarketplaceAccountId(
   companyParam?: string | null,
   client?: SupabaseClient
 ): Promise<{ marketplaceAccountId: string; companyId: string }> {
-  const companyId = await resolveCompanyId(companyParam, client);
-
+  // Prefer account id first — dashboard URLs always pass account; skip company fan-out.
   if (accountParam) {
-    const supabase = getClient(client);
+    const supabase = await getClient(client);
     const { data } = await supabase
       .from("marketplace_accounts")
       .select("id, company_id")
@@ -310,14 +354,26 @@ export async function resolveMarketplaceAccountId(
       .maybeSingle();
 
     if (data) {
+      const accountCompanyId = String(data.company_id);
+      // SEC-006 — when both scope params are present, reject cross-company binding.
+      if (companyParam) {
+        const expectedCompanyId = await resolveCompanyId(companyParam, client);
+        if (expectedCompanyId !== accountCompanyId) {
+          throw new Error(
+            "Marketplace account does not belong to the specified company"
+          );
+        }
+      }
       return {
         marketplaceAccountId: String(data.id),
-        companyId: String(data.company_id),
+        companyId: accountCompanyId,
       };
     }
   }
 
-  const supabase = getClient(client);
+  const companyId = await resolveCompanyId(companyParam, client);
+
+  const supabase = await getClient(client);
   const { data, error } = await supabase
     .from("marketplace_accounts")
     .select("id, company_id")
@@ -343,21 +399,154 @@ export async function resolveMarketplaceAccountId(
 /** Lightweight sync state for status polling. */
 export async function getMarketplaceAccountSyncState(accountId: string) {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+  const fullSelect =
+    "id, last_sync_at, last_successful_sync_at, last_sync_status, sync_heartbeat_at, sync_lock_expires_at, finance_lookback_days, finance_gap_warn_days, finance_latest_operation_date, finance_latest_report_id, finance_gap_days, finance_recovery_needed, finance_last_sync_run_id, sync_lifecycle_status, finance_backfill_error";
+  const legacySelect = "id, last_sync_at, last_successful_sync_at, last_sync_status";
+
+  let { data, error } = await supabase
     .from("marketplace_accounts")
-    .select("id, last_sync_at, last_successful_sync_at, last_sync_status")
+    .select(fullSelect)
     .eq("id", accountId)
     .maybeSingle();
+
+  if (error) {
+    ({ data, error } = await supabase
+      .from("marketplace_accounts")
+      .select(legacySelect)
+      .eq("id", accountId)
+      .maybeSingle());
+  }
 
   if (error) throw new Error(`Failed to fetch sync state: ${error.message}`);
   if (!data) return null;
 
   return {
     id: String(data.id),
-    last_sync_at: data.last_sync_at,
-    last_successful_sync_at: data.last_successful_sync_at,
-    last_sync_status: data.last_sync_status,
+    last_sync_at: data.last_sync_at as string | null,
+    last_successful_sync_at: data.last_successful_sync_at as string | null,
+    last_sync_status: data.last_sync_status as SyncStatus | null,
+    sync_heartbeat_at: ((data as { sync_heartbeat_at?: string | null }).sync_heartbeat_at as string | null) ?? null,
+    sync_lock_expires_at:
+      ((data as { sync_lock_expires_at?: string | null }).sync_lock_expires_at as string | null) ?? null,
+    finance_lookback_days:
+      ((data as { finance_lookback_days?: number | null }).finance_lookback_days as number | null) ?? null,
+    finance_gap_warn_days:
+      ((data as { finance_gap_warn_days?: number | null }).finance_gap_warn_days as number | null) ?? null,
+    finance_latest_operation_date:
+      ((data as { finance_latest_operation_date?: string | null }).finance_latest_operation_date as
+        | string
+        | null) ?? null,
+    finance_latest_report_id:
+      ((data as { finance_latest_report_id?: number | null }).finance_latest_report_id as number | null) ??
+      null,
+    finance_gap_days: ((data as { finance_gap_days?: number | null }).finance_gap_days as number | null) ?? null,
+    finance_recovery_needed: Boolean(
+      (data as { finance_recovery_needed?: boolean | null }).finance_recovery_needed
+    ),
+    finance_last_sync_run_id:
+      ((data as { finance_last_sync_run_id?: string | null }).finance_last_sync_run_id as string | null) ??
+      null,
+    sync_lifecycle_status:
+      ((data as { sync_lifecycle_status?: SyncLifecycleStatus | null }).sync_lifecycle_status as
+        | SyncLifecycleStatus
+        | null) ?? null,
+    finance_backfill_error:
+      ((data as { finance_backfill_error?: string | null }).finance_backfill_error as string | null) ??
+      null,
   };
+}
+
+/**
+ * If status=running but heartbeat/lock expired, release the lock so a new sync can start.
+ * Returns true when a stale lock was released.
+ */
+export async function releaseStaleSyncLockIfNeeded(accountId: string): Promise<boolean> {
+  const state = await getMarketplaceAccountSyncState(accountId);
+  if (!state || state.last_sync_status !== "running") return false;
+
+  const now = Date.now();
+  const lockExpired =
+    state.sync_lock_expires_at != null &&
+    new Date(state.sync_lock_expires_at).getTime() < now;
+  const heartbeatStale =
+    state.sync_heartbeat_at != null &&
+    now - new Date(state.sync_heartbeat_at).getTime() > SYNC_LOCK_TTL_MS;
+  // Legacy stuck running with no heartbeat columns / null heartbeat older than last_sync_at+TTL
+  const legacyStale =
+    state.sync_heartbeat_at == null &&
+    state.last_sync_at != null &&
+    now - new Date(state.last_sync_at).getTime() > SYNC_LOCK_TTL_MS;
+
+  if (!lockExpired && !heartbeatStale && !legacyStale) return false;
+
+  const supabase = createAdminClient();
+  const finished = new Date().toISOString();
+  const withLock = {
+    last_sync_status: "failed" as const,
+    sync_lock_expires_at: null,
+    sync_heartbeat_at: finished,
+    updated_at: finished,
+  };
+  let { error } = await supabase
+    .from("marketplace_accounts")
+    .update(withLock)
+    .eq("id", accountId)
+    .eq("last_sync_status", "running");
+  if (error) {
+    ({ error } = await supabase
+      .from("marketplace_accounts")
+      .update({ last_sync_status: "failed", updated_at: finished })
+      .eq("id", accountId)
+      .eq("last_sync_status", "running"));
+  }
+  const released = !error;
+  if (released) {
+    // Resume historical backfill if the stale lock belonged to new-account lifecycle.
+    const { resumeAccountLifecycleIfNeeded } = await import(
+      "@/services/account-lifecycle-service"
+    );
+    await resumeAccountLifecycleIfNeeded(accountId).catch(() => undefined);
+  }
+  return released;
+}
+
+export async function touchAccountSyncHeartbeat(accountId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const now = new Date();
+  const expires = new Date(now.getTime() + SYNC_LOCK_TTL_MS).toISOString();
+  const { error } = await supabase
+    .from("marketplace_accounts")
+    .update({
+      sync_heartbeat_at: now.toISOString(),
+      sync_lock_expires_at: expires,
+      updated_at: now.toISOString(),
+    })
+    .eq("id", accountId);
+  if (error) {
+    // Columns may be missing until V2 migration is applied — non-fatal.
+    console.warn("[sync] heartbeat skipped:", error.message);
+  }
+}
+
+export async function markAccountSyncStarted(accountId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const now = new Date();
+  const expires = new Date(now.getTime() + SYNC_LOCK_TTL_MS).toISOString();
+  const base = {
+    last_sync_at: now.toISOString(),
+    last_sync_status: "running" as const,
+    updated_at: now.toISOString(),
+  };
+  const withLock = {
+    ...base,
+    sync_heartbeat_at: now.toISOString(),
+    sync_lock_expires_at: expires,
+  };
+  let { error } = await supabase.from("marketplace_accounts").update(withLock).eq("id", accountId);
+  if (error) {
+    ({ error } = await supabase.from("marketplace_accounts").update(base).eq("id", accountId));
+  }
+  if (error) throw new Error(`Failed to mark sync started: ${error.message}`);
 }
 
 /** Full account row with decrypted API key — admin/sync only. */
@@ -390,28 +579,17 @@ export async function getMarketplaceAccountForSync(accountId: string) {
       throw new Error(`Failed to decrypt API key for "${data.account_name}"`);
     }
 
+    const safeRow = { ...(data as Record<string, unknown>) };
+    delete safeRow.api_key_encrypted;
+
     return {
-      ...data,
+      ...safeRow,
       id: String(data.id),
       company_id: String(data.company_id),
+      // Sprint 7.1.E — plaintext for sync only; never retain ciphertext in the same object
       apiKey,
     };
   });
-}
-
-export async function markAccountSyncStarted(accountId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const now = new Date().toISOString();
-  const { error } = await supabase
-    .from("marketplace_accounts")
-    .update({
-      last_sync_at: now,
-      last_sync_status: "running",
-      updated_at: now,
-    })
-    .eq("id", accountId);
-
-  if (error) throw new Error(`Failed to mark sync started: ${error.message}`);
 }
 
 export async function markAccountSyncFinished(
@@ -420,26 +598,29 @@ export async function markAccountSyncFinished(
 ): Promise<void> {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
-  const patch: {
-    updated_at: string;
-    last_sync_at: string;
-    last_sync_status: SyncStatus;
-    last_successful_sync_at?: string;
-  } = {
+  const patchFull: Record<string, unknown> = {
     updated_at: now,
     last_sync_at: now,
     last_sync_status: status,
+    sync_lock_expires_at: null,
+    sync_heartbeat_at: now,
   };
-
-  if (status === "success" || status === "partial") {
-    patch.last_successful_sync_at = now;
+  if (status === "success" || status === "partial" || status === "warning") {
+    patchFull.last_successful_sync_at = now;
   }
 
-  const { error } = await supabase
-    .from("marketplace_accounts")
-    .update(patch)
-    .eq("id", accountId);
-
+  let { error } = await supabase.from("marketplace_accounts").update(patchFull).eq("id", accountId);
+  if (error) {
+    const patchLegacy: Record<string, unknown> = {
+      updated_at: now,
+      last_sync_at: now,
+      last_sync_status: status === "warning" ? "partial" : status,
+    };
+    if (status === "success" || status === "partial" || status === "warning") {
+      patchLegacy.last_successful_sync_at = now;
+    }
+    ({ error } = await supabase.from("marketplace_accounts").update(patchLegacy).eq("id", accountId));
+  }
   if (error) throw new Error(`Failed to mark sync finished: ${error.message}`);
 }
 
@@ -456,21 +637,34 @@ export async function createMarketplaceAccount(input: {
   const supabase = createAdminClient();
   const isDefault = input.is_default ?? false;
 
-  const { data, error } = await supabase
+  const baseInsert = {
+    company_id: input.company_id,
+    marketplace: input.marketplace,
+    account_name: input.account_name.trim(),
+    seller_id: input.seller_id?.trim() || null,
+    api_key_encrypted: encryptCredential(input.api_key.trim()),
+    is_active: input.is_active ?? true,
+    is_default: isDefault,
+    sync_enabled: input.sync_enabled ?? true,
+    last_sync_status: "idle" as const,
+    sync_lifecycle_status: "NEW_ACCOUNT" as const,
+  };
+
+  let { data, error } = await supabase
     .from("marketplace_accounts")
-    .insert({
-      company_id: input.company_id,
-      marketplace: input.marketplace,
-      account_name: input.account_name.trim(),
-      seller_id: input.seller_id?.trim() || null,
-      api_key_encrypted: encryptCredential(input.api_key.trim()),
-      is_active: input.is_active ?? true,
-      is_default: isDefault,
-      sync_enabled: input.sync_enabled ?? true,
-      last_sync_status: "idle",
-    })
-    .select(ACCOUNT_PUBLIC_COLUMNS)
+    .insert(baseInsert)
+    .select(ACCOUNT_COLUMNS_WITH_SECRET_FLAG_V2)
     .single();
+
+  if (error) {
+    const { sync_lifecycle_status: _omit, ...legacyInsert } = baseInsert;
+    void _omit;
+    ({ data, error } = await supabase
+      .from("marketplace_accounts")
+      .insert(legacyInsert)
+      .select(ACCOUNT_COLUMNS_WITH_SECRET_FLAG)
+      .single());
+  }
 
   if (error) throw new Error(`Failed to create marketplace account: ${error.message}`);
 
@@ -478,7 +672,18 @@ export async function createMarketplaceAccount(input: {
     await clearOtherDefaultAccounts(input.company_id, String(data.id));
   }
 
-  return toPublicAccount(data);
+  const account = toPublicAccount(data);
+
+  const { initializeNewAccountLifecycle } = await import(
+    "@/services/account-lifecycle-service"
+  );
+  await initializeNewAccountLifecycle(account.id, input.marketplace);
+
+  return toPublicAccount({
+    ...data,
+    sync_lifecycle_status:
+      input.marketplace === "wildberries" ? "NEW_ACCOUNT" : "ACCOUNT_VERIFICATION",
+  });
 }
 
 export async function updateMarketplaceAccount(
@@ -519,7 +724,7 @@ export async function updateMarketplaceAccount(
     .from("marketplace_accounts")
     .update(patch)
     .eq("id", accountId)
-    .select(ACCOUNT_PUBLIC_COLUMNS)
+    .select(ACCOUNT_COLUMNS_WITH_SECRET_FLAG)
     .single();
 
   if (error) throw new Error(`Failed to update marketplace account: ${error.message}`);

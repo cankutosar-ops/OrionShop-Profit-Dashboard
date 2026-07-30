@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import {
   buildModelBBreakdownLines,
   shareOfNetSalesPercent,
-} from "@/lib/profit-engine-model-b";
+} from "@/lib/financial-engine";
 import { isNetSalesReady } from "@/lib/sales-revenue-resolution";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 import type { ModelBProfitMetrics } from "@/types/database";
@@ -15,8 +15,8 @@ type ProfitabilityBreakdownProps = {
 };
 
 /**
- * Model B profitability breakdown — Final Net Profit matches Dashboard KPI.
- * Tax is applied to Seller Payout only; Product Cost / Advertising after tax.
+ * Commercial Performance profitability breakdown — Net Profit matches Dashboard KPI.
+ * Marketplace Fee / Acquiring are informational (not deducted again).
  */
 export function ProfitabilityBreakdown({
   modelB,
@@ -27,7 +27,7 @@ export function ProfitabilityBreakdown({
   const { breakdown, salesBase } = useMemo(
     () => ({
       breakdown: buildModelBBreakdownLines(modelB),
-      salesBase: modelB.sellerPayout,
+      salesBase: modelB.revenue,
     }),
     [modelB]
   );
@@ -50,7 +50,7 @@ export function ProfitabilityBreakdown({
       <div className="border-b border-border px-6 py-4">
         <h3 className="text-base font-semibold">Profitability Breakdown</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Model B commercial flow — Estimated Tax from Seller Payout only
+          Commercial Performance V4 — Revenue = Finance ppvz_for_pay
         </p>
       </div>
 
@@ -60,7 +60,7 @@ export function ProfitabilityBreakdown({
             <tr className="border-b border-border text-left text-muted-foreground">
               <th className="px-6 py-3 font-medium">Line Item</th>
               <th className="px-6 py-3 text-right font-medium">Amount</th>
-              <th className="px-6 py-3 text-right font-medium">% of Seller Payout</th>
+              <th className="px-6 py-3 text-right font-medium">% of Revenue</th>
             </tr>
           </thead>
           <tbody>
@@ -70,11 +70,9 @@ export function ProfitabilityBreakdown({
                 className={cn(
                   "border-b border-border/50",
                   line.isTotal && "bg-primary/5 font-semibold",
-                  (line.key === "marketplaceFees" ||
-                    line.key === "logistics" ||
-                    line.key === "storage" ||
-                    line.key === "penalties" ||
-                    line.key === "adjustments") &&
+                  (line.key === "marketplaceFee" ||
+                    line.key === "acquiring" ||
+                    line.key === "marketplaceFees") &&
                     "text-muted-foreground"
                 )}
               >
@@ -89,8 +87,7 @@ export function ProfitabilityBreakdown({
                     "px-6 py-3.5 text-right font-medium tabular-nums",
                     line.isDeduction && "text-danger",
                     line.isTotal && line.amount >= 0 && "text-success",
-                    line.isTotal && line.amount < 0 && "text-danger",
-                    line.key === "marketplaceFees" && "text-foreground"
+                    line.isTotal && line.amount < 0 && "text-danger"
                   )}
                 >
                   {formatAmount(line.amount, line.isDeduction)}

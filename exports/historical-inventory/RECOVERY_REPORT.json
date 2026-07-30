@@ -1,0 +1,510 @@
+{
+  "startedAt": "2026-07-26T10:21:57.551Z",
+  "start": "2026-07-17",
+  "end": "2026-07-26",
+  "accounts": [
+    {
+      "accountId": "1",
+      "accountName": "Wildberries Default",
+      "recoveredDays": [
+        "2026-07-17",
+        "2026-07-18",
+        "2026-07-19",
+        "2026-07-20",
+        "2026-07-21",
+        "2026-07-22",
+        "2026-07-23",
+        "2026-07-24",
+        "2026-07-25",
+        "2026-07-26"
+      ],
+      "missingDates": [],
+      "downloadFailures": [],
+      "totals": {
+        "inventoryRecords": 7610,
+        "warehouseCount": 42,
+        "warehouses": [
+          "Актобе",
+          "Астана Карагандинское шоссе",
+          "Атакент",
+          "Вёшки",
+          "Владивосток WB",
+          "Владимир WB",
+          "Внуково",
+          "Волгоград",
+          "Воронеж WB",
+          "Гомель 2",
+          "Екатеринбург - Испытателей 14г",
+          "Екатеринбург - Перспективная 14",
+          "Истра WB",
+          "Казань",
+          "Калининград",
+          "Коледино",
+          "Котовск",
+          "Краснодар",
+          "Крыловская",
+          "Курск",
+          "Махачкала Сепараторная",
+          "Невинномысск",
+          "Новосемейкино",
+          "Омск",
+          "Остальные",
+          "Пенза WB",
+          "Подольск",
+          "Пушкино",
+          "Рязань (Тюшевское)",
+          "Сарапул WB",
+          "Симферополь, Молодежненское",
+          "СК Ереван",
+          "СК Тверь Эммаусское WB",
+          "Склад СПБ Шушары Московское",
+          "Сургут",
+          "СЦ Барнаул",
+          "СЦ Ереван Арташисян 106",
+          "СЦ Шушары",
+          "Томск",
+          "Тула",
+          "Ульяновск",
+          "Электросталь"
+        ],
+        "skuCount": 42,
+        "skuSizeCount": 135
+      }
+    },
+    {
+      "accountId": "2",
+      "accountName": "Orion shop",
+      "recoveredDays": [
+        "2026-07-17",
+        "2026-07-18",
+        "2026-07-19",
+        "2026-07-20",
+        "2026-07-21",
+        "2026-07-22",
+        "2026-07-23",
+        "2026-07-24",
+        "2026-07-25",
+        "2026-07-26"
+      ],
+      "missingDates": [],
+      "downloadFailures": [],
+      "totals": {
+        "inventoryRecords": 14370,
+        "warehouseCount": 46,
+        "warehouses": [
+          "Абакан 2",
+          "Актобе",
+          "Артём",
+          "Астана Карагандинское шоссе",
+          "Атакент",
+          "Белая дача",
+          "Вёшки",
+          "Владивосток WB",
+          "Владимир WB",
+          "Волгоград",
+          "Воронеж WB",
+          "Екатеринбург - Перспективная 14",
+          "Казань",
+          "Калининград",
+          "Кемерово",
+          "Коледино",
+          "Котовск",
+          "Краснодар",
+          "Невинномысск",
+          "Нижний Тагил Восточное  WB",
+          "Новокузнецк WB",
+          "Новосемейкино",
+          "Остальные",
+          "Пенза WB",
+          "Пермь 2",
+          "Пушкино",
+          "Пятигорск, Этока",
+          "Радумля 1",
+          "Рязань (Тюшевское)",
+          "Сарапул WB",
+          "СК Ереван",
+          "СК Тверь Эммаусское WB",
+          "склад продавца Иркутск",
+          "Склад СПБ Шушары Московское",
+          "Софьино",
+          "СЦ Барнаул",
+          "СЦ Вологда 2",
+          "СЦ Нижний Новгород Ларина",
+          "СЦ Хабаровск",
+          "Томск",
+          "Тула",
+          "Тюмень",
+          "Уфа",
+          "Челябинск",
+          "Чита",
+          "Электросталь"
+        ],
+        "skuCount": 132,
+        "skuSizeCount": 447
+      }
+    },
+    {
+      "accountId": "3",
+      "accountName": "Verify Flow Test",
+      "recoveredDays": [],
+      "missingDates": [
+        "2026-07-17",
+        "2026-07-18",
+        "2026-07-19",
+        "2026-07-20",
+        "2026-07-21",
+        "2026-07-22",
+        "2026-07-23",
+        "2026-07-24",
+        "2026-07-25",
+        "2026-07-26"
+      ],
+      "downloadFailures": [
+        {
+          "phase": "range-download",
+          "error": "Create failed HTTP 401: {\n    \"title\": \"unauthorized\",\n    \"detail\": \"access token problem; token is malformed: token contains an invalid number of segments\",\n    \"code\": \"167251cb759b cc73ad3617b9d5c82732 84bd353bf-75\",\n    \"requestId\": \"51c58fd7c1930eea09a635bf8c5eb0c0\",\n    \"origin\": \"s2sauth-ca\",\n    \"status\": 401,\n    \"statusText\": \"Unauthorized\",\n    \"timestamp\": \"2026-07-26T10:23:37Z\"\n}\r\n"
+        }
+      ],
+      "totals": {
+        "inventoryRecords": 0,
+        "warehouses": {},
+        "skus": {},
+        "skuSizes": {}
+      }
+    },
+    {
+      "accountId": "4",
+      "accountName": "Verify Flow Test 2",
+      "recoveredDays": [],
+      "missingDates": [
+        "2026-07-17",
+        "2026-07-18",
+        "2026-07-19",
+        "2026-07-20",
+        "2026-07-21",
+        "2026-07-22",
+        "2026-07-23",
+        "2026-07-24",
+        "2026-07-25",
+        "2026-07-26"
+      ],
+      "downloadFailures": [
+        {
+          "phase": "range-download",
+          "error": "Create failed HTTP 401: {\n    \"title\": \"unauthorized\",\n    \"detail\": \"access token problem; token is malformed: token contains an invalid number of segments\",\n    \"code\": \"167251cb759b cc73ad3617b9d5c82732 84bd353bf-75\",\n    \"requestId\": \"c3a3fd54e4b9c0888e6586661b8409e0\",\n    \"origin\": \"s2sauth-ca\",\n    \"status\": 401,\n    \"statusText\": \"Unauthorized\",\n    \"timestamp\": \"2026-07-26T10:24:03Z\"\n}\r\n"
+        }
+      ],
+      "totals": {
+        "inventoryRecords": 0,
+        "warehouses": {},
+        "skus": {},
+        "skuSizes": {}
+      }
+    }
+  ],
+  "recoveredDays": [
+    {
+      "accountId": "1",
+      "date": "2026-07-17"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-18"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-19"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-20"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-21"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-22"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-23"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-24"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-25"
+    },
+    {
+      "accountId": "1",
+      "date": "2026-07-26"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-17"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-18"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-19"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-20"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-21"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-22"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-23"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-24"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-25"
+    },
+    {
+      "accountId": "2",
+      "date": "2026-07-26"
+    }
+  ],
+  "recoveredFiles": [
+    "account-1/2026-07-17/raw.csv",
+    "account-1/2026-07-17/inventory.xlsx",
+    "account-1/2026-07-17/summary.json",
+    "account-1/2026-07-18/raw.csv",
+    "account-1/2026-07-18/inventory.xlsx",
+    "account-1/2026-07-18/summary.json",
+    "account-1/2026-07-19/raw.csv",
+    "account-1/2026-07-19/inventory.xlsx",
+    "account-1/2026-07-19/summary.json",
+    "account-1/2026-07-20/raw.csv",
+    "account-1/2026-07-20/inventory.xlsx",
+    "account-1/2026-07-20/summary.json",
+    "account-1/2026-07-21/raw.csv",
+    "account-1/2026-07-21/inventory.xlsx",
+    "account-1/2026-07-21/summary.json",
+    "account-1/2026-07-22/raw.csv",
+    "account-1/2026-07-22/inventory.xlsx",
+    "account-1/2026-07-22/summary.json",
+    "account-1/2026-07-23/raw.csv",
+    "account-1/2026-07-23/inventory.xlsx",
+    "account-1/2026-07-23/summary.json",
+    "account-1/2026-07-24/raw.csv",
+    "account-1/2026-07-24/inventory.xlsx",
+    "account-1/2026-07-24/summary.json",
+    "account-1/2026-07-25/raw.csv",
+    "account-1/2026-07-25/inventory.xlsx",
+    "account-1/2026-07-25/summary.json",
+    "account-1/2026-07-26/raw.csv",
+    "account-1/2026-07-26/inventory.xlsx",
+    "account-1/2026-07-26/summary.json",
+    "account-2/2026-07-17/raw.csv",
+    "account-2/2026-07-17/inventory.xlsx",
+    "account-2/2026-07-17/summary.json",
+    "account-2/2026-07-18/raw.csv",
+    "account-2/2026-07-18/inventory.xlsx",
+    "account-2/2026-07-18/summary.json",
+    "account-2/2026-07-19/raw.csv",
+    "account-2/2026-07-19/inventory.xlsx",
+    "account-2/2026-07-19/summary.json",
+    "account-2/2026-07-20/raw.csv",
+    "account-2/2026-07-20/inventory.xlsx",
+    "account-2/2026-07-20/summary.json",
+    "account-2/2026-07-21/raw.csv",
+    "account-2/2026-07-21/inventory.xlsx",
+    "account-2/2026-07-21/summary.json",
+    "account-2/2026-07-22/raw.csv",
+    "account-2/2026-07-22/inventory.xlsx",
+    "account-2/2026-07-22/summary.json",
+    "account-2/2026-07-23/raw.csv",
+    "account-2/2026-07-23/inventory.xlsx",
+    "account-2/2026-07-23/summary.json",
+    "account-2/2026-07-24/raw.csv",
+    "account-2/2026-07-24/inventory.xlsx",
+    "account-2/2026-07-24/summary.json",
+    "account-2/2026-07-25/raw.csv",
+    "account-2/2026-07-25/inventory.xlsx",
+    "account-2/2026-07-25/summary.json",
+    "account-2/2026-07-26/raw.csv",
+    "account-2/2026-07-26/inventory.xlsx",
+    "account-2/2026-07-26/summary.json"
+  ],
+  "totalInventoryRecords": 21980,
+  "warehouses": [
+    "Абакан 2",
+    "Актобе",
+    "Артём",
+    "Астана Карагандинское шоссе",
+    "Атакент",
+    "Белая дача",
+    "Вёшки",
+    "Владивосток WB",
+    "Владимир WB",
+    "Внуково",
+    "Волгоград",
+    "Воронеж WB",
+    "Гомель 2",
+    "Екатеринбург - Испытателей 14г",
+    "Екатеринбург - Перспективная 14",
+    "Истра WB",
+    "Казань",
+    "Калининград",
+    "Кемерово",
+    "Коледино",
+    "Котовск",
+    "Краснодар",
+    "Крыловская",
+    "Курск",
+    "Махачкала Сепараторная",
+    "Невинномысск",
+    "Нижний Тагил Восточное  WB",
+    "Новокузнецк WB",
+    "Новосемейкино",
+    "Омск",
+    "Остальные",
+    "Пенза WB",
+    "Пермь 2",
+    "Подольск",
+    "Пушкино",
+    "Пятигорск, Этока",
+    "Радумля 1",
+    "Рязань (Тюшевское)",
+    "Сарапул WB",
+    "Симферополь, Молодежненское",
+    "СК Ереван",
+    "СК Тверь Эммаусское WB",
+    "склад продавца Иркутск",
+    "Склад СПБ Шушары Московское",
+    "Софьино",
+    "Сургут",
+    "СЦ Барнаул",
+    "СЦ Вологда 2",
+    "СЦ Ереван Арташисян 106",
+    "СЦ Нижний Новгород Ларина",
+    "СЦ Хабаровск",
+    "СЦ Шушары",
+    "Томск",
+    "Тула",
+    "Тюмень",
+    "Ульяновск",
+    "Уфа",
+    "Челябинск",
+    "Чита",
+    "Электросталь"
+  ],
+  "skuCount": 174,
+  "skuSizeCount": 582,
+  "missingDates": [
+    {
+      "accountId": "3",
+      "date": "2026-07-17"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-18"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-19"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-20"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-21"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-22"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-23"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-24"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-25"
+    },
+    {
+      "accountId": "3",
+      "date": "2026-07-26"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-17"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-18"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-19"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-20"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-21"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-22"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-23"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-24"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-25"
+    },
+    {
+      "accountId": "4",
+      "date": "2026-07-26"
+    }
+  ],
+  "downloadFailures": [
+    {
+      "accountId": "3",
+      "phase": "range-download",
+      "error": "Create failed HTTP 401: {\n    \"title\": \"unauthorized\",\n    \"detail\": \"access token problem; token is malformed: token contains an invalid number of segments\",\n    \"code\": \"167251cb759b cc73ad3617b9d5c82732 84bd353bf-75\",\n    \"requestId\": \"51c58fd7c1930eea09a635bf8c5eb0c0\",\n    \"origin\": \"s2sauth-ca\",\n    \"status\": 401,\n    \"statusText\": \"Unauthorized\",\n    \"timestamp\": \"2026-07-26T10:23:37Z\"\n}\r\n"
+    },
+    {
+      "accountId": "4",
+      "phase": "range-download",
+      "error": "Create failed HTTP 401: {\n    \"title\": \"unauthorized\",\n    \"detail\": \"access token problem; token is malformed: token contains an invalid number of segments\",\n    \"code\": \"167251cb759b cc73ad3617b9d5c82732 84bd353bf-75\",\n    \"requestId\": \"c3a3fd54e4b9c0888e6586661b8409e0\",\n    \"origin\": \"s2sauth-ca\",\n    \"status\": 401,\n    \"statusText\": \"Unauthorized\",\n    \"timestamp\": \"2026-07-26T10:24:03Z\"\n}\r\n"
+    }
+  ],
+  "warehouseCount": 60,
+  "finishedAt": "2026-07-26T10:23:48.538Z"
+}

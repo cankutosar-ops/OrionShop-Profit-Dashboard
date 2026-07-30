@@ -10,19 +10,19 @@ import type {
   WbSale,
 } from "@/types/database";
 
-function getClient() {
+async function getClient() {
   return createServerClient();
 }
 
 export const brandsService = {
   async getAll(): Promise<Brand[]> {
-    const { data, error } = await getClient().from("brands").select("*").order("name");
+    const { data, error } = await (await getClient()).from("brands").select("*").order("name");
     if (error) throw new Error(`Failed to fetch brands: ${error.message}`);
     return data ?? [];
   },
 
   async getById(id: string): Promise<Brand | null> {
-    const { data, error } = await getClient().from("brands").select("*").eq("id", id).single();
+    const { data, error } = await (await getClient()).from("brands").select("*").eq("id", id).single();
     if (error) return null;
     return data;
   },
@@ -30,16 +30,13 @@ export const brandsService = {
 
 export const categoriesService = {
   async getAll(): Promise<Category[]> {
-    const { data, error } = await getClient()
-      .from("categories")
-      .select("*")
-      .order("name");
+    const { data, error } = await (await getClient()).from("categories").select("*").order("name");
     if (error) throw new Error(`Failed to fetch categories: ${error.message}`);
     return data ?? [];
   },
 
   async getById(id: string): Promise<Category | null> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("categories")
       .select("*")
       .eq("id", id)
@@ -51,13 +48,13 @@ export const categoriesService = {
 
 export const productsService = {
   async getAll(): Promise<Product[]> {
-    const { data, error } = await getClient().from("products").select("*").order("name");
+    const { data, error } = await (await getClient()).from("products").select("*").order("name");
     if (error) throw new Error(`Failed to fetch products: ${error.message}`);
     return data ?? [];
   },
 
   async getBySupplierArticle(supplierArticle: string): Promise<Product | null> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("products")
       .select("*")
       .eq("supplier_article", supplierArticle)
@@ -67,7 +64,7 @@ export const productsService = {
   },
 
   async getByNmId(nmId: number): Promise<Product | null> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("products")
       .select("*")
       .eq("nm_id", nmId)
@@ -79,7 +76,7 @@ export const productsService = {
 
 export const ordersService = {
   async getByDateRange(from: string, to: string): Promise<WbOrder[]> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("wb_orders")
       .select("*")
       .gte("order_date", from)
@@ -92,7 +89,7 @@ export const ordersService = {
 
 export const salesService = {
   async getByDateRange(from: string, to: string): Promise<WbSale[]> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("wb_sales")
       .select("*")
       .gte("sale_date", from)
@@ -105,7 +102,7 @@ export const salesService = {
 
 export const financeService = {
   async getByDateRange(from: string, to: string): Promise<WbFinance[]> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("wb_finance")
       .select("*")
       .gte("operation_date", from)
@@ -118,7 +115,7 @@ export const financeService = {
 
 export const adsService = {
   async getByDateRange(from: string, to: string): Promise<WbAd[]> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("wb_ads")
       .select("*")
       .gte("campaign_date", from)
@@ -131,7 +128,7 @@ export const adsService = {
 
 export const costHistoryService = {
   async getByProductId(productId: string): Promise<ProductCostHistory[]> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("product_cost_history")
       .select("*")
       .eq("product_id", productId)
@@ -141,7 +138,7 @@ export const costHistoryService = {
   },
 
   async getAll(): Promise<ProductCostHistory[]> {
-    const { data, error } = await getClient()
+    const { data, error } = await (await getClient())
       .from("product_cost_history")
       .select("*")
       .order("effective_from", { ascending: false });

@@ -6,6 +6,13 @@ import type {
   CommissionWindowKey,
   ProductSmartPricingInputs,
 } from "@/lib/smart-pricing-types";
+import {
+  aspWindowDateFrom,
+  lookbackDateFrom,
+  materializeWindowKeyForFilter,
+  resolvePreferredCostWindow,
+  SMART_PRICING_COST_WINDOW_DEFAULT,
+} from "@/lib/smart-pricing-windows";
 
 export type {
   CommissionWindowKey,
@@ -27,20 +34,18 @@ export type SmartPricingCommissionSettings = {
   commissionWindow: CommissionWindowKey;
 };
 
+/** Sprint 8.1 — default cost window is 90d (preferred band), never dashboard range. */
 export const DEFAULT_SMART_PRICING_COMMISSION_SETTINGS: SmartPricingCommissionSettings = {
   minProductSales: 20,
   minCategorySales: 50,
-  commissionWindow: "range",
+  commissionWindow: SMART_PRICING_COST_WINDOW_DEFAULT,
 };
 
 export const COMMISSION_WINDOW_KEYS: CommissionWindowKey[] = ["30", "60", "90", "180", "range"];
 
 export function commissionWindowDateFrom(scopeTo: string, window: CommissionWindowKey): string {
-  if (window === "range") return scopeTo;
-  const end = new Date(scopeTo);
-  const start = new Date(end);
-  start.setDate(start.getDate() - (Number(window) - 1));
-  return start.toISOString().slice(0, 10);
+  const material = materializeWindowKeyForFilter(window);
+  return lookbackDateFrom(scopeTo, Number(material));
 }
 
 export function filterSalesByCommissionWindow<T extends { sale_date: string }>(
@@ -48,7 +53,7 @@ export function filterSalesByCommissionWindow<T extends { sale_date: string }>(
   scope: { from: string; to: string },
   window: CommissionWindowKey
 ): T[] {
-  const from = window === "range" ? scope.from : commissionWindowDateFrom(scope.to, window);
+  const from = commissionWindowDateFrom(scope.to, window);
   return sales.filter((row) => {
     const date = row.sale_date.slice(0, 10);
     return date >= from && date <= scope.to;
@@ -60,11 +65,36 @@ export function filterFinanceByCommissionWindow<T extends { operation_date: stri
   scope: { from: string; to: string },
   window: CommissionWindowKey
 ): T[] {
-  const from = window === "range" ? scope.from : commissionWindowDateFrom(scope.to, window);
+  const from = commissionWindowDateFrom(scope.to, window);
   return finance.filter((row) => {
     const date = row.operation_date.slice(0, 10);
     return date >= from && date <= scope.to;
   });
+}
+
+/** ASP / market comparison — recent window only (Sprint 8.1). */
+export function filterSalesByAspWindow<T extends { sale_date: string }>(
+  sales: T[],
+  scopeTo: string
+): T[] {
+  const from = aspWindowDateFrom(scopeTo);
+  return sales.filter((row) => {
+    const date = row.sale_date.slice(0, 10);
+    return date >= from && date <= scopeTo;
+  });
+}
+
+/** Resolve which precomputed cost window to apply for fee / logistics / storage. */
+export function resolveCostWindowForSettings(
+  input: ProductSmartPricingInputs,
+  settings: SmartPricingCommissionSettings
+): "60" | "90" | "30" | "180" {
+  const preferred = resolvePreferredCostWindow({
+    window: settings.commissionWindow,
+    productUnits60: input.historicalReplay.byWindow["60"]?.productLogistics.unitsSold ?? 0,
+    minProductSales: settings.minProductSales,
+  });
+  return preferred;
 }
 
 function windowBucketFromTotals(
@@ -97,7 +127,8 @@ export function applySmartPricingCommissionSettings(
   input: ProductSmartPricingInputs,
   settings: SmartPricingCommissionSettings
 ): ProductSmartPricingInputs {
-  const windowTotals = input.historicalReplay.byWindow[settings.commissionWindow];
+  const costWindow = resolveCostWindowForSettings(input, settings);
+  const windowTotals = input.historicalReplay.byWindow[costWindow];
   const buckets = windowBucketFromTotals(windowTotals);
   const resolved = resolveAdaptiveHistoricalCosts({
     marketplace: input.historicalReplay.marketplace,

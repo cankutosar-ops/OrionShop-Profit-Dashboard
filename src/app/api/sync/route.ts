@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { syncLog } from "@/lib/wildberries/sync-log";
-import {
-  ensureDefaultTenant,
-  resolveMarketplaceAccountId,
-} from "@/services/marketplace-account-service";
+import { authorize, authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
+import { ensureDefaultTenant } from "@/services/marketplace-account-service";
 import {
   runBlockingDashboardSync,
   scheduleBackgroundDashboardSync,
@@ -22,18 +20,29 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      marketplaceAccountId,
       dateFrom,
       dateTo,
       entities,
       blocking = false,
+      allAccounts,
     } = body as {
       marketplaceAccountId?: string;
       dateFrom?: string;
       dateTo?: string;
       entities?: Parameters<typeof runBlockingDashboardSync>[0]["entities"];
       blocking?: boolean;
+      allAccounts?: boolean;
     };
+
+    const authz = await authorizeRequestScope(request, {
+      body,
+      requireMarketplaceAccount: !allAccounts,
+      allowAllAccounts: !!allAccounts,
+      allowDefaultAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
+
+    const marketplaceAccountId = authz.marketplaceAccountId;
 
     syncLog("route", "POST /api/sync received", {
       marketplaceAccountId,
@@ -51,12 +60,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const resolved = marketplaceAccountId
-      ? { marketplaceAccountId }
-      : await resolveMarketplaceAccountId(null, null);
+    if (!marketplaceAccountId) {
+      return NextResponse.json(
+        { error: "marketplaceAccountId is required" },
+        { status: 400 }
+      );
+    }
 
     const syncRequest = {
-      marketplaceAccountId: resolved.marketplaceAccountId,
+      marketplaceAccountId,
       dateFrom,
       dateTo,
       entities,
@@ -105,8 +117,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
-  await ensureDefaultTenant();
+export async function GET(request: Request) {
+  const authz = await authorize(request);
+  if (isAuthzFailure(authz)) return authz;
+
+  if (authz.isInternalService) {
+    await ensureDefaultTenant();
+  }
 
   return NextResponse.json({
     status: "ready",

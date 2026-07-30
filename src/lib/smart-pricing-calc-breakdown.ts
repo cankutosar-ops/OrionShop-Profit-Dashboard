@@ -1,5 +1,5 @@
 /**
- * Presentation-only cost breakdown for Smart Pricing hover.
+ * Presentation-only cost breakdown for Smart Pricing expandable row detail.
  * Reads existing Model B / after-tax engine output — does not change mathematics.
  */
 import {
@@ -15,7 +15,7 @@ export type CostBreakdownRow = {
   amount: number;
   /** Shown for Commission, Advertising, Estimated Tax when meaningful. */
   percent: number | null;
-  /** Optional visual group for the popover. */
+  /** Optional visual group for the expandable detail. */
   section?: "marketplace" | "logistics" | "other";
 };
 
@@ -75,8 +75,8 @@ export function buildSmartPricingCostBreakdown(
   const advertisingPercent =
     modelB.netSales > 0 ? (modelB.advertising / modelB.netSales) * 100 : null;
   const taxRatePercent =
-    modelB.sellerPayout > 0
-      ? (afterTax.tax / modelB.sellerPayout) * 100
+    modelB.customerPaid > 0
+      ? (afterTax.tax / modelB.customerPaid) * 100
       : taxPercent > 0
         ? taxPercent
         : null;

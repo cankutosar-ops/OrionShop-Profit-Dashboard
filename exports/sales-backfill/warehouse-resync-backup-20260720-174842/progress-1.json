@@ -1,0 +1,40 @@
+{
+  "completedWindows": {
+    "2026-01-01:2026-01-31": {
+      "completedAt": "2026-07-13T17:13:31.223Z",
+      "processed": 61,
+      "updated": 57
+    },
+    "2026-02-01:2026-02-28": {
+      "completedAt": "2026-07-13T17:14:39.056Z",
+      "processed": 214,
+      "updated": 188
+    },
+    "2026-03-01:2026-03-31": {
+      "completedAt": "2026-07-13T17:15:47.710Z",
+      "processed": 393,
+      "updated": 340
+    },
+    "2026-04-01:2026-04-30": {
+      "completedAt": "2026-07-13T17:16:56.327Z",
+      "processed": 400,
+      "updated": 341
+    },
+    "2026-05-01:2026-05-31": {
+      "completedAt": "2026-07-13T17:18:04.712Z",
+      "processed": 319,
+      "updated": 280
+    },
+    "2026-06-01:2026-06-30": {
+      "completedAt": "2026-07-13T17:19:13.015Z",
+      "processed": 332,
+      "updated": 269
+    },
+    "2026-07-01:2026-07-13": {
+      "completedAt": "2026-07-13T17:20:20.650Z",
+      "processed": 83,
+      "updated": 75
+    }
+  },
+  "failedWindows": {}
+}

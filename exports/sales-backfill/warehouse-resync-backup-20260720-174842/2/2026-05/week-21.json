@@ -1,0 +1,12 @@
+{
+  "dateFrom": "2026-05-21",
+  "dateTo": "2026-05-27",
+  "status": "completed",
+  "source": "legacy-monthly",
+  "legacyWindow": "2026-05-01:2026-05-31",
+  "rowsImported": 266,
+  "rowsUpdated": 245,
+  "retries": 0,
+  "completedAt": "2026-07-13T22:30:54.577Z",
+  "note": "Skipped — fully covered by prior monthly import; no re-fetch."
+}

@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-07-24T16:35:54.197Z",
+  "account": "1",
+  "window": {
+    "from": "2026-07-13",
+    "to": "2026-07-24"
+  },
+  "schema": {
+    "price_with_disc": true,
+    "last_change_date": true
+  },
+  "before": {
+    "total": 2974,
+    "inWindow": 0,
+    "latestOrderDate": "2026-07-12"
+  },
+  "after": {
+    "total": 3225,
+    "inWindow": 237,
+    "latestOrderDate": "2026-07-24"
+  },
+  "api": {
+    "rawCount": 335,
+    "orderDateInWindow": 237,
+    "latestApiOrderDate": "2026-07-24"
+  },
+  "syncResult": {
+    "recordsProcessed": 335,
+    "recordsUpdated": 335,
+    "recordsInserted": 0,
+    "errors": []
+  },
+  "sridProbe": {
+    "sampleSize": 25,
+    "presentInDb": 25,
+    "missingFromDb": 0,
+    "missingExamples": [],
+    "presentExamples": [
+      {
+        "srid": "e1.ra1f77bcea5c14bf988d3b70eeee7df85.0.0",
+        "order_date": "2026-07-13T00:00:00+00:00",
+        "price_with_disc": 7200,
+        "last_change_date": "2026-07-13"
+      },
+      {
+        "srid": "eA8.rcdc39759fcda4e86bd3407d7e7a91cfc.0.0",
+        "order_date": "2026-07-14T00:00:00+00:00",
+        "price_with_disc": 7200,
+        "last_change_date": "2026-07-15"
+      },
+      {
+        "srid": "eAL.rcb81de85eb124786901234a1a80bb460.0.0",
+        "order_date": "2026-07-15T00:00:00+00:00",
+        "price_with_disc": 6960,
+        "last_change_date": "2026-07-15"
+      },
+      {
+        "srid": "eAm.r780c33004c4146e8a30a35eb07335dbb.0.0",
+        "order_date": "2026-07-13T00:00:00+00:00",
+        "price_with_disc": 7200,
+        "last_change_date": "2026-07-13"
+      },
+      {
+        "srid": "eAM.rf671b05adf7d4eb48cb0b4855a0bee53.0.0",
+        "order_date": "2026-07-13T00:00:00+00:00",
+        "price_with_disc": 7200,
+        "last_change_date": "2026-07-15"
+      }
+    ]
+  },
+  "success": true
+}

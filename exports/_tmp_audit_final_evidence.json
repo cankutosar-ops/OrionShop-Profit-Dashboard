@@ -1,0 +1,620 @@
+{
+  "schema": {
+    "wb_finance_columns": [
+      "id",
+      "product_id",
+      "nm_id",
+      "operation_date",
+      "operation_type",
+      "amount",
+      "description",
+      "source_key",
+      "srid",
+      "marketplace_account_id"
+    ],
+    "note": "Live wb_finance has reduced column set; ppvz_for_pay is stored as amount lines with source_key suffix historically, but finance_category/wb_source_suffix columns are absent from live select *."
+  },
+  "financeCoverage": {
+    "rows_2026_07_13_to_19": 0,
+    "rows_2026_07_01_to_05": 1505,
+    "latestSample": [
+      {
+        "operation_date": "2026-07-05",
+        "srid": "eAc.id4164b2adc29a4aad7e30ddce7d827c4.0.0",
+        "amount": 61.4,
+        "operation_type": "logistics",
+        "source_key": "rrd:3129137813177:logistics"
+      },
+      {
+        "operation_date": "2026-07-05",
+        "srid": "eAc.id4164b2adc29a4aad7e30ddce7d827c4.0.0",
+        "amount": 199.52,
+        "operation_type": "logistics",
+        "source_key": "rrd:3129137813176:logistics"
+      },
+      {
+        "operation_date": "2026-07-05",
+        "srid": "b25366007ec064c3d5e5c9329ffaaf652ea06191",
+        "amount": 15000,
+        "operation_type": "other",
+        "source_key": "rrd:3129137813175:deduction"
+      }
+    ],
+    "excelSaleSrids": 31,
+    "saleSridsPresentInFinance": 0,
+    "saleSridsMissingInFinance": 31,
+    "saleSridsPresentInWbSales": 31,
+    "missingFinanceSaleEvidence": [
+      {
+        "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+        "excelPpvz": 3914.36,
+        "saleDate": "2026-07-13",
+        "nmId": "197648828"
+      },
+      {
+        "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+        "excelPpvz": 3393.77,
+        "saleDate": "2026-07-13",
+        "nmId": "155297552"
+      },
+      {
+        "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+        "excelPpvz": 3161.71,
+        "saleDate": "2026-07-13",
+        "nmId": "233020825"
+      },
+      {
+        "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0",
+        "excelPpvz": 4182.16,
+        "saleDate": "2026-07-14",
+        "nmId": "197648828"
+      },
+      {
+        "srid": "eA4.r5a1c8e77b7ce41e38bb8927b96b2af77.0.0",
+        "excelPpvz": 3909.6,
+        "saleDate": "2026-07-14",
+        "nmId": "150065294"
+      },
+      {
+        "srid": "eBe.r54e0d145317e4253af68cfe797de1545.0.0",
+        "excelPpvz": 3783.88,
+        "saleDate": "2026-07-14",
+        "nmId": "233025591"
+      },
+      {
+        "srid": "eB8.rac05535c63644603a55d92777aed2a2c.0.0",
+        "excelPpvz": 3909.6,
+        "saleDate": "2026-07-14",
+        "nmId": "233025616"
+      },
+      {
+        "srid": "ebX.r813c452e2ca34dfcbe2ca208d0a8b328.0.0",
+        "excelPpvz": 3909.6,
+        "saleDate": "2026-07-14",
+        "nmId": "150065294"
+      },
+      {
+        "srid": "ecC.ibe6bd56bd4fe2a7fe1dd371fa9bb2b5c.0.0",
+        "excelPpvz": 3914.36,
+        "saleDate": "2026-07-14",
+        "nmId": "150064437"
+      },
+      {
+        "srid": "ebV.ie453dc1f33eb7b6e30235e9cfdad7253.4.0",
+        "excelPpvz": 4171.65,
+        "saleDate": "2026-07-15",
+        "nmId": "150064437"
+      },
+      {
+        "srid": "ebK.id00fe2aa64fdb308d9eaf3233ef3d97b.0.0",
+        "excelPpvz": 3874.75,
+        "saleDate": "2026-07-15",
+        "nmId": "150064437"
+      },
+      {
+        "srid": "eAS.r93f2140070204b0fb4111e00938a843e.0.0",
+        "excelPpvz": 3798,
+        "saleDate": "2026-07-15",
+        "nmId": "233025595"
+      },
+      {
+        "srid": "ebj.r7dedc5b5fd2c4451b4efe333ceecf2c3.0.0",
+        "excelPpvz": 3914.36,
+        "saleDate": "2026-07-16",
+        "nmId": "150065294"
+      },
+      {
+        "srid": "eAO.i9b7234dc4a8d3b7d4837e585f9973666.0.0",
+        "excelPpvz": 3909.6,
+        "saleDate": "2026-07-16",
+        "nmId": "150064438"
+      },
+      {
+        "srid": "eAO.i685e91e88aa86604d90e96d8b3869daf.0.0",
+        "excelPpvz": 3909.6,
+        "saleDate": "2026-07-16",
+        "nmId": "150064437"
+      }
+    ],
+    "presentSalesEvidence": [
+      {
+        "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+        "excelPpvz": 3914.36,
+        "salesRows": [
+          {
+            "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+            "sale_date": "2026-07-13T00:00:00+00:00",
+            "for_pay": 4068,
+            "price_with_disc": 7200,
+            "is_return": false,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+        "excelPpvz": 3393.77,
+        "salesRows": [
+          {
+            "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+            "sale_date": "2026-07-18T00:00:00+00:00",
+            "for_pay": 3531.25,
+            "price_with_disc": 6250,
+            "is_return": true,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+        "excelPpvz": 3161.71,
+        "salesRows": [
+          {
+            "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+            "sale_date": "2026-07-13T00:00:00+00:00",
+            "for_pay": 3319.37,
+            "price_with_disc": 5875,
+            "is_return": false,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0",
+        "excelPpvz": 4182.16,
+        "salesRows": [
+          {
+            "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0",
+            "sale_date": "2026-07-14T00:00:00+00:00",
+            "for_pay": 4323,
+            "price_with_disc": 6600,
+            "is_return": false,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "eA4.r5a1c8e77b7ce41e38bb8927b96b2af77.0.0",
+        "excelPpvz": 3909.6,
+        "salesRows": [
+          {
+            "srid": "eA4.r5a1c8e77b7ce41e38bb8927b96b2af77.0.0",
+            "sale_date": "2026-07-14T00:00:00+00:00",
+            "for_pay": 4068,
+            "price_with_disc": 7200,
+            "is_return": false,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "eBe.r54e0d145317e4253af68cfe797de1545.0.0",
+        "excelPpvz": 3783.88,
+        "salesRows": [
+          {
+            "srid": "eBe.r54e0d145317e4253af68cfe797de1545.0.0",
+            "sale_date": "2026-07-17T00:00:00+00:00",
+            "for_pay": 3932.4,
+            "price_with_disc": 6960,
+            "is_return": true,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "eB8.rac05535c63644603a55d92777aed2a2c.0.0",
+        "excelPpvz": 3909.6,
+        "salesRows": [
+          {
+            "srid": "eB8.rac05535c63644603a55d92777aed2a2c.0.0",
+            "sale_date": "2026-07-14T00:00:00+00:00",
+            "for_pay": 4068,
+            "price_with_disc": 7200,
+            "is_return": true,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "ebX.r813c452e2ca34dfcbe2ca208d0a8b328.0.0",
+        "excelPpvz": 3909.6,
+        "salesRows": [
+          {
+            "srid": "ebX.r813c452e2ca34dfcbe2ca208d0a8b328.0.0",
+            "sale_date": "2026-07-15T00:00:00+00:00",
+            "for_pay": 4068,
+            "price_with_disc": 7200,
+            "is_return": true,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "ecC.ibe6bd56bd4fe2a7fe1dd371fa9bb2b5c.0.0",
+        "excelPpvz": 3914.36,
+        "salesRows": [
+          {
+            "srid": "ecC.ibe6bd56bd4fe2a7fe1dd371fa9bb2b5c.0.0",
+            "sale_date": "2026-07-14T00:00:00+00:00",
+            "for_pay": 4068,
+            "price_with_disc": 7200,
+            "is_return": false,
+            "marketplace_account_id": 1
+          }
+        ]
+      },
+      {
+        "srid": "ebV.ie453dc1f33eb7b6e30235e9cfdad7253.4.0",
+        "excelPpvz": 4171.65,
+        "salesRows": [
+          {
+            "srid": "ebV.ie453dc1f33eb7b6e30235e9cfdad7253.4.0",
+            "sale_date": "2026-07-15T00:00:00+00:00",
+            "for_pay": 4323.01,
+            "price_with_disc": 6600.02,
+            "is_return": false,
+            "marketplace_account_id": 1
+          }
+        ]
+      }
+    ]
+  },
+  "revenue": {
+    "excelOsn_signed_saleMinusReturn": 88111.28,
+    "excelOsn_saleSum": 118263.95,
+    "excelOsn_returnSum": 30152.67,
+    "excelVyk_signed": 3323.16,
+    "excelVyk_byJustification": [
+      {
+        "justification": "Логистика",
+        "rows": 15,
+        "ppvz": 0,
+        "logistics": 2217.42,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Продажа",
+        "rows": 2,
+        "ppvz": 7562.86,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Возврат",
+        "rows": 1,
+        "ppvz": 4239.7,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      }
+    ],
+    "excelOsn_byJustification": [
+      {
+        "justification": "Логистика",
+        "rows": 281,
+        "ppvz": 0,
+        "logistics": 39715.42,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Продажа",
+        "rows": 31,
+        "ppvz": 118263.95,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Возврат",
+        "rows": 8,
+        "ppvz": 30152.67,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+        "rows": 537,
+        "ppvz": 0,
+        "logistics": 0,
+        "rebill": 3409.95,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Возмещение за выдачу и возврат товаров на ПВЗ",
+        "rows": 48,
+        "ppvz": 0,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Хранение",
+        "rows": 7,
+        "ppvz": 0,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 2875.57,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Удержание",
+        "rows": 3,
+        "ppvz": 0,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": 0,
+        "holds": 7048.56,
+        "penalties": 0,
+        "acceptance": 0
+      },
+      {
+        "justification": "Коррекция хранения",
+        "rows": 1,
+        "ppvz": 0,
+        "logistics": 0,
+        "rebill": 0,
+        "storage": -144.12,
+        "holds": 0,
+        "penalties": 0,
+        "acceptance": 0
+      }
+    ],
+    "summaryOsn_K": 84788.12,
+    "summaryVyk_K": 3323.16,
+    "summaryBoth_K": 88111.28,
+    "detailOsnSigned_minus_summaryOsn": 3323.16,
+    "salesAPI_week_forPayNet": 72275.32,
+    "salesAPI_week_rowCount": 34,
+    "financeDB_week": 0,
+    "dashboard_Revenue_equals_finance_week": 0
+  },
+  "step1_overlap": {
+    "bothSridCount": 9,
+    "onlyVykCount": 0,
+    "bothLogistics": [
+      {
+        "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+        "osnLogistics": 241.96,
+        "vykLogistics": 241.96,
+        "logisticsIdentical": true,
+        "osnPpvz": 0,
+        "vykPpvz": 0,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика"
+        ],
+        "vykJust": [
+          "Логистика"
+        ]
+      },
+      {
+        "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+        "osnLogistics": 188.96,
+        "vykLogistics": 188.96,
+        "logisticsIdentical": true,
+        "osnPpvz": 3635.39,
+        "vykPpvz": 3635.39,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Продажа"
+        ],
+        "vykJust": [
+          "Логистика",
+          "Продажа"
+        ]
+      },
+      {
+        "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+        "osnLogistics": 163.63,
+        "vykLogistics": 163.63,
+        "logisticsIdentical": true,
+        "osnPpvz": 0,
+        "vykPpvz": 0,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика"
+        ],
+        "vykJust": [
+          "Логистика"
+        ]
+      },
+      {
+        "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+        "osnLogistics": 307.76,
+        "vykLogistics": 307.76,
+        "logisticsIdentical": true,
+        "osnPpvz": 0,
+        "vykPpvz": 0,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика"
+        ],
+        "vykJust": [
+          "Логистика"
+        ]
+      },
+      {
+        "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+        "osnLogistics": 145.96,
+        "vykLogistics": 145.96,
+        "logisticsIdentical": true,
+        "osnPpvz": 4239.7,
+        "vykPpvz": 4239.7,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Возврат"
+        ],
+        "vykJust": [
+          "Логистика",
+          "Возврат"
+        ]
+      },
+      {
+        "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+        "osnLogistics": 497.82,
+        "vykLogistics": 497.82,
+        "logisticsIdentical": true,
+        "osnPpvz": 0,
+        "vykPpvz": 0,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика"
+        ],
+        "vykJust": [
+          "Логистика"
+        ]
+      },
+      {
+        "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+        "osnLogistics": 295.1,
+        "vykLogistics": 295.1,
+        "logisticsIdentical": true,
+        "osnPpvz": 0,
+        "vykPpvz": 0,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика"
+        ],
+        "vykJust": [
+          "Логистика"
+        ]
+      },
+      {
+        "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+        "osnLogistics": 122.67,
+        "vykLogistics": 122.67,
+        "logisticsIdentical": true,
+        "osnPpvz": 3927.47,
+        "vykPpvz": 3927.47,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Продажа"
+        ],
+        "vykJust": [
+          "Логистика",
+          "Продажа"
+        ]
+      },
+      {
+        "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+        "osnLogistics": 253.56,
+        "vykLogistics": 253.56,
+        "logisticsIdentical": true,
+        "osnPpvz": 0,
+        "vykPpvz": 0,
+        "osnJust": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика"
+        ],
+        "vykJust": [
+          "Логистика"
+        ]
+      }
+    ],
+    "sumBothOsnLogistics": 2217.42,
+    "sumBothVykLogistics": 2217.42,
+    "logisticsDuplicatedAcrossReports": true,
+    "note": "All 9 По выкупам SRIDs also appear in Основной. For overlapping SRIDs, logistics line totals match exactly between the two reports (duplicate representation of same logistics amounts)."
+  },
+  "weekSummaryRows": [
+    {
+      "№ отчета": "786182326",
+      "Юридическое лицо": "ИП Галиева Ошар Гузель Ирековна",
+      "Дата начала": "2026-07-13T00:00:00+03:00",
+      "Дата конца": "2026-07-19T00:00:00+03:00",
+      "Дата формирования": "2026-07-19T22:53:43+00:00",
+      "Тип отчета": "Основной",
+      "Продажа": 85990.12,
+      "В том числе Компенсация скидки по программе лояльности": 0,
+      "К перечислению за товар": 84788.12,
+      "Согласованная скидка, %": 0,
+      "Стоимость логистики": 37498,
+      "Стоимость хранения": 2731.45,
+      "Стоимость операций на приемке": 0,
+      "\"x": 7048.56,
+      "Общая сумма штрафов": 0,
+      "Корректировка Вознаграждения Вайлдберриз (ВВ)": 0,
+      "Стоимость участия в программе лояльности": 0,
+      "Сумма баллов, удержанных по программе лояльности": 0,
+      "Разовое изменение срока перечисления денежных средств": 0,
+      "Итого к оплате": 37510.11,
+      "Валюта": "руб."
+    },
+    {
+      "№ отчета": "786182329",
+      "Юридическое лицо": "ИП Галиева Ошар Гузель Ирековна",
+      "Дата начала": "2026-07-13T00:00:00+03:00",
+      "Дата конца": "2026-07-19T00:00:00+03:00",
+      "Дата формирования": "2026-07-19T22:53:45+00:00",
+      "Тип отчета": "По выкупам",
+      "Продажа": 4787.3,
+      "В том числе Компенсация скидки по программе лояльности": 0,
+      "К перечислению за товар": 3323.16,
+      "Согласованная скидка, %": 0,
+      "Стоимость логистики": 2217.42,
+      "Стоимость хранения": 0,
+      "Стоимость операций на приемке": 0,
+      "\"x": 0,
+      "Общая сумма штрафов": 0,
+      "Корректировка Вознаграждения Вайлдберриз (ВВ)": 0,
+      "Стоимость участия в программе лояльности": 0,
+      "Сумма баллов, удержанных по программе лояльности": 0,
+      "Разовое изменение срока перечисления денежных средств": 0,
+      "Итого к оплате": 1105.74,
+      "Валюта": "руб."
+    }
+  ]
+}

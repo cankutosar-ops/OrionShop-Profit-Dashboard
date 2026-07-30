@@ -1,3 +1,9 @@
+"use client";
+
+import { useCallback, useMemo } from "react";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import type { ProductProfitabilityAuditRow } from "@/types/database";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
@@ -5,6 +11,51 @@ type ProductProfitabilityAuditTableProps = {
   rows: ProductProfitabilityAuditRow[];
   totals: ProductProfitabilityAuditRow;
 };
+
+type AuditSortKey =
+  | "supplierArticle"
+  | "productName"
+  | "revenue"
+  | "quantitySold"
+  | "commission"
+  | "logistics"
+  | "returnLogistics"
+  | "deductions"
+  | "productCost"
+  | "grossProfit"
+  | "netProfit"
+  | "marginPercent";
+
+const DEFAULT_SORT = { key: "revenue" as const, direction: "desc" as const };
+
+function auditSortValue(row: ProductProfitabilityAuditRow, key: AuditSortKey): SortValue {
+  switch (key) {
+    case "supplierArticle":
+      return row.supplierArticle;
+    case "productName":
+      return row.productName;
+    case "revenue":
+      return row.revenue;
+    case "quantitySold":
+      return row.quantitySold;
+    case "commission":
+      return row.commission;
+    case "logistics":
+      return row.logistics;
+    case "returnLogistics":
+      return row.returnLogistics;
+    case "deductions":
+      return row.deductions;
+    case "productCost":
+      return row.productCost;
+    case "grossProfit":
+      return row.grossProfit;
+    case "netProfit":
+      return row.netProfit;
+    case "marginPercent":
+      return row.marginPercent;
+  }
+}
 
 function AuditCell({
   value,
@@ -38,6 +89,16 @@ export function ProductProfitabilityAuditTable({
   rows,
   totals,
 }: ProductProfitabilityAuditTableProps) {
+  const { sort, onSort, directionFor, isActive } = useCycleSort<AuditSortKey>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: ProductProfitabilityAuditRow, key: AuditSortKey) => auditSortValue(row, key),
+    []
+  );
+  const sortedRows = useMemo(
+    () => sortRowsBySpec(rows, sort, getValue),
+    [rows, sort, getValue]
+  );
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-6 py-4">
@@ -50,29 +111,111 @@ export function ProductProfitabilityAuditTable({
         <table className="w-full min-w-[1200px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="sticky left-0 z-10 bg-card px-4 py-3 font-medium">Article</th>
-              <th className="px-4 py-3 font-medium">Product</th>
-              <th className="px-4 py-3 text-right font-medium">Revenue</th>
-              <th className="px-4 py-3 text-right font-medium">Qty Sold</th>
-              <th className="px-4 py-3 text-right font-medium">Commission</th>
-              <th className="px-4 py-3 text-right font-medium">Logistics</th>
-              <th className="px-4 py-3 text-right font-medium">Return Log.</th>
-              <th className="px-4 py-3 text-right font-medium">Deductions</th>
-              <th className="px-4 py-3 text-right font-medium">Product Cost</th>
-              <th className="px-4 py-3 text-right font-medium">Gross Profit</th>
-              <th className="px-4 py-3 text-right font-medium">Net Profit</th>
-              <th className="px-4 py-3 text-right font-medium">Margin %</th>
+              <SortableTh
+                label="Article"
+                active={isActive("supplierArticle")}
+                direction={directionFor("supplierArticle")}
+                onClick={() => onSort("supplierArticle")}
+                className="sticky left-0 z-10 bg-card px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Product"
+                active={isActive("productName")}
+                direction={directionFor("productName")}
+                onClick={() => onSort("productName")}
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Revenue"
+                active={isActive("revenue")}
+                direction={directionFor("revenue")}
+                onClick={() => onSort("revenue")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Qty Sold"
+                active={isActive("quantitySold")}
+                direction={directionFor("quantitySold")}
+                onClick={() => onSort("quantitySold")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Commission"
+                active={isActive("commission")}
+                direction={directionFor("commission")}
+                onClick={() => onSort("commission")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Logistics"
+                active={isActive("logistics")}
+                direction={directionFor("logistics")}
+                onClick={() => onSort("logistics")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Return Log."
+                active={isActive("returnLogistics")}
+                direction={directionFor("returnLogistics")}
+                onClick={() => onSort("returnLogistics")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Deductions"
+                active={isActive("deductions")}
+                direction={directionFor("deductions")}
+                onClick={() => onSort("deductions")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Product Cost"
+                active={isActive("productCost")}
+                direction={directionFor("productCost")}
+                onClick={() => onSort("productCost")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Gross Profit"
+                active={isActive("grossProfit")}
+                direction={directionFor("grossProfit")}
+                onClick={() => onSort("grossProfit")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Net Profit"
+                active={isActive("netProfit")}
+                direction={directionFor("netProfit")}
+                onClick={() => onSort("netProfit")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
+              <SortableTh
+                label="Margin %"
+                active={isActive("marginPercent")}
+                direction={directionFor("marginPercent")}
+                onClick={() => onSort("marginPercent")}
+                align="right"
+                className="px-4 py-3 font-medium"
+              />
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {sortedRows.length === 0 ? (
               <tr>
                 <td colSpan={12} className="px-6 py-12 text-center text-muted-foreground">
                   No product sales in the selected period
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              sortedRows.map((row) => (
                 <tr
                   key={row.productId}
                   className="border-b border-border/50 transition-colors hover:bg-card-hover"

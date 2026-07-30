@@ -1,0 +1,151 @@
+{
+  "auditScope": {
+    "week": { "from": "2026-07-13", "to": "2026-07-19" },
+    "accountId": "1",
+    "files": {
+      "summary": "c:/Users/User/Downloads/Еженедельный отчет 2024-01-29 - 2026-07-19_1202289.xlsx",
+      "detailOsnovnoy": "…/Еженедельный детализированный отчет №786182326_1202289 - 1.xlsx",
+      "detailPoVykupam": "…/Еженедельный детализированный отчет №786182329_1202289 - 1.xlsx"
+    },
+    "reportNumbers": { "osnovnoy": "786182326", "poVykupam": "786182329" },
+    "constraints": "Evidence only. No code/engine changes. No fix proposals."
+  },
+  "step1_weeklyReportValidation": {
+    "osnRows": 916,
+    "vykRows": 18,
+    "osnUniqueSrids": 573,
+    "vykUniqueSrids": 9,
+    "onlyInOsnovnoy": 564,
+    "onlyInPoVykupam": 0,
+    "inBoth": 9,
+    "finding": "Every По выкупам detail line is an exact duplicate of a line already present in Основной detail (same SRID + justification + amount).",
+    "payLineDuplicationEvidence": [
+      {
+        "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+        "justification": "Продажа",
+        "ppvz_for_pay": 3635.39,
+        "inBothReports": true
+      },
+      {
+        "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+        "justification": "Возврат",
+        "ppvz_for_pay": 4239.7,
+        "inBothReports": true
+      },
+      {
+        "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+        "justification": "Продажа",
+        "ppvz_for_pay": 3927.47,
+        "inBothReports": true
+      }
+    ],
+    "logisticsDuplication": {
+      "vykLogisticsLines": 15,
+      "duplicatedExactlyInOsnovnoy": 15,
+      "vykLogisticsTotal": 2217.42,
+      "sameTotalOnOverlappingSridsInOsnovnoy": 2217.42
+    },
+    "summaryListStillSeparate": {
+      "osn": { "id": "786182326", "K": 84788.12, "logistics": 37498, "storage": 2731.45, "other": 7048.56 },
+      "vyk": { "id": "786182329", "K": 3323.16, "logistics": 2217.42, "storage": 0, "other": 0 },
+      "note": "Official summary lists two report numbers with different К totals for the same calendar week, but detail-file SRIDs for По выкупам are a subset already inside Основной detail."
+    },
+    "detailSignedVsSummary": {
+      "osnDetail_signed_saleMinusReturn": 88111.28,
+      "osnSummary_K": 84788.12,
+      "delta": 3323.16,
+      "deltaEquals_vykSigned": true,
+      "vykDetail_signed": 3323.16
+    }
+  },
+  "step2_financeValidation": {
+    "wb_finance_live_columns": [
+      "id", "product_id", "nm_id", "operation_date", "operation_type",
+      "amount", "description", "source_key", "srid", "marketplace_account_id"
+    ],
+    "financeRowsInWeek_operation_date": 0,
+    "financeLatestOperationDate": "2026-07-05",
+    "financeRows_2026_07_01_to_05": 1505,
+    "excelUniqueSrids": 573,
+    "excelSridsPresentInFinance": 0,
+    "excelSridsMissingInFinance": 573,
+    "excelSaleSrids": 31,
+    "saleSridsPresentInFinance": 0,
+    "saleSridsPresentInWbSales": 31,
+    "duplicatedInFinance": [],
+    "amountDifferences": [],
+    "missingSaleEvidenceSample": [
+      { "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0", "excelPpvz": 3914.36, "saleDate": "2026-07-13", "nmId": "197648828", "inWbSales": true, "wbSalesForPay": 4068 },
+      { "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0", "excelPpvz": 3161.71, "saleDate": "2026-07-13", "nmId": "233020825", "inWbSales": true, "wbSalesForPay": 3319.37 },
+      { "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0", "excelPpvz": 4182.16, "saleDate": "2026-07-14", "nmId": "197648828", "inWbSales": true, "wbSalesForPay": 4323 }
+    ]
+  },
+  "step3_revenue": {
+    "A_weeklyReports": {
+      "osnSummary_K": 84788.12,
+      "vykSummary_K": 3323.16,
+      "sumBothSummaries_K": 88111.28,
+      "osnDetail_signed_ppvz": 88111.28,
+      "recommendedOfficialSingleCountWithoutDoubleCount": 88111.28,
+      "note": "Do not add both detail files — По выкупам lines are already inside Основной detail."
+    },
+    "B_financeDB": 0,
+    "C_dashboard_Revenue_V4": 0,
+    "salesAPI_forPay_net_sameCalendarWeek": 72275.32,
+    "differences": {
+      "dashboard_vs_osnSummary_K": -84788.12,
+      "dashboard_vs_osnDetailSigned": -88111.28,
+      "finance_vs_dashboard": 0,
+      "salesAPI_vs_osnDetailSigned": -15835.96
+    },
+    "transactionsDrivingGap": "All 31 Продажа + 8 Возврат lines in Основной detail (net 88 111.28 ₽). None exist in wb_finance for this week. Full list in exports/tx-audit-week-2026-07-13_2026-07-19-reports-786182326_786182329.json → step3_revenue.transactionsDrivingForPayGap_missing"
+  },
+  "step4_otherMetrics": {
+    "logistics": {
+      "excelOsnDetail_delivery": 39715.42,
+      "excelOsnDetail_rebill": 3409.95,
+      "excelOsnSummary": 37498,
+      "excelVykDetail_delivery": 2217.42,
+      "financeDB": 0,
+      "dashboard": 0,
+      "missingDeliveryLines": 281,
+      "missingRebillLines": 537,
+      "note": "Vyk logistics 2 217.42 is fully duplicated inside Osn detail; summary Osn logistics 37 498 ≠ detail delivery 39 715.42 (definition/filter difference inside official files)."
+    },
+    "storage": { "excelDetail": 2731.45, "excelSummary": 2731.45, "financeDB": 0, "dashboard": 0 },
+    "acceptance": { "excel": 0, "financeDB": 0, "dashboard": 0 },
+    "penalties": { "excel": 0, "financeDB": 0, "dashboard": 0 },
+    "otherHolds": {
+      "excel": 7048.56,
+      "financeDB": 0,
+      "dashboard": 0,
+      "missingEvidence": [
+        { "srid": "transit_deduction_39887188", "justification": "Удержание", "amount": 2293.2, "saleDate": "2026-07-17" },
+        { "srid": "transit_deduction_40412692", "justification": "Удержание", "amount": 1829.36, "saleDate": "2026-07-17" },
+        { "srid": "9a498abe7df63da2de4d759caab8c59f3caa345b", "justification": "Удержание", "amount": 2926, "saleDate": "2026-07-19" }
+      ]
+    }
+  },
+  "verdict": {
+    "q1_dashboardMatchesOfficialWeekly": false,
+    "q2_exactTransactionsCreatingMismatch": "Every finance-backed Dashboard metric for this week is 0 because wb_finance has 0 rows with operation_date in 2026-07-13→19. Concrete drivers include all 31 Excel Продажа SRIDs (examples: eBs.i70140a05ef97b212165bb26a07c847bc.0.0 @ 3 914.36; eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0 @ 3 161.71) — present in wb_sales, absent from wb_finance — plus 281 logistics, 537 rebill, 8 storage, and 3 hold lines from the official detail.",
+    "q3_officialFullyInWbFinance": false,
+    "q3_evidence": { "excelSrids": 573, "presentInFinance": 0, "financeLatestDate": "2026-07-05" },
+    "q4_poVykupamNature": "Detail-level: subset / alternate packaging of transactions already present in Основной detail (0 SRIDs only-in-По-выкупам; 3/3 pay lines and 15/15 logistics lines exact duplicates). Summary-level: WB still publishes a separate report №786182329 with its own К=3 323.16. Not a disjoint second settlement of new SRIDs for this week.",
+    "q5_causes": [
+      {
+        "cause": "Missing Sync",
+        "evidence": "wb_finance latest operation_date = 2026-07-05; week 2026-07-13→19 row count = 0; 31/31 Excel sale SRIDs missing from finance while present in wb_sales."
+      },
+      {
+        "cause": "Wrong Date Scope",
+        "evidence": "Official report week is realization-report packaging (№786182326 / №786182329). Dashboard Revenue uses finance operation_date range. Even before this gap, those axes are not the same; this week they yield 88 111.28 vs 0."
+      },
+      {
+        "cause": "Wrong Aggregation (risk if summing both official reports)",
+        "evidence": "Summing Основной+По выкупам detail double-counts identical SRIDs/amounts. Dashboard did not do this here (finance empty); the trap exists in the official files themselves."
+      }
+    ],
+    "notObservedThisWeek": ["Duplicate Transactions inside wb_finance", "Amount Differences on matched finance SRIDs (no matches)"]
+  }
+}

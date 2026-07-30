@@ -1,14 +1,18 @@
 import { buildCostTemplateFilename, buildCostTemplateWorkbook } from "@/lib/cost-excel";
-import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import { buildCostTemplateRows } from "@/services/cost-service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const scope = await resolveScopedDateRangeFromUrl(new URL(request.url));
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
 
-    const rows = await buildCostTemplateRows(scope.marketplaceAccountId);
+    const rows = await buildCostTemplateRows(authz.marketplaceAccountId!);
     const buffer = buildCostTemplateWorkbook(rows);
     const filename = buildCostTemplateFilename();
 

@@ -45,7 +45,7 @@ function RevenueTooltip({
       active
       label={label ? formatDate(label) : undefined}
       items={payload.map((entry) => ({
-        label: entry.dataKey === "revenue" ? "Revenue" : "Profit",
+        label: entry.dataKey === "revenue" ? "Sales" : "Profit",
         value: entry.value,
         format: "currency" as const,
         color: entry.dataKey === "revenue" ? colors.revenue : colors.profit,
@@ -129,7 +129,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
       <ChartLegend
         className="mt-4"
         items={[
-          { label: "Revenue", color: revenueColor },
+          { label: "Sales", color: revenueColor },
           { label: "Gross Profit (daily)", color: profitColor },
         ]}
       />

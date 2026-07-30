@@ -1,0 +1,40 @@
+{
+  "range": {
+    "accountId": "1",
+    "from": "2026-06-23",
+    "to": "2026-07-22"
+  },
+  "dashboardAcquiringKPI": 14973.26000000001,
+  "formula": "Σ |wb_finance.amount| where effectiveFinanceCategory = ACQUIRING (for_pay lines excluded)",
+  "categoriesInAcquiringKPI": [
+    {
+      "financeSourceField": "acquiring_fee",
+      "categoryName": "ACQUIRING",
+      "totalAmount": 14973.26000000001,
+      "included": true
+    }
+  ],
+  "inclusionCheck": {
+    "acquiring_fee": true,
+    "ppvz_sales_commission": false,
+    "ppvz_reward": false,
+    "ppvz_vw": false,
+    "other_marketplace_fees": false,
+    "account_adjustments": false
+  },
+  "siblingCategoryTotals_notInAcquiringKPI": {
+    "COMMISSION": 35620.76999999999,
+    "PPVZ_REWARD": 8773.339999999995,
+    "PPVZ_VW": 48635.15000000004,
+    "OTHER": 0,
+    "ADJUSTMENT": 48500
+  },
+  "acquiring_fee_reclassified_away_from_ACQUIRING": 0,
+  "bySuffix": {
+    "acquiring_fee": 14973.26000000001,
+    "commission": 35620.76999999999,
+    "ppvz_reward": 8773.339999999995,
+    "ppvz_vw": 48635.15000000004,
+    "deduction": 48500
+  }
+}

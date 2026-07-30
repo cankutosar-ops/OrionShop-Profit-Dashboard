@@ -14,6 +14,7 @@ import {
   sumProductHistoricalLogisticsMetrics,
   totalHistoricalLogistics,
 } from "@/lib/smart-pricing-logistics";
+import { finishedPriceRatioFromSales } from "@/lib/financial-engine";
 import {
   buildAccountMarketplaceFeesTotals,
   buildCategoryMarketplaceFeesTotals,
@@ -29,9 +30,11 @@ import {
   COMMISSION_WINDOW_KEYS,
   DEFAULT_SMART_PRICING_COMMISSION_SETTINGS,
   filterFinanceByCommissionWindow,
+  filterSalesByAspWindow,
   filterSalesByCommissionWindow,
   type CommissionWindowKey,
 } from "@/lib/smart-pricing-settings";
+import { buildSmartPricingDataScope, aspWindowDateFrom } from "@/lib/smart-pricing-windows";
 import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
@@ -212,19 +215,23 @@ export async function getSmartPricingInputs(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
-  // Respect header Brand Filter (same scope as Dashboard / Reports).
-  const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
-    brandId: scope.brandId,
+  const client = await createServerClient();
+  // Sprint 8.1 — pricing lookback is fixed (ending today). Dashboard from/to
+  // affect reporting only; keep brand/account/company from page scope.
+  const dataScope = buildSmartPricingDataScope(scope);
+
+  // Respect header Brand Filter (same account/brand scope as Dashboard / Reports).
+  const products = await fetchProductsWithRelations(dataScope.marketplaceAccountId, client, {
+    brandId: dataScope.brandId,
   });
   const productIds = products.map((p) => String(p.id));
   const [costHistory, sales, finance, orders, account, inventoryRows] = await Promise.all([
-    fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
-    fetchSalesInRange(scope, client, { productIds }),
-    fetchFinanceInRange(scope, client, { productIds }),
-    fetchOrdersInRange(scope, client, { productIds }),
-    getMarketplaceAccountForSync(scope.marketplaceAccountId),
-    getInventoryForAccount(scope.marketplaceAccountId, client),
+    fetchCostHistory(dataScope.marketplaceAccountId, client, { productIds }),
+    fetchSalesInRange(dataScope, client, { productIds }),
+    fetchFinanceInRange(dataScope, client, { productIds }),
+    fetchOrdersInRange(dataScope, client, { productIds }),
+    getMarketplaceAccountForSync(dataScope.marketplaceAccountId),
+    getInventoryForAccount(dataScope.marketplaceAccountId, client),
   ]);
 
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
@@ -232,11 +239,11 @@ export async function getSmartPricingInputs(
   const salesByProductId = indexByProductId<WbSale>(sales);
   const financeByProductId = indexByProductId<WbFinance>(finance);
   const ordersByProductId = indexByProductId(orders);
-  const aggregates = buildWindowAggregates(scope, products, sales, finance);
+  const aggregates = buildWindowAggregates(dataScope, products, sales, finance);
   const defaultSettings = DEFAULT_SMART_PRICING_COMMISSION_SETTINGS;
   const defaultWindow = defaultSettings.commissionWindow;
 
-  logScopeAudit("Smart Pricing", scope, scope, {
+  logScopeAudit("Smart Pricing", scope, dataScope, {
     orders: orders.length,
     sales: sales.length,
     finance: finance.length,
@@ -254,20 +261,42 @@ export async function getSmartPricingInputs(
       const productFinance = financeByProductId.get(productId) ?? [];
       const productOrders = ordersByProductId.get(productId) ?? [];
 
-      const completedSales = productSales.filter((row) => !row.is_return);
-      const returnedUnits = productSales
+      // Sprint 8.1 — ASP / market comparison from recent window only (14–30d band).
+      const aspSales = filterSalesByAspWindow(productSales, dataScope.to);
+      const completedAspSales = aspSales.filter((row) => !row.is_return);
+      const returnedAspUnits = aspSales
         .filter((row) => row.is_return)
         .reduce((sum, row) => sum + row.quantity, 0);
-      const unitsSold = completedSales.reduce((sum, row) => sum + row.quantity, 0);
-      const totalUnits = unitsSold + returnedUnits;
-      const revenue = completedSales.reduce((sum, row) => sum + saleUnitSalesAmount(row), 0);
-      const hasSalesHistory = unitsSold > 0 && revenue > 0;
+      const unitsSoldAsp = completedAspSales.reduce((sum, row) => sum + row.quantity, 0);
+      const totalUnitsAsp = unitsSoldAsp + returnedAspUnits;
+      const revenueAsp = completedAspSales.reduce(
+        (sum, row) => sum + saleUnitSalesAmount(row),
+        0
+      );
+      const hasSalesHistory = unitsSoldAsp > 0 && revenueAsp > 0;
 
-      const productLogistics = sumProductHistoricalLogisticsMetrics(productSales, productFinance);
+      // Cost-window product logistics for display splits (default 90d preferred band).
+      const costWindowSales = filterSalesByCommissionWindow(
+        productSales,
+        dataScope,
+        defaultWindow
+      );
+      const costWindowFinance = filterFinanceByCommissionWindow(
+        productFinance,
+        dataScope,
+        defaultWindow
+      );
+      const productLogistics = sumProductHistoricalLogisticsMetrics(
+        costWindowSales,
+        costWindowFinance
+      );
+      const costWindowUnits = costWindowSales
+        .filter((row) => !row.is_return)
+        .reduce((sum, row) => sum + row.quantity, 0);
       const unitOutboundLogistics =
-        unitsSold > 0 ? productLogistics.outboundLogistics / unitsSold : 0;
+        costWindowUnits > 0 ? productLogistics.outboundLogistics / costWindowUnits : 0;
       const unitRebillLogistics =
-        unitsSold > 0 ? productLogistics.rebillLogistics / unitsSold : 0;
+        costWindowUnits > 0 ? productLogistics.rebillLogistics / costWindowUnits : 0;
       const totalProductLogistics = totalHistoricalLogistics(productLogistics);
       const returnLogisticsPercent =
         totalProductLogistics > 0
@@ -280,7 +309,7 @@ export async function getSmartPricingInputs(
         categoryId,
         aggregates,
         defaultWindow,
-        scope
+        dataScope
       );
 
       const resolved = resolveAdaptiveHistoricalCosts({
@@ -317,7 +346,7 @@ export async function getSmartPricingInputs(
           categoryId,
           aggregates,
           window,
-          scope
+          dataScope
         );
       }
 
@@ -328,14 +357,14 @@ export async function getSmartPricingInputs(
       };
 
       for (const window of COMMISSION_WINDOW_KEYS) {
-        const wSales = filterSalesByCommissionWindow(productSales, scope, window);
+        const wSales = filterSalesByCommissionWindow(productSales, dataScope, window);
         const productTotals = sumCompletedSalesMetrics(wSales);
         commissionReplay.byWindow[window] = {
           productTotals,
           categoryTotals:
             buildCategoryCommissionTotals(
               products,
-              indexByProductId(filterSalesByCommissionWindow(sales, scope, window))
+              indexByProductId(filterSalesByCommissionWindow(sales, dataScope, window))
             ).get(categoryId) ?? {
               commission: 0,
               revenue: 0,
@@ -345,7 +374,14 @@ export async function getSmartPricingInputs(
         };
       }
 
-      const funnel = buildProductFunnelMetrics(productOrders, productSales);
+      // Orders / funnel for table filters — use ASP recent window (not reporting range).
+      const aspFrom = aspWindowDateFrom(dataScope.to);
+      const aspOrders = productOrders.filter((row) => {
+        const date = String(row.order_date ?? "").slice(0, 10);
+        if (!date) return false;
+        return date >= aspFrom && date <= dataScope.to;
+      });
+      const funnel = buildProductFunnelMetrics(aspOrders, aspSales);
 
       const row: ProductSmartPricingInputs = {
         productId,
@@ -377,7 +413,7 @@ export async function getSmartPricingInputs(
         commissionPercent: resolved.marketplaceFeesPercent,
         marketplaceFeesSource: resolved.resolutionSource,
         commissionSource: resolved.resolutionSource,
-        completedSales: unitsSold,
+        completedSales: unitsSoldAsp,
         productHistoricalMarketplaceFeesPercent:
           resolved.productHistoricalMarketplaceFeesPercent,
         categoryHistoricalMarketplaceFeesPercent:
@@ -387,10 +423,11 @@ export async function getSmartPricingInputs(
         categoryHistoricalCommissionPercent:
           resolved.categoryHistoricalMarketplaceFeesPercent,
         marketplaceCommissionPercent: resolved.marketplaceFeesPercent,
-        currentAvgPrice: hasSalesHistory ? revenue / unitsSold : null,
+        currentAvgPrice: hasSalesHistory ? revenueAsp / unitsSoldAsp : null,
+        finishedPriceRatio: finishedPriceRatioFromSales(aspSales) ?? 1,
         hasSalesHistory,
         orders: funnel.orders,
-        returnRatePercent: totalUnits > 0 ? (returnedUnits / totalUnits) * 100 : 0,
+        returnRatePercent: totalUnitsAsp > 0 ? (returnedAspUnits / totalUnitsAsp) * 100 : 0,
         returnLogisticsPercent,
         unitPurchaseLogistics: unitOutboundLogistics,
         unitExcludedLogistics: 0,
@@ -419,7 +456,7 @@ export async function getSmartPricingReport(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const products = await getProductProfitability(scope, client);
   const rows = buildProductPricingHealthRows(products, targetMarginPercent, marketingPercent);
   const inputs = await getSmartPricingInputs(scope);

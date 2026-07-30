@@ -34,7 +34,7 @@ function ProductAnalyticsFunnelSection({ totals }: { totals: ProductAnalyticsTot
       title="Funnel"
       description="Order flow — volume and conversion, separate from unit economics"
     >
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           size="compact"
           title="Orders"
@@ -43,7 +43,7 @@ function ProductAnalyticsFunnelSection({ totals }: { totals: ProductAnalyticsTot
         />
         <MetricCard
           size="compact"
-          title="Purchases"
+          title="Buyout"
           value={formatKpiCount(totals.purchases)}
           icon={KPI_ICONS.purchases}
         />
@@ -55,21 +55,9 @@ function ProductAnalyticsFunnelSection({ totals }: { totals: ProductAnalyticsTot
         />
         <MetricCard
           size="compact"
-          title="Cancelled Orders"
-          value={formatKpiCount(totals.cancelled)}
-          icon={KPI_ICONS.returns}
-        />
-        <MetricCard
-          size="compact"
-          title="Cancellation %"
-          value={formatKpiPercent(totals.cancellationPercent)}
-          icon={KPI_ICONS.conversion}
-        />
-        <MetricCard
-          size="compact"
           title="Lost Orders"
           value={formatKpiCount(totals.lostOrders)}
-          subtitle="Orders − purchases"
+          subtitle="Orders − Buyout"
           icon={KPI_ICONS.orders}
         />
       </div>

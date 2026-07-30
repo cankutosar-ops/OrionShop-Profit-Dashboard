@@ -195,7 +195,7 @@ function performanceHeader(): SheetCell[] {
     "Profit",
     "Margin %",
     "Orders",
-    "Purchases",
+    "Buyout",
     "Conversion %",
     "Units Sold",
     "Inventory",
@@ -430,14 +430,14 @@ function buildInventorySheet(
 
   rows.push(
     [],
-    ["Warehouse Distribution"],
+    ["Warehouse Sales"],
     [
       "Warehouse",
       "Orders",
       "Units",
-      "Revenue",
+      "Sales",
       "Order Share %",
-      "Revenue Share %",
+      "Sales Share %",
     ]
   );
 

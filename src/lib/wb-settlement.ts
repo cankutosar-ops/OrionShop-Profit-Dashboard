@@ -147,12 +147,18 @@ export function resolveNetForPay(params: {
   };
 }
 
-function sumFinanceBySuffix(finance: WbFinance[], suffix: string): number {
+/** Abs-sum of finance lines matching a WB field suffix (e.g. acceptance). */
+export function sumFinanceBySuffix(finance: WbFinance[], suffix: string): number {
   return finance.reduce((sum, row) => {
     const rowSuffix = parseWbSourceSuffix(row.source_key, row.wb_source_suffix);
     if (rowSuffix !== suffix) return sum;
     return sum + Math.abs(Number(row.amount));
   }, 0);
+}
+
+/** Acceptance = Σ|amount| where suffix = acceptance (Finance API). */
+export function sumAcceptanceFromFinance(finance: WbFinance[]): number {
+  return sumFinanceBySuffix(finance, "acceptance");
 }
 
 export function buildWbSettlementMetrics(params: {

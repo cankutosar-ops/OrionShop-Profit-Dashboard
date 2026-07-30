@@ -30,9 +30,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# env files — never commit secrets
 .env
-.env*.local
+.env.*
+!.env.example
+!.env.e2e.example
+credentials.json
+**/credentials.json
+*.key
+*.p12
 
 # typescript
 *.tsbuildinfo
@@ -44,3 +50,8 @@ scripts/.ui-verify-output/
 
 # performance audit (Sprint 6.35.2)
 .perf/
+
+# E2E — Playwright
+/e2e/.auth/
+/playwright-report/
+/test-results/

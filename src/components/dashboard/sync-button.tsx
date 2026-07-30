@@ -11,6 +11,10 @@ import {
 import { notifyDashboardSyncComplete } from "@/lib/dashboard-auto-sync-session";
 import { getDefaultDateRange } from "@/lib/utils";
 
+/**
+ * Sync control for the page header.
+ * Status text uses title + aria-live so it never grows header height.
+ */
 export function SyncButton() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,6 +29,7 @@ export function SyncButton() {
   );
 
   const syncInFlight = loading || externalSyncInFlight;
+  const statusText = error ?? message;
 
   const handleSync = useCallback(async () => {
     setLoading(true);
@@ -42,7 +47,7 @@ export function SyncButton() {
         marketplaceAccountId,
         dateFrom: range.from,
         dateTo: range.to,
-        entities: ["products", "orders", "sales", "finance"],
+        entities: ["products", "orders", "sales", "finance", "stock"],
       });
 
       if (!result.ok) {
@@ -64,18 +69,30 @@ export function SyncButton() {
   }, [router, searchParams]);
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="relative inline-flex h-9 items-center">
       <button
         type="button"
         onClick={handleSync}
         disabled={syncInFlight}
-        className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+        title={statusText ?? undefined}
+        className="inline-flex h-9 items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
       >
         <RefreshCw className={`h-4 w-4 ${syncInFlight ? "animate-spin" : ""}`} />
         {syncInFlight ? "Syncing…" : "Sync Wildberries"}
       </button>
-      {message && <p className="text-xs text-success">{message}</p>}
-      {error && <p className="max-w-xs text-right text-xs text-danger">{error}</p>}
+      <span className="sr-only" role="status" aria-live="polite">
+        {statusText}
+      </span>
+      {statusText && (
+        <span
+          className={`pointer-events-none absolute right-0 top-full z-50 mt-1 max-w-[16rem] truncate rounded-md border border-border/60 bg-background px-2 py-0.5 text-[11px] shadow-sm ${
+            error ? "text-danger" : "text-success"
+          }`}
+          title={statusText}
+        >
+          {statusText}
+        </span>
+      )}
     </div>
   );
 }

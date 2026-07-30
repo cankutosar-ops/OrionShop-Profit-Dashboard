@@ -28,7 +28,8 @@ export function toProductAnalyticsRow(product: ProductProfitability): ProductAna
     quantitySold: product.unitsSold,
     productCost: product.productCost,
     marketplaceFees: product.marketplaceFees,
-    netProfit: product.netProfit,
+    /** V4 Net Profit (after tax). */
+    netProfit: product.finalNetProfit,
     marginPercent: calculateGrossMarginPercent(product.revenue, grossProfit),
   };
 }
@@ -120,7 +121,7 @@ function sumFinancialTotals(products: ProductProfitability[]) {
         acc.purchaseLogistics += product.purchaseLogistics;
         acc.excludedLogistics += product.excludedLogistics;
         acc.returnLogistics += product.returnLogistics;
-        acc.netProfit += product.netProfit;
+        acc.netProfit += product.finalNetProfit;
         acc.purchaseLogisticsRows += product.purchaseLogisticsRows;
         acc.excludedLogisticsRows += product.excludedLogisticsRows;
         return acc;
@@ -198,26 +199,16 @@ export function buildProductAnalyticsTotals(
   };
 }
 
-/** Validates financial net profit (dashboard engine) — unchanged. */
+/** Validates Net Profit against Financial Engine V4 (no Marketplace Fee / Acquiring re-deduction). */
 export function verifyProductAnalyticsTotals(
   products: ProductProfitability[],
   totals: ProductAnalyticsTotals
 ): { ok: boolean; delta: number } {
   const withRevenue = products.filter((product) => product.revenue > 0);
-  const recomputedNet = withRevenue.reduce((sum, product) => {
-    return (
-      sum +
-      (product.revenue -
-        product.productCost -
-        product.commission -
-        product.logistics -
-        product.returnLogistics -
-        product.storage -
-        product.advertising -
-        product.penalties -
-        product.otherExpenses)
-    );
-  }, 0);
+  const recomputedNet = withRevenue.reduce(
+    (sum, product) => sum + product.finalNetProfit,
+    0
+  );
 
   const delta = Math.abs(recomputedNet - totals.netProfit);
   return { ok: delta < 0.02, delta };
@@ -261,7 +252,10 @@ export function verifyProductAnalyticsV3Totals(
   return { ok, deltas };
 }
 
-/** Financial net profit − operational profit (per SKU). */
+/**
+ * Operating Profit (before tax) − Net Profit (after tax).
+ * Equals Estimated Tax on the SKU when V4 engine is used.
+ */
 export function reconcileFinancialVsOperational(product: ProductProfitability): number {
-  return product.netProfit - calculateOperationalProfit(product);
+  return product.netProfit - product.finalNetProfit;
 }

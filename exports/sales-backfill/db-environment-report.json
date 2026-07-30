@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T16:53:11.856Z",
+  "generatedAt": "2026-07-26T13:23:22.730Z",
   "connected": {
     "supabaseProjectId": "mdiqspjvmekyngmiehqk",
     "supabaseUrl": "https://mdiqspjvmekyngmiehqk.supabase.co",
@@ -28,6 +28,11 @@
         "source": "openapi"
       },
       {
+        "column_name": "for_pay",
+        "data_type": "numeric",
+        "source": "openapi"
+      },
+      {
         "column_name": "id",
         "data_type": "bigint",
         "source": "openapi"
@@ -45,6 +50,11 @@
       {
         "column_name": "nm_id",
         "data_type": "bigint",
+        "source": "openapi"
+      },
+      {
+        "column_name": "price_with_disc",
+        "data_type": "numeric",
         "source": "openapi"
       },
       {
@@ -81,6 +91,11 @@
         "column_name": "tech_size",
         "data_type": "text",
         "source": "openapi"
+      },
+      {
+        "column_name": "warehouse",
+        "data_type": "text",
+        "source": "openapi"
       }
     ],
     "columnMap": {
@@ -91,6 +106,12 @@
       "created_at": {
         "data_type": "timestamp with time zone",
         "source": "openapi"
+      },
+      "for_pay": {
+        "data_type": "numeric",
+        "source": "openapi",
+        "exists": true,
+        "probeError": null
       },
       "id": {
         "data_type": "bigint",
@@ -107,6 +128,12 @@
       "nm_id": {
         "data_type": "bigint",
         "source": "openapi"
+      },
+      "price_with_disc": {
+        "data_type": "numeric",
+        "source": "openapi",
+        "exists": true,
+        "probeError": null
       },
       "product_id": {
         "data_type": "bigint",
@@ -136,32 +163,24 @@
         "data_type": "text",
         "source": "openapi"
       },
-      "price_with_disc": {
-        "exists": false,
-        "probeError": "column wb_sales.price_with_disc does not exist"
-      },
-      "for_pay": {
-        "exists": false,
-        "probeError": "column wb_sales.for_pay does not exist"
+      "warehouse": {
+        "data_type": "text",
+        "source": "openapi"
       }
     },
     "required": {
-      "price_with_disc": false,
-      "for_pay": false
+      "price_with_disc": true,
+      "for_pay": true
     },
-    "schemaCorrect": false
+    "schemaCorrect": true
   },
   "migration": {
-    "status": "generated_not_applied",
-    "generated": true,
-    "migrationFile": "supabase/migrations/20260712180000_wb_sales_price_with_disc.sql",
-    "missing": [
-      "price_with_disc",
-      "for_pay"
-    ]
+    "status": "applied",
+    "generated": false,
+    "missing": []
   },
   "sprintGate": {
-    "passed": false,
-    "message": "BLOCKED — apply migration before backfill or runtime changes."
+    "passed": true,
+    "message": "Schema validated — safe to proceed with backfill and runtime switch."
   }
 }

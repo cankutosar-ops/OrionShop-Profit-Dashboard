@@ -1,0 +1,294 @@
+{
+  "engineVersion": 1,
+  "generatedAt": "2026-07-23T14:49:44.959Z",
+  "recommendations": [
+    {
+      "id": "rec-costs-largest",
+      "ruleId": "costs.largest-line",
+      "category": "marketplace-costs",
+      "severity": "critical",
+      "title": "Dominant marketplace cost",
+      "shortDescription": "Logistics is the largest cost line at 52.0% of Revenue.",
+      "businessExplanation": "When a single marketplace cost exceeds a quarter of Revenue, it is the primary lever for margin recovery — not a secondary optimization.",
+      "recommendedAction": "Review warehouse allocation and shipping profile to reduce logistics pressure.",
+      "affectedMetrics": [
+        {
+          "id": "costLine",
+          "label": "Logistics",
+          "value": 268568.799999997,
+          "format": "currency"
+        },
+        {
+          "id": "costPct",
+          "label": "% of Revenue",
+          "value": 52.02908124217364,
+          "format": "percent"
+        },
+        {
+          "id": "totalCosts",
+          "label": "Total Costs",
+          "value": 673838.1857999971,
+          "format": "currency"
+        }
+      ]
+    },
+    {
+      "id": "rec-costs-logistics",
+      "ruleId": "costs.logistics-pressure",
+      "category": "marketplace-costs",
+      "severity": "critical",
+      "title": "Logistics cost pressure",
+      "shortDescription": "Logistics is 52.0% of Revenue.",
+      "businessExplanation": "Elevated logistics share compresses Net Margin regardless of top-line growth. Warehouse mix and return logistics are typical drivers.",
+      "recommendedAction": "Review warehouse allocation and return flows; align stock to warehouses that already sell efficiently.",
+      "affectedMetrics": [
+        {
+          "id": "logistics",
+          "label": "Logistics",
+          "value": 268568.799999997,
+          "format": "currency"
+        },
+        {
+          "id": "logisticsPct",
+          "label": "Logistics % of Revenue",
+          "value": 52.02908124217364,
+          "format": "percent"
+        }
+      ]
+    },
+    {
+      "id": "rec-products-high-return",
+      "ruleId": "products.high-return",
+      "category": "products",
+      "severity": "critical",
+      "title": "Product has elevated return rate",
+      "shortDescription": "ARISIYAH01 returns at 100.0%.",
+      "businessExplanation": "High return SKUs inflate logistics and cancel the benefit of unit velocity.",
+      "recommendedAction": "Review sizing, product quality, or listing content for this SKU before restocking.",
+      "affectedMetrics": [
+        {
+          "id": "sku",
+          "label": "SKU",
+          "value": "ARISIYAH01",
+          "format": "text"
+        },
+        {
+          "id": "returnRate",
+          "label": "Return Rate %",
+          "value": 100,
+          "format": "percent"
+        },
+        {
+          "id": "product",
+          "label": "Product",
+          "value": "Платье нарядное большие размеры",
+          "format": "text"
+        }
+      ]
+    },
+    {
+      "id": "rec-profit-margin-critical",
+      "ruleId": "profit.margin-critical",
+      "category": "profitability",
+      "severity": "critical",
+      "title": "Net Margin is negative",
+      "shortDescription": "Every ruble of Revenue currently destroys margin.",
+      "businessExplanation": "Negative Net Margin confirms unit economics are underwater for the selected scope — growth would amplify losses.",
+      "recommendedAction": "Freeze growth experiments; fix fee, logistics, and pricing on the worst margin categories first.",
+      "affectedMetrics": [
+        {
+          "id": "margin",
+          "label": "Net Margin %",
+          "value": -12.24991819868998,
+          "format": "percent"
+        },
+        {
+          "id": "revenue",
+          "label": "Revenue",
+          "value": 516189.77999999933,
+          "format": "currency"
+        }
+      ]
+    },
+    {
+      "id": "rec-profit-net-negative",
+      "ruleId": "profit.net-negative",
+      "category": "profitability",
+      "severity": "critical",
+      "title": "Net Profit is negative",
+      "shortDescription": "The selected period is loss-making after marketplace costs.",
+      "businessExplanation": "Net Profit below zero means Commercial Performance does not cover product cost, marketplace fees, logistics, and estimated tax for this Report Scope.",
+      "recommendedAction": "Prioritize the largest marketplace cost line and loss-making SKUs before increasing ad spend or expanding assortment.",
+      "affectedMetrics": [
+        {
+          "id": "netProfit",
+          "label": "Net Profit",
+          "value": -63232.825799997685,
+          "format": "currency"
+        },
+        {
+          "id": "revenue",
+          "label": "Revenue",
+          "value": 516189.77999999933,
+          "format": "currency"
+        },
+        {
+          "id": "margin",
+          "label": "Net Margin %",
+          "value": -12.24991819868998,
+          "format": "percent"
+        }
+      ]
+    },
+    {
+      "id": "rec-categories-high-return",
+      "ruleId": "categories.high-return",
+      "category": "categories",
+      "severity": "warning",
+      "title": "Category has highest return rate",
+      "shortDescription": "Платья leads returns at 22.4%.",
+      "businessExplanation": "Elevated category returns destroy logistics efficiency and Net Margin even when Revenue looks healthy.",
+      "recommendedAction": "Review sizing, product quality, or listing accuracy for this category before restocking.",
+      "affectedMetrics": [
+        {
+          "id": "category",
+          "label": "Category",
+          "value": "Платья",
+          "format": "text"
+        },
+        {
+          "id": "returnRate",
+          "label": "Return Rate %",
+          "value": 22.395833333333336,
+          "format": "percent"
+        },
+        {
+          "id": "revenue",
+          "label": "Category Revenue",
+          "value": 516189.78,
+          "format": "currency"
+        }
+      ]
+    },
+    {
+      "id": "rec-products-loss",
+      "ruleId": "products.loss-maker",
+      "category": "products",
+      "severity": "warning",
+      "title": "Loss-making product",
+      "shortDescription": "ZARAMOR has the lowest Net Profit (-83).",
+      "businessExplanation": "Negative Net Profit SKUs consume logistics and fee capacity without returning owner cash.",
+      "recommendedAction": "Raise price, cut spend, or exit this SKU — do not restock on autopilot.",
+      "affectedMetrics": [
+        {
+          "id": "sku",
+          "label": "SKU",
+          "value": "ZARAMOR",
+          "format": "text"
+        },
+        {
+          "id": "netProfit",
+          "label": "Net Profit",
+          "value": -83.41,
+          "format": "currency"
+        },
+        {
+          "id": "product",
+          "label": "Product",
+          "value": "Вечернее платье больших размеров",
+          "format": "text"
+        }
+      ]
+    },
+    {
+      "id": "rec-revenue-without-profit",
+      "ruleId": "revenue.without-profit",
+      "category": "revenue",
+      "severity": "warning",
+      "title": "Revenue without profit",
+      "shortDescription": "Top-line activity is not converting into Net Profit.",
+      "businessExplanation": "Revenue is present while Net Profit is zero or negative. Scaling this Revenue profile increases marketplace volume without owner cash.",
+      "recommendedAction": "Do not increase ads until the largest cost line and loss-making products are addressed.",
+      "affectedMetrics": [
+        {
+          "id": "revenue",
+          "label": "Revenue",
+          "value": 516189.77999999933,
+          "format": "currency"
+        },
+        {
+          "id": "netProfit",
+          "label": "Net Profit",
+          "value": -63232.825799997685,
+          "format": "currency"
+        }
+      ]
+    },
+    {
+      "id": "rec-warehouses-low",
+      "ruleId": "warehouses.low-contribution",
+      "category": "warehouses",
+      "severity": "info",
+      "title": "Low-contribution warehouse",
+      "shortDescription": "СПБ Шушары contributes only 1.1% of warehouse Revenue.",
+      "businessExplanation": "Warehouses with very small sales share may be holding inventory that would sell faster elsewhere.",
+      "recommendedAction": "Evaluate inventory distribution — move or stop replenishing stock that does not sell here.",
+      "affectedMetrics": [
+        {
+          "id": "warehouse",
+          "label": "Warehouse",
+          "value": "СПБ Шушары",
+          "format": "text"
+        },
+        {
+          "id": "contribution",
+          "label": "Contribution %",
+          "value": 1.1263278991840238,
+          "format": "percent"
+        },
+        {
+          "id": "orders",
+          "label": "Orders",
+          "value": 2,
+          "format": "number"
+        },
+        {
+          "id": "revenue",
+          "label": "Revenue",
+          "value": 10200,
+          "format": "currency"
+        }
+      ]
+    }
+  ],
+  "evaluatedRuleIds": [
+    "profit.net-negative",
+    "profit.margin-critical",
+    "profit.margin-weak",
+    "revenue.without-profit",
+    "revenue.brand-gap",
+    "inventory.out-of-stock",
+    "inventory.low-stock",
+    "costs.largest-line",
+    "costs.logistics-pressure",
+    "categories.high-return",
+    "categories.revenue-profit-mismatch",
+    "categories.lowest-margin",
+    "products.profit-concentration",
+    "products.loss-maker",
+    "products.high-return",
+    "warehouses.low-contribution",
+    "warehouses.concentration"
+  ],
+  "firedRuleIds": [
+    "costs.largest-line",
+    "costs.logistics-pressure",
+    "products.high-return",
+    "profit.margin-critical",
+    "profit.net-negative",
+    "categories.high-return",
+    "products.loss-maker",
+    "revenue.without-profit",
+    "warehouses.low-contribution"
+  ]
+}

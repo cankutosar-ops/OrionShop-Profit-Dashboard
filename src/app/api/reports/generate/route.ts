@@ -1,15 +1,31 @@
-import { parsePeriodPreset } from "@/lib/reports/report-period";
+import { parsePeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 import { exportReport } from "@/lib/reports/report-engine";
-import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
+import { normalizeBrandId, scopeSearchParamsFromUrl } from "@/lib/filter-params";
+import { parseDateRange } from "@/lib/utils";
+import { buildBusinessReport } from "@/lib/reporting";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
+import {
+  buildBusinessWorkbookFilename,
+  isBusinessDocumentEmpty,
+  renderBusinessReportWorkbook,
+} from "@/lib/reporting/excel";
+import type { ScopedDateRange } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Sprint 7.1 — generate + download Excel from Report Engine.
- * Query: templateId (required), optional templateVersion, periodPreset, locale + FILTER_PARAMS.
+ * Generate + download Excel.
+ * Business report → ReportDocument Excel Renderer (Sprint 8.0).
+ * Product report → legacy ReportPayload workbook (until product Document sprint).
  */
 export async function GET(request: Request) {
   try {
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
+
     const url = new URL(request.url);
     const templateId = url.searchParams.get("templateId")?.trim();
     if (!templateId) {
@@ -19,16 +35,63 @@ export async function GET(request: Request) {
     const versionRaw = url.searchParams.get("templateVersion");
     const templateVersion = versionRaw ? Number(versionRaw) : undefined;
     if (versionRaw && !Number.isFinite(templateVersion)) {
-      return Response.json({ error: "templateVersion must be a number" }, { status: 400 });
+      return Response.json(
+        { error: "templateVersion must be a number" },
+        { status: 400 }
+      );
     }
 
-    const scope = await resolveScopedDateRangeFromUrl(url);
+    const params = scopeSearchParamsFromUrl(url);
+    const scope: ScopedDateRange = {
+      ...parseDateRange(params.from || undefined, params.to || undefined),
+      marketplaceAccountId: authz.marketplaceAccountId!,
+      companyId: authz.companyId!,
+      brandId: normalizeBrandId(params.brand || undefined),
+    };
+    const periodPreset = parsePeriodPreset(url.searchParams.get("periodPreset"));
+    const locale =
+      (url.searchParams.get("locale") as "en" | "ru" | "tr" | null) ?? "en";
+
+    if (templateId === "business-report") {
+      const document = await buildBusinessReport(scope, {
+        periodPresetLabel: periodPresetLabel(periodPreset),
+        locale,
+      });
+
+      if (isBusinessDocumentEmpty(document)) {
+        return Response.json(
+          {
+            ok: false,
+            code: "NO_DATA_FOR_PERIOD",
+            messageKey: "report.error.noDataForPeriod",
+            message: `No business data exists for the selected period (${scope.from} → ${scope.to}).`,
+            scope,
+          },
+          { status: 422 }
+        );
+      }
+
+      const body = await renderBusinessReportWorkbook(document);
+      const filename = buildBusinessWorkbookFilename(document);
+
+      return new Response(body, {
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-store",
+          "X-Report-Engine": "report-document",
+          "X-Report-Version": String(document.metadata.version),
+        },
+      });
+    }
+
     const result = await exportReport({
       templateId,
       templateVersion,
       scope,
-      periodPreset: parsePeriodPreset(url.searchParams.get("periodPreset")),
-      locale: (url.searchParams.get("locale") as "en" | "ru" | "tr" | null) ?? "en",
+      periodPreset,
+      locale,
       dataMode: "live",
     });
 
@@ -51,6 +114,7 @@ export async function GET(request: Request) {
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${result.filename}"`,
         "Cache-Control": "no-store",
+        "X-Report-Engine": "legacy-payload",
       },
     });
   } catch (error) {

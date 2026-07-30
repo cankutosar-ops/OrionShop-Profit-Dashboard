@@ -1,0 +1,1292 @@
+{
+  "investigatedAt": "2026-07-22T14:57:19.319Z",
+  "step1_accountState": {
+    "accErr": "column marketplace_accounts.name does not exist",
+    "accountColumns": [
+      "id",
+      "company_id",
+      "marketplace",
+      "account_name",
+      "seller_id",
+      "api_key_encrypted",
+      "is_active",
+      "created_at",
+      "updated_at",
+      "is_default",
+      "sync_enabled",
+      "last_sync_at",
+      "last_successful_sync_at",
+      "last_sync_status"
+    ],
+    "accounts": [
+      {
+        "id": 1,
+        "company_id": 1,
+        "marketplace": "wildberries",
+        "account_name": "Wildberries Default",
+        "seller_id": null,
+        "api_key_encrypted": "[REDACTED len=610]",
+        "is_active": true,
+        "created_at": "2026-06-26T13:18:14.881664+00:00",
+        "updated_at": "2026-07-21T14:55:43.512+00:00",
+        "is_default": true,
+        "sync_enabled": true,
+        "last_sync_at": "2026-07-21T14:55:43.512+00:00",
+        "last_successful_sync_at": "2026-07-20T11:29:37.089+00:00",
+        "last_sync_status": "running"
+      },
+      {
+        "id": 2,
+        "company_id": 2,
+        "marketplace": "wildberries",
+        "account_name": "Orion shop",
+        "seller_id": "68674",
+        "api_key_encrypted": "[REDACTED len=574]",
+        "is_active": true,
+        "created_at": "2026-06-27T13:07:58.501121+00:00",
+        "updated_at": "2026-07-17T07:30:32.249+00:00",
+        "is_default": false,
+        "sync_enabled": true,
+        "last_sync_at": "2026-07-17T07:30:32.249+00:00",
+        "last_successful_sync_at": "2026-07-16T22:12:11.075+00:00",
+        "last_sync_status": "running"
+      },
+      {
+        "id": 3,
+        "company_id": 2,
+        "marketplace": "wildberries",
+        "account_name": "Verify Flow Test",
+        "seller_id": null,
+        "api_key_encrypted": "[REDACTED len=66]",
+        "is_active": true,
+        "created_at": "2026-06-27T13:53:15.341388+00:00",
+        "updated_at": "2026-07-17T13:42:39.424+00:00",
+        "is_default": false,
+        "sync_enabled": true,
+        "last_sync_at": "2026-07-17T13:42:39.424+00:00",
+        "last_successful_sync_at": "2026-07-17T13:42:39.424+00:00",
+        "last_sync_status": "partial"
+      },
+      {
+        "id": 4,
+        "company_id": 2,
+        "marketplace": "wildberries",
+        "account_name": "Verify Flow Test 2",
+        "seller_id": null,
+        "api_key_encrypted": "[REDACTED len=58]",
+        "is_active": true,
+        "created_at": "2026-06-27T13:53:23.066996+00:00",
+        "updated_at": "2026-06-27T13:53:23.066996+00:00",
+        "is_default": false,
+        "sync_enabled": true,
+        "last_sync_at": null,
+        "last_successful_sync_at": null,
+        "last_sync_status": "idle"
+      }
+    ],
+    "accountsMinimal": null
+  },
+  "step4_financeDb": {
+    "1": {
+      "totalRows": {
+        "count": 63165,
+        "error": null
+      },
+      "rowsAfterJul5": {
+        "count": 0,
+        "error": null
+      },
+      "rowsOnJul5": {
+        "count": 295,
+        "error": null
+      },
+      "rowsWeekJul13_19": {
+        "count": 0,
+        "error": null
+      },
+      "newestRows": [
+        {
+          "source_key": "rrd:3129137813177:logistics",
+          "rrd_id": "3129137813177",
+          "id": 187354,
+          "operation_date": "2026-07-05",
+          "operation_type": "logistics",
+          "amount": 61.4,
+          "srid": "eAc.id4164b2adc29a4aad7e30ddce7d827c4.0.0",
+          "nm_id": 150064438,
+          "product_id": 18
+        },
+        {
+          "source_key": "rrd:3129137813176:logistics",
+          "rrd_id": "3129137813176",
+          "id": 187353,
+          "operation_date": "2026-07-05",
+          "operation_type": "logistics",
+          "amount": 199.52,
+          "srid": "eAc.id4164b2adc29a4aad7e30ddce7d827c4.0.0",
+          "nm_id": 150064438,
+          "product_id": 18
+        },
+        {
+          "source_key": "rrd:3129137813175:deduction",
+          "rrd_id": "3129137813175",
+          "id": 187352,
+          "operation_date": "2026-07-05",
+          "operation_type": "other",
+          "amount": 15000,
+          "srid": "b25366007ec064c3d5e5c9329ffaaf652ea06191",
+          "nm_id": 0,
+          "product_id": null
+        },
+        {
+          "source_key": "rrd:3129137813174:storage",
+          "rrd_id": "3129137813174",
+          "id": 187351,
+          "operation_date": "2026-07-05",
+          "operation_type": "storage",
+          "amount": 420.2,
+          "srid": "4d9d59509cd279fb311abef3a150785042f397a8",
+          "nm_id": 0,
+          "product_id": null
+        },
+        {
+          "source_key": "rrd:3129137813173:ppvz_vw",
+          "rrd_id": "3129137813173",
+          "id": 187350,
+          "operation_date": "2026-07-05",
+          "operation_type": "other",
+          "amount": 8.34,
+          "srid": "25148960",
+          "nm_id": 150065294,
+          "product_id": 17
+        }
+      ],
+      "maxOperationDate": "2026-07-05",
+      "dailyJul1_20": {
+        "2026-07-01": 342,
+        "2026-07-02": 332,
+        "2026-07-03": 273,
+        "2026-07-04": 263,
+        "2026-07-05": 295,
+        "2026-07-06": 0,
+        "2026-07-07": 0,
+        "2026-07-08": 0,
+        "2026-07-09": 0,
+        "2026-07-10": 0,
+        "2026-07-11": 0,
+        "2026-07-12": 0,
+        "2026-07-13": 0,
+        "2026-07-14": 0,
+        "2026-07-15": 0,
+        "2026-07-16": 0,
+        "2026-07-17": 0,
+        "2026-07-18": 0,
+        "2026-07-19": 0,
+        "2026-07-20": 0
+      }
+    },
+    "2": {
+      "totalRows": {
+        "count": 10443,
+        "error": null
+      },
+      "rowsAfterJul5": {
+        "count": 0,
+        "error": null
+      },
+      "rowsOnJul5": {
+        "count": 0,
+        "error": null
+      },
+      "rowsWeekJul13_19": {
+        "count": 0,
+        "error": null
+      },
+      "newestRows": [
+        {
+          "source_key": "rrd:3127708647683:return_logistics",
+          "rrd_id": "3127708647683",
+          "id": 49708,
+          "operation_date": "2026-06-21",
+          "operation_type": "return_logistics",
+          "amount": 1.96,
+          "srid": "9400400",
+          "nm_id": 405580950,
+          "product_id": 137
+        },
+        {
+          "source_key": "rrd:3127708647683:ppvz_vw",
+          "rrd_id": "3127708647683",
+          "id": 49709,
+          "operation_date": "2026-06-21",
+          "operation_type": "other",
+          "amount": 1.61,
+          "srid": "9400400",
+          "nm_id": 405580950,
+          "product_id": 137
+        },
+        {
+          "source_key": "rrd:3127708647684:return_logistics",
+          "rrd_id": "3127708647684",
+          "id": 49710,
+          "operation_date": "2026-06-21",
+          "operation_type": "return_logistics",
+          "amount": 1.71,
+          "srid": "9400401",
+          "nm_id": 405580951,
+          "product_id": 136
+        },
+        {
+          "source_key": "rrd:3127708647684:ppvz_vw",
+          "rrd_id": "3127708647684",
+          "id": 49711,
+          "operation_date": "2026-06-21",
+          "operation_type": "other",
+          "amount": 1.4,
+          "srid": "9400401",
+          "nm_id": 405580951,
+          "product_id": 136
+        },
+        {
+          "source_key": "rrd:3127708647685:return_logistics",
+          "rrd_id": "3127708647685",
+          "id": 49712,
+          "operation_date": "2026-06-21",
+          "operation_type": "return_logistics",
+          "amount": 1.71,
+          "srid": "9400402",
+          "nm_id": 405580951,
+          "product_id": 136
+        }
+      ],
+      "maxOperationDate": "2026-06-21",
+      "dailyJul1_20": {
+        "2026-07-01": 0,
+        "2026-07-02": 0,
+        "2026-07-03": 0,
+        "2026-07-04": 0,
+        "2026-07-05": 0,
+        "2026-07-06": 0,
+        "2026-07-07": 0,
+        "2026-07-08": 0,
+        "2026-07-09": 0,
+        "2026-07-10": 0,
+        "2026-07-11": 0,
+        "2026-07-12": 0,
+        "2026-07-13": 0,
+        "2026-07-14": 0,
+        "2026-07-15": 0,
+        "2026-07-16": 0,
+        "2026-07-17": 0,
+        "2026-07-18": 0,
+        "2026-07-19": 0,
+        "2026-07-20": 0
+      }
+    }
+  },
+  "salesCoverage": {
+    "1": {
+      "newestSales": [
+        {
+          "srid": "eBA.ieffc28ed7509aa5caeea0b8e329fc502.0.0",
+          "sale_date": "2026-07-20T00:00:00+00:00",
+          "for_pay": 4068,
+          "is_return": true
+        },
+        {
+          "srid": "eBq.r73e2c9fd50ee437684ce29e76bf05013.0.0",
+          "sale_date": "2026-07-20T00:00:00+00:00",
+          "for_pay": 3932.4,
+          "is_return": false
+        },
+        {
+          "srid": "em.rc34b7ed825804cdc8855898e2b4d8415.0.0",
+          "sale_date": "2026-07-20T00:00:00+00:00",
+          "for_pay": 4068,
+          "is_return": false
+        }
+      ],
+      "salesWeek": {
+        "count": 34,
+        "error": null
+      },
+      "salesAfterJul5": {
+        "count": 76,
+        "error": null
+      }
+    }
+  },
+  "localProgressAndLogs": {
+    "listed": {
+      "exports/finance-backfill": [
+        {
+          "name": "progress.json",
+          "size": 335,
+          "mtime": "2026-07-14T17:58:06.793Z",
+          "isDir": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "finance-api-investigation",
+          "size": 0,
+          "mtime": "2026-07-12T19:14:25.395Z",
+          "isDir": true
+        },
+        {
+          "name": "finance-backfill",
+          "size": 0,
+          "mtime": "2026-07-12T23:21:39.481Z",
+          "isDir": true
+        },
+        {
+          "name": "lily-siyah01-finance-proof.json",
+          "size": 13481,
+          "mtime": "2026-07-22T12:48:58.648Z",
+          "isDir": false
+        },
+        {
+          "name": "_tmp_finance_count_check.json",
+          "size": 204,
+          "mtime": "2026-07-22T14:15:29.309Z",
+          "isDir": false
+        }
+      ]
+    },
+    "files": {
+      "exports/finance-backfill/progress.json": {
+        "completedWindows": {
+          "2026-01-01:2026-01-31": true,
+          "2026-02-01:2026-02-28": true,
+          "2026-03-01:2026-03-31": true,
+          "2026-04-01:2026-04-30": true,
+          "2026-05-01:2026-05-31": true,
+          "2026-06-01:2026-06-30": true,
+          "2026-07-01:2026-07-12": true
+        },
+        "lastCompletedAt": "2026-07-12T19:28:52.615Z"
+      },
+      "exports/lily-siyah01-finance-proof.json": {
+        "srid": "e8.r70c53dab43d9457eb9e197ef8d6a25d8.0.0",
+        "saleID": "S24081604269",
+        "article": "LILYSIYAH01",
+        "sourceFinanceFile": "exports/wb-raw-2026-06-18_2026-06-29/finance.json",
+        "sourceSalesFile": "exports/wb-raw-2026-06-18_2026-06-29/sales.json",
+        "salesApiComplete": {
+          "date": "2026-06-25T20:43:04",
+          "lastChangeDate": "2026-06-25T20:57:59",
+          "warehouseName": "Невинномысск",
+          "warehouseType": "Склад WB",
+          "countryName": "Россия",
+          "oblastOkrugName": "Северо-Кавказский федеральный округ",
+          "regionName": "Карачаево-Черкесская Республика",
+          "supplierArticle": "LILYSIYAH01",
+          "nmId": 150064437,
+          "barcode": "4627121466438",
+          "category": "Одежда",
+          "subject": "Платья",
+          "brand": "GVOnly",
+          "techSize": "46-48",
+          "incomeID": 33323960,
+          "isSupply": false,
+          "isRealization": true,
+          "totalPrice": 12000,
+          "discountPercent": 45,
+          "spp": 45,
+          "paymentSaleAmount": 0,
+          "forPay": 4323,
+          "finishedPrice": 3630,
+          "priceWithDisc": 6600,
+          "saleID": "S24081604269",
+          "sticker": "50819848026",
+          "gNumber": "92893262057200722096",
+          "srid": "e8.r70c53dab43d9457eb9e197ef8d6a25d8.0.0"
+        },
+        "financeApiRowsComplete": [
+          {
+            "realizationreport_id": 764655778,
+            "date_from": "2026-06-22",
+            "date_to": "2026-06-28",
+            "create_dt": "2026-06-29",
+            "currency_name": "RUB",
+            "suppliercontract_code": null,
+            "rrd_id": 3128162170641,
+            "gi_id": 33323960,
+            "dlv_prc": 1.3,
+            "fix_tariff_date_from": "2025-11-13T21:00:00Z",
+            "fix_tariff_date_to": "2026-02-11T21:00:00Z",
+            "subject_name": "Платья",
+            "nm_id": 150064437,
+            "brand_name": "GVOnly",
+            "sa_name": "lilysiyah01",
+            "ts_name": "46-48",
+            "barcode": "4627121466438",
+            "doc_type_name": "",
+            "quantity": 0,
+            "retail_price": 0,
+            "retail_amount": 0,
+            "sale_percent": 0,
+            "commission_percent": 0,
+            "office_name": "Невинномысск",
+            "supplier_oper_name": "Логистика",
+            "order_dt": "2026-06-24T07:29:29Z",
+            "sale_dt": "2026-06-25T17:43:04Z",
+            "rr_dt": "2026-06-25",
+            "shk_id": 41922594208,
+            "retail_price_withdisc_rub": 0,
+            "delivery_amount": 1,
+            "return_amount": 0,
+            "delivery_rub": 293.35,
+            "gi_box_type_name": "Микс",
+            "product_discount_for_report": 0,
+            "supplier_promo": 0,
+            "ppvz_spp_prc": 0,
+            "ppvz_kvw_prc_base": 0,
+            "ppvz_kvw_prc": 0,
+            "sup_rating_prc_up": 0,
+            "is_kgvp_v2": 0,
+            "ppvz_sales_commission": 0,
+            "ppvz_for_pay": 0,
+            "ppvz_reward": 0,
+            "acquiring_fee": 0,
+            "acquiring_percent": 0,
+            "payment_processing": "",
+            "acquiring_bank": "",
+            "ppvz_vw": 0,
+            "ppvz_vw_nds": 0,
+            "ppvz_office_name": "Карачаево-Черкесская Республика аул Эльбурган Набережная улица 24",
+            "ppvz_office_id": 311437,
+            "ppvz_supplier_id": 0,
+            "ppvz_supplier_name": "",
+            "ppvz_inn": "",
+            "declaration_number": "",
+            "bonus_type_name": "К клиенту при продаже",
+            "sticker_id": "0",
+            "site_country": "Россия",
+            "srv_dbs": false,
+            "penalty": 0,
+            "additional_payment": 0,
+            "rebill_logistic_cost": 0,
+            "storage_fee": 0,
+            "deduction": 0,
+            "acceptance": 0,
+            "assembly_id": 0,
+            "kiz": "0104627121466438215/ZrYRClMIYtz\u001d91EE11\u001d92NTERwXO6SVXjIWIdCRN8PIhfpINTbW5HHt9ev+xocW4=",
+            "srid": "e8.r70c53dab43d9457eb9e197ef8d6a25d8.0.0",
+            "report_type": 1,
+            "is_legal_entity": false,
+            "trbx_id": "0",
+            "installment_cofinancing_amount": 0,
+            "wibes_wb_discount_percent": 0,
+            "cashback_amount": 0,
+            "cashback_discount": 0,
+            "cashback_commission_change": 0,
+            "order_uid": "r70c53dab43d9457eb9e197ef8d6a25d8",
+            "payment_schedule": 0,
+            "delivery_method": "FBW, (МГТ, короба)",
+            "seller_promo_id": 0,
+            "seller_promo_discount": 0,
+            "loyalty_id": 0,
+            "loyalty_discount": 0,
+            "uuid_promocode": "",
+            "sale_price_promocode_discount_prc": 0,
+            "article_substitution": "",
+            "sale_price_affiliated_discount_prc": 0,
+            "sale_price_wholesale_discount_prc": 0,
+            "b2b_customer_tin": ""
+          },
+          {
+            "realizationreport_id": 764655778,
+            "date_from": "2026-06-22",
+            "date_to": "2026-06-28",
+            "create_dt": "2026-06-29",
+            "currency_name": "RUB",
+            "suppliercontract_code": null,
+            "rrd_id": 3128162170642,
+            "gi_id": 33323960,
+            "dlv_prc": 0,
+            "fix_tariff_date_from": "",
+            "fix_tariff_date_to": "",
+            "subject_name": "Платья",
+            "nm_id": 150064437,
+            "brand_name": "GVOnly",
+            "sa_name": "lilysiyah01",
+            "ts_name": "46-48",
+            "barcode": "4627121466438",
+            "doc_type_name": "Продажа",
+            "quantity": 1,
+            "retail_price": 6600,
+            "retail_amount": 3630,
+            "sale_percent": 0,
+            "commission_percent": 34.5,
+            "office_name": "Невинномысск",
+            "supplier_oper_name": "Продажа",
+            "order_dt": "2026-06-24T07:29:29Z",
+            "sale_dt": "2026-06-25T17:43:04Z",
+            "rr_dt": "2026-06-25",
+            "shk_id": 41922594208,
+            "retail_price_withdisc_rub": 6600,
+            "delivery_amount": 0,
+            "return_amount": 0,
+            "delivery_rub": 0,
+            "gi_box_type_name": "Микс",
+            "product_discount_for_report": 0,
+            "supplier_promo": 0,
+            "ppvz_spp_prc": 45,
+            "ppvz_kvw_prc_base": 28.28,
+            "ppvz_kvw_prc": -16.72,
+            "sup_rating_prc_up": 0,
+            "is_kgvp_v2": 0,
+            "ppvz_sales_commission": -568.03,
+            "ppvz_for_pay": 4177.8,
+            "ppvz_reward": 76.638,
+            "acquiring_fee": 145.2,
+            "acquiring_percent": 2.2,
+            "payment_processing": "Компенсация платёжных услуг",
+            "acquiring_bank": "Вайлдберриз Банк",
+            "ppvz_vw": -630.8508196721311,
+            "ppvz_vw_nds": -138.79,
+            "ppvz_office_name": "Карачаево-Черкесская Республика аул Эльбурган Набережная улица 24",
+            "ppvz_office_id": 311437,
+            "ppvz_supplier_id": 0,
+            "ppvz_supplier_name": "",
+            "ppvz_inn": "",
+            "declaration_number": "",
+            "sticker_id": "0",
+            "site_country": "Россия",
+            "srv_dbs": false,
+            "penalty": 0,
+            "additional_payment": 0,
+            "rebill_logistic_cost": 0,
+            "storage_fee": 0,
+            "deduction": 0,
+            "acceptance": 0,
+            "assembly_id": 0,
+            "kiz": "0104627121466438215/ZrYRClMIYtz\u001d91EE11\u001d92NTERwXO6SVXjIWIdCRN8PIhfpINTbW5HHt9ev+xocW4=",
+            "srid": "e8.r70c53dab43d9457eb9e197ef8d6a25d8.0.0",
+            "report_type": 1,
+            "is_legal_entity": false,
+            "trbx_id": "",
+            "installment_cofinancing_amount": 0,
+            "wibes_wb_discount_percent": 0,
+            "cashback_amount": 0,
+            "cashback_discount": 0,
+            "cashback_commission_change": 0,
+            "order_uid": "r70c53dab43d9457eb9e197ef8d6a25d8",
+            "payment_schedule": 0,
+            "delivery_method": "",
+            "seller_promo_id": 0,
+            "seller_promo_discount": 0,
+            "loyalty_id": 0,
+            "loyalty_discount": 0,
+            "uuid_promocode": "",
+            "sale_price_promocode_discount_prc": 0,
+            "article_substitution": "",
+            "sale_price_affiliated_discount_prc": 0,
+            "sale_price_wholesale_discount_prc": 0,
+            "b2b_customer_tin": ""
+          },
+          {
+            "realizationreport_id": 764655778,
+            "date_from": "2026-06-22",
+            "date_to": "2026-06-28",
+            "create_dt": "2026-06-29",
+            "currency_name": "RUB",
+            "suppliercontract_code": null,
+            "rrd_id": 3128441080756,
+            "gi_id": 0,
+            "dlv_prc": 0,
+            "fix_tariff_date_from": "",
+            "fix_tariff_date_to": "",
+            "subject_name": "",
+            "nm_id": 0,
+            "brand_name": "",
+            "sa_name": "",
+            "ts_name": "",
+            "barcode": "4627121466438",
+            "doc_type_name": "",
+            "quantity": 2,
+            "retail_price": 0,
+            "retail_amount": 0,
+            "sale_percent": 0,
+            "commission_percent": 0,
+            "office_name": "",
+            "supplier_oper_name": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "order_dt": "2026-06-28T00:00:00Z",
+            "sale_dt": "2026-06-28T00:00:00Z",
+            "rr_dt": "2026-06-28",
+            "shk_id": 41922594208,
+            "retail_price_withdisc_rub": 0,
+            "delivery_amount": 0,
+            "return_amount": 0,
+            "delivery_rub": 0,
+            "gi_box_type_name": "",
+            "product_discount_for_report": 0,
+            "supplier_promo": 0,
+            "ppvz_spp_prc": 0,
+            "ppvz_kvw_prc_base": 0,
+            "ppvz_kvw_prc": 0,
+            "sup_rating_prc_up": 0,
+            "is_kgvp_v2": 0,
+            "ppvz_sales_commission": 0,
+            "ppvz_for_pay": 0,
+            "ppvz_reward": 0,
+            "acquiring_fee": 0,
+            "acquiring_percent": 0,
+            "payment_processing": "",
+            "acquiring_bank": "",
+            "ppvz_vw": -11.188524590163935,
+            "ppvz_vw_nds": -2.46,
+            "ppvz_office_name": "",
+            "ppvz_office_id": 0,
+            "ppvz_supplier_id": 0,
+            "ppvz_supplier_name": "",
+            "ppvz_inn": "",
+            "declaration_number": "",
+            "sticker_id": "0",
+            "site_country": "",
+            "srv_dbs": false,
+            "penalty": 0,
+            "additional_payment": 0,
+            "rebill_logistic_cost": 13.65,
+            "storage_fee": 0,
+            "deduction": 0,
+            "acceptance": 0,
+            "assembly_id": 0,
+            "srid": "e8.r70c53dab43d9457eb9e197ef8d6a25d8.0.0",
+            "report_type": 1,
+            "is_legal_entity": false,
+            "trbx_id": "",
+            "installment_cofinancing_amount": 0,
+            "wibes_wb_discount_percent": 0,
+            "cashback_amount": 0,
+            "cashback_discount": 0,
+            "cashback_commission_change": 0,
+            "order_uid": "",
+            "payment_schedule": 0,
+            "delivery_method": "",
+            "seller_promo_id": 0,
+            "seller_promo_discount": 0,
+            "loyalty_id": 0,
+            "loyalty_discount": 0,
+            "uuid_promocode": "",
+            "sale_price_promocode_discount_prc": 0,
+            "article_substitution": "",
+            "sale_price_affiliated_discount_prc": 0,
+            "sale_price_wholesale_discount_prc": 0,
+            "b2b_customer_tin": ""
+          }
+        ],
+        "rowOps": [
+          {
+            "rrd_id": 3128162170641,
+            "supplier_oper_name": "Логистика",
+            "doc_type_name": "",
+            "realizationreport_id": 764655778
+          },
+          {
+            "rrd_id": 3128162170642,
+            "supplier_oper_name": "Продажа",
+            "doc_type_name": "Продажа",
+            "realizationreport_id": 764655778
+          },
+          {
+            "rrd_id": 3128441080756,
+            "supplier_oper_name": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "doc_type_name": "",
+            "realizationreport_id": 764655778
+          }
+        ],
+        "requestedFormulaProof": {
+          "formula": "priceWithDisc − |ppvz_sales_commission| − acquiring_fee − |ppvz_reward| − |ppvz_vw|",
+          "left": 5179.28,
+          "right": 4177.8,
+          "delta": 1001.48,
+          "components": {
+            "priceWithDisc": 6600,
+            "abs_ppvz_sales_commission": 568.03,
+            "acquiring_fee": 145.2,
+            "abs_ppvz_reward": 76.638,
+            "abs_ppvz_vw": 630.8508196721311,
+            "abs_ppvz_vw_nds": 138.79,
+            "sum_fees_CRVW_A": 1420.72,
+            "pwd_minus_ppvz_for_pay": 2422.2,
+            "gap_fees_vs_pwd_minus_ppvz": -1001.48
+          }
+        },
+        "exactIdentity": {
+          "name": "sales.forPay = ppvz_for_pay + acquiring_fee",
+          "left": 4323,
+          "right": 4323,
+          "delta": 0
+        },
+        "formulas": [
+          {
+            "name": "PWD − |C| − A − |R| − |VW|",
+            "calc": 5179.28,
+            "target": 4177.8,
+            "delta": 1001.48
+          },
+          {
+            "name": "PWD − |C| − A − |VW|  (exclude reward)",
+            "calc": 5255.92,
+            "target": 4177.8,
+            "delta": 1078.12
+          },
+          {
+            "name": "PWD − |C| − A − |R| − |VW| − |VW_NDS|",
+            "calc": 5040.49,
+            "target": 4177.8,
+            "delta": 862.69
+          },
+          {
+            "name": "PWD − |C| − |R| − |VW|  (no acquiring)",
+            "calc": 5324.48,
+            "target": 4177.8,
+            "delta": 1146.68
+          },
+          {
+            "name": "PWD − |C| − A  (exclude R and VW)",
+            "calc": 5886.77,
+            "target": 4177.8,
+            "delta": 1708.97
+          },
+          {
+            "name": "sales.forPay − acquiring",
+            "calc": 4177.8,
+            "target": 4177.8,
+            "delta": 0
+          },
+          {
+            "name": "sales.forPay",
+            "calc": 4323,
+            "target": 4177.8,
+            "delta": 145.2
+          },
+          {
+            "name": "|C|+|R|+|VW|+A  vs  PWD−ppvz_for_pay",
+            "calc": 1420.72,
+            "target": 2422.2,
+            "delta": -1001.48
+          },
+          {
+            "name": "|C|+|R|+|VW|  vs  PWD−sales.forPay",
+            "calc": 1275.52,
+            "target": 2277,
+            "delta": -1001.48
+          },
+          {
+            "name": "|C|+A+|VW|−|R|  (signed reward credit hypothesis)",
+            "calc": 5332.56,
+            "target": 4177.8,
+            "delta": 1154.76
+          },
+          {
+            "name": "PWD − |C| − A − |VW| + |R|",
+            "calc": 5332.56,
+            "target": 4177.8,
+            "delta": 1154.76
+          },
+          {
+            "name": "retail_amount path: finished − ? ",
+            "calc": 2916.77,
+            "target": 4177.8,
+            "delta": -1261.03
+          }
+        ],
+        "note_return_delivery_rub": "Field return_delivery_rub is NOT present on any Finance API row for this SRID. Return logistics appears as rebill_logistic_cost on the reimbursement row."
+      },
+      "exports/_tmp_finance_count_check.json": {
+        "financeCount": 4938,
+        "salesCount": 179,
+        "financePagedLen": 4938,
+        "salesPagedLen": 179,
+        "financeNetForPayPaged": 268851.54999999993,
+        "salesForPayPaged": 416972.75000000006,
+        "reports": []
+      }
+    }
+  },
+  "perfFinanceHints": [
+    {
+      "id": "89ec357a-d233-40f6-a734-0ec4080defb3",
+      "ts": 1784731236235,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 204,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "34ea8248-1ec7-4e91-b373-ec84b07f3cb0",
+      "ts": 1784731236355,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 325,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "0e597fc4-e74e-48be-9b0a-ff96ceae5a0a",
+      "ts": 1784731251178,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 181,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "63a47104-c849-4cfa-b35b-d2e1ba60ad0d",
+      "ts": 1784731251234,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 237,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "51fbc495-db6d-4b48-b199-dc4444c6fbce",
+      "ts": 1784731288818,
+      "category": "wb_api",
+      "name": "wb_api./api/finance/v1/sales-reports/list",
+      "durationMs": 10,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/list",
+        "path": "/api/finance/v1/sales-reports/list",
+        "method": "POST",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 10
+      }
+    },
+    {
+      "id": "e0628e25-7ed0-4d23-b619-840ee6e43daa",
+      "ts": 1784731288818,
+      "category": "wb_api",
+      "name": "wb_api./api/v1/account/balance",
+      "durationMs": 10,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/v1/account/balance",
+        "path": "/api/v1/account/balance",
+        "method": "GET",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 10
+      }
+    },
+    {
+      "id": "33a3495c-2348-4527-88d6-56e78cbe8777",
+      "ts": 1784731290583,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1819,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "59619624-403c-4c14-9240-bc51e3a7209d",
+      "ts": 1784731290652,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1889,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "188c8ea8-d205-422b-a4ae-e1b3b7314868",
+      "ts": 1784731298626,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 382,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "e0d1a194-4056-42f6-bf15-e5d23155702a",
+      "ts": 1784731299944,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1700,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "c23d8ca9-4d39-4f59-b826-8d7168b70989",
+      "ts": 1784731368265,
+      "category": "wb_api",
+      "name": "wb_api./api/finance/v1/sales-reports/list",
+      "durationMs": 12,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/list",
+        "path": "/api/finance/v1/sales-reports/list",
+        "method": "POST",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 11
+      }
+    },
+    {
+      "id": "03fd4346-ab2c-40ca-96fd-eecc1e817817",
+      "ts": 1784731368267,
+      "category": "wb_api",
+      "name": "wb_api./api/v1/account/balance",
+      "durationMs": 12,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/v1/account/balance",
+        "path": "/api/v1/account/balance",
+        "method": "GET",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 11
+      }
+    },
+    {
+      "id": "f8e14d9d-dcdd-4da4-8e16-38317b7d3fc1",
+      "ts": 1784731369479,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1274,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "6a3d41ca-ad36-4a4a-be3e-aba7cf826c27",
+      "ts": 1784731370107,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1902,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "ee8b86c2-7b46-479e-b241-2c6761502969",
+      "ts": 1784731411933,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 183,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "b9c7e873-8d5d-46ef-a8e1-381ad26d5047",
+      "ts": 1784731411993,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 243,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "c318e402-08fb-4a16-8e5d-6ebabcf7fecb",
+      "ts": 1784731453716,
+      "category": "wb_api",
+      "name": "wb_api./api/finance/v1/sales-reports/list",
+      "durationMs": 10,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/list",
+        "path": "/api/finance/v1/sales-reports/list",
+        "method": "POST",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 10
+      }
+    },
+    {
+      "id": "979a2c02-b32e-4db9-8071-250a95a06187",
+      "ts": 1784731453717,
+      "category": "wb_api",
+      "name": "wb_api./api/v1/account/balance",
+      "durationMs": 10,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/v1/account/balance",
+        "path": "/api/v1/account/balance",
+        "method": "GET",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 10
+      }
+    },
+    {
+      "id": "417c1e81-30e7-4d37-87ff-671b0b73f6b7",
+      "ts": 1784731455674,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 2009,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "610c3a17-7b4d-4cc8-a92d-2a5304ec8e2e",
+      "ts": 1784731455750,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 2085,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "183b474e-f10a-4e27-b78a-2bbae9a4c644",
+      "ts": 1784731462310,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 278,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "e28948da-31c4-49a9-8f5d-9e04d59f8e66",
+      "ts": 1784731463622,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1590,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "47a3b843-fa9c-4f3a-9769-8f629ef01e71",
+      "ts": 1784731516877,
+      "category": "wb_api",
+      "name": "wb_api./api/finance/v1/sales-reports/list",
+      "durationMs": 14,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/list",
+        "path": "/api/finance/v1/sales-reports/list",
+        "method": "POST",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 13
+      }
+    },
+    {
+      "id": "bdc43ede-7001-4646-9a3e-59ce9bbc820f",
+      "ts": 1784731516877,
+      "category": "wb_api",
+      "name": "wb_api./api/v1/account/balance",
+      "durationMs": 12,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/v1/account/balance",
+        "path": "/api/v1/account/balance",
+        "method": "GET",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 12
+      }
+    },
+    {
+      "id": "bb1640b2-6698-4cd0-8acf-fe65b162465c",
+      "ts": 1784731517072,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 253,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "8c30c016-6d7d-4c3e-b8de-21fee45fb1f2",
+      "ts": 1784731517675,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 856,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "fabe886f-9feb-49cf-b31e-43715d4927b4",
+      "ts": 1784732207862,
+      "category": "wb_api",
+      "name": "wb_api./api/finance/v1/sales-reports/list",
+      "durationMs": 11,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/list",
+        "path": "/api/finance/v1/sales-reports/list",
+        "method": "POST",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 11
+      }
+    },
+    {
+      "id": "1092c1a7-b776-47ca-b2cd-75a0aaa6b6f9",
+      "ts": 1784732207863,
+      "category": "wb_api",
+      "name": "wb_api./api/v1/account/balance",
+      "durationMs": 11,
+      "meta": {
+        "endpoint": "https://finance-api.wildberries.ru/api/v1/account/balance",
+        "path": "/api/v1/account/balance",
+        "method": "GET",
+        "status": 200,
+        "retries": 0,
+        "count429": 0,
+        "cache": "miss",
+        "ok": true,
+        "attemptDurationMs": 11
+      }
+    },
+    {
+      "id": "15794707-0b49-4040-b07a-166dc191dbec",
+      "ts": 1784732208093,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 282,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 22472,
+        "pages": 23,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    },
+    {
+      "id": "4a1ade0c-04bf-4d81-9ec9-1d1a7ee5b5c4",
+      "ts": 1784732209067,
+      "category": "sql",
+      "name": "sql.wb_finance.date_range",
+      "durationMs": 1256,
+      "meta": {
+        "table": "wb_finance",
+        "rows": 40693,
+        "pages": 41,
+        "queryName": "wb_finance.operation_date",
+        "from": "2026-01-01",
+        "to": "2026-07-19"
+      }
+    }
+  ]
+}

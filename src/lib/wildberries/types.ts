@@ -54,6 +54,7 @@ export type WbApiSale = {
 
 export type WbApiFinanceRow = {
   rrd_id: number;
+  realizationreport_id?: number;
   nm_id?: number;
   sa_name?: string;
   subject_name?: string;
@@ -86,7 +87,13 @@ export type WbApiProductCard = {
   title: string;
   brand?: string;
   subjectName?: string;
-  sizes?: { techSize?: string; skus?: string[] }[];
+  sizes?: {
+    techSize?: string;
+    wbSize?: string;
+    chrtID?: number;
+    chrtId?: number;
+    skus?: string[];
+  }[];
 };
 
 export type WbApiStockRow = {
@@ -100,6 +107,35 @@ export type WbApiStockRow = {
   inWayFromClient?: number;
   nmId?: number;
   warehouseName?: string;
+};
+
+/** Analytics API — current WB warehouse inventory (replaces deprecated Statistics stocks). */
+export type WbWarehouseStockItem = {
+  nmId: number;
+  chrtId: number;
+  warehouseId?: number;
+  warehouseName?: string;
+  regionName?: string;
+  quantity?: number;
+  inWayToClient?: number;
+  inWayFromClient?: number;
+  /** Forward-compat: some API revisions nest qty/transit under warehouses[]. */
+  warehouses?: Array<{
+    warehouseId?: number;
+    warehouseName?: string;
+    regionName?: string;
+    quantity?: number;
+    inWayToClient?: number;
+    inWayFromClient?: number;
+    nmId?: number;
+    chrtId?: number;
+  }>;
+};
+
+export type WbWarehousesStockResponse = {
+  data?: {
+    items?: WbWarehouseStockItem[];
+  };
 };
 
 /** Weekly/daily sales report summary — finance API v1 (settlement / bank payout). */

@@ -19,6 +19,7 @@ import {
   subMonths,
 } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { notifyDashboardHeaderPopupOpen } from "@/lib/dashboard-header-popup";
 import {
   formatCalendarMonth,
   getAppLanguage,
@@ -256,7 +257,13 @@ export function DateRangePicker() {
     <div ref={containerRef} className="relative z-20">
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() =>
+          setOpen((current) => {
+            const next = !current;
+            if (next) notifyDashboardHeaderPopupOpen("date-range");
+            return next;
+          })
+        }
         disabled={applying}
         className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm transition-colors hover:bg-card-hover disabled:opacity-60"
         aria-expanded={open}

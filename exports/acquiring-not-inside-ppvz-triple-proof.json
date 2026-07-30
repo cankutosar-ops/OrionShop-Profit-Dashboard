@@ -1,0 +1,332 @@
+{
+  "range": {
+    "accountId": "1",
+    "from": "2026-06-23",
+    "to": "2026-07-22"
+  },
+  "syncModel": {
+    "note": "Each WB reportDetailByPeriod row fans out into separate wb_finance lines per non-zero field",
+    "acquiring_is_own_suffix": "acquiring_fee",
+    "triple_suffixes": [
+      "commission",
+      "ppvz_reward",
+      "ppvz_vw"
+    ]
+  },
+  "rrdLevel": {
+    "rrdRowsWithAcquiring": 116,
+    "rrdWithAcquiringAndAnyTripleComponent": 116,
+    "count_acquiring_equals_any_triple_component": 0,
+    "count_acquiring_equals_triple_sum": 0,
+    "sums_on_acquiring_rrds": {
+      "ppvz_sales_commission": 34902.8,
+      "ppvz_reward": 8379.02,
+      "ppvz_vw": 39766.79,
+      "triple": 83048.61,
+      "acquiring_fee": 14821.46,
+      "triple_plus_acquiring": 97870.07
+    },
+    "proof_not_nested": "PASS: acquiring_fee never equals commission, reward, vw, or their sum on same rrd",
+    "examples": [
+      {
+        "rrd_id": "3127917359454",
+        "srid": "em.rf5517e48468d4cd59204a0e5ff989e28.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 181.31,
+        "ppvz_reward": 101.07,
+        "ppvz_vw": 98.46,
+        "triple_sum": 380.84,
+        "acquiring_fee": 22.85,
+        "ppvz_for_pay": 3356.95,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359460",
+        "srid": "eB8.r1d97e1ce7b114daf804dc6fb065526a6.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 50.16,
+        "ppvz_reward": 107.08,
+        "ppvz_vw": 137.94,
+        "triple_sum": 295.18,
+        "acquiring_fee": 129.6,
+        "ppvz_for_pay": 3171.6,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359396",
+        "srid": "eAy.i686dca012f2177ac318dd8e906ad4d93.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 133.44,
+        "ppvz_reward": 90.44,
+        "ppvz_vw": 207.57,
+        "triple_sum": 431.45,
+        "acquiring_fee": 128.68,
+        "ppvz_for_pay": 3251.12,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359406",
+        "srid": "eF.i37ec4dba48b3207f66ce97c7706488d4.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 141.19,
+        "ppvz_reward": 129.01,
+        "ppvz_vw": 246.94,
+        "triple_sum": 517.14,
+        "acquiring_fee": 117.56,
+        "ppvz_for_pay": 2993.69,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359408",
+        "srid": "ecb.r326569d6144a41ab88a710b320b8c767.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 60.66,
+        "ppvz_reward": 51.39,
+        "ppvz_vw": 102.78,
+        "triple_sum": 214.83,
+        "acquiring_fee": 86.12,
+        "ppvz_for_pay": 2140.88,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359412",
+        "srid": "eE.rd0399e3d2eb74a688e02cebd5aac58a1.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 190.48,
+        "ppvz_reward": 108.09,
+        "ppvz_vw": 279.07,
+        "triple_sum": 577.64,
+        "acquiring_fee": 138.08,
+        "ppvz_for_pay": 3546.3,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359414",
+        "srid": "eA2.r0083bf2887434382909b5e78f8ab6679.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 66.6,
+        "ppvz_reward": 86.32,
+        "ppvz_vw": 137.35,
+        "triple_sum": 290.27,
+        "acquiring_fee": 147.86,
+        "ppvz_for_pay": 2963.39,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359416",
+        "srid": "eE.r8ee56088f899411eac51910578e59523.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 211.79,
+        "ppvz_reward": 89.23,
+        "ppvz_vw": 284.93,
+        "triple_sum": 585.95,
+        "acquiring_fee": 137.04,
+        "ppvz_for_pay": 3547.34,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359424",
+        "srid": "eBf.rcdf47a7063d74eab92d974bafa06bed9.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 224.59,
+        "ppvz_reward": 62.24,
+        "ppvz_vw": 275.61,
+        "triple_sum": 562.44,
+        "acquiring_fee": 130.52,
+        "ppvz_for_pay": 3406.48,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359428",
+        "srid": "e1.rccdd134f1be04ecb9b76839f92d24a34.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 139.51,
+        "ppvz_reward": 132.14,
+        "ppvz_vw": 31.2,
+        "triple_sum": 302.85,
+        "acquiring_fee": 173.24,
+        "ppvz_for_pay": 3206.56,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": true
+      },
+      {
+        "rrd_id": "3127917359430",
+        "srid": "eAB.r960bada91fc74268a0919ac8e2653339.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 65.98,
+        "ppvz_reward": 81.02,
+        "ppvz_vw": 0.43,
+        "triple_sum": 147.43,
+        "acquiring_fee": 147.77,
+        "ppvz_for_pay": 2799.73,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": false
+      },
+      {
+        "rrd_id": "3127917359434",
+        "srid": "eAz.r93ea7a8c873248ed84344b878c3db929.0.0",
+        "date": "2026-06-23",
+        "ppvz_sales_commission": 9.34,
+        "ppvz_reward": 60.27,
+        "ppvz_vw": 58.75,
+        "triple_sum": 128.36,
+        "acquiring_fee": 168.21,
+        "ppvz_for_pay": 3290.19,
+        "acquiring_equals_commission": false,
+        "acquiring_equals_triple": false,
+        "acquiring_subset_of_triple_numerically": false
+      }
+    ]
+  },
+  "sridLevel": {
+    "sridsWithSalesAndAcquiring": 100,
+    "sridsWhereAcquiringDiffersFromTriple": 100,
+    "examples": [
+      {
+        "srid": "em.rf5517e48468d4cd59204a0e5ff989e28.0.0",
+        "salesForPay": 3379.8,
+        "finance_for_pay": 3356.95,
+        "commission": 181.31,
+        "ppvz_reward": 101.07,
+        "ppvz_vw": 111.24,
+        "triple": 393.62,
+        "acquiring_fee": 22.85,
+        "triple_plus_acquiring": 416.47
+      },
+      {
+        "srid": "eB8.r1d97e1ce7b114daf804dc6fb065526a6.0.0",
+        "salesForPay": -3301.2,
+        "finance_for_pay": 0,
+        "commission": 100.32,
+        "ppvz_reward": 214.16,
+        "ppvz_vw": 284.86,
+        "triple": 599.34,
+        "acquiring_fee": 259.2,
+        "triple_plus_acquiring": 858.54
+      },
+      {
+        "srid": "eAy.i686dca012f2177ac318dd8e906ad4d93.0.0",
+        "salesForPay": 3379.8,
+        "finance_for_pay": 3251.12,
+        "commission": 133.44,
+        "ppvz_reward": 90.44,
+        "ppvz_vw": 207.57,
+        "triple": 431.45,
+        "acquiring_fee": 128.68,
+        "triple_plus_acquiring": 560.13
+      },
+      {
+        "srid": "eF.i37ec4dba48b3207f66ce97c7706488d4.0.0",
+        "salesForPay": -3111.25,
+        "finance_for_pay": 0,
+        "commission": 282.38,
+        "ppvz_reward": 258.02,
+        "ppvz_vw": 497.2,
+        "triple": 1037.6,
+        "acquiring_fee": 235.12,
+        "triple_plus_acquiring": 1272.72
+      },
+      {
+        "srid": "ecb.r326569d6144a41ab88a710b320b8c767.0.0",
+        "salesForPay": 2227,
+        "finance_for_pay": 2140.88,
+        "commission": 60.66,
+        "ppvz_reward": 51.39,
+        "ppvz_vw": 106.21,
+        "triple": 218.26,
+        "acquiring_fee": 86.12,
+        "triple_plus_acquiring": 304.38
+      },
+      {
+        "srid": "eE.rd0399e3d2eb74a688e02cebd5aac58a1.0.0",
+        "salesForPay": 3684.37,
+        "finance_for_pay": 3546.3,
+        "commission": 190.48,
+        "ppvz_reward": 108.09,
+        "ppvz_vw": 287.32,
+        "triple": 585.89,
+        "acquiring_fee": 138.08,
+        "triple_plus_acquiring": 723.97
+      },
+      {
+        "srid": "eA2.r0083bf2887434382909b5e78f8ab6679.0.0",
+        "salesForPay": 3111.25,
+        "finance_for_pay": 2963.39,
+        "commission": 66.6,
+        "ppvz_reward": 86.32,
+        "ppvz_vw": 137.35,
+        "triple": 290.27,
+        "acquiring_fee": 147.86,
+        "triple_plus_acquiring": 438.13
+      },
+      {
+        "srid": "eE.r8ee56088f899411eac51910578e59523.0.0",
+        "salesForPay": -3684.37,
+        "finance_for_pay": -3547.34,
+        "commission": 211.79,
+        "ppvz_reward": 89.23,
+        "ppvz_vw": 284.93,
+        "triple": 585.95,
+        "acquiring_fee": 137.04,
+        "triple_plus_acquiring": 722.99
+      },
+      {
+        "srid": "eBf.rcdf47a7063d74eab92d974bafa06bed9.0.0",
+        "salesForPay": 3537,
+        "finance_for_pay": 3406.48,
+        "commission": 224.59,
+        "ppvz_reward": 62.24,
+        "ppvz_vw": 275.61,
+        "triple": 562.44,
+        "acquiring_fee": 130.52,
+        "triple_plus_acquiring": 692.96
+      },
+      {
+        "srid": "e1.rccdd134f1be04ecb9b76839f92d24a34.0.0",
+        "salesForPay": 3379.8,
+        "finance_for_pay": 3206.56,
+        "commission": 139.51,
+        "ppvz_reward": 132.14,
+        "ppvz_vw": 43.03,
+        "triple": 314.68,
+        "acquiring_fee": 173.24,
+        "triple_plus_acquiring": 487.92
+      }
+    ]
+  },
+  "modelB_noDoubleCount": {
+    "explanation": [
+      "Model B commercial commission = Sales netSales − Sales forPay (NOT finance ppvz_sales_commission+reward+vw).",
+      "Model B deducts finance ACQUIRING from salesForPay once in sellerPayout.",
+      "Finance triple (commission+reward+vw) is used in Marketplace Fees presentation, not subtracted again as a block in sellerPayout.",
+      "Therefore: (a) acquiring is not a subset of the finance triple columns; (b) Model B does not subtract the finance triple AND acquiring as overlapping fee sets."
+    ],
+    "modelB_commission_from_sales": 237433.06,
+    "finance_triple_all_rows_in_range": 91697.91,
+    "finance_acquiring_all_rows_in_range": 14821.46,
+    "salesForPay": 393651.48,
+    "netSales": 631084.54,
+    "identity": "sellerPayout = salesForPay − acquiring − logistics − storage − penalties − adjustments",
+    "if_we_also_subtracted_finance_triple_from_sellerPayout_that_would_be_a_different_bug": "Model B does not do that — only acquiring from the fee family is in sellerPayout; commission is Sales-side spread."
+  }
+}

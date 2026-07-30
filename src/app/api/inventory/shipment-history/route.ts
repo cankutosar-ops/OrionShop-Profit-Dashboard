@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getShipmentHistoryForProduct } from "@/services/shipment-history-service";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 
 export const maxDuration = 300;
 
@@ -8,13 +9,16 @@ export const maxDuration = 300;
  * Inbound WB warehouse shipments for one Inventory product (live Supplies API).
  */
 export async function GET(request: Request) {
+  const authz = await authorizeRequestScope(request, { requireMarketplaceAccount: true });
+  if (isAuthzFailure(authz)) return authz;
+
+  const marketplaceAccountId = authz.marketplaceAccountId!;
   const url = new URL(request.url);
-  const marketplaceAccountId = url.searchParams.get("marketplaceAccountId")?.trim();
   const productId = url.searchParams.get("productId")?.trim();
 
-  if (!marketplaceAccountId || !productId) {
+  if (!productId) {
     return NextResponse.json(
-      { error: "marketplaceAccountId and productId are required" },
+      { error: "productId is required" },
       { status: 400 }
     );
   }

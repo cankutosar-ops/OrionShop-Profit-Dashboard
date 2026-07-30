@@ -1,0 +1,705 @@
+{
+  "snapshotDate": "2026-07-19",
+  "totalQuantity": 1945,
+  "warehouseCount": 46,
+  "warehouseTotals": [
+    {
+      "warehouse": "Казань",
+      "quantity": 369
+    },
+    {
+      "warehouse": "Коледино",
+      "quantity": 316
+    },
+    {
+      "warehouse": "Новосемейкино",
+      "quantity": 280
+    },
+    {
+      "warehouse": "Краснодар",
+      "quantity": 189
+    },
+    {
+      "warehouse": "Невинномысск",
+      "quantity": 156
+    },
+    {
+      "warehouse": "Екатеринбург - Перспективная 14",
+      "quantity": 147
+    },
+    {
+      "warehouse": "Склад СПБ Шушары Московское",
+      "quantity": 124
+    },
+    {
+      "warehouse": "Тула",
+      "quantity": 97
+    },
+    {
+      "warehouse": "Воронеж WB",
+      "quantity": 56
+    },
+    {
+      "warehouse": "Рязань (Тюшевское)",
+      "quantity": 49
+    },
+    {
+      "warehouse": "Владимир WB",
+      "quantity": 48
+    },
+    {
+      "warehouse": "Сарапул WB",
+      "quantity": 32
+    },
+    {
+      "warehouse": "Волгоград",
+      "quantity": 30
+    },
+    {
+      "warehouse": "Пенза WB",
+      "quantity": 17
+    },
+    {
+      "warehouse": "Владивосток WB",
+      "quantity": 10
+    },
+    {
+      "warehouse": "Астана Карагандинское шоссе",
+      "quantity": 8
+    },
+    {
+      "warehouse": "СК Тверь Эммаусское WB",
+      "quantity": 7
+    },
+    {
+      "warehouse": "Атакент",
+      "quantity": 3
+    },
+    {
+      "warehouse": "СК Ереван",
+      "quantity": 3
+    },
+    {
+      "warehouse": "Актобе",
+      "quantity": 2
+    },
+    {
+      "warehouse": "Калининград",
+      "quantity": 2
+    },
+    {
+      "warehouse": "Абакан 2",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Артём",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Белая дача",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Вёшки",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Кемерово",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Котовск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Нижний Тагил Восточное  WB",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Новокузнецк WB",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Остальные",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Пермь 2",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Пушкино",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Пятигорск, Этока",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Радумля 1",
+      "quantity": 0
+    },
+    {
+      "warehouse": "склад продавца Иркутск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Софьино",
+      "quantity": 0
+    },
+    {
+      "warehouse": "СЦ Барнаул",
+      "quantity": 0
+    },
+    {
+      "warehouse": "СЦ Вологда 2",
+      "quantity": 0
+    },
+    {
+      "warehouse": "СЦ Нижний Новгород Ларина",
+      "quantity": 0
+    },
+    {
+      "warehouse": "СЦ Хабаровск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Томск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Тюмень",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Уфа",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Челябинск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Чита",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Электросталь",
+      "quantity": 0
+    }
+  ],
+  "skuCount": 132,
+  "skuSizeCount": 447,
+  "recordCount": 1437,
+  "top100Skus": [
+    {
+      "sellerSku": "i8-80968",
+      "nmId": "538158130",
+      "quantity": 128
+    },
+    {
+      "sellerSku": "i8-80966",
+      "nmId": "538158125",
+      "quantity": 125
+    },
+    {
+      "sellerSku": "i8-80965",
+      "nmId": "538158123",
+      "quantity": 100
+    },
+    {
+      "sellerSku": "i8-80967",
+      "nmId": "538158112",
+      "quantity": 86
+    },
+    {
+      "sellerSku": "i8-80964",
+      "nmId": "538158120",
+      "quantity": 81
+    },
+    {
+      "sellerSku": "i8-80970",
+      "nmId": "538158116",
+      "quantity": 73
+    },
+    {
+      "sellerSku": "i8-80969",
+      "nmId": "538158131",
+      "quantity": 73
+    },
+    {
+      "sellerSku": "i8-80545",
+      "nmId": "405580951",
+      "quantity": 72
+    },
+    {
+      "sellerSku": "i8-80971",
+      "nmId": "538158119",
+      "quantity": 71
+    },
+    {
+      "sellerSku": "i8-80717",
+      "nmId": "405580945",
+      "quantity": 69
+    },
+    {
+      "sellerSku": "i8-80444",
+      "nmId": "405580950",
+      "quantity": 51
+    },
+    {
+      "sellerSku": "5624016-BL",
+      "nmId": "263173340",
+      "quantity": 48
+    },
+    {
+      "sellerSku": "i8-80433",
+      "nmId": "405580956",
+      "quantity": 34
+    },
+    {
+      "sellerSku": "i8-80431",
+      "nmId": "405580948",
+      "quantity": 33
+    },
+    {
+      "sellerSku": "R-1098E",
+      "nmId": "974838178",
+      "quantity": 27
+    },
+    {
+      "sellerSku": "R-1098S",
+      "nmId": "974838179",
+      "quantity": 25
+    },
+    {
+      "sellerSku": "R-1091E",
+      "nmId": "974838174",
+      "quantity": 25
+    },
+    {
+      "sellerSku": "i8-80457",
+      "nmId": "405362929",
+      "quantity": 24
+    },
+    {
+      "sellerSku": "R-1091S",
+      "nmId": "974838175",
+      "quantity": 24
+    },
+    {
+      "sellerSku": "R-1104S",
+      "nmId": "974838180",
+      "quantity": 24
+    },
+    {
+      "sellerSku": "i8-NS017",
+      "nmId": "532183402",
+      "quantity": 23
+    },
+    {
+      "sellerSku": "5624016-CR",
+      "nmId": "263173341",
+      "quantity": 23
+    },
+    {
+      "sellerSku": "R-1055E",
+      "nmId": "974838162",
+      "quantity": 23
+    },
+    {
+      "sellerSku": "i8-NS002",
+      "nmId": "532183397",
+      "quantity": 22
+    },
+    {
+      "sellerSku": "R-1104E",
+      "nmId": "974838181",
+      "quantity": 22
+    },
+    {
+      "sellerSku": "i8-NS001",
+      "nmId": "532183396",
+      "quantity": 21
+    },
+    {
+      "sellerSku": "R-1055S",
+      "nmId": "974838163",
+      "quantity": 21
+    },
+    {
+      "sellerSku": "i8-NS003",
+      "nmId": "532183398",
+      "quantity": 19
+    },
+    {
+      "sellerSku": "5625006-BL",
+      "nmId": "263166498",
+      "quantity": 19
+    },
+    {
+      "sellerSku": "W-632",
+      "nmId": "170054357",
+      "quantity": 19
+    },
+    {
+      "sellerSku": "i8-EG1001-GR",
+      "nmId": "405585729",
+      "quantity": 17
+    },
+    {
+      "sellerSku": "i8-80455",
+      "nmId": "405580955",
+      "quantity": 16
+    },
+    {
+      "sellerSku": "R-1056S",
+      "nmId": "974838165",
+      "quantity": 16
+    },
+    {
+      "sellerSku": "R-1058S",
+      "nmId": "974838169",
+      "quantity": 16
+    },
+    {
+      "sellerSku": "5624020-GR",
+      "nmId": "263619974",
+      "quantity": 16
+    },
+    {
+      "sellerSku": "R-1098B",
+      "nmId": "974838176",
+      "quantity": 15
+    },
+    {
+      "sellerSku": "R-1091B",
+      "nmId": "974838173",
+      "quantity": 15
+    },
+    {
+      "sellerSku": "5624017-BL",
+      "nmId": "263166512",
+      "quantity": 14
+    },
+    {
+      "sellerSku": "R-1057S",
+      "nmId": "974838167",
+      "quantity": 14
+    },
+    {
+      "sellerSku": "5624017-BG",
+      "nmId": "263166514",
+      "quantity": 14
+    },
+    {
+      "sellerSku": "R-1098L",
+      "nmId": "974838177",
+      "quantity": 14
+    },
+    {
+      "sellerSku": "5624016-GR",
+      "nmId": "263173343",
+      "quantity": 14
+    },
+    {
+      "sellerSku": "5624017-CR",
+      "nmId": "263166513",
+      "quantity": 14
+    },
+    {
+      "sellerSku": "R-1091F",
+      "nmId": "974838172",
+      "quantity": 13
+    },
+    {
+      "sellerSku": "5625006-CR",
+      "nmId": "263166499",
+      "quantity": 13
+    },
+    {
+      "sellerSku": "5624020-BL",
+      "nmId": "263619971",
+      "quantity": 11
+    },
+    {
+      "sellerSku": "R-1057E",
+      "nmId": "974838166",
+      "quantity": 10
+    },
+    {
+      "sellerSku": "i8-80452",
+      "nmId": "405580953",
+      "quantity": 10
+    },
+    {
+      "sellerSku": "i8-81306",
+      "nmId": "1003036753",
+      "quantity": 10
+    },
+    {
+      "sellerSku": "5624016-GM",
+      "nmId": "263173346",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "i8-NS016",
+      "nmId": "532183399",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "M3368 1030",
+      "nmId": "143324827",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "R-1104B",
+      "nmId": "974838182",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "i8-80445",
+      "nmId": "405580946",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "PNT4157 1416",
+      "nmId": "139368643",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "R-1056E",
+      "nmId": "974838164",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "5624017-GR",
+      "nmId": "263166515",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "5624075-BL",
+      "nmId": "263619966",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "M3368 1416",
+      "nmId": "172745043",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "W-603",
+      "nmId": "169463326",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "i8-NS018",
+      "nmId": "532183406",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "i8-80442",
+      "nmId": "405580952",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "i8-81047",
+      "nmId": "1003036756",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "W-634",
+      "nmId": "170054359",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "5624020-DG",
+      "nmId": "263619975",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "5624016-BG",
+      "nmId": "263173342",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "5625029-CR",
+      "nmId": "263173321",
+      "quantity": 6
+    },
+    {
+      "sellerSku": "5624017-DG",
+      "nmId": "263166516",
+      "quantity": 6
+    },
+    {
+      "sellerSku": "PNT4157 1415",
+      "nmId": "173192726",
+      "quantity": 6
+    },
+    {
+      "sellerSku": "5625006-BG",
+      "nmId": "263166500",
+      "quantity": 6
+    },
+    {
+      "sellerSku": "M3367_131175645",
+      "nmId": "131175645",
+      "quantity": 6
+    },
+    {
+      "sellerSku": "5624016-LGM",
+      "nmId": "263173347",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "5624017-BLU",
+      "nmId": "263166517",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "i8-81330",
+      "nmId": "1003036750",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "5624020-LB",
+      "nmId": "263619979",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "5625006-DG",
+      "nmId": "263166501",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "M3368 1415",
+      "nmId": "172745046",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "W-700",
+      "nmId": "170054361",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "i8-81329",
+      "nmId": "1003036755",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "i8-80429",
+      "nmId": "405580949",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "M3464 1231",
+      "nmId": "180153778",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "5624020-BG",
+      "nmId": "263619973",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "5624020-BLU",
+      "nmId": "263619976",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "5625011-CR",
+      "nmId": "263173326",
+      "quantity": 3
+    },
+    {
+      "sellerSku": "5624016-DG",
+      "nmId": "263173344",
+      "quantity": 3
+    },
+    {
+      "sellerSku": "5624016-DGRN",
+      "nmId": "263173349",
+      "quantity": 3
+    },
+    {
+      "sellerSku": "M3369 1416",
+      "nmId": "143324408",
+      "quantity": 3
+    },
+    {
+      "sellerSku": "i8-81305",
+      "nmId": "1003036752",
+      "quantity": 3
+    },
+    {
+      "sellerSku": "i8-NS021",
+      "nmId": "532183410",
+      "quantity": 3
+    },
+    {
+      "sellerSku": "i8-81123",
+      "nmId": "1003036754",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "5625029-GR",
+      "nmId": "263173322",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "5624016-BLU",
+      "nmId": "263173345",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "5624020-CR",
+      "nmId": "263619972",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "i8-80449",
+      "nmId": "405580947",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "M3368 1436",
+      "nmId": "172745044",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "M3464 1446",
+      "nmId": "180155094",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "5624075-CR",
+      "nmId": "263619967",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "i8-81048",
+      "nmId": "1003036751",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "i8-810471",
+      "nmId": "1003036757",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "M3367 1007",
+      "nmId": "131176543",
+      "quantity": 1
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "duplicateWarehouseSkuSize": 0,
+    "emptyWarehouse": 0,
+    "emptySku": 0,
+    "emptySize": 0,
+    "nonNumericQuantity": 0,
+    "sampleErrors": []
+  }
+}

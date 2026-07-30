@@ -6,7 +6,12 @@ import { copyScopeQueryParams } from "@/lib/filter-params";
 import { cn } from "@/lib/utils";
 
 const MODULE_TABS = [
-  { id: "stock", label: "Stock", href: "/inventory" },
+  { id: "stock", label: "Current Inventory", href: "/inventory" },
+  {
+    id: "history",
+    label: "Inventory History",
+    href: "/inventory/history",
+  },
   {
     id: "warehouse-sales",
     label: "Warehouse Sales",
@@ -20,7 +25,7 @@ const MODULE_TABS = [
 ] as const;
 
 /**
- * Inventory module entry points: Stock | Warehouse Sales | Inventory Intelligence.
+ * Inventory module entry points: Current Inventory | Inventory History | …
  */
 export function InventoryModuleNav() {
   const pathname = usePathname();

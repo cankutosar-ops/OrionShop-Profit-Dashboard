@@ -1,0 +1,129 @@
+{
+  "generatedAt": "2026-07-24T16:14:21.866Z",
+  "account": "1",
+  "window": {
+    "from": "2026-07-13",
+    "to": "2026-07-24"
+  },
+  "api": {
+    "rawCount": 335,
+    "pagesObserved": "see sync logs (flag=0 stops when batch < 80000)",
+    "syncFilterWouldKeep": 335,
+    "rowsWithOrderDateInWindow": 237,
+    "rowsWithLastChangeDateInWindow": 335,
+    "orderDateHistogram": {
+      "2026-06-26": 1,
+      "2026-06-29": 3,
+      "2026-06-30": 1,
+      "2026-07-02": 1,
+      "2026-07-03": 3,
+      "2026-07-06": 3,
+      "2026-07-07": 15,
+      "2026-07-08": 11,
+      "2026-07-09": 6,
+      "2026-07-10": 13,
+      "2026-07-11": 17,
+      "2026-07-12": 24,
+      "2026-07-13": 21,
+      "2026-07-14": 18,
+      "2026-07-15": 22,
+      "2026-07-16": 19,
+      "2026-07-17": 12,
+      "2026-07-18": 25,
+      "2026-07-19": 28,
+      "2026-07-20": 21,
+      "2026-07-21": 30,
+      "2026-07-22": 22,
+      "2026-07-23": 9,
+      "2026-07-24": 10
+    },
+    "lastChangeDateHistogram": {
+      "2026-07-13": 30,
+      "2026-07-14": 22,
+      "2026-07-15": 25,
+      "2026-07-16": 26,
+      "2026-07-17": 18,
+      "2026-07-18": 21,
+      "2026-07-19": 26,
+      "2026-07-20": 31,
+      "2026-07-21": 44,
+      "2026-07-22": 39,
+      "2026-07-23": 29,
+      "2026-07-24": 24
+    },
+    "earliestOrderDate": "2026-06-26",
+    "latestOrderDate": "2026-07-24",
+    "earliestChangeDate": "2026-07-13",
+    "latestChangeDate": "2026-07-24"
+  },
+  "db": {
+    "totalRows": 2974,
+    "earliestOrderDate": null,
+    "latestOrderDate": null,
+    "latestLastChangeDate": null,
+    "rowsWithOrderDateInWindow": 0,
+    "rowsWithLastChangeDateInWindow": 0
+  },
+  "sampleProbe": {
+    "sampleSize": 25,
+    "presentInDb": 0,
+    "missingFromDb": 25,
+    "missingExamples": [
+      {
+        "srid": "eBY.r27b1e11a83c8493a8e56e1bb354685c7.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-13"
+      },
+      {
+        "srid": "eAW.r5d646cee3f834a75bb6ab6b258ac2222.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-13"
+      },
+      {
+        "srid": "e1.ra1f77bcea5c14bf988d3b70eeee7df85.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-13"
+      },
+      {
+        "srid": "eAm.r780c33004c4146e8a30a35eb07335dbb.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-13"
+      },
+      {
+        "srid": "eb3.r3df9c83e08de4804bc189ac83bf4cfbd.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-13"
+      },
+      {
+        "srid": "eB8.rac05535c63644603a55d92777aed2a2c.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-13"
+      },
+      {
+        "srid": "eZ.re8330c2e14c34b26aed96788753a6f09.0.0",
+        "orderDate": "2026-07-14",
+        "lastChangeDate": "2026-07-14"
+      },
+      {
+        "srid": "ebU.r65d25df1ea534b9eb9a074636586c432.0.0",
+        "orderDate": "2026-07-14",
+        "lastChangeDate": "2026-07-14"
+      },
+      {
+        "srid": "eB8.reada7f5714ff43aab9b3c6d47ad1c0a7.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-14"
+      },
+      {
+        "srid": "eB8.r76f876f310c24e46a74fca6ecca3392e.0.0",
+        "orderDate": "2026-07-13",
+        "lastChangeDate": "2026-07-14"
+      }
+    ],
+    "presentExamples": []
+  },
+  "conclusionHints": [
+    "API returns orders with order.date in the gap window, but DB has zero rows by order_date in that window → loss is AFTER fetch (filter/upsert/scheduling), or sync never persisted this window.",
+    "Sample API srids with order.date in-window are missing from DB → sync did not persist these rows."
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "sampleSaleExcel": [
+    {
+      "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+      "pay": 3914.36,
+      "sale": "2026-07-13"
+    },
+    {
+      "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+      "pay": 3393.77,
+      "sale": "2026-07-13"
+    },
+    {
+      "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+      "pay": 3161.71,
+      "sale": "2026-07-13"
+    }
+  ],
+  "probes": [
+    {
+      "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eA4.r5a1c8e77b7ce41e38bb8927b96b2af77.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eBe.r54e0d145317e4253af68cfe797de1545.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eB8.rac05535c63644603a55d92777aed2a2c.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "ebX.r813c452e2ca34dfcbe2ca208d0a8b328.0.0",
+      "error": "column wb_finance.ppvz_for_pay does not exist",
+      "count": 0,
+      "rows": []
+    }
+  ],
+  "anyFirst": null,
+  "salesHit": [
+    {
+      "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+      "sale_date": "2026-07-13T00:00:00+00:00",
+      "for_pay": 4068,
+      "price_with_disc": 7200,
+      "marketplace_account_id": 1
+    }
+  ],
+  "counts": {
+    "1": {
+      "weekOpDate": 0,
+      "totalRows": 63165,
+      "latest": null,
+      "byRealizationReportId": null,
+      "byRrdId": null
+    },
+    "2": {
+      "weekOpDate": 0,
+      "totalRows": 10443,
+      "latest": null,
+      "byRealizationReportId": null,
+      "byRrdId": null
+    }
+  }
+}

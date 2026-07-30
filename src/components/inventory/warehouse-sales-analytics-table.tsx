@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ArrowLeft, Search } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { FILTER_PARAMS } from "@/lib/filter-params";
 import {
   isEmptyWarehouseName,
@@ -16,6 +18,7 @@ import {
 import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type WarehouseSalesAnalyticsTableProps = {
@@ -25,6 +28,27 @@ type WarehouseSalesAnalyticsTableProps = {
   products: WarehouseProductSalesRow[] | null;
   rangeFrom: string;
   rangeTo: string;
+};
+
+type WarehouseSortKey =
+  | "warehouse"
+  | "orders"
+  | "ordersAmount"
+  | "units"
+  | "revenue"
+  | "orderShare"
+  | "revenueShare";
+
+type ProductSortKey = "sku" | "productName" | "orders" | "units" | "revenue";
+
+const WAREHOUSE_DEFAULT_SORT = {
+  key: "revenue" as const,
+  direction: "desc" as const,
+};
+
+const PRODUCT_DEFAULT_SORT = {
+  key: "revenue" as const,
+  direction: "desc" as const,
 };
 
 function warehouseHref(pathname: string, searchParams: URLSearchParams, warehouse: string): string {
@@ -40,6 +64,40 @@ function backHref(pathname: string, searchParams: URLSearchParams): string {
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function warehouseSortValue(row: WarehouseSalesRow, key: WarehouseSortKey): SortValue {
+  switch (key) {
+    case "warehouse":
+      return row.warehouse ? formatWarehouseName(row.warehouse) : "";
+    case "orders":
+      return row.orders;
+    case "ordersAmount":
+      return row.ordersAmount;
+    case "units":
+      return row.units;
+    case "revenue":
+      return row.revenue;
+    case "orderShare":
+      return row.orderSharePercent;
+    case "revenueShare":
+      return row.revenueSharePercent;
+  }
+}
+
+function productSortValue(row: WarehouseProductSalesRow, key: ProductSortKey): SortValue {
+  switch (key) {
+    case "sku":
+      return row.sku;
+    case "productName":
+      return row.productName;
+    case "orders":
+      return row.orders;
+    case "units":
+      return row.units;
+    case "revenue":
+      return row.revenue;
+  }
+}
+
 export function WarehouseSalesAnalyticsTable({
   rows,
   totals,
@@ -52,6 +110,29 @@ export function WarehouseSalesAnalyticsTable({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [hideEmpty, setHideEmpty] = useState(true);
+
+  const {
+    sort: warehouseSort,
+    onSort: onWarehouseSort,
+    directionFor: warehouseDir,
+    isActive: warehouseActive,
+  } = useCycleSort<WarehouseSortKey>(WAREHOUSE_DEFAULT_SORT);
+
+  const {
+    sort: productSort,
+    onSort: onProductSort,
+    directionFor: productDir,
+    isActive: productActive,
+  } = useCycleSort<ProductSortKey>(PRODUCT_DEFAULT_SORT);
+
+  const getWarehouseValue = useCallback(
+    (row: WarehouseSalesRow, key: WarehouseSortKey) => warehouseSortValue(row, key),
+    []
+  );
+  const getProductValue = useCallback(
+    (row: WarehouseProductSalesRow, key: ProductSortKey) => productSortValue(row, key),
+    []
+  );
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -67,7 +148,17 @@ export function WarehouseSalesAnalyticsTable({
     });
   }, [rows, query, hideEmpty]);
 
-  /** Shares are vs full cohort (all non-NULL warehouses); must total ~100%. */
+  const sortedWarehouses = useMemo(
+    () => sortRowsBySpec(filtered, warehouseSort, getWarehouseValue),
+    [filtered, warehouseSort, getWarehouseValue]
+  );
+
+  const sortedProducts = useMemo(
+    () => sortRowsBySpec(products ?? [], productSort, getProductValue),
+    [products, productSort, getProductValue]
+  );
+
+  /** Shares are vs full cohort (including Unknown Warehouse); must total ~100%. */
   const orderShareTotal = sumRoundedShares(rows.map((r) => r.orderSharePercent));
   const revenueShareTotal = sumRoundedShares(rows.map((r) => r.revenueSharePercent));
 
@@ -97,22 +188,55 @@ export function WarehouseSalesAnalyticsTable({
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                <th className="px-4 py-3 font-medium">SKU</th>
-                <th className="px-4 py-3 font-medium">Product Name</th>
-                <th className="px-4 py-3 text-right font-medium">Orders</th>
-                <th className="px-4 py-3 text-right font-medium">Units</th>
-                <th className="px-4 py-3 text-right font-medium">Revenue</th>
+                <SortableTh
+                  label="SKU"
+                  active={productActive("sku")}
+                  direction={productDir("sku")}
+                  onClick={() => onProductSort("sku")}
+                  className="px-4 py-3"
+                />
+                <SortableTh
+                  label="Product Name"
+                  active={productActive("productName")}
+                  direction={productDir("productName")}
+                  onClick={() => onProductSort("productName")}
+                  className="px-4 py-3"
+                />
+                <SortableTh
+                  label="Orders"
+                  active={productActive("orders")}
+                  direction={productDir("orders")}
+                  onClick={() => onProductSort("orders")}
+                  align="right"
+                  className="px-4 py-3"
+                />
+                <SortableTh
+                  label="Units"
+                  active={productActive("units")}
+                  direction={productDir("units")}
+                  onClick={() => onProductSort("units")}
+                  align="right"
+                  className="px-4 py-3"
+                />
+                <SortableTh
+                  label="Sales"
+                  active={productActive("revenue")}
+                  direction={productDir("revenue")}
+                  onClick={() => onProductSort("revenue")}
+                  align="right"
+                  className="px-4 py-3"
+                />
               </tr>
             </thead>
             <tbody>
-              {(products ?? []).length === 0 ? (
+              {sortedProducts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                     No completed sales for this warehouse in the selected period.
                   </td>
                 </tr>
               ) : (
-                (products ?? []).map((row) => (
+                sortedProducts.map((row) => (
                   <tr
                     key={row.productId}
                     className="border-t border-border/60 transition-colors hover:bg-card-hover/40"
@@ -164,7 +288,7 @@ export function WarehouseSalesAnalyticsTable({
       </div>
 
       <div
-        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7"
         role="group"
         aria-label="Warehouse sales summary"
       >
@@ -182,13 +306,20 @@ export function WarehouseSalesAnalyticsTable({
         />
         <MetricCard
           size="compact"
+          title="Orders Amount"
+          value={formatKpiCurrency(totals.ordersAmount)}
+          icon={KPI_ICONS.purchases}
+          hint="Σ order price_with_disc × quantity (wb_orders)"
+        />
+        <MetricCard
+          size="compact"
           title="Units"
           value={formatKpiCount(totals.units)}
           icon={KPI_ICONS.units}
         />
         <MetricCard
           size="compact"
-          title="Revenue"
+          title="Sales"
           value={formatKpiCurrency(totals.revenue)}
           icon={KPI_ICONS.revenue}
         />
@@ -201,7 +332,7 @@ export function WarehouseSalesAnalyticsTable({
         />
         <MetricCard
           size="compact"
-          title="Revenue Share Σ"
+          title="Sales Share Σ"
           value={formatKpiPercent(revenueShareTotal)}
           icon={KPI_ICONS.conversion}
           hint="All warehouses, 1 decimal"
@@ -209,26 +340,75 @@ export function WarehouseSalesAnalyticsTable({
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[840px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-3 font-medium">Warehouse</th>
-              <th className="px-4 py-3 text-right font-medium">Orders</th>
-              <th className="px-4 py-3 text-right font-medium">Units</th>
-              <th className="px-4 py-3 text-right font-medium">Revenue</th>
-              <th className="px-4 py-3 text-right font-medium">Order Share</th>
-              <th className="px-4 py-3 text-right font-medium">Revenue Share</th>
+              <SortableTh
+                label="Warehouse"
+                active={warehouseActive("warehouse")}
+                direction={warehouseDir("warehouse")}
+                onClick={() => onWarehouseSort("warehouse")}
+                className="px-4 py-3"
+              />
+              <SortableTh
+                label="Orders"
+                active={warehouseActive("orders")}
+                direction={warehouseDir("orders")}
+                onClick={() => onWarehouseSort("orders")}
+                align="right"
+                className="px-4 py-3"
+              />
+              <SortableTh
+                label="Orders Amount"
+                active={warehouseActive("ordersAmount")}
+                direction={warehouseDir("ordersAmount")}
+                onClick={() => onWarehouseSort("ordersAmount")}
+                align="right"
+                className="px-4 py-3"
+              />
+              <SortableTh
+                label="Units"
+                active={warehouseActive("units")}
+                direction={warehouseDir("units")}
+                onClick={() => onWarehouseSort("units")}
+                align="right"
+                className="px-4 py-3"
+              />
+              <SortableTh
+                label="Sales"
+                active={warehouseActive("revenue")}
+                direction={warehouseDir("revenue")}
+                onClick={() => onWarehouseSort("revenue")}
+                align="right"
+                className="px-4 py-3"
+              />
+              <SortableTh
+                label="Order Share"
+                active={warehouseActive("orderShare")}
+                direction={warehouseDir("orderShare")}
+                onClick={() => onWarehouseSort("orderShare")}
+                align="right"
+                className="px-4 py-3"
+              />
+              <SortableTh
+                label="Sales Share"
+                active={warehouseActive("revenueShare")}
+                direction={warehouseDir("revenueShare")}
+                onClick={() => onWarehouseSort("revenueShare")}
+                align="right"
+                className="px-4 py-3"
+              />
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {sortedWarehouses.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
                   No warehouse sales in the selected period.
                 </td>
               </tr>
             ) : (
-              filtered.map((row) => {
+              sortedWarehouses.map((row) => {
                 const label = row.warehouse
                   ? formatWarehouseName(row.warehouse)
                   : "—";
@@ -255,6 +435,9 @@ export function WarehouseSalesAnalyticsTable({
                       {formatNumber(row.orders)}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
+                      {formatCurrency(row.ordersAmount)}
+                    </td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">
                       {formatNumber(row.units)}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums font-medium">
@@ -277,6 +460,9 @@ export function WarehouseSalesAnalyticsTable({
                 <td className="px-4 py-2.5">Total (all warehouses)</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">
                   {formatNumber(totals.orders)}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums">
+                  {formatCurrency(totals.ordersAmount)}
                 </td>
                 <td className="px-4 py-2.5 text-right tabular-nums">
                   {formatNumber(totals.units)}

@@ -30,8 +30,11 @@ export function formatFinanceCategoryJson(report: FinanceCategoryReport): string
     {
       scope: report.scope,
       categories: rows,
-      netProfit: report.modelBProfit.netProfit,
-      revenue: report.modelBProfit.netSales,
+      sales: report.modelBProfit.netSales,
+      marketplaceFee: report.modelBProfit.marketplaceFee ?? report.modelBProfit.commission,
+      revenue: report.modelBProfit.revenue,
+      operatingProfit: report.modelBProfit.operatingProfit,
+      netProfit: report.modelBProfit.finalNetProfit,
     },
     null,
     2

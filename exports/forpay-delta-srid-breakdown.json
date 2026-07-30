@@ -1,0 +1,354 @@
+{
+  "range": {
+    "accountId": "1",
+    "from": "2026-06-23",
+    "to": "2026-07-22"
+  },
+  "totals": {
+    "salesApiForPay": 393651.48,
+    "financeNetForPay": 239628.51,
+    "delta_sales_minus_finance": 154022.97,
+    "expectedDashboardDelta": 154022.97,
+    "matchesExpected": true
+  },
+  "categories": {
+    "matched_exact": {
+      "contributionToDelta": 0,
+      "sridOrRowCount": 0,
+      "salesSum": 0,
+      "financeSum": 0
+    },
+    "matched_sales_gt_finance": {
+      "contributionToDelta": 17229.66,
+      "sridOrRowCount": 73,
+      "salesSum": 273501.85,
+      "financeSum": 256272.19
+    },
+    "matched_sales_lt_finance": {
+      "contributionToDelta": -72593.44,
+      "sridOrRowCount": 27,
+      "salesSum": -89237.12,
+      "financeSum": -16643.68
+    },
+    "sales_only_realization_outside_window": {
+      "contributionToDelta": 0,
+      "sridOrRowCount": 0
+    },
+    "sales_only_never_realized_in_finance": {
+      "contributionToDelta": 209386.75,
+      "sridOrRowCount": 72
+    },
+    "finance_only_sale_outside_window": {
+      "contributionToDelta": 0,
+      "sridOrRowCount": 0
+    },
+    "finance_only_no_sale": {
+      "contributionToDelta": 0,
+      "sridOrRowCount": 0
+    },
+    "finance_null_srid": {
+      "contributionToDelta": 0,
+      "sridOrRowCount": 0
+    },
+    "sales_empty_srid": {
+      "contributionToDelta": 0,
+      "sridOrRowCount": 0
+    }
+  },
+  "reconciliation": {
+    "sumOfCategoryContributions": 154022.97,
+    "residual_unexplained": 0,
+    "exact": true,
+    "identity": "Δ = matched_gaps + sales_only* + (−finance_only*) + (−finance_null_srid) + sales_empty_srid"
+  },
+  "informational_not_added_to_total": {
+    "matched_gaps_involving_returns": -72593.44,
+    "note": "Subset of matched_* amounts where sale side has return rows — already included above"
+  },
+  "examples": {
+    "matched_sales_gt_finance": [
+      {
+        "srid": "em.rf5517e48468d4cd59204a0e5ff989e28.0.0",
+        "sales": 3379.8,
+        "finance": 3356.95,
+        "gap": 22.85,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "e1.rccdd134f1be04ecb9b76839f92d24a34.0.0",
+        "sales": 3379.8,
+        "finance": 3206.56,
+        "gap": 173.24,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "es.rb3490ba58c7d4c5a82c8ccba58e280c8.0.0",
+        "sales": 3379.81,
+        "finance": 3280.07,
+        "gap": 99.74,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "eAy.i686dca012f2177ac318dd8e906ad4d93.0.0",
+        "sales": 3379.8,
+        "finance": 3251.12,
+        "gap": 128.68,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "eAz.r93ea7a8c873248ed84344b878c3db929.0.0",
+        "sales": 3458.4,
+        "finance": 3290.19,
+        "gap": 168.21,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "ecB.r017c3db5ede54139be70c541f71c2bc9.0.0",
+        "sales": 3602.5,
+        "finance": 3461.06,
+        "gap": 141.44,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "ecb.r326569d6144a41ab88a710b320b8c767.0.0",
+        "sales": 2227,
+        "finance": 2140.88,
+        "gap": 86.12,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "eb8.ib72241a3c099bf24cc4a7e35eb40c218.0.0",
+        "sales": 3301.25,
+        "finance": 3210.85,
+        "gap": 90.4,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      }
+    ],
+    "matched_sales_lt_finance": [
+      {
+        "srid": "eE.r8ee56088f899411eac51910578e59523.0.0",
+        "sales": -3684.37,
+        "finance": -3547.34,
+        "gap": -137.03,
+        "saleDates": [
+          "2026-06-23"
+        ],
+        "opDates": [
+          "2026-06-23"
+        ]
+      },
+      {
+        "srid": "eB8.r1d97e1ce7b114daf804dc6fb065526a6.0.0",
+        "sales": -3301.2,
+        "finance": 0,
+        "gap": -3301.2,
+        "saleDates": [
+          "2026-06-24"
+        ],
+        "opDates": [
+          "2026-06-23",
+          "2026-06-24"
+        ]
+      },
+      {
+        "srid": "eBN.r2057660b44f64c80a6e6fe46755dfa7b.0.0",
+        "sales": -3537,
+        "finance": -3403.36,
+        "gap": -133.64,
+        "saleDates": [
+          "2026-06-24"
+        ],
+        "opDates": [
+          "2026-06-24"
+        ]
+      },
+      {
+        "srid": "eBA.r1e550ca2355a417e9e47d333d08fe2ba.0.0",
+        "sales": -3602.5,
+        "finance": 0,
+        "gap": -3602.5,
+        "saleDates": [
+          "2026-06-25"
+        ],
+        "opDates": [
+          "2026-06-23",
+          "2026-06-25"
+        ]
+      },
+      {
+        "srid": "eI.i01e576f0aa71ccb201af3f513797f8ba.0.0",
+        "sales": -3379.8,
+        "finance": -3207.83,
+        "gap": -171.97,
+        "saleDates": [
+          "2026-06-25"
+        ],
+        "opDates": [
+          "2026-06-25"
+        ]
+      },
+      {
+        "srid": "eAB.r960bada91fc74268a0919ac8e2653339.0.0",
+        "sales": -2947.5,
+        "finance": 0,
+        "gap": -2947.5,
+        "saleDates": [
+          "2026-06-26"
+        ],
+        "opDates": [
+          "2026-06-23",
+          "2026-06-26"
+        ]
+      },
+      {
+        "srid": "eI.ra7b26787e90b448899fd1a0e302d7494.12.0",
+        "sales": -3301.2,
+        "finance": 0,
+        "gap": -3301.2,
+        "saleDates": [
+          "2026-06-26"
+        ],
+        "opDates": [
+          "2026-06-23",
+          "2026-06-26"
+        ]
+      },
+      {
+        "srid": "ed.i85f982ef0a67121dc06ad89c060e342e.0.0",
+        "sales": -3301.2,
+        "finance": -3171.2,
+        "gap": -130,
+        "saleDates": [
+          "2026-06-26"
+        ],
+        "opDates": [
+          "2026-06-26"
+        ]
+      }
+    ],
+    "sales_only_realization_outside_window": [],
+    "sales_only_never_realized_in_finance": [
+      {
+        "srid": "eAz.44aad8705e344e518422f490aaa3c33e.0.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-06"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "ebt.rb13a3bac0cf14238bbc2af6e07603954.0.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-06"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "eS.r15413b77b8c24edb8c0fcf6e6f133a4e.0.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-07"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "eBj.i9b686edcd432f520b808271555958b76.0.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-07"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "eA7.icc6dc54efbf46a80cda92613ce9732be.0.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-07"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "eB7.r7c028eff6a4344adae0a99ccbe3e66d0.0.0",
+        "salesInRange": 3729,
+        "saleDates": [
+          "2026-07-07"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "eg.rda5d64e3eae04b07971560da0785aa31.0.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-08"
+        ],
+        "purchases": 1,
+        "returns": 0
+      },
+      {
+        "srid": "eBe.i876e5b413d69895fe26d435a4fad7f20.2.0",
+        "salesInRange": 4323,
+        "saleDates": [
+          "2026-07-08"
+        ],
+        "purchases": 1,
+        "returns": 0
+      }
+    ],
+    "finance_only_sale_outside_window": [],
+    "finance_only_no_sale": []
+  },
+  "rowCounts": {
+    "salesInRange": 172,
+    "financeInRange": 4491,
+    "financeForPayLinesInRange": 116,
+    "distinctSalesSrids": 172,
+    "distinctFinanceSrids": 100
+  }
+}

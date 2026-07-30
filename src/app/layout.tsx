@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import { getAppLanguage } from "@/lib/app-locale";
 import "./globals.css";
 
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang={getAppLanguage()} className={inter.variable}>
       <body className={`${inter.className} bg-background text-foreground antialiased`}>
-        <DashboardLayout>{children}</DashboardLayout>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

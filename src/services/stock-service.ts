@@ -11,7 +11,7 @@ export async function fetchStockForProduct(
   marketplaceAccountId: string,
   client?: SupabaseClient<Database>
 ): Promise<WbStock[]> {
-  const supabase = client ?? createServerClient();
+  const supabase = client ?? (await createServerClient());
   const { data, error } = await supabase
     .from("wb_stock")
     .select("*")

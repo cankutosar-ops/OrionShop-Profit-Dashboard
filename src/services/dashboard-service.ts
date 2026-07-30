@@ -14,10 +14,18 @@ import {
   buildDimensionProfitability,
 } from "@/lib/dimension-profitability";
 import { buildMarketplaceFeesPresentation } from "@/lib/marketplace-fees-presentation";
-import { buildModelBProfitMetrics } from "@/lib/profit-engine-model-b";
+import { buildModelBProfitMetrics } from "@/lib/financial-engine";
 import { buildModelCProfitMetrics } from "@/lib/profit-engine-model-c";
 import { summarizeFinanceByCategory } from "@/lib/finance-rollup";
-import { buildNetForPayFromDb } from "@/lib/sales-revenue-resolution";
+import {
+  buildNetFinishedPriceFromDb,
+  buildNetForPayFromDb,
+  sumReturnedFinishedPriceFromDb,
+} from "@/lib/sales-revenue-resolution";
+import {
+  sumAcceptanceFromFinance,
+  sumNetForPayFromFinance,
+} from "@/lib/wb-settlement";
 import {
   measureAsync,
   measureSync,
@@ -338,16 +346,22 @@ async function buildOverviewMetricsFromRaw(
   const netSalesResolution = await resolveNetSales(scope, raw.sales);
   const categorySummary = summarizeFinanceByCategory(raw.finance);
   const salesForPay = buildNetForPayFromDb(raw.sales);
+  const financeNetForPay = sumNetForPayFromFinance(raw.finance);
+  const acceptance = sumAcceptanceFromFinance(raw.finance);
+  const customerPaid = buildNetFinishedPriceFromDb(raw.sales);
   const modelBProfit = measureSync("model_b.calculateModelBNetProfit", "model_b", () =>
     buildModelBProfitMetrics(netSalesResolution, {
       salesForPay,
+      financeNetForPay,
       acquiring: categorySummary.ACQUIRING,
       logistics: totalLogistics,
       storage,
       penalties,
       adjustments: marketplaceFeesPresentation.accountAdjustments,
+      acceptance,
       productCost,
       advertising,
+      customerPaid,
     })
   );
 
@@ -384,6 +398,7 @@ async function buildOverviewMetricsFromRaw(
     unitsSold: salesMetrics.unitsSold,
     unitsReturned: salesMetrics.unitsReturned,
     netUnits: salesMetrics.unitsSold - salesMetrics.unitsReturned,
+    returnedValue: sumReturnedFinishedPriceFromDb(raw.sales),
   };
 
   logScopeAudit("Dashboard", scope, scope, {
@@ -394,16 +409,19 @@ async function buildOverviewMetricsFromRaw(
   });
 
   return {
-    revenue: salesMetrics.revenue,
+    /** Commercial Performance Revenue = Finance ppvz_for_pay. */
+    revenue: modelBProfit.revenue,
     productCost,
-    commission,
+    /** Marketplace Fee = Sales − Sales API forPay (not Finance ppvz_sales_commission). */
+    commission: modelBProfit.commission,
     logistics,
     returnLogistics,
     storage,
     advertising,
     penalties,
     otherExpenses,
-    netProfit: modelBProfit.netProfit,
+    /** Net Profit after tax (V4). */
+    netProfit: modelBProfit.finalNetProfit,
     returnRate: salesMetrics.returnRate,
     unitsSold: salesMetrics.unitsSold,
     unitsReturned: salesMetrics.unitsReturned,
@@ -439,7 +457,7 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
         }
 
         try {
-          const client = createServerClient();
+          const client = await createServerClient();
           const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
           if (empty) {
             return getSampleDashboard(
@@ -516,7 +534,7 @@ export const getDashboardWbStripData = cache(
       if (!env.isConfigured) return null;
 
       try {
-        const client = createServerClient();
+        const client = await createServerClient();
         const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
         if (empty) return null;
 
@@ -632,7 +650,7 @@ export async function getDashboardListData(scope: ScopedDateRange): Promise<{
     }
 
     try {
-      const client = createServerClient();
+      const client = await createServerClient();
       if (await isDatabaseEmpty(client, scope.marketplaceAccountId)) {
         const sample = getSampleDashboard(
           "Database tables are empty. Showing sample data until Wildberries data is synced."
@@ -704,7 +722,7 @@ export async function getDashboardData(scope: ScopedDateRange): Promise<Dashboar
         }
 
         try {
-          const client = createServerClient();
+          const client = await createServerClient();
           const empty = await measureAsync("server.isDatabaseEmpty", "server", () =>
             isDatabaseEmpty(client, scope.marketplaceAccountId)
           );

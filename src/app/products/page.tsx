@@ -20,13 +20,13 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
   const profitChartData = products.slice(0, 15).map((p) => ({
     label: p.modelCode,
-    value: p.netProfit,
+    value: p.finalNetProfit,
   }));
 
   const revenueChartData = products.slice(0, 15).map((p) => ({
     label: p.modelCode,
     value: p.revenue,
-    secondary: p.netProfit,
+    secondary: p.finalNetProfit,
   }));
 
   const returnRateChartData = products

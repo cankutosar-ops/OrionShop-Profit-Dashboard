@@ -49,7 +49,7 @@ export async function getProductProfitReport(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const allProducts = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
   });
@@ -90,8 +90,8 @@ export async function getProductProfitReport(
       logistics: row.logistics,
       advertising: row.advertising,
       productCost: row.productCost,
-      netProfit: row.netProfit,
-      marginPercent: calculateNetMarginPercent(row.revenue, row.netProfit),
+      netProfit: row.finalNetProfit,
+      marginPercent: calculateNetMarginPercent(row.revenue, row.finalNetProfit),
     };
   });
 

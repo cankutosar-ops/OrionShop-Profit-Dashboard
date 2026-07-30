@@ -20,8 +20,8 @@ export type PurchaseHeaderInput = {
   notes?: string | null;
 };
 
-function getReadClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getReadClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 function mapPurchase(row: Purchase): Purchase {
@@ -53,7 +53,7 @@ export async function fetchPurchases(
   marketplaceAccountId: string,
   client?: SupabaseClient
 ): Promise<PurchaseListItem[]> {
-  const supabase = getReadClient(client);
+  const supabase = await getReadClient(client);
 
   const { data: purchases, error } = await supabase
     .from("purchases")
@@ -69,20 +69,29 @@ export async function fetchPurchases(
 
   const { data: lines, error: linesError } = await supabase
     .from("purchase_lines")
-    .select("purchase_id")
+    .select("purchase_id, supplier_article")
     .in("purchase_id", purchaseIds);
 
   if (linesError) throw new Error(`Failed to fetch purchase lines: ${linesError.message}`);
 
   const countByPurchase = new Map<string, number>();
+  const articlesByPurchase = new Map<string, string[]>();
   for (const line of lines ?? []) {
     const purchaseId = String(line.purchase_id);
     countByPurchase.set(purchaseId, (countByPurchase.get(purchaseId) ?? 0) + 1);
+    const article = String(line.supplier_article ?? "").trim();
+    if (article) {
+      const existing = articlesByPurchase.get(purchaseId) ?? [];
+      if (!existing.includes(article)) {
+        articlesByPurchase.set(purchaseId, [...existing, article]);
+      }
+    }
   }
 
   return (purchases ?? []).map((row) => ({
     ...mapPurchase(row as Purchase),
     line_count: countByPurchase.get(String(row.id)) ?? 0,
+    supplierArticles: articlesByPurchase.get(String(row.id)) ?? [],
   }));
 }
 
@@ -91,7 +100,7 @@ export async function fetchPurchaseById(
   marketplaceAccountId: string,
   client?: SupabaseClient
 ): Promise<PurchaseWithLines | null> {
-  const supabase = getReadClient(client);
+  const supabase = await getReadClient(client);
 
   const { data: purchase, error } = await supabase
     .from("purchases")

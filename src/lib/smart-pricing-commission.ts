@@ -4,13 +4,7 @@ import {
 
 } from "@/lib/marketplace-commission";
 
-import {
-
-  buildNetForPayFromDb,
-
-  buildNetSalesFromDb,
-
-} from "@/lib/sales-revenue-resolution";
+import { marketplaceFeeFromSales, sumSalesAndMarketplaceFee } from "@/lib/financial-engine";
 
 import type { MarketplaceType, WbFinance, WbSale } from "@/types/database";
 
@@ -97,29 +91,13 @@ export function weightedCommissionPercent(
 /** Model B Sales API commission metrics for a sales set. */
 
 export function sumCompletedSalesMetrics(sales: WbSale[]): CommissionTotals {
-
-  const { netSales } = buildNetSalesFromDb(sales);
-
-  const salesForPay = buildNetForPayFromDb(sales);
-
-  const completed = sales.filter((row) => !row.is_return);
-
-  const unitsSold = completed.reduce((sum, row) => sum + row.quantity, 0);
-
-
-
+  const totals = sumSalesAndMarketplaceFee(sales);
   return {
-
-    commission: Math.max(0, netSales - salesForPay),
-
-    revenue: netSales,
-
-    salesForPay,
-
-    unitsSold,
-
+    commission: totals.marketplaceFee,
+    revenue: totals.netSales,
+    salesForPay: totals.salesForPay,
+    unitsSold: totals.unitsSold,
   };
-
 }
 
 
@@ -172,7 +150,7 @@ function mergeCommissionTotals(a: CommissionTotals, b: CommissionTotals): Commis
 
     unitsSold: a.unitsSold + b.unitsSold,
 
-    commission: Math.max(0, revenue - salesForPay),
+    commission: marketplaceFeeFromSales(revenue, salesForPay),
 
   };
 

@@ -146,7 +146,7 @@ export function ProductIntelligenceDrawer({
             />
             <section aria-labelledby="pi-warehouse-heading">
               <h3 id="pi-warehouse-heading" className="sr-only">
-                Warehouse Distribution
+                Warehouse Sales
               </h3>
               <WarehouseDistributionPanel
                 rows={row.warehouseDistribution}
@@ -264,8 +264,9 @@ function InventorySummarySection({ row }: { row: InventoryIntelligenceSkuRow }) 
 /**
  * Product Analytics funnel for the scoped period.
  * Sales Conversion = purchases ÷ orders (same as Product Analytics).
- * Favorites / Cart are not in the persisted PA pipeline — show placeholder until
- * WB Sales Funnel analytics is synced (future).
+ *
+ * Add to Favorites / Add to Cart are exposed by WB Sales Funnel Analytics API
+ * but are not ingested by our sync pipeline yet — show as unavailable, not as a sync failure.
  */
 function ProductEngagementSection({
   funnel,
@@ -296,7 +297,7 @@ function ProductEngagementSection({
           size="compact"
           title="Add to Favorites"
           value="—"
-          subtitle="Not synced"
+          subtitle="Not available"
           icon={KPI_ICONS.engagement}
           variant="muted"
         />
@@ -304,7 +305,7 @@ function ProductEngagementSection({
           size="compact"
           title="Add to Cart"
           value="—"
-          subtitle="Not synced"
+          subtitle="Not available"
           icon={KPI_ICONS.orders}
           variant="muted"
         />
@@ -326,6 +327,10 @@ function ProductEngagementSection({
           icon={KPI_ICONS.conversion}
         />
       </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        Favorites and Cart require Wildberries Sales Funnel Analytics (not in current sync).
+        Sales Conversion uses orders and purchases already in the dashboard.
+      </p>
     </section>
   );
 }
@@ -343,7 +348,7 @@ function SalesSummarySection({
     <section aria-labelledby="pi-sales-heading">
       <SectionHeading id="pi-sales-heading">Sales Summary</SectionHeading>
       <p className="mt-1 text-xs text-muted-foreground">
-        Period totals from warehouse distribution (same as table / export)
+        Period totals from warehouse sales (same as table / export)
       </p>
       <div className="mt-3 grid grid-cols-3 gap-3">
         <MetricCard
@@ -360,7 +365,7 @@ function SalesSummarySection({
         />
         <MetricCard
           size="compact"
-          title="Total Revenue"
+          title="Total Sales"
           value={formatKpiCurrency(revenue)}
           icon={KPI_ICONS.revenue}
         />

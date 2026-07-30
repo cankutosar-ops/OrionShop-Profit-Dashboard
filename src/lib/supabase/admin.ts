@@ -3,15 +3,23 @@ import type { Database } from "@/types/database";
 import { requireSupabaseEnv } from "./env";
 import { supabaseFetch } from "./fetch";
 
-/** Server-side Supabase client with write access for sync jobs. */
+/**
+ * Server-side Supabase client with service_role (bypasses RLS).
+ * Sprint 7.1.D — keep only for sync, lifecycle, credentials, membership admin,
+ * and other documented exceptions. Prefer createServerClient() (user JWT + RLS)
+ * for request-scoped reads/writes.
+ */
 export function createAdminClient() {
-  const { url, anonKey } = requireSupabaseEnv();
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { url } = requireSupabaseEnv();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
-  const key =
-    serviceKey && serviceKey !== "your-service-role-key" ? serviceKey : anonKey;
+  if (!serviceKey || serviceKey === "your-service-role-key") {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY is required for server-side database access (Sprint 7.1.A containment). Anon fallback is disabled."
+    );
+  }
 
-  return createClient<Database>(url, key, {
+  return createClient<Database>(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { fetch: supabaseFetch },
   });

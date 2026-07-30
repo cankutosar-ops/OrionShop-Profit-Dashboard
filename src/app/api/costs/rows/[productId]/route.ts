@@ -1,15 +1,37 @@
 import { NextResponse } from "next/server";
-import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
+import { normalizeBrandId, scopeSearchParamsFromUrl } from "@/lib/filter-params";
+import { parseDateRange } from "@/lib/utils";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import { fetchCostManagementRow, updateProductPurchaseCost } from "@/services/cost-service";
+import type { ScopedDateRange } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ productId: string }> };
 
+function scopeFromAuthz(
+  authz: { marketplaceAccountId: string | null; companyId: string | null },
+  url: URL
+): ScopedDateRange {
+  const params = scopeSearchParamsFromUrl(url);
+  return {
+    ...parseDateRange(params.from || undefined, params.to || undefined),
+    marketplaceAccountId: authz.marketplaceAccountId!,
+    companyId: authz.companyId!,
+    brandId: normalizeBrandId(params.brand || undefined),
+  };
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
+
     const { productId } = await context.params;
-    const scope = await resolveScopedDateRangeFromUrl(new URL(request.url));
+    const scope = scopeFromAuthz(authz, new URL(request.url));
 
     const row = await fetchCostManagementRow(productId, scope);
     if (!row) {
@@ -25,8 +47,14 @@ export async function GET(request: Request, context: RouteContext) {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
+
     const { productId } = await context.params;
-    const scope = await resolveScopedDateRangeFromUrl(new URL(request.url));
+    const scope = scopeFromAuthz(authz, new URL(request.url));
 
     const body = await request.json();
     const cost = Number(body.cost);

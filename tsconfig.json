@@ -29,13 +29,17 @@
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "next-env.d.ts",
+    "next.config.ts",
+    "middleware.ts",
+    ".next/types/**/*.ts",
     ".next-dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scripts",
+    "e2e"
   ]
 }

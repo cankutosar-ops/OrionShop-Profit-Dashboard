@@ -422,7 +422,7 @@ export function DecisionSimulatorPanel({
                 : formatCurrency(report.operationalTargetPrice)
             }
           />
-          <Metric label="Orders / Purchases" value={`${formatNumber(initialContext.orders)} / ${formatNumber(initialContext.purchases)}`} />
+          <Metric label="Orders / Buyout" value={`${formatNumber(initialContext.orders)} / ${formatNumber(initialContext.purchases)}`} />
         </div>
       </Section>
     </div>

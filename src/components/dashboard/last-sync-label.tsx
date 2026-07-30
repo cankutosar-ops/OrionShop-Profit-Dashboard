@@ -6,6 +6,7 @@ import { DASHBOARD_SYNC_COMPLETE_EVENT } from "@/lib/dashboard-auto-sync-session
 import { fetchDashboardCompanies } from "@/lib/dashboard-lifecycle";
 import { formatLastSyncTimestamp } from "@/lib/marketplace-sync-date";
 
+/** Fixed-height last-sync block for the Dashboard toolbar. */
 export function LastSyncLabel() {
   const searchParams = useSearchParams();
   const accountId = searchParams.get("account");
@@ -56,9 +57,14 @@ export function LastSyncLabel() {
   if (!label) return null;
 
   return (
-    <div className="text-right text-xs text-muted-foreground">
-      <span className="block font-medium text-foreground/80">Last Sync</span>
-      <span className="tabular-nums">{label}</span>
+    <div
+      className="flex h-9 min-w-[7.5rem] flex-col justify-center leading-tight"
+      title={`Last Sync: ${label}`}
+    >
+      <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        Last Sync
+      </span>
+      <span className="truncate text-xs tabular-nums text-foreground/90">{label}</span>
     </div>
   );
 }

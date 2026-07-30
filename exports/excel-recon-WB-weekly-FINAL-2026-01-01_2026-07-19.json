@@ -1,0 +1,202 @@
+{
+  "objective": "Identify first divergence Dashboard V4 vs official WB weekly Excel — no engine changes",
+  "excelFile": "C:/Users/User/Downloads/Еженедельный отчет 2024-01-29 - 2026-07-19_1202289.xlsx",
+  "period": {
+    "from": "2026-01-01",
+    "to": "2026-07-19",
+    "accountId": "1",
+    "excelFilter": "Тип отчета = Основной only; weeks overlapping period; unique report id",
+    "excelWeeks": 29
+  },
+  "counts": {
+    "salesRows": 1543,
+    "financeRows": 63165,
+    "adsRows": 0,
+    "weeklyReportsInDb": 0,
+    "weeklyReportsOverlapping": 0
+  },
+  "excel": {
+    "n": 29,
+    "prodazha": 3775137.73,
+    "k": 3801642.41,
+    "logistics": 1380075.56,
+    "storage": 118902.85,
+    "acceptance": 315,
+    "other": 809036.73,
+    "penalties": 6205,
+    "totalPay": 1485710.32,
+    "vvAdj": 1396.95,
+    "impliedFee": -26504.68
+  },
+  "dashboard": {
+    "grossSales": 6414588.18,
+    "returnedSales": 891480.57,
+    "netSales_display": 5523107.61,
+    "netSales_engine": 4979563.05,
+    "returnedSales_engine_pwd": 1435025.13,
+    "revenue": 3831458.84,
+    "marketplaceFee": 1794272.6,
+    "logistics": 1492660.02,
+    "storage": 113272.48,
+    "acceptance": 315,
+    "penalties": 6205,
+    "other": 791988.17,
+    "estimatedTax": 181716.08,
+    "productCost": 1669900,
+    "netProfit": -424597.91,
+    "salesForPay": 3185290.45,
+    "customerPaid": 3028601.27,
+    "acquiring": 206469.7,
+    "presentationFees": 1274711.15
+  },
+  "reconciliation": [
+    {
+      "metric": "1. Gross Sales",
+      "dashboard": 6414588.18,
+      "excel": null,
+      "diff": null,
+      "source": "Sales API / DB Σ priceWithDisc (purchases)",
+      "explanation": "Weekly Excel has no Gross Sales column. Excel «Продажа» is a realized weekly retail total, not Σ priceWithDisc purchases.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "2. Returned Sales",
+      "dashboard": 891480.57,
+      "excel": null,
+      "diff": null,
+      "source": "Sales API / DB Σ finishedPrice (returns)",
+      "explanation": "Weekly Excel summary has no returned-sales / refund column.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "3. Net Sales (display KPI)",
+      "dashboard": 5523107.61,
+      "excel": 3775137.73,
+      "diff": 1747969.88,
+      "source": "Display: Gross − Returned finishedPrice · Excel: Продажа",
+      "explanation": "Different definitions. Display Net Sales mixes priceWithDisc gross with finishedPrice returns. Excel Продажа is WB weekly realized retail. Engine commercial net (priceWithDisc)=4979563.05; finishedPrice net=3028601.27.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "3b. Engine Net Sales (priceWithDisc) vs Excel Продажа",
+      "dashboard": 4979563.05,
+      "excel": 3775137.73,
+      "diff": 1204425.32,
+      "source": "Sales API priceWithDisc net · Excel Продажа",
+      "explanation": "Same commercial intent family, but Excel Продажа ≠ priceWithDisc (SPP / retail realization / week axis).",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "4. Revenue (ppvz_for_pay)",
+      "dashboard": 3831458.84,
+      "excel": 3801642.41,
+      "diff": 29816.43,
+      "source": "Finance API signed for_pay (operation_date) · Excel: К перечислению за товар",
+      "explanation": "Closest Excel analog to V4 Revenue. Residual from week-report axis vs operation_date axis / coverage.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "5. Marketplace Fee",
+      "dashboard": 1794272.6,
+      "excel": -26504.68,
+      "diff": 1820777.28,
+      "source": "Sales API: priceWithDisc net − forPay · Excel implied: Продажа − К перечислению",
+      "explanation": "Excel has no Marketplace Fee column; implied fee can be negative when К > Продажа. Not the same identity as Sales−forPay.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "6. Logistics",
+      "dashboard": 1492660.02,
+      "excel": 1380075.56,
+      "diff": 112584.46,
+      "source": "Finance LOGISTICS+RETURN_LOGISTICS (operation_date) · Excel: Стоимость логистики",
+      "explanation": "Same concept; date axis (operation_date vs report week) and Основной-only Excel filter drive residual.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "7. Storage",
+      "dashboard": 113272.48,
+      "excel": 118902.85,
+      "diff": -5630.37,
+      "source": "Finance storage · Excel: Стоимость хранения",
+      "explanation": "Same concept; residual from date axis / classification.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "8. Acceptance",
+      "dashboard": 315,
+      "excel": 315,
+      "diff": 0,
+      "source": "Finance acceptance · Excel: Стоимость операций на приемке",
+      "explanation": "Same concept.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "9. Penalties",
+      "dashboard": 6205,
+      "excel": 6205,
+      "diff": 0,
+      "source": "Finance penalty · Excel: Общая сумма штрафов",
+      "explanation": "Same concept.",
+      "status": "MATCH"
+    },
+    {
+      "metric": "10. Other Marketplace Expenses",
+      "dashboard": 791988.17,
+      "excel": 809036.73,
+      "diff": -17048.56,
+      "source": "Finance ADJUSTMENT · Excel: Прочие удержания/выплаты",
+      "explanation": "Near-analog columns; classification / axis residuals.",
+      "status": "MISMATCH"
+    },
+    {
+      "metric": "11. Estimated Tax",
+      "dashboard": 181716.08,
+      "excel": null,
+      "diff": null,
+      "source": "Tax% × Σ finishedPrice",
+      "explanation": "Not present in WB weekly settlement Excel.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "12. Product Cost",
+      "dashboard": 1669900,
+      "excel": null,
+      "diff": null,
+      "source": "DB product_cost_history × sales",
+      "explanation": "Seller cost — not a WB weekly settlement field.",
+      "status": "EXCEL_MISSING"
+    },
+    {
+      "metric": "13. Net Profit",
+      "dashboard": -424597.91,
+      "excel": 1485710.32,
+      "diff": -1910308.23,
+      "source": "V4 finalNetProfit · Excel: Итого к оплате",
+      "explanation": "Different economics. Excel Итого = settlement cash after logistics/storage/holds. V4 Net Profit = Revenue − PC − costs − ads − tax. Not comparable 1:1.",
+      "status": "MISMATCH"
+    }
+  ],
+  "answers": {
+    "q1_firstDivergingKpi": {
+      "firstInFunnelOrder": "1. Gross Sales",
+      "reason": "Gross Sales has no Excel counterpart — divergence starts before shared columns exist. First shared comparable break is Net Sales/Продажа (definition mismatch), then Revenue vs К перечислению (axis/coverage).",
+      "firstSharedNumericMismatch": "3. Net Sales (display KPI)",
+      "firstSharedNumericDiff": 1747969.88
+    },
+    "q2_cause": {
+      "primary": "different aggregation logic + wrong date axis (week report vs sale_date/operation_date)",
+      "detail": [
+        "Gross/Returned/Net Sales KPIs are Dashboard commercial constructs; weekly Excel exposes Продажа (realized retail), not priceWithDisc gross/returns.",
+        "Revenue: V4 uses Finance operation_date Σ ppvz_for_pay; Excel uses weekly report «К перечислению» — same economic family, different axis.",
+        "Marketplace Fee: V4 Sales−forPay ≠ Excel implied Продажа−К.",
+        "Logistics/Storage residuals: operation_date vs report week.",
+        "Acceptance/Penalties historically near/match when coverage aligns.",
+        "Net Profit vs Итого к оплате: different equations (not formula bug inside V4).",
+        "wb_sales_reports count in DB: 0 (overlapping 0) — Weekly Report dataset not available as parallel source in DB."
+      ],
+      "notPrimary": "wrong V4 tax formula / wrong V4 fee formula as such"
+    },
+    "q3_weeklyReportsWouldEliminateDifference": "Partially for Revenue/logistics/storage IF weekly report detail were synced into DB and used on the report-week axis — that would close the К перечислению / logistics gap toward Excel. It would NOT eliminate Gross/Returned/Net Sales gaps (Excel lacks those columns) nor make Итого к оплате equal V4 Net Profit (different equation). Currently account 1 has no usable wb_sales_reports rows overlapping this period."
+  }
+}

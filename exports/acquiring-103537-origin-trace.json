@@ -1,0 +1,153 @@
+{
+  "question": "Why Acquiring=103537 when Σ acquiring_fee was 17929?",
+  "answer_candidate": "Same field (acquiring_fee only). Different operation_date window. 17929 = Jun20–Jul20; 103537 = longer window matching screenshot Sales.",
+  "results": [
+    {
+      "accountId": "1",
+      "totalAcquiringAllTime": 206469.7,
+      "refWindow_Jun20_Jul20": 17929.01,
+      "nonFeeSuffixIntoACQUIRING": 0,
+      "nonFeeExamples": [],
+      "dailyBySuffixIntoAcquiring": {},
+      "preciseMatches": [
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-20",
+          "sum": 103536.55,
+          "delta": 0.45
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-20",
+          "sum": 103536.55,
+          "delta": 0.45,
+          "tag": "closest_for_end"
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-21",
+          "sum": 103536.55,
+          "delta": 0.45
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-21",
+          "sum": 103536.55,
+          "delta": 0.45,
+          "tag": "closest_for_end"
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-22",
+          "sum": 103536.55,
+          "delta": 0.45
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-22",
+          "sum": 103536.55,
+          "delta": 0.45,
+          "tag": "closest_for_end"
+        }
+      ],
+      "closest": [
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-20",
+          "sum": 103536.55,
+          "delta": 0.45,
+          "tag": "closest_for_end"
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-21",
+          "sum": 103536.55,
+          "delta": 0.45,
+          "tag": "closest_for_end"
+        },
+        {
+          "from": "2026-04-20",
+          "to": "2026-07-22",
+          "sum": 103536.55,
+          "delta": 0.45,
+          "tag": "closest_for_end"
+        }
+      ],
+      "salesMatch": {
+        "netSales": 2385655.02,
+        "salesForPay": 1512470.37,
+        "commission": 873184.65,
+        "screenshot": {
+          "sales": 2373070,
+          "commission": 867710,
+          "acquiring": 103537
+        },
+        "ACQUIRING_summary": 103536.55,
+        "COMMISSION_fin": 153122,
+        "PPVZ_REWARD": 59963.23,
+        "PPVZ_VW": 204256.3
+      },
+      "byMonth": {
+        "2026-01": 10341.44,
+        "2026-02": 18181.67,
+        "2026-03": 44328.21,
+        "2026-04": 46869.82,
+        "2026-05": 41038.56,
+        "2026-06": 41337.69,
+        "2026-07": 4372.31
+      },
+      "delta_103537_minus_17929": 85607.99
+    },
+    {
+      "accountId": "2",
+      "totalAcquiringAllTime": 27831.51,
+      "refWindow_Jun20_Jul20": 2322.07,
+      "nonFeeSuffixIntoACQUIRING": 0,
+      "nonFeeExamples": [],
+      "dailyBySuffixIntoAcquiring": {},
+      "preciseMatches": [],
+      "closest": [
+        {
+          "from": "2026-05-28",
+          "to": "2026-07-20",
+          "sum": 27831.51,
+          "delta": 75705.49,
+          "tag": "closest_for_end"
+        },
+        {
+          "from": "2026-05-28",
+          "to": "2026-07-21",
+          "sum": 27831.51,
+          "delta": 75705.49,
+          "tag": "closest_for_end"
+        },
+        {
+          "from": "2026-05-28",
+          "to": "2026-07-22",
+          "sum": 27831.51,
+          "delta": 75705.49,
+          "tag": "closest_for_end"
+        }
+      ],
+      "salesMatch": {
+        "netSales": 1992328.27,
+        "salesForPay": 1239742.8,
+        "commission": 752585.47,
+        "screenshot": {
+          "sales": 2373070,
+          "commission": 867710,
+          "acquiring": 103537
+        },
+        "ACQUIRING_summary": 27831.51,
+        "COMMISSION_fin": 74944.86,
+        "PPVZ_REWARD": 22975.1,
+        "PPVZ_VW": 77797.05
+      },
+      "byMonth": {
+        "2026-05": 2901.96,
+        "2026-06": 24929.55
+      },
+      "delta_103537_minus_17929": 101214.93
+    }
+  ]
+}

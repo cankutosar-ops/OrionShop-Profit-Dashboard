@@ -1,0 +1,36 @@
+{
+  "scope": {
+    "accountId": "1",
+    "from": "2025-12-20",
+    "to": "2026-07-19",
+    "filter": "marketplace_account_id + operation_date BETWEEN from AND to (inclusive)",
+    "table": "wb_finance",
+    "amountColumn": "amount",
+    "dateColumn": "operation_date"
+  },
+  "financeRowsLoaded": 63165,
+  "acquiringFeeRows": 1826,
+  "sums": {
+    "summarizeFinanceByCategory_ACQUIRING": 206469.7,
+    "sum_abs_amount_where_suffix_acquiring_fee": 206469.7,
+    "sum_abs_amount_where_category_ACQUIRING": 206469.7,
+    "widget_displayed": 103537
+  },
+  "equals_widget": {
+    "ACQUIRING_vs_103537": false,
+    "acquiring_fee_vs_103537": false,
+    "ACQUIRING_minus_widget": 102932.7,
+    "acquiring_fee_minus_widget": 102932.7
+  },
+  "bySuffixInAcquiring": {
+    "acquiring_fee": 206469.7
+  },
+  "byOperName": {
+    "(null)": 206469.7
+  },
+  "byOperationType": {
+    "other": 206469.7
+  },
+  "nonFeeSuffixIntoAcquiring": [],
+  "equivalentSql": "-- Dashboard-equivalent (PostgREST / Supabase)\n-- Table: wb_finance\n-- Filters: marketplace_account_id = '1'\n--          operation_date >= '2025-12-20'\n--          operation_date <= '2026-07-19'\n-- Then in app: skip for_pay suffix; category ACQUIRING from suffix acquiring_fee;\n--              SUM(ABS(amount))\n\nSELECT ROUND(SUM(ABS(amount))::numeric, 2) AS sum_acquiring_fee\nFROM wb_finance\nWHERE marketplace_account_id = '1'\n  AND operation_date >= '2025-12-20'\n  AND operation_date <= '2026-07-19'\n  AND (\n    COALESCE(NULLIF(TRIM(wb_source_suffix), ''), split_part(source_key, ':', -1))\n    = 'acquiring_fee'\n  );"
+}

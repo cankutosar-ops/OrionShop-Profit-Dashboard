@@ -4,9 +4,11 @@ import { Building2, ChevronDown, Store } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAccountSwitch } from "@/components/layout/account-switch-context";
+import { notifyDashboardHeaderPopupOpen } from "@/lib/dashboard-header-popup";
 import { replaceUrlIfChanged, fetchDashboardCompanies } from "@/lib/dashboard-lifecycle";
 import { navigateScope } from "@/lib/scope-navigation";
 import { FILTER_PARAMS } from "@/lib/filter-params";
+import { filterOperationalMarketplaceAccounts } from "@/lib/marketplace-account-visibility";
 import {
   lastSyncDateKey,
   rangeExtendsBeyondLastSync,
@@ -92,10 +94,16 @@ function Dropdown({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() =>
+          setOpen((current) => {
+            const next = !current;
+            if (next) notifyDashboardHeaderPopupOpen("tenant");
+            return next;
+          })
+        }
         disabled={disabled || options.length === 0}
         className={cn(
-          "inline-flex min-w-[160px] items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50"
+          "inline-flex min-w-[180px] items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-card-hover disabled:cursor-not-allowed disabled:opacity-50"
         )}
       >
         <span className="flex items-center gap-2 truncate">
@@ -178,12 +186,13 @@ export function TenantSelectors() {
     null;
 
   const companyAccounts = activeCompany?.accounts ?? [];
+  /** Production selectors: active + non-test/demo only. Settings still lists all. */
+  const operationalAccounts = filterOperationalMarketplaceAccounts(companyAccounts);
 
   const activeAccount =
-    companyAccounts.find((account) => account.id === activeAccountId) ??
-    companyAccounts.find((account) => account.is_default && account.is_active) ??
-    companyAccounts.find((account) => account.is_active) ??
-    companyAccounts[0] ??
+    operationalAccounts.find((account) => account.id === activeAccountId) ??
+    operationalAccounts.find((account) => account.is_default) ??
+    operationalAccounts[0] ??
     null;
 
   useEffect(() => {
@@ -274,11 +283,9 @@ export function TenantSelectors() {
 
   function selectCompany(companyId: string) {
     const company = companies.find((row) => row.id === companyId);
+    const accounts = filterOperationalMarketplaceAccounts(company?.accounts ?? []);
     const account =
-      company?.accounts.find((row) => row.is_default && row.is_active) ??
-      company?.accounts.find((row) => row.is_active) ??
-      company?.accounts[0] ??
-      null;
+      accounts.find((row) => row.is_default) ?? accounts[0] ?? null;
     navigateToTenant({
       company: companyId,
       account: account?.id,
@@ -287,7 +294,7 @@ export function TenantSelectors() {
   }
 
   function selectAccount(accountId: string) {
-    const account = companyAccounts.find((row) => row.id === accountId) ?? null;
+    const account = operationalAccounts.find((row) => row.id === accountId) ?? null;
     navigateToTenant({
       company: activeCompany?.id,
       account: accountId,
@@ -297,18 +304,19 @@ export function TenantSelectors() {
 
   const selectorsDisabled = loading || isBusy;
 
-  const companyOptions = companies.map((company) => ({
-    id: company.id,
-    label: company.name,
-    hint: `${company.accounts.length} account${company.accounts.length === 1 ? "" : "s"}`,
-  }));
+  const companyOptions = companies.map((company) => {
+    const visibleCount = filterOperationalMarketplaceAccounts(company.accounts).length;
+    return {
+      id: company.id,
+      label: company.name,
+      hint: `${visibleCount} account${visibleCount === 1 ? "" : "s"}`,
+    };
+  });
 
-  const accountOptions = companyAccounts.map((account: MarketplaceAccountPublic) => ({
+  const accountOptions = operationalAccounts.map((account: MarketplaceAccountPublic) => ({
     id: account.id,
     label: account.account_name,
-    hint: `${MARKETPLACE_LABELS[account.marketplace] ?? account.marketplace}${
-      account.is_active ? "" : " · inactive"
-    }`,
+    hint: MARKETPLACE_LABELS[account.marketplace] ?? account.marketplace,
   }));
 
   return (
@@ -327,7 +335,7 @@ export function TenantSelectors() {
         value={activeAccount?.id ?? ""}
         options={accountOptions}
         onSelect={selectAccount}
-        disabled={selectorsDisabled || companyAccounts.length === 0}
+        disabled={selectorsDisabled || operationalAccounts.length === 0}
       />
     </div>
   );

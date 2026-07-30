@@ -85,7 +85,7 @@ export async function fetchCostManagementRows(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<CostManagementRow[]> {
-  const supabase = getReadClient(client);
+  const supabase = await getReadClient(client);
   const marketplaceAccountId = scope.marketplaceAccountId;
 
   const [products, costs, stockByProductId, sales] = await Promise.all([
@@ -163,15 +163,15 @@ function pickLatestPerProduct(rows: CostRowWithProduct[]): CostRowWithProduct[] 
   return Array.from(pickLatestCostHistoryByProductId(rows).values());
 }
 
-function getReadClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getReadClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 export async function fetchCostRecords(
   marketplaceAccountId?: string,
   client?: SupabaseClient
 ): Promise<CostRecord[]> {
-  const supabase = getReadClient(client);
+  const supabase = await getReadClient(client);
 
   let query = supabase
     .from("product_cost_history")
@@ -197,7 +197,7 @@ export async function fetchProductOptions(
   marketplaceAccountId?: string,
   client?: SupabaseClient
 ): Promise<ProductOption[]> {
-  const supabase = getReadClient(client);
+  const supabase = await getReadClient(client);
 
   let query = supabase
     .from("products")
@@ -221,13 +221,17 @@ export async function fetchProductOptions(
 
 async function resolveProductIdBySupplierArticle(
   supplierArticle: string,
-  client: SupabaseClient
+  client: SupabaseClient,
+  marketplaceAccountId?: string
 ): Promise<string> {
-  const { data, error } = await client
+  let query = client
     .from("products")
     .select("id")
-    .eq("supplier_article", supplierArticle.trim())
-    .maybeSingle();
+    .eq("supplier_article", supplierArticle.trim());
+  if (marketplaceAccountId) {
+    query = query.eq("marketplace_account_id", marketplaceAccountId);
+  }
+  const { data, error } = await query.maybeSingle();
 
   if (error) throw new Error(`Failed to resolve product: ${error.message}`);
   if (!data) throw new Error(`Product not found for supplier article "${supplierArticle}"`);
@@ -237,16 +241,25 @@ async function resolveProductIdBySupplierArticle(
 
 async function resolveProductIdFromHistoryId(
   historyId: string,
-  client: SupabaseClient
+  client: SupabaseClient,
+  marketplaceAccountId?: string
 ): Promise<string> {
   const { data, error } = await client
     .from("product_cost_history")
-    .select("product_id")
+    .select("product_id, product:products!inner(marketplace_account_id)")
     .eq("id", historyId)
     .maybeSingle();
 
   if (error) throw new Error(`Failed to resolve cost record: ${error.message}`);
   if (!data) throw new Error("Cost record not found");
+
+  if (marketplaceAccountId) {
+    const product = data.product as { marketplace_account_id?: string | number } | null;
+    const accountId = product?.marketplace_account_id;
+    if (String(accountId) !== String(marketplaceAccountId)) {
+      throw new Error("Cost record does not belong to the selected marketplace account");
+    }
+  }
 
   return String(data.product_id);
 }
@@ -320,9 +333,16 @@ export type CostInput = {
   effective_from: string;
 };
 
-export async function createCostRecord(input: CostInput): Promise<CostRecord> {
+export async function createCostRecord(
+  input: CostInput,
+  marketplaceAccountId: string
+): Promise<CostRecord> {
   const supabase = createAdminClient();
-  const productId = await resolveProductIdBySupplierArticle(input.supplier_article, supabase);
+  const productId = await resolveProductIdBySupplierArticle(
+    input.supplier_article,
+    supabase,
+    marketplaceAccountId
+  );
   return insertCostHistoryRow(supabase, productId, {
     cost: input.cost,
     effective_from: input.effective_from,
@@ -332,10 +352,11 @@ export async function createCostRecord(input: CostInput): Promise<CostRecord> {
 /** Append a new history row; never overwrites existing cost values. */
 export async function appendCostRecordChange(
   id: string,
-  input: { cost: number; effective_from: string }
+  input: { cost: number; effective_from: string },
+  marketplaceAccountId: string
 ): Promise<CostRecord> {
   const supabase = createAdminClient();
-  const productId = await resolveProductIdFromHistoryId(id, supabase);
+  const productId = await resolveProductIdFromHistoryId(id, supabase, marketplaceAccountId);
   return insertCostHistoryRow(supabase, productId, input);
 }
 
@@ -430,8 +451,11 @@ export async function bulkImportCostRecords(
   return result;
 }
 
-/** @deprecated Use bulkImportCostRecords — kept for compatibility if referenced elsewhere. */
-export async function bulkCreateCostRecords(rows: BulkCostRow[]): Promise<BulkImportResult> {
+/** @deprecated Prefer bulkImportCostRecords with an explicit marketplace account. */
+export async function bulkCreateCostRecords(
+  rows: BulkCostRow[],
+  marketplaceAccountId: string
+): Promise<BulkImportResult> {
   const supabase = createAdminClient();
   const result: BulkImportResult = {
     inserted: 0,
@@ -442,7 +466,11 @@ export async function bulkCreateCostRecords(rows: BulkCostRow[]): Promise<BulkIm
 
   for (const row of rows) {
     try {
-      const productId = await resolveProductIdBySupplierArticle(row.supplier_article, supabase);
+      const productId = await resolveProductIdBySupplierArticle(
+        row.supplier_article,
+        supabase,
+        marketplaceAccountId
+      );
       await insertCostHistoryRow(supabase, productId, {
         cost: row.cost,
         effective_from: row.effective_from,

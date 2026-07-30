@@ -6,46 +6,26 @@ import type {
   ProductProfitability,
 } from "@/types/database";
 import { CHART_COLOR_FALLBACKS } from "@/lib/chart-theme";
+import { calculateModelBNetProfit } from "@/lib/financial-engine";
 
-const SAMPLE_MODEL_B: ModelBProfitMetrics = (() => {
-  const revenue = 1_710_000;
-  const acquiring = 41_800;
-  const logistics = 240_700;
-  const storage = 67_800;
-  const penalties = 8_500;
-  const adjustments = 18_200;
-  const productCost = 1_124_000;
-  const advertising = 156_200;
-  const taxPercent = 6;
-  const sellerPayout =
-    revenue - acquiring - logistics - storage - penalties - adjustments;
-  const operatingProfit = sellerPayout - productCost - advertising;
-  const estimatedTax = sellerPayout > 0 ? sellerPayout * (taxPercent / 100) : 0;
-  const afterTaxPayout = sellerPayout - estimatedTax;
-  const finalNetProfit = afterTaxPayout - productCost - advertising;
-  return {
-    grossSales: 3_520_000,
-    returnedSales: 100_000,
-    netSales: 3_420_000,
-    netSalesStatus: "ready" as const,
-    commission: 1_710_000,
-    acquiring,
-    revenue,
-    logistics,
-    storage,
-    penalties,
-    adjustments,
-    productCost,
-    advertising,
-    netProfit: operatingProfit,
-    sellerPayout,
-    operatingProfit,
-    taxPercent,
-    estimatedTax,
-    afterTaxPayout,
-    finalNetProfit,
-  };
-})();
+const SAMPLE_MODEL_B: ModelBProfitMetrics = calculateModelBNetProfit({
+  grossSales: 3_520_000,
+  returnedSales: 100_000,
+  netSales: 3_420_000,
+  netSalesStatus: "ready",
+  salesForPay: 3_420_000 - 1_710_000,
+  financeNetForPay: 1_710_000,
+  acquiring: 41_800,
+  logistics: 240_700,
+  storage: 67_800,
+  penalties: 8_500,
+  adjustments: 18_200,
+  acceptance: 315,
+  productCost: 1_124_000,
+  advertising: 156_200,
+  customerPaid: 3_580_000,
+  taxPercent: 6,
+});
 
 const SAMPLE_MODEL_C: ModelCProfitMetrics = {
   revenue: 950_000,
@@ -149,6 +129,7 @@ export const SAMPLE_OVERVIEW: OverviewMetrics = {
     unitsSold: 3840,
     unitsReturned: 168,
     netUnits: 3672,
+    returnedValue: 105_000,
   },
   marketplaceFeesPresentation: {
     marketplaceFees: 328_400,
@@ -473,18 +454,21 @@ export function getEmptyPeriodDashboard(lastSyncAt: string | null): DashboardPay
         netSales: 0,
         netSalesStatus: "empty",
         commission: 0,
+        marketplaceFee: 0,
         acquiring: 0,
         revenue: 0,
         logistics: 0,
         storage: 0,
         penalties: 0,
         adjustments: 0,
+        acceptance: 0,
         productCost: 0,
         advertising: 0,
         netProfit: 0,
         sellerPayout: 0,
         operatingProfit: 0,
         taxPercent: 6,
+        customerPaid: 0,
         estimatedTax: 0,
         afterTaxPayout: 0,
         finalNetProfit: 0,
@@ -515,6 +499,7 @@ export function getEmptyPeriodDashboard(lastSyncAt: string | null): DashboardPay
         unitsSold: 0,
         unitsReturned: 0,
         netUnits: 0,
+        returnedValue: 0,
       },
       marketplaceFeesPresentation: {
         marketplaceFees: 0,

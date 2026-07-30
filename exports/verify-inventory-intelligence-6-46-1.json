@@ -1,0 +1,66 @@
+{
+  "scope": {
+    "from": "2026-06-20",
+    "to": "2026-07-20",
+    "marketplaceAccountId": "1",
+    "companyId": "1"
+  },
+  "asOfDate": "2026-07-20",
+  "loadTimeMs": 983,
+  "rowCount": 47,
+  "distributionSalesRowCount": 151,
+  "lastSaleSalesRowCount": 1262,
+  "healthCounts": {
+    "Dead Stock": 20,
+    "At Risk": 5,
+    "Slow": 10,
+    "Healthy": 12
+  },
+  "sample": [
+    {
+      "sku": "ESMAMOR",
+      "stock": 8,
+      "warehouses": 2,
+      "lastSale": null,
+      "days": null,
+      "health": "Dead Stock",
+      "dist": []
+    },
+    {
+      "sku": "ESMASAKSMAVI",
+      "stock": 11,
+      "warehouses": 7,
+      "lastSale": null,
+      "days": null,
+      "health": "Dead Stock",
+      "dist": []
+    },
+    {
+      "sku": "ESMASIYAH",
+      "stock": 7,
+      "warehouses": 3,
+      "lastSale": null,
+      "days": null,
+      "health": "Dead Stock",
+      "dist": []
+    },
+    {
+      "sku": "ESMAYESIL",
+      "stock": 8,
+      "warehouses": 4,
+      "lastSale": null,
+      "days": null,
+      "health": "Dead Stock",
+      "dist": []
+    },
+    {
+      "sku": "GV006",
+      "stock": 10,
+      "warehouses": 2,
+      "lastSale": null,
+      "days": null,
+      "health": "Dead Stock",
+      "dist": []
+    }
+  ]
+}

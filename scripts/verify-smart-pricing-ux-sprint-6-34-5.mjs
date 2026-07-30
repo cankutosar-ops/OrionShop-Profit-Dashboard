@@ -29,6 +29,7 @@ const inputs = {
   storagePerUnit: 20,
   marketplaceFeesPercent: 25,
   commissionPercent: 25,
+  finishedPriceRatio: 1,
 };
 
 const marketing = 5;
@@ -64,6 +65,7 @@ const fakeRow = {
   accountHistoricalStoragePerUnit: null,
   marketplaceFeesPercent: 25,
   commissionPercent: 25,
+  finishedPriceRatio: 1,
   marketplaceFeesSource: "product",
   commissionSource: "product",
   completedSales: 10,

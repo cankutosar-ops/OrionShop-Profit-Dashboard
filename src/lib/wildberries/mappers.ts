@@ -156,6 +156,9 @@ function buildFinanceLine(
     wb_source_suffix: suffix,
     supplier_oper_name: supplierOperName,
     finance_nature: null,
+    realizationreport_id: row.realizationreport_id ?? null,
+    rrd_id: row.rrd_id ?? null,
+    rr_dt: row.rr_dt ? toDateString(row.rr_dt) : null,
   };
 }
 

@@ -1,16 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Info } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronRight, Info } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { SmartPricingCalcTrigger } from "@/components/analytics/smart-pricing-calc-panel";
+import {
+  canExpandSmartPricingCostBreakdown,
+  SmartPricingCostBreakdownDetail,
+} from "@/components/analytics/smart-pricing-calc-panel";
 import { SmartPricingExplainDialog } from "@/components/analytics/smart-pricing-explain-dialog";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import {
   buildSmartPricingRow,
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
   DEFAULT_TAX_PERCENT,
-  PRICING_V3_STATUS_LABEL,
   type ProductSmartPricingInputs,
   type SmartPricingComputedRow,
 } from "@/lib/smart-pricing";
@@ -33,6 +37,8 @@ import {
   saveSmartPricingUiSettings,
 } from "@/lib/smart-pricing-ui-settings";
 import { FILTER_PARAMS } from "@/lib/filter-params";
+import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 
 type SmartPricingPanelProps = {
@@ -74,6 +80,87 @@ const DECISION_MIN_WIDTH = DECISION_COLS.reduce((sum, col) => sum + col.width, 0
 /** Extra width for scrollable columns after Test Price. */
 const SCROLL_TAIL_MIN = 560;
 
+type PricingSortKey =
+  | "model"
+  | "avgSell"
+  | "commission"
+  | "currentNp"
+  | "currentMargin"
+  | "markup"
+  | "m15"
+  | "m20"
+  | "recommended"
+  | "testPrice"
+  | "risk"
+  | "testNp"
+  | "testMargin"
+  | "diffVsRec"
+  | "simulator"
+  | "differenceRub"
+  | "differencePercent"
+  | "costMultiplier";
+
+function pricingSortValue(
+  row: SmartPricingComputedRow,
+  key: PricingSortKey,
+  testPriceOverrides: Record<string, number>,
+  marketing: number,
+  taxPercent: number
+): SortValue {
+  switch (key) {
+    case "model":
+      return row.supplierArticle;
+    case "avgSell":
+      return row.currentAvgPrice;
+    case "commission":
+      return row.commissionPercent;
+    case "currentNp":
+      return row.currentNetProfit;
+    case "currentMargin":
+      return row.currentMarginPercent;
+    case "markup":
+      return row.currentMarkupOnCostPercent;
+    case "m15":
+      return row.priceFor15;
+    case "m20":
+      return row.priceFor20;
+    case "recommended":
+      return row.targetPrice;
+    case "testPrice":
+      return resolveTestPrice(row, testPriceOverrides[row.productId]);
+    case "risk":
+      return row.riskLabel;
+    case "testNp":
+    case "testMargin":
+    case "diffVsRec":
+    case "simulator": {
+      const testPrice = resolveTestPrice(row, testPriceOverrides[row.productId]);
+      if (testPrice === null) return null;
+      const simulation = computeSmartPricingSimulation(row, testPrice, marketing, taxPercent);
+      if (!simulation) return null;
+      if (key === "testNp") return simulation.netProfit;
+      if (key === "testMargin") return simulation.profitMarginPercent;
+      if (key === "diffVsRec") return simulation.differenceVsRecommended;
+      return simulation.comparisonLabel;
+    }
+    case "differenceRub":
+      return row.differenceRub;
+    case "differencePercent":
+      return row.differencePercent;
+    case "costMultiplier":
+      if (
+        row.currentAvgPrice == null ||
+        row.purchaseCost == null ||
+        !Number.isFinite(row.currentAvgPrice) ||
+        !Number.isFinite(row.purchaseCost) ||
+        row.purchaseCost <= 0
+      ) {
+        return null;
+      }
+      return row.currentAvgPrice / row.purchaseCost;
+  }
+}
+
 const fieldClass =
   "block h-9 w-full rounded-lg border border-border bg-background px-2.5 text-sm tabular-nums";
 const labelClass = "block text-[11px] font-medium leading-none text-muted-foreground";
@@ -102,6 +189,23 @@ function stickyCell(index: number, highlight: boolean): string {
 function formatPrice(value: number | null): string {
   if (value === null) return "—";
   return formatCurrency(value);
+}
+
+/** Display-only: Avg Sell / Product Cost. Does not feed any pricing formulas. */
+function formatCostMultiplier(
+  avgSell: number | null | undefined,
+  productCost: number | null | undefined
+): string {
+  if (
+    avgSell == null ||
+    productCost == null ||
+    !Number.isFinite(avgSell) ||
+    !Number.isFinite(productCost) ||
+    productCost <= 0
+  ) {
+    return "—";
+  }
+  return `${(avgSell / productCost).toFixed(2)}×`;
 }
 
 function MoneyRubUsd({
@@ -168,13 +272,28 @@ export function SmartPricingPanel({
     initialCommissionSettings ?? DEFAULT_SMART_PRICING_COMMISSION_SETTINGS
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(
+    () => searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku) ?? ""
+  );
   const [brandFilter, setBrandFilter] = useState(urlBrandId ?? "all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [onlyIncreaseOver20, setOnlyIncreaseOver20] = useState(false);
   const [onlyHighVolume, setOnlyHighVolume] = useState(false);
   const [explainRow, setExplainRow] = useState<SmartPricingComputedRow | null>(null);
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(() => {
+    const productId = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.product)?.trim();
+    if (productId && inputs.some((row) => row.productId === productId)) return productId;
+    return null;
+  });
   const [testPriceOverrides, setTestPriceOverrides] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    setSearch(searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku) ?? "");
+    const productId = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.product)?.trim();
+    if (productId && inputs.some((row) => row.productId === productId)) {
+      setExpandedProductId(productId);
+    }
+  }, [searchParams, inputs]);
 
   // Keep panel brand dropdown aligned with header Brand Filter (URL).
   // When URL scopes a brand, server `inputs` are already filtered — lock the dropdown.
@@ -264,6 +383,17 @@ export function SmartPricingPanel({
     onlyHighVolume,
     volumeCutoff,
   ]);
+
+  const { sort, onSort, directionFor, isActive } = useCycleSort<PricingSortKey>(null);
+  const getSortValue = useCallback(
+    (row: SmartPricingComputedRow, key: PricingSortKey) =>
+      pricingSortValue(row, key, testPriceOverrides, marketing, taxPercent),
+    [testPriceOverrides, marketing, taxPercent]
+  );
+  const sortedFiltered = useMemo(
+    () => sortRowsBySpec(filtered, sort, getSortValue),
+    [filtered, sort, getSortValue]
+  );
 
   const setTestPriceForProduct = useCallback((productId: string, value: number | null) => {
     setTestPriceOverrides((current) => {
@@ -395,7 +525,7 @@ export function SmartPricingPanel({
                   setTaxPercent(Number.isFinite(parsed) && parsed >= 0 ? parsed : 0);
                 }}
                 className={fieldClass}
-                title="Tax = Seller Payout × Tax %. Default 6%."
+                title="Tax = Tax% × (Sale − Marketplace Fee). Default 6%."
               />
             </label>
             <label className="space-y-1.5">
@@ -536,77 +666,182 @@ export function SmartPricingPanel({
           >
             <thead className="sticky top-0 z-20 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
               <tr className="border-b border-border text-left text-[11px] text-muted-foreground">
-                <th
+                <SortableTh
+                  label="Model"
+                  active={isActive("model")}
+                  direction={directionFor("model")}
+                  onClick={() => onSort("model")}
+                  align="left"
                   className={stickyHeader(0)}
                   style={{
                     left: STICKY_LEFT[0],
                     minWidth: STICKY_COLS[0].width,
                     width: STICKY_COLS[0].width,
                   }}
-                >
-                  Model
-                </th>
-                <th
+                />
+                <SortableTh
+                  label="Avg Sell"
+                  active={isActive("avgSell")}
+                  direction={directionFor("avgSell")}
+                  onClick={() => onSort("avgSell")}
+                  align="right"
                   className={stickyHeader(1)}
                   style={{
                     left: STICKY_LEFT[1],
                     minWidth: STICKY_COLS[1].width,
                     width: STICKY_COLS[1].width,
                   }}
-                >
-                  Avg Sell
-                </th>
-                <th
+                />
+                <SortableTh
+                  label="Comm %"
+                  active={isActive("commission")}
+                  direction={directionFor("commission")}
+                  onClick={() => onSort("commission")}
+                  align="right"
                   className={stickyHeader(2)}
                   style={{
                     left: STICKY_LEFT[2],
                     minWidth: STICKY_COLS[2].width,
                     width: STICKY_COLS[2].width,
                   }}
-                >
-                  Comm %
-                </th>
-                <th
+                />
+                <SortableTh
+                  label="Final Net Profit"
+                  active={isActive("currentNp")}
+                  direction={directionFor("currentNp")}
+                  onClick={() => onSort("currentNp")}
+                  align="right"
                   className={stickyHeader(3)}
                   style={{
                     left: STICKY_LEFT[3],
                     minWidth: STICKY_COLS[3].width,
                     width: STICKY_COLS[3].width,
                   }}
-                  title="Current Final Net Profit after tax"
-                >
-                  Final Net Profit
-                </th>
-                <th className="whitespace-nowrap px-1.5 py-2 text-right font-medium">
-                  Final Margin
-                </th>
-                <th className="whitespace-nowrap px-1.5 py-2 text-right font-medium">Markup</th>
-                <th className="whitespace-nowrap px-1.5 py-2 text-right font-medium">15%</th>
-                <th className="whitespace-nowrap px-1.5 py-2 text-right font-medium">20%</th>
-                <th className="whitespace-nowrap px-1.5 py-2 text-right font-medium text-primary">
-                  Recommended
-                </th>
-                <th className="whitespace-nowrap px-1.5 py-2 text-right font-medium">Test Price</th>
-                <th className="whitespace-nowrap px-2 py-2 font-medium">Risk</th>
-                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Test NP</th>
-                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Test Margin</th>
-                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Diff vs Rec.</th>
-                <th className="whitespace-nowrap px-2 py-2 font-medium">Simulator</th>
-                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Δ ₽</th>
-                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Δ %</th>
-                <th className="whitespace-nowrap px-2 py-2 font-medium">Status</th>
+                />
+                <SortableTh
+                  label="Final Margin"
+                  active={isActive("currentMargin")}
+                  direction={directionFor("currentMargin")}
+                  onClick={() => onSort("currentMargin")}
+                  align="right"
+                  className="whitespace-nowrap px-1.5 py-2"
+                />
+                <SortableTh
+                  label="Markup"
+                  active={isActive("markup")}
+                  direction={directionFor("markup")}
+                  onClick={() => onSort("markup")}
+                  align="right"
+                  className="whitespace-nowrap px-1.5 py-2"
+                />
+                <SortableTh
+                  label="15%"
+                  active={isActive("m15")}
+                  direction={directionFor("m15")}
+                  onClick={() => onSort("m15")}
+                  align="right"
+                  className="whitespace-nowrap px-1.5 py-2"
+                />
+                <SortableTh
+                  label="20%"
+                  active={isActive("m20")}
+                  direction={directionFor("m20")}
+                  onClick={() => onSort("m20")}
+                  align="right"
+                  className="whitespace-nowrap px-1.5 py-2"
+                />
+                <SortableTh
+                  label="Recommended"
+                  active={isActive("recommended")}
+                  direction={directionFor("recommended")}
+                  onClick={() => onSort("recommended")}
+                  align="right"
+                  className="whitespace-nowrap px-1.5 py-2 text-primary"
+                />
+                <SortableTh
+                  label="Test Price"
+                  active={isActive("testPrice")}
+                  direction={directionFor("testPrice")}
+                  onClick={() => onSort("testPrice")}
+                  align="right"
+                  className="whitespace-nowrap px-1.5 py-2"
+                />
+                <SortableTh
+                  label="Risk"
+                  active={isActive("risk")}
+                  direction={directionFor("risk")}
+                  onClick={() => onSort("risk")}
+                  align="left"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Test NP"
+                  active={isActive("testNp")}
+                  direction={directionFor("testNp")}
+                  onClick={() => onSort("testNp")}
+                  align="right"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Test Margin"
+                  active={isActive("testMargin")}
+                  direction={directionFor("testMargin")}
+                  onClick={() => onSort("testMargin")}
+                  align="right"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Diff vs Rec."
+                  active={isActive("diffVsRec")}
+                  direction={directionFor("diffVsRec")}
+                  onClick={() => onSort("diffVsRec")}
+                  align="right"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Simulator"
+                  active={isActive("simulator")}
+                  direction={directionFor("simulator")}
+                  onClick={() => onSort("simulator")}
+                  align="left"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Δ ₽"
+                  active={isActive("differenceRub")}
+                  direction={directionFor("differenceRub")}
+                  onClick={() => onSort("differenceRub")}
+                  align="right"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Δ %"
+                  active={isActive("differencePercent")}
+                  direction={directionFor("differencePercent")}
+                  onClick={() => onSort("differencePercent")}
+                  align="right"
+                  className="whitespace-nowrap px-2 py-2"
+                />
+                <SortableTh
+                  label="Cost Multiplier (×)"
+                  active={isActive("costMultiplier")}
+                  direction={directionFor("costMultiplier")}
+                  onClick={() => onSort("costMultiplier")}
+                  align="right"
+                  className="whitespace-nowrap px-2 py-2"
+                />
                 <th className="whitespace-nowrap px-2 py-2 text-center font-medium">Explain</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {sortedFiltered.length === 0 ? (
                 <tr>
                   <td colSpan={19} className="px-3 py-8 text-center text-muted-foreground">
                     No products match the current filters
                   </td>
                 </tr>
               ) : (
-                filtered.map((row) => (
+                sortedFiltered.map((row) => (
                   <PricingRow
                     key={row.productId}
                     row={row}
@@ -614,6 +849,12 @@ export function SmartPricingPanel({
                     marketing={marketing}
                     taxPercent={taxPercent}
                     usdExchangeRate={usdExchangeRate}
+                    expanded={expandedProductId === row.productId}
+                    onToggleExpand={() =>
+                      setExpandedProductId((prev) =>
+                        prev === row.productId ? null : row.productId
+                      )
+                    }
                     onTestPriceChange={(value) => setTestPriceForProduct(row.productId, value)}
                     onExplain={() => setExplainRow(row)}
                   />
@@ -694,6 +935,8 @@ function PricingRow({
   marketing,
   taxPercent,
   usdExchangeRate,
+  expanded,
+  onToggleExpand,
   onTestPriceChange,
   onExplain,
 }: {
@@ -702,6 +945,8 @@ function PricingRow({
   marketing: number;
   taxPercent: number;
   usdExchangeRate: number;
+  expanded: boolean;
+  onToggleExpand: () => void;
   onTestPriceChange: (value: number | null) => void;
   onExplain: () => void;
 }) {
@@ -728,12 +973,16 @@ function PricingRow({
       : undefined;
 
   const currentLoss = row.currentNetProfit !== null && row.currentNetProfit < 0;
+  const canExpand = canExpandSmartPricingCostBreakdown(row);
+  const isExpanded = expanded && canExpand;
 
   return (
+    <Fragment>
     <tr
       className={cn(
         "group border-b border-border/50 transition-colors hover:bg-card-hover",
-        rowHighlight
+        rowHighlight,
+        isExpanded && "border-b-0"
       )}
     >
       <td
@@ -745,13 +994,37 @@ function PricingRow({
         }}
         title={row.productName}
       >
-        <SmartPricingCalcTrigger
-          row={row}
-          marketingPercent={marketing}
-          taxPercent={taxPercent}
-        >
-          {row.supplierArticle}
-        </SmartPricingCalcTrigger>
+        <div className="flex min-w-0 items-center gap-0.5">
+          {canExpand ? (
+            <button
+              type="button"
+              className="inline-flex h-6 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-card-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              aria-expanded={isExpanded}
+              aria-label={
+                isExpanded
+                  ? `Collapse cost breakdown for ${row.supplierArticle}`
+                  : `Expand cost breakdown for ${row.supplierArticle}`
+              }
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleExpand();
+              }}
+            >
+              <ChevronRight
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-150",
+                  isExpanded && "rotate-90"
+                )}
+                aria-hidden
+              />
+            </button>
+          ) : (
+            <span className="inline-block w-5 shrink-0" aria-hidden />
+          )}
+          <span className="min-w-0 truncate font-mono text-xs font-medium text-foreground">
+            {row.supplierArticle}
+          </span>
+        </div>
       </td>
       <td
         className={stickyCell(1, highlight)}
@@ -887,13 +1160,8 @@ function PricingRow({
       >
         {row.differencePercent === null ? "—" : formatPercent(row.differencePercent)}
       </td>
-      <td
-        className={cn(
-          "whitespace-nowrap px-2 py-1.5 text-xs font-medium",
-          missingCost && "text-danger"
-        )}
-      >
-        {PRICING_V3_STATUS_LABEL[row.status]}
+      <td className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums text-xs">
+        {formatCostMultiplier(row.currentAvgPrice, row.purchaseCost)}
       </td>
       <td className="px-2 py-1.5 text-center">
         <button
@@ -908,6 +1176,18 @@ function PricingRow({
         </button>
       </td>
     </tr>
+    {isExpanded ? (
+      <tr className="border-b border-border/50 bg-muted/20">
+        <td colSpan={19} className="px-3 py-3 pl-8">
+          <SmartPricingCostBreakdownDetail
+            row={row}
+            marketingPercent={marketing}
+            taxPercent={taxPercent}
+          />
+        </td>
+      </tr>
+    ) : null}
+    </Fragment>
   );
 }
 

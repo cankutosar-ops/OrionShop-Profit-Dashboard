@@ -1,0 +1,220 @@
+{
+  "completedWindows": {
+    "2026-01-01:2026-01-31": {
+      "completedAt": "2026-07-13T18:29:02.603Z",
+      "processed": 420,
+      "updated": 387
+    },
+    "2026-05-01:2026-05-31": {
+      "completedAt": "2026-07-13T22:30:54.577Z",
+      "processed": 266,
+      "updated": 245
+    },
+    "2026-02-01:2026-02-28": {
+      "completedAt": "2026-07-14T08:54:22.502Z",
+      "processed": 946,
+      "updated": 872,
+      "inserted": 0
+    },
+    "2026-03-01:2026-03-31": {
+      "completedAt": "2026-07-14T10:57:02.688Z",
+      "processed": 757,
+      "updated": 690,
+      "inserted": 0
+    },
+    "2026-02-05:2026-02-11": {
+      "completedAt": "2026-07-14T08:54:22.502Z",
+      "processed": 946,
+      "updated": 872,
+      "inserted": 0,
+      "inheritedFrom": "2026-02-01:2026-02-28"
+    },
+    "2026-02-12:2026-02-18": {
+      "completedAt": "2026-07-14T08:54:22.502Z",
+      "processed": 946,
+      "updated": 872,
+      "inserted": 0,
+      "inheritedFrom": "2026-02-01:2026-02-28"
+    },
+    "2026-02-19:2026-02-25": {
+      "completedAt": "2026-07-14T08:54:22.502Z",
+      "processed": 946,
+      "updated": 872,
+      "inserted": 0,
+      "inheritedFrom": "2026-02-01:2026-02-28"
+    },
+    "2026-03-05:2026-03-11": {
+      "completedAt": "2026-07-14T10:57:02.688Z",
+      "processed": 757,
+      "updated": 690,
+      "inserted": 0,
+      "inheritedFrom": "2026-03-01:2026-03-31"
+    },
+    "2026-03-12:2026-03-18": {
+      "completedAt": "2026-07-14T10:57:02.688Z",
+      "processed": 757,
+      "updated": 690,
+      "inserted": 0,
+      "inheritedFrom": "2026-03-01:2026-03-31"
+    },
+    "2026-03-19:2026-03-25": {
+      "completedAt": "2026-07-14T10:57:02.688Z",
+      "processed": 757,
+      "updated": 690,
+      "inserted": 0,
+      "inheritedFrom": "2026-03-01:2026-03-31"
+    },
+    "2026-05-07:2026-05-13": {
+      "completedAt": "2026-07-13T22:30:54.577Z",
+      "processed": 266,
+      "updated": 245,
+      "inserted": 0,
+      "inheritedFrom": "2026-05-01:2026-05-31"
+    },
+    "2026-05-14:2026-05-20": {
+      "completedAt": "2026-07-13T22:30:54.577Z",
+      "processed": 266,
+      "updated": 245,
+      "inserted": 0,
+      "inheritedFrom": "2026-05-01:2026-05-31"
+    },
+    "2026-05-21:2026-05-27": {
+      "completedAt": "2026-07-13T22:30:54.577Z",
+      "processed": 266,
+      "updated": 245,
+      "inserted": 0,
+      "inheritedFrom": "2026-05-01:2026-05-31"
+    },
+    "2026-01-29:2026-02-04": {
+      "completedAt": "2026-07-13T18:29:02.603Z",
+      "processed": 420,
+      "updated": 387,
+      "inheritedFrom": "2026-01-01:2026-01-31+2026-02-01:2026-02-28"
+    },
+    "2026-02-26:2026-03-04": {
+      "completedAt": "2026-07-14T08:54:22.502Z",
+      "processed": 946,
+      "updated": 872,
+      "inserted": 0,
+      "inheritedFrom": "2026-02-01:2026-02-28"
+    },
+    "2026-03-26:2026-04-01": {
+      "completedAt": "2026-07-14T15:39:22.774Z",
+      "processed": 116,
+      "updated": 110,
+      "inserted": 0
+    },
+    "2026-04-02:2026-04-08": {
+      "completedAt": "2026-07-14T17:40:31.198Z",
+      "processed": 117,
+      "updated": 107,
+      "inserted": 0
+    },
+    "2026-04-09:2026-04-15": {
+      "completedAt": "2026-07-15T10:16:26.319Z",
+      "processed": 94,
+      "updated": 89,
+      "inserted": 0
+    },
+    "2026-04-16:2026-04-22": {
+      "completedAt": "2026-07-15T12:17:34.070Z",
+      "processed": 97,
+      "updated": 90,
+      "inserted": 0
+    },
+    "2026-04-23:2026-04-29": {
+      "completedAt": "2026-07-15T14:18:42.539Z",
+      "processed": 132,
+      "updated": 123,
+      "inserted": 0
+    },
+    "2026-04-30:2026-05-06": {
+      "completedAt": "2026-07-15T16:19:52.019Z",
+      "processed": 109,
+      "updated": 105,
+      "inserted": 0
+    },
+    "2026-05-28:2026-06-03": {
+      "completedAt": "2026-07-15T18:21:02.591Z",
+      "processed": 54,
+      "updated": 50,
+      "inserted": 0
+    },
+    "2026-06-04:2026-06-10": {
+      "completedAt": "2026-07-15T20:22:11.075Z",
+      "processed": 91,
+      "updated": 84,
+      "inserted": 0
+    },
+    "2026-06-11:2026-06-17": {
+      "completedAt": "2026-07-15T22:23:27.845Z",
+      "processed": 103,
+      "updated": 92,
+      "inserted": 0
+    },
+    "2026-06-18:2026-06-24": {
+      "completedAt": "2026-07-16T00:24:45.282Z",
+      "processed": 95,
+      "updated": 88,
+      "inserted": 0
+    },
+    "2026-06-25:2026-07-01": {
+      "completedAt": "2026-07-16T02:25:52.108Z",
+      "processed": 113,
+      "updated": 111,
+      "inserted": 0
+    },
+    "2026-07-02:2026-07-08": {
+      "completedAt": "2026-07-16T04:26:58.962Z",
+      "processed": 122,
+      "updated": 115,
+      "inserted": 0
+    },
+    "2026-07-09:2026-07-13": {
+      "completedAt": "2026-07-16T06:28:05.866Z",
+      "processed": 101,
+      "updated": 99,
+      "inserted": 0
+    }
+  },
+  "failedWindows": {
+    "2026-04-01:2026-04-30": {
+      "failedAt": "2026-07-13T22:11:27.070Z",
+      "error": "WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller 0acfd317-7629-5e85-92d0-ca81f8a0454a; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"ad24627bd247d47333078b7d843c47c8\",\n    \"origin\": \"s2s-api",
+      "label": "2026-04-01 → 2026-04-30",
+      "processed": 0,
+      "updated": 0
+    },
+    "2026-06-01:2026-06-30": {
+      "failedAt": "2026-07-13T23:17:07.841Z",
+      "error": "WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller 0acfd317-7629-5e85-92d0-ca81f8a0454a; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"6c90047392245d499ae583281fec42e3\",\n    \"origin\": \"s2s-api",
+      "label": "2026-06-01 → 2026-06-30",
+      "processed": 0,
+      "updated": 0
+    },
+    "2026-07-01:2026-07-13": {
+      "failedAt": "2026-07-14T00:12:30.995Z",
+      "error": "WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller 0acfd317-7629-5e85-92d0-ca81f8a0454a; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"1be385682da4cbaa243a0f02941871f6\",\n    \"origin\": \"s2s-api",
+      "label": "2026-07-01 → 2026-07-13",
+      "processed": 0,
+      "updated": 0
+    }
+  },
+  "pendingQueue": [],
+  "meta": {
+    "strategy": "weekly",
+    "range": {
+      "from": "2026-01-01",
+      "to": "2026-07-13"
+    },
+    "runStartedAt": "2026-07-15T10:16:23.713Z",
+    "lastSavedAt": "2026-07-16T06:28:06.924Z",
+    "weeklySeededAt": "2026-07-14T11:54:32.429Z",
+    "reconciledAt": "2026-07-14T13:24:07.916Z",
+    "last429At": "2026-07-16T05:59:55.871Z",
+    "last429Week": "2026-07-09 → 2026-07-13",
+    "retryAttempt": 2,
+    "runEndedAt": "2026-07-16T06:28:06.924Z",
+    "remainingWeeks": 0
+  }
+}

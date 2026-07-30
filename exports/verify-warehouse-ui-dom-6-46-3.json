@@ -1,0 +1,132 @@
+{
+  "sprint": "6.46.3-reopened",
+  "pass": false,
+  "results": [
+    {
+      "page": "warehouse-sales",
+      "visibleSample": [
+        "Nevinnomyssk",
+        "Krasnodar",
+        "Elektrostal",
+        "Koledino",
+        "Tula",
+        "Yekaterinburg - Perspektivnaya 14",
+        "Voronezh",
+        "Samara (Novosemeykino)",
+        "Vladimir",
+        "Volgograd",
+        "Kotovsk",
+        "Sarapul",
+        "Ryazan (Tyushevskoye)",
+        "Kazan",
+        "SPB Shushary",
+        "SC Yerevan"
+      ],
+      "cyrillicVisible": [],
+      "latinVisibleCount": 16,
+      "payloadMayContainCyrillicKeys": true,
+      "pass": true
+    },
+    {
+      "page": "intelligence",
+      "visibleSample": [],
+      "cyrillicVisible": [],
+      "latinVisibleCount": 0,
+      "payloadMayContainCyrillicKeys": true,
+      "pass": false
+    },
+    {
+      "page": "stock",
+      "visibleSample": [
+        "ZARASIYAH01",
+        "ZARALACIVERT01",
+        "ARINAMOR",
+        "ARINALACIVERT",
+        "ARINABORDO",
+        "SONNASIYAH",
+        "ALEXASIYAH01",
+        "ZARAYESIL",
+        "SONNAYESIL",
+        "ZARAMOR",
+        "SONNAMOR",
+        "ARISIYAH01",
+        "ALEXALACIVERT",
+        "ZARASAMPANYA",
+        "SONNASAKSMAVI",
+        "SONNALACIVERT",
+        "ZARASAKSMAVI",
+        "ALEXASAKSMAVI",
+        "ALEXAYESIL",
+        "ZARABORDO",
+        "LILYSIYAH01",
+        "ARINASIYAH01",
+        "SONNABORDO",
+        "ALEXABORDO",
+        "ESMASAKSMAVI"
+      ],
+      "cyrillicVisible": [
+        "КЛАССИКПЛТ"
+      ],
+      "latinVisibleCount": 0,
+      "payloadMayContainCyrillicKeys": true,
+      "pass": false
+    }
+  ],
+  "sourceAudit": [
+    {
+      "file": "src/components/inventory/warehouse-sales-analytics-table.tsx",
+      "sites": [
+        "table Warehouse column",
+        "drill-down heading",
+        "search matches Latin+raw"
+      ],
+      "usesFormatWarehouseName": true,
+      "rawWarehouseJsx": false
+    },
+    {
+      "file": "src/components/inventory/inventory-intelligence-table.tsx",
+      "sites": [
+        "Warehouse Distribution detail cells + title"
+      ],
+      "usesFormatWarehouseName": true,
+      "rawWarehouseJsx": true
+    },
+    {
+      "file": "src/components/inventory/inventory-model-detail.tsx",
+      "sites": [
+        "Warehouses tab",
+        "Shipment History warehouse line"
+      ],
+      "usesFormatWarehouseName": true,
+      "rawWarehouseJsx": true
+    },
+    {
+      "file": "src/lib/inventory-intelligence-excel.ts",
+      "sites": [
+        "Excel sheet Warehouse Distribution"
+      ],
+      "usesFormatWarehouseName": true,
+      "rawWarehouseJsx": false
+    }
+  ],
+  "aliasCoverage": {
+    "mapSize": 90,
+    "sample": [
+      "Коледино → Koledino",
+      "Электросталь → Elektrostal",
+      "Краснодар → Krasnodar",
+      "Тула → Tula",
+      "Казань → Kazan",
+      "Самара (Новосемейкино) → Samara (Novosemeykino)",
+      "Екатеринбург - Перспективная 14 → Yekaterinburg - Perspektivnaya 14",
+      "Невинномысск → Nevinnomyssk",
+      "Котовск → Kotovsk",
+      "Сарапул → Sarapul",
+      "Воронеж → Voronezh",
+      "Владимир → Vladimir"
+    ],
+    "unknownCyrillicFallback": "Neizvestnyy Sklad",
+    "unknownLatinFallback": "Unknown Warehouse XYZ"
+  },
+  "generatedAt": "2026-07-20T18:59:26.098Z"
+}

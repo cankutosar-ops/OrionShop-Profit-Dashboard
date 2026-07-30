@@ -1,0 +1,59 @@
+{
+  "sampleSaleExcel": [
+    {
+      "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+      "pay": 3914.36,
+      "sale": "2026-07-13"
+    },
+    {
+      "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+      "pay": 3393.77,
+      "sale": "2026-07-13"
+    },
+    {
+      "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+      "pay": 3161.71,
+      "sale": "2026-07-13"
+    }
+  ],
+  "probes": [
+    {
+      "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+      "error": "column wb_finance.sale_dt does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+      "error": "column wb_finance.sale_dt does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+      "error": "column wb_finance.sale_dt does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0",
+      "error": "column wb_finance.sale_dt does not exist",
+      "count": 0,
+      "rows": []
+    },
+    {
+      "srid": "eA4.r5a1c8e77b7ce41e38bb8927b96b2af77.0.0",
+      "error": "column wb_finance.sale_dt does not exist",
+      "count": 0,
+      "rows": []
+    }
+  ],
+  "finWeek": 0,
+  "weekSample": null,
+  "byRrd": null,
+  "byRrdCount": null,
+  "byRrId": null,
+  "byRrIdCount": null,
+  "excelUniqueSrids": 573,
+  "overlapWeekSample": []
+}

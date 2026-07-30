@@ -29,7 +29,7 @@ export async function getDecisionSimulatorPageData(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const products = await getProductProfitability(scope, client);
   const candidates = products.filter(isProductAnalyticsV3Candidate);
   const availableSkus = candidates

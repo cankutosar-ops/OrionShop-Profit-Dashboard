@@ -1,0 +1,415 @@
+{
+  "range": {
+    "accountId": "1",
+    "from": "2026-06-23",
+    "to": "2026-07-22"
+  },
+  "engine": "Model B (Dashboard Operating / Final Net Profit)",
+  "steps": [
+    {
+      "name": "Sales Revenue (gross priceWithDisc purchases)",
+      "rawWb": "Sales API priceWithDisc (non-return)",
+      "db": "wb_sales.price_with_disc WHERE is_return=false",
+      "engine": "netSales.grossSales",
+      "formula": "Σ |price_with_disc| × qty (purchases)",
+      "amount": 835734.85,
+      "running": 835734.85
+    },
+    {
+      "name": "Returned Sales (priceWithDisc returns)",
+      "rawWb": "Sales API priceWithDisc (return / saleID R*)",
+      "db": "wb_sales.price_with_disc WHERE is_return=true",
+      "engine": "netSales.returnedSales",
+      "formula": "− Σ |price_with_disc| × qty (returns)",
+      "amount": -204650.31,
+      "running": 631084.54
+    },
+    {
+      "name": "Net Sales (= Sales Revenue after returns)",
+      "rawWb": "derived",
+      "db": "derived from wb_sales",
+      "engine": "netSales.netSales / ModelB.netSales",
+      "formula": "grossSales − returnedSales",
+      "amount": 631084.54,
+      "running": 631084.54,
+      "note": "This IS Model B 'Sales Revenue' baseline (priceWithDisc net)."
+    },
+    {
+      "name": "Sales forPay",
+      "rawWb": "Sales API forPay",
+      "db": "wb_sales.for_pay",
+      "engine": "salesForPay / ModelB.revenue",
+      "formula": "Σ for_pay purchases − Σ for_pay returns",
+      "amount": 393651.48,
+      "running": 393651.48,
+      "note": "Running total switches to forPay base here (Model B revenue)."
+    },
+    {
+      "name": "Model B Commission (Sales spread) — DISPLAY / INFORMATIONAL",
+      "rawWb": "NOT a Finance field — implied by priceWithDisc − forPay",
+      "db": "derived",
+      "engine": "ModelB.commission",
+      "formula": "max(0, netSales − salesForPay)",
+      "amount": 237433.06,
+      "running": 393651.48,
+      "usedInSellerPayout": false,
+      "note": "Does NOT change running subtotal toward Net Profit. Not finance triple."
+    },
+    {
+      "name": "Finance ppvz_sales_commission (Marketplace Fees component)",
+      "rawWb": "ppvz_sales_commission",
+      "db": "wb_finance amount suffix commission",
+      "engine": "categorySummary.COMMISSION / fees.commission",
+      "formula": "Σ |commission| lines",
+      "amount": 34902.8,
+      "running": 393651.48,
+      "usedInSellerPayout": false
+    },
+    {
+      "name": "Finance ppvz_reward (Marketplace Fees component)",
+      "rawWb": "ppvz_reward",
+      "db": "wb_finance amount suffix ppvz_reward",
+      "engine": "categorySummary.PPVZ_REWARD / fees.ppvzReward",
+      "formula": "Σ |ppvz_reward| lines",
+      "amount": 8692.1,
+      "running": 393651.48,
+      "usedInSellerPayout": false
+    },
+    {
+      "name": "Finance ppvz_vw (Marketplace Fees component)",
+      "rawWb": "ppvz_vw",
+      "db": "wb_finance amount suffix ppvz_vw",
+      "engine": "categorySummary.PPVZ_VW / fees.ppvzVw",
+      "formula": "Σ |ppvz_vw| lines",
+      "amount": 48103.01,
+      "running": 393651.48,
+      "usedInSellerPayout": false
+    },
+    {
+      "name": "Finance triple subtotal (C+R+VW) — DISPLAY ONLY in fee card",
+      "rawWb": "sum of three fields above",
+      "db": "sum of three suffixes",
+      "engine": "COMMISSION+PPVZ_REWARD+PPVZ_VW",
+      "formula": "COMMISSION + PPVZ_REWARD + PPVZ_VW",
+      "amount": 91697.91,
+      "running": 393651.48,
+      "usedInSellerPayout": false,
+      "note": "Marketplace Fees includes this + acquiring + OTHER. NOT deducted in Model B sellerPayout."
+    },
+    {
+      "name": "− Acquiring",
+      "rawWb": "acquiring_fee",
+      "db": "wb_finance suffix acquiring_fee",
+      "engine": "ModelB.acquiring / categorySummary.ACQUIRING",
+      "formula": "salesForPay − ACQUIRING",
+      "amount": -14821.46,
+      "running": 378830.02,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "− Logistics (incl. return logistics)",
+      "rawWb": "delivery_rub + rebill_logistic_cost (+ oper_* fallbacks)",
+      "db": "wb_finance LOGISTICS + RETURN_LOGISTICS",
+      "engine": "ModelB.logistics",
+      "formula": "− (logistics + returnLogistics)",
+      "amount": -134371.94,
+      "running": 244458.08,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "− Storage",
+      "rawWb": "storage_fee",
+      "db": "wb_finance STORAGE",
+      "engine": "ModelB.storage",
+      "formula": "− STORAGE",
+      "amount": -5237.04,
+      "running": 239221.04,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "− Penalties",
+      "rawWb": "penalty",
+      "db": "wb_finance PENALTY",
+      "engine": "ModelB.penalties",
+      "formula": "− PENALTY",
+      "amount": 0,
+      "running": 239221.04,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "− Account Adjustments",
+      "rawWb": "deduction (and удерж* oper refinements)",
+      "db": "wb_finance ADJUSTMENT",
+      "engine": "ModelB.adjustments",
+      "formula": "− ADJUSTMENT",
+      "amount": -48500,
+      "running": 190721.04,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "Acceptance (NOT in Model B)",
+      "rawWb": "acceptance",
+      "db": "wb_finance suffix acceptance",
+      "engine": "Settlement.acceptance / Model C only",
+      "formula": "not used in Model B Net Profit",
+      "amount": 0,
+      "running": 190721.04,
+      "usedInSellerPayout": false,
+      "note": "Shown because requested in template — Settlement/Model C path only."
+    },
+    {
+      "name": "= Seller Payout",
+      "rawWb": "derived",
+      "db": "derived",
+      "engine": "ModelB.sellerPayout",
+      "formula": "salesForPay − acquiring − logistics − storage − penalties − adjustments",
+      "amount": 190721.04,
+      "running": 190721.04,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "− Product Cost",
+      "rawWb": "n/a (internal cost history)",
+      "db": "product_cost_history × wb_sales qty",
+      "engine": "ModelB.productCost",
+      "formula": "sellerPayout − productCost (− ads next)",
+      "amount": -170300,
+      "running": 20421.04,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "− Advertising",
+      "rawWb": "Ads API / wb_ads",
+      "db": "wb_ads spend in range",
+      "engine": "ModelB.advertising",
+      "formula": "− advertising",
+      "amount": 0,
+      "running": 20421.04,
+      "usedInSellerPayout": true
+    },
+    {
+      "name": "= OPERATING PROFIT (= ModelB.netProfit alias)",
+      "rawWb": "derived",
+      "db": "derived",
+      "engine": "ModelB.operatingProfit",
+      "formula": "sellerPayout − productCost − advertising",
+      "amount": 20421.04,
+      "running": 20421.04
+    },
+    {
+      "name": "− Estimated Tax (on Seller Payout)",
+      "rawWb": "n/a",
+      "db": "n/a",
+      "engine": "ModelB.estimatedTax",
+      "formula": "sellerPayout × tax% (if sellerPayout>0)",
+      "amount": -11443.26,
+      "running": 8977.78,
+      "note": "taxPercent=6"
+    },
+    {
+      "name": "= FINAL NET PROFIT",
+      "rawWb": "derived",
+      "db": "derived",
+      "engine": "ModelB.finalNetProfit",
+      "formula": "afterTaxPayout − productCost − advertising",
+      "amount": 8977.78,
+      "running": 8977.78
+    }
+  ],
+  "identities": {
+    "sellerPayout_engine": 190721.04,
+    "sellerPayout_recompute": 190721.04,
+    "sellerPayout_ok": true,
+    "operatingProfit_engine": 20421.04,
+    "operatingProfit_recompute": 20421.04,
+    "operatingProfit_ok": true,
+    "finalNetProfit_engine": 8977.78,
+    "finalNetProfit_recompute": 8977.78,
+    "finalNetProfit_ok": true,
+    "running_matches_final": true
+  },
+  "commissionInvestigation": {
+    "modelB_commission_sales_spread": 237433.06,
+    "formula": "max(0, netSales − salesForPay)",
+    "finance_components": {
+      "ppvz_sales_commission": 34902.8,
+      "ppvz_reward": 8692.1,
+      "ppvz_vw": 48103.01,
+      "other_in_marketplace_fees": 0,
+      "triple": 91697.91,
+      "marketplaceFees_total": 106519.37
+    },
+    "explanation": "Model B Commission is the Sales-side gap between priceWithDisc net and forPay. Finance ppvz_* fields are Marketplace Fees display components and are NOT inputs to ModelB.commission or sellerPayout."
+  },
+  "acquiringInvestigation": {
+    "amount": 14821.46,
+    "entryPoint": "sellerPayout := salesForPay − acquiring − …",
+    "rrd_with_acquiring": 116,
+    "rrd_where_acquiring_equals_triple_or_component": 0,
+    "verdict_independent_from_commission_triple": true,
+    "proof": "On all acquiring rrds, acquiring_fee ≠ commission, ≠ ppvz_reward, ≠ ppvz_vw, ≠ sum(triple)."
+  },
+  "doubleCountTable": [
+    {
+      "rawFinanceField": "ppvz_sales_commission",
+      "displayedKpi": "Marketplace Fees → Commission part",
+      "profitEngineVariable": "categorySummary.COMMISSION (NOT ModelB.commission)",
+      "reachesNetProfit": "NO",
+      "flags": {
+        "read": true,
+        "displayOnly": true,
+        "usedInProfit": false,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "ppvz_reward",
+      "displayedKpi": "Marketplace Fees → PPVZ reward",
+      "profitEngineVariable": "categorySummary.PPVZ_REWARD",
+      "reachesNetProfit": "NO",
+      "flags": {
+        "read": true,
+        "displayOnly": true,
+        "usedInProfit": false,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "ppvz_vw",
+      "displayedKpi": "Marketplace Fees → PPVZ VW",
+      "profitEngineVariable": "categorySummary.PPVZ_VW",
+      "reachesNetProfit": "NO",
+      "flags": {
+        "read": true,
+        "displayOnly": true,
+        "usedInProfit": false,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "acquiring_fee",
+      "displayedKpi": "Acquiring KPI + Marketplace Fees.acquiring",
+      "profitEngineVariable": "ModelB.acquiring",
+      "reachesNetProfit": "YES — once via sellerPayout",
+      "flags": {
+        "read": true,
+        "displayOnly": false,
+        "usedInProfit": true,
+        "usedMoreThanOnce": false
+      },
+      "note": "Same ACQUIRING number shown on fee card; subtracted once in OP path"
+    },
+    {
+      "rawFinanceField": "delivery_rub / rebill_logistic_cost",
+      "displayedKpi": "Logistics (in cost breakdown)",
+      "profitEngineVariable": "ModelB.logistics",
+      "reachesNetProfit": "YES — once",
+      "flags": {
+        "read": true,
+        "displayOnly": false,
+        "usedInProfit": true,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "storage_fee",
+      "displayedKpi": "Storage",
+      "profitEngineVariable": "ModelB.storage",
+      "reachesNetProfit": "YES — once",
+      "flags": {
+        "read": true,
+        "displayOnly": false,
+        "usedInProfit": true,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "penalty",
+      "displayedKpi": "Penalties",
+      "profitEngineVariable": "ModelB.penalties",
+      "reachesNetProfit": "YES — once",
+      "flags": {
+        "read": true,
+        "displayOnly": false,
+        "usedInProfit": true,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "deduction",
+      "displayedKpi": "Account Adjustments",
+      "profitEngineVariable": "ModelB.adjustments",
+      "reachesNetProfit": "YES — once",
+      "flags": {
+        "read": true,
+        "displayOnly": false,
+        "usedInProfit": true,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "acceptance",
+      "displayedKpi": "WB Settlement breakdown",
+      "profitEngineVariable": "Settlement/Model C only",
+      "reachesNetProfit": "NO (not Model B)",
+      "flags": {
+        "read": true,
+        "displayOnly": true,
+        "usedInProfit": false,
+        "usedMoreThanOnce": false
+      }
+    },
+    {
+      "rawFinanceField": "ppvz_for_pay",
+      "displayedKpi": "WB Settlement netForPay (when finance source)",
+      "profitEngineVariable": "Model C revenue — NOT Model B revenue",
+      "reachesNetProfit": "NO for Model B Net Profit",
+      "flags": {
+        "read": true,
+        "displayOnly": false,
+        "usedInProfit": false,
+        "usedMoreThanOnce": false
+      },
+      "note": "Model B revenue is Sales forPay, not Finance for_pay"
+    },
+    {
+      "rawFinanceField": "(none) Sales priceWithDisc − forPay",
+      "displayedKpi": "Commission (Commercial Performance)",
+      "profitEngineVariable": "ModelB.commission",
+      "reachesNetProfit": "NO — informational spread only",
+      "flags": {
+        "read": true,
+        "displayOnly": true,
+        "usedInProfit": false,
+        "usedMoreThanOnce": false
+      }
+    }
+  ],
+  "verdict": {
+    "acquiring_fee_counted_exactly_once": true,
+    "commission_contains_acquiring": false,
+    "formula_can_double_count": false,
+    "support": {
+      "acquiring_once": "Only one −acquiring term in sellerPayout; fee card reuses same ACQUIRING scalar for display.",
+      "commission_no_acquiring": "rrd equality hits=0/116; Model B commission is Sales spread 237433.06, not finance triple 91697.91.",
+      "no_double_count": "Finance triple not in sellerPayout; acquiring not inside triple; each usedInProfit finance family appears once."
+    }
+  },
+  "suffixInventory": {
+    "for_pay": 239628.51,
+    "logistics": 124514.94,
+    "deduction": 48500,
+    "ppvz_vw": 48103.01,
+    "commission": 34902.8,
+    "acquiring_fee": 14821.46,
+    "return_logistics": 9857,
+    "ppvz_reward": 8692.1,
+    "storage": 5237.04
+  },
+  "logistics_components": {
+    "LOGISTICS": 124514.94,
+    "RETURN_LOGISTICS": 9857,
+    "modelB_logistics": 134371.94,
+    "sum": 134371.94
+  }
+}

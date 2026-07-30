@@ -1,22 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowUpDown, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import {
   formatDaysLeft,
   InventoryStatusBadge,
 } from "@/components/inventory/inventory-status-badge";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import type {
   InventoryModelRow,
-  InventoryModelSort,
   InventoryStatusFilter,
 } from "@/lib/inventory-types";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatNumber } from "@/lib/utils";
 
 type InventoryModelListProps = {
   models: InventoryModelRow[];
   selectedProductId: string | null;
   onSelect: (productId: string) => void;
+};
+
+type SortKey = "model" | "stock" | "daysLeft" | "status";
+
+const DEFAULT_SORT = { key: "stock" as const, direction: "desc" as const };
+
+const STATUS_RANK: Record<InventoryModelRow["status"], number> = {
+  "Out of Stock": 0,
+  "Low Stock": 1,
+  Healthy: 2,
 };
 
 const statusFilters: { id: InventoryStatusFilter; label: string }[] = [
@@ -26,13 +38,6 @@ const statusFilters: { id: InventoryStatusFilter; label: string }[] = [
   { id: "healthy", label: "Healthy" },
 ];
 
-const sortOptions: { id: InventoryModelSort; label: string }[] = [
-  { id: "stock_desc", label: "Current Stock (High → Low)" },
-  { id: "stock_asc", label: "Current Stock (Low → High)" },
-  { id: "name_asc", label: "Model Name (A → Z)" },
-  { id: "name_desc", label: "Model Name (Z → A)" },
-];
-
 function matchesFilter(model: InventoryModelRow, filter: InventoryStatusFilter): boolean {
   if (filter === "all") return true;
   if (filter === "low") return model.status === "Low Stock";
@@ -40,19 +45,17 @@ function matchesFilter(model: InventoryModelRow, filter: InventoryStatusFilter):
   return model.status === "Healthy";
 }
 
-function modelNameKey(model: InventoryModelRow): string {
-  return `${model.supplierArticle} ${model.productName}`.trim().toLowerCase();
-}
-
-function sortModels(models: InventoryModelRow[], sort: InventoryModelSort): InventoryModelRow[] {
-  const sorted = [...models];
-  sorted.sort((a, b) => {
-    if (sort === "stock_desc") return b.currentStock - a.currentStock;
-    if (sort === "stock_asc") return a.currentStock - b.currentStock;
-    if (sort === "name_asc") return modelNameKey(a).localeCompare(modelNameKey(b));
-    return modelNameKey(b).localeCompare(modelNameKey(a));
-  });
-  return sorted;
+function sortValue(row: InventoryModelRow, key: SortKey): SortValue {
+  switch (key) {
+    case "model":
+      return `${row.supplierArticle} ${row.productName}`.trim();
+    case "stock":
+      return row.currentStock;
+    case "daysLeft":
+      return row.daysLeft ?? Number.POSITIVE_INFINITY;
+    case "status":
+      return STATUS_RANK[row.status];
+  }
 }
 
 export function InventoryModelList({
@@ -62,7 +65,11 @@ export function InventoryModelList({
 }: InventoryModelListProps) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<InventoryStatusFilter>("all");
-  const [sort, setSort] = useState<InventoryModelSort>("stock_desc");
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortKey>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: InventoryModelRow, key: SortKey) => sortValue(row, key),
+    []
+  );
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -74,8 +81,8 @@ export function InventoryModelList({
         model.productName.toLowerCase().includes(normalized)
       );
     });
-    return sortModels(matched, sort);
-  }, [models, query, statusFilter, sort]);
+    return sortRowsBySpec(matched, sort, getValue);
+  }, [models, query, statusFilter, sort, getValue]);
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card">
@@ -95,25 +102,6 @@ export function InventoryModelList({
             className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/50"
           />
         </div>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            Sort
-          </span>
-          <select
-            value={sort}
-            onChange={(event) => setSort(event.target.value as InventoryModelSort)}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary/50"
-            aria-label="Sort models"
-          >
-            {sortOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <div className="flex flex-wrap gap-1.5">
           {statusFilters.map((filter) => (
@@ -138,10 +126,36 @@ export function InventoryModelList({
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2 font-medium">Model</th>
-              <th className="px-3 py-2 text-right font-medium">Current Stock</th>
-              <th className="px-3 py-2 text-right font-medium">Days Left</th>
-              <th className="px-4 py-2 font-medium">Status</th>
+              <SortableTh
+                label="Model"
+                active={isActive("model")}
+                direction={directionFor("model")}
+                onClick={() => onSort("model")}
+                className="px-4 py-2"
+              />
+              <SortableTh
+                label="Current Stock"
+                active={isActive("stock")}
+                direction={directionFor("stock")}
+                onClick={() => onSort("stock")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Days Left"
+                active={isActive("daysLeft")}
+                direction={directionFor("daysLeft")}
+                onClick={() => onSort("daysLeft")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Status"
+                active={isActive("status")}
+                direction={directionFor("status")}
+                onClick={() => onSort("status")}
+                className="px-4 py-2"
+              />
             </tr>
           </thead>
           <tbody>

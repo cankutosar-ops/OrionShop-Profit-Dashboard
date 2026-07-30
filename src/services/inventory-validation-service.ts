@@ -21,8 +21,8 @@ import { getInventoryForAccount } from "@/services/inventory-service";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import type { Product, ProductVariant, WbStock } from "@/types/database";
 
-function getClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 async function fetchProductsForAccount(
@@ -81,7 +81,7 @@ export async function fetchWildberriesStockFromApi(
     throw new Error(`Stock API validation not implemented for ${account.marketplace}`);
   }
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const products = await fetchProductsForAccount(marketplaceAccountId, client);
   const nmIdToProductId = buildNmIdToProductId(products);
   const apiClient = new WbApiClient(account.apiKey);
@@ -181,7 +181,7 @@ export async function validateInventoryDataChain(
   marketplaceAccountId: string,
   client?: SupabaseClient
 ): Promise<InventoryValidationResult> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const [products, variants, stockRows, { apiRows, inventoryRows: apiInventoryRows }] =
     await Promise.all([
       fetchProductsForAccount(marketplaceAccountId, supabase),

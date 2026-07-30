@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { recordPerfEvent } from "@/lib/perf/perf-recorder";
 import type { PerfCategory } from "@/lib/perf/types";
+import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 
 export const dynamic = "force-dynamic";
 
 /** Ingest client-side performance events. */
 export async function POST(request: Request) {
   try {
+    const authz = await authorize(request);
+    if (isAuthzFailure(authz)) return authz;
+
     const body = (await request.json()) as {
       category?: PerfCategory;
       name?: string;

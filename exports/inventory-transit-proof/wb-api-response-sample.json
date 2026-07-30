@@ -1,0 +1,75 @@
+{
+  "endpoint": "POST https://seller-analytics-api.wildberries.ru/api/analytics/v1/stocks-report/wb-warehouses",
+  "accountId": "1",
+  "accountName": "Wildberries Default",
+  "itemCount": 657,
+  "fieldNamesOnItem": [
+    "nmId",
+    "chrtId",
+    "warehouseId",
+    "warehouseName",
+    "regionName",
+    "quantity",
+    "inWayToClient",
+    "inWayFromClient"
+  ],
+  "fieldMapping": {
+    "To Customer": "inWayToClient → in_way_to_client → toCustomer",
+    "From Customer": "inWayFromClient → in_way_from_client → fromCustomer"
+  },
+  "sumInWayToClient": 101,
+  "sumInWayFromClient": 113,
+  "rowsWithTransit": 135,
+  "sampleRows": [
+    {
+      "nmId": 150060261,
+      "chrtId": 251681599,
+      "warehouseId": 0,
+      "warehouseName": "Остальные",
+      "regionName": "Центральный",
+      "quantity": 0,
+      "inWayToClient": 0,
+      "inWayFromClient": 1
+    },
+    {
+      "nmId": 150060262,
+      "chrtId": 251681601,
+      "warehouseId": 0,
+      "warehouseName": "Остальные",
+      "regionName": "Центральный",
+      "quantity": 0,
+      "inWayToClient": 3,
+      "inWayFromClient": 1
+    },
+    {
+      "nmId": 150060262,
+      "chrtId": 251681601,
+      "warehouseId": 507,
+      "warehouseName": "Коледино",
+      "regionName": "Центральный",
+      "quantity": 10,
+      "inWayToClient": 1,
+      "inWayFromClient": 0
+    },
+    {
+      "nmId": 150060262,
+      "chrtId": 251681601,
+      "warehouseId": 301809,
+      "warehouseName": "Котовск",
+      "regionName": "Центральный",
+      "quantity": 0,
+      "inWayToClient": 0,
+      "inWayFromClient": 1
+    },
+    {
+      "nmId": 150060262,
+      "chrtId": 251681602,
+      "warehouseId": 361670,
+      "warehouseName": "Махачкала Сепараторная",
+      "regionName": "Южный и Северо-Кавказский",
+      "quantity": 0,
+      "inWayToClient": 0,
+      "inWayFromClient": 1
+    }
+  ]
+}

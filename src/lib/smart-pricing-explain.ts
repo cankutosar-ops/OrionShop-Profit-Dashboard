@@ -66,7 +66,7 @@ export function buildSmartPricingExplainContent(
             },
             { label: "Marketing", value: `${marketingPercent.toFixed(0)}%` },
             {
-              label: "Tax (on Seller Payout)",
+              label: "Tax (after Marketplace Fee)",
               value: `${taxPercent.toFixed(0)}% → ${tax.toFixed(2)} ₽`,
             },
             { label: "Purchase Cost", value: `${row.purchaseCost.toFixed(2)} ₽` },
@@ -98,7 +98,7 @@ export function buildSmartPricingExplainContent(
         value: `${row.marketplaceFeesPercent.toFixed(2)}% (${formatCommissionSourceLabel(row.marketplaceFeesSource)})`,
       },
       { label: "Marketing", value: `${marketingPercent.toFixed(0)}%` },
-      { label: "Tax (on Seller Payout)", value: `${taxPercent.toFixed(0)}%` },
+      { label: "Tax (after Marketplace Fee)", value: `${taxPercent.toFixed(0)}%` },
       {
         label: "Target Margin (after tax)",
         value: `${targetMarginPercent.toFixed(0)}%`,

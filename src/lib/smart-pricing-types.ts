@@ -86,6 +86,11 @@ export type ProductSmartPricingInputs = {
   marketplaceCommissionPercent: number;
   /** Historical average selling price for comparison — display only. */
   currentAvgPrice: number | null;
+  /**
+   * Historical Σ finishedPrice / Σ priceWithDisc (reporting metadata).
+   * Not used as Smart Pricing tax base — simulator taxes after Marketplace Fee.
+   */
+  finishedPriceRatio: number;
   hasSalesHistory: boolean;
   /** Order volume in period — table filters only. */
   orders: number;

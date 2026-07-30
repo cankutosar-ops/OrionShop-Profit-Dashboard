@@ -1,0 +1,47 @@
+---
+description: Dual Estimated Tax models — reporting vs Smart Pricing (do not unify)
+alwaysApply: true
+---
+
+# Estimated Tax — Dual Models (Intentional)
+
+This project uses **two different Estimated Tax bases**. Do **not** merge them into one formula.
+
+## 1. Historical Reporting (Financial Engine)
+
+**Purpose:** Report tax incurred on completed sales.
+
+```
+Estimated Tax = Tax Rate × Σ(finishedPrice)
+```
+
+- Source: Sales API `finishedPrice` (persisted as `wb_sales.revenue`)
+- Used by: Dashboard, Commercial Performance, Product Analytics, Reports, historical profitability
+- Entry: `calculateEstimatedTax(customerPaid, tax%)` with `customerPaid = buildNetFinishedPriceFromDb(sales)`
+
+Do **not** tax historical modules from Revenue, Seller Payout, `ppvz_for_pay`, `priceWithDisc`, or `forPay`.
+
+## 2. Smart Pricing (simulator)
+
+**Purpose:** Solve the selling price needed for a target profit.
+
+```
+Tax Base = Sale Price − Marketplace Fee
+Estimated Tax = Tax Rate × Tax Base
+```
+
+Flow: Sale → Marketplace Fee → Tax → Logistics → Storage → Product Cost → Advertising → Net Profit
+
+- Used only by Smart Pricing / Profit Simulator (`src/lib/smart-pricing.ts`)
+- Does **not** use Σ(finishedPrice)
+
+## Why they differ
+
+| Question | Module | Tax base |
+|---|---|---|
+| What tax was incurred on completed sales? | Reporting / Financial Engine | Σ finishedPrice |
+| What selling price achieves target profit? | Smart Pricing | Sale − Marketplace Fee |
+
+This split is **expected**. Never “normalize” Smart Pricing onto finishedPrice (or reporting onto post-fee) during refactors.
+
+See `docs/estimated-tax-models.md` (pointer) and `docs/99-legacy/estimated-tax-models.md` (historical note). Canonical KB placement TBD under `docs/01-business/` / ADR.

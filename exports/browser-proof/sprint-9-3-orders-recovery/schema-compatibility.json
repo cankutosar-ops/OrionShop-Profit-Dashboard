@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-07-26T09:52:29.234Z",
+  "compatible": true,
+  "results": [
+    {
+      "table": "wb_orders",
+      "column": "price_with_disc",
+      "expectedMigration": "20260712200000",
+      "exists": true,
+      "error": null
+    },
+    {
+      "table": "wb_orders",
+      "column": "last_change_date",
+      "expectedMigration": "20260712200000",
+      "exists": true,
+      "error": null
+    },
+    {
+      "table": "wb_sales",
+      "column": "price_with_disc",
+      "expectedMigration": "20260712180000",
+      "exists": true,
+      "error": null
+    },
+    {
+      "table": "wb_sales",
+      "column": "for_pay",
+      "expectedMigration": "20260712180000",
+      "exists": true,
+      "error": null
+    }
+  ],
+  "missing": []
+}

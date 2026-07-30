@@ -1,0 +1,13 @@
+{
+  "id": "346690cc-5b78-4b70-a6c1-81517637d9b5",
+  "reportType": "STOCK_HISTORY_DAILY_CSV",
+  "userReportName": "Orion-9.6-validation-346690cc",
+  "params": {
+    "currentPeriod": {
+      "start": "2026-07-17",
+      "end": "2026-07-25"
+    },
+    "stockType": "wb",
+    "skipDeletedNm": false
+  }
+}

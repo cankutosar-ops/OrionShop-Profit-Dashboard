@@ -1,0 +1,1082 @@
+{
+  "period": {
+    "from": "2026-01-01",
+    "to": "2026-07-19",
+    "accountId": "1"
+  },
+  "excelFile": "C:/Users/User/Downloads/Еженедельный отчет 2024-01-29 - 2026-07-19_1202289.xlsx",
+  "excelHeader": [
+    "№ отчета",
+    "Юридическое лицо",
+    "Дата начала",
+    "Дата конца",
+    "Дата формирования",
+    "Тип отчета",
+    "Продажа",
+    "В том числе Компенсация скидки по программе лояльности",
+    "К перечислению за товар",
+    "Согласованная скидка, %",
+    "Стоимость логистики",
+    "Стоимость хранения",
+    "Стоимость операций на приемке",
+    "\"x",
+    "Общая сумма штрафов",
+    "Корректировка Вознаграждения Вайлдберриз (ВВ)",
+    "Стоимость участия в программе лояльности",
+    "Сумма баллов, удержанных по программе лояльности",
+    "Разовое изменение срока перечисления денежных средств",
+    "Итого к оплате",
+    "Валюта"
+  ],
+  "excel": {
+    "weekCount": 57,
+    "reportIds": [
+      "693134115",
+      "758291426",
+      "751265392",
+      "764655778",
+      "727586126",
+      "699553616",
+      "742938173",
+      "685941634",
+      "771254347",
+      "737125393",
+      "719638118",
+      "706071292",
+      "678996793",
+      "672219426",
+      "712859015",
+      "778300185",
+      "650688593",
+      "657543539",
+      "664575112",
+      "786182326",
+      "620930571",
+      "628137550",
+      "634300238",
+      "640984225",
+      "615075925",
+      "601766404",
+      "608241115",
+      "594361892",
+      "714615038",
+      "758291427",
+      "587965723",
+      "699553618",
+      "751265393",
+      "719638120",
+      "737125394",
+      "664575142",
+      "778300188",
+      "685941636",
+      "727586133",
+      "742938174",
+      "680035826",
+      "658998750",
+      "764655780",
+      "650688594",
+      "640984211",
+      "672219427",
+      "706071293",
+      "786182329",
+      "622515175",
+      "615075926",
+      "634300242",
+      "771254352",
+      "693424903",
+      "629848619",
+      "594361891",
+      "608241120",
+      "601766405"
+    ],
+    "dateSpan": {
+      "minStart": "2026-01-01",
+      "maxEnd": "2026-07-19"
+    },
+    "prodazha": 4071658,
+    "loyaltyComp": 176.13,
+    "kPerechisleniyu": 4052731.18,
+    "logistics": 1487288.42,
+    "storage": 118902.85,
+    "acceptance": 315,
+    "otherHold": 809036.73,
+    "penalties": 6205,
+    "totalPay": 1629586.23,
+    "impliedGoodsFee": 18926.82,
+    "settlementCheck": 1630983.18,
+    "totalPay_vs_formula": -1396.95
+  },
+  "excelWeekCount": 57,
+  "excelWeeks": [
+    {
+      "id": "693134115",
+      "start": "2026-04-13",
+      "end": "2026-04-19",
+      "prodazha": 149470,
+      "kPerechisleniyu": 156933.14,
+      "logistics": 78373.75,
+      "storage": 4233.18,
+      "acceptance": 0,
+      "otherHold": 15000,
+      "penalties": 0,
+      "totalPay": 59326.21
+    },
+    {
+      "id": "758291426",
+      "start": "2026-06-15",
+      "end": "2026-06-21",
+      "prodazha": 116679,
+      "kPerechisleniyu": 122805.49,
+      "logistics": 78222.8,
+      "storage": 2786.94,
+      "acceptance": 0,
+      "otherHold": 26500,
+      "penalties": 40,
+      "totalPay": 15255.75
+    },
+    {
+      "id": "751265392",
+      "start": "2026-06-08",
+      "end": "2026-06-14",
+      "prodazha": 151982,
+      "kPerechisleniyu": 147401.54,
+      "logistics": 70955.66,
+      "storage": 2998.66,
+      "acceptance": 0,
+      "otherHold": 23000,
+      "penalties": 0,
+      "totalPay": 50447.22
+    },
+    {
+      "id": "764655778",
+      "start": "2026-06-22",
+      "end": "2026-06-28",
+      "prodazha": 127887,
+      "kPerechisleniyu": 131434.64,
+      "logistics": 69723.81,
+      "storage": 2760.72,
+      "acceptance": 0,
+      "otherHold": 27500,
+      "penalties": 0,
+      "totalPay": 31450.11
+    },
+    {
+      "id": "727586126",
+      "start": "2026-05-18",
+      "end": "2026-05-24",
+      "prodazha": 168842,
+      "kPerechisleniyu": 152688.46,
+      "logistics": 66541.69,
+      "storage": 3518.54,
+      "acceptance": 0,
+      "otherHold": 8322,
+      "penalties": 30,
+      "totalPay": 74276.23
+    },
+    {
+      "id": "699553616",
+      "start": "2026-04-20",
+      "end": "2026-04-26",
+      "prodazha": 168494,
+      "kPerechisleniyu": 173724.87,
+      "logistics": 65723.06,
+      "storage": 4133,
+      "acceptance": 0,
+      "otherHold": 3000,
+      "penalties": 50,
+      "totalPay": 100818.81
+    },
+    {
+      "id": "742938173",
+      "start": "2026-06-01",
+      "end": "2026-06-07",
+      "prodazha": 147117,
+      "kPerechisleniyu": 134265.55,
+      "logistics": 61308.4,
+      "storage": 3145.96,
+      "acceptance": 0,
+      "otherHold": 29000,
+      "penalties": 415,
+      "totalPay": 40396.19
+    },
+    {
+      "id": "685941634",
+      "start": "2026-04-06",
+      "end": "2026-04-12",
+      "prodazha": 199219.61,
+      "kPerechisleniyu": 205557.19,
+      "logistics": 61129.98,
+      "storage": 4408.87,
+      "acceptance": 90,
+      "otherHold": 12000,
+      "penalties": 10,
+      "totalPay": 127918.34
+    },
+    {
+      "id": "771254347",
+      "start": "2026-06-29",
+      "end": "2026-07-05",
+      "prodazha": 113924,
+      "kPerechisleniyu": 131564.28,
+      "logistics": 60712.93,
+      "storage": 2877,
+      "acceptance": 0,
+      "otherHold": 21000,
+      "penalties": 0,
+      "totalPay": 46974.35
+    },
+    {
+      "id": "737125393",
+      "start": "2026-05-25",
+      "end": "2026-05-31",
+      "prodazha": 171426,
+      "kPerechisleniyu": 153298.46,
+      "logistics": 60527.66,
+      "storage": 3221.63,
+      "acceptance": 0,
+      "otherHold": 23034,
+      "penalties": 30,
+      "totalPay": 66485.17
+    },
+    {
+      "id": "719638118",
+      "start": "2026-05-11",
+      "end": "2026-05-17",
+      "prodazha": 123957,
+      "kPerechisleniyu": 119536.07,
+      "logistics": 58948.09,
+      "storage": 3537.69,
+      "acceptance": 0,
+      "otherHold": 13738.5,
+      "penalties": 120,
+      "totalPay": 41794.84
+    },
+    {
+      "id": "706071292",
+      "start": "2026-04-27",
+      "end": "2026-05-03",
+      "prodazha": 166121,
+      "kPerechisleniyu": 163423.59,
+      "logistics": 56412.4,
+      "storage": 4012.34,
+      "acceptance": 0,
+      "otherHold": 7000,
+      "penalties": 0,
+      "totalPay": 95998.85
+    },
+    {
+      "id": "678996793",
+      "start": "2026-03-30",
+      "end": "2026-04-05",
+      "prodazha": 174814,
+      "kPerechisleniyu": 186788.45,
+      "logistics": 54629.62,
+      "storage": 4614.17,
+      "acceptance": 120,
+      "otherHold": 82040.82,
+      "penalties": 0,
+      "totalPay": 45383.84
+    },
+    {
+      "id": "672219426",
+      "start": "2026-03-23",
+      "end": "2026-03-29",
+      "prodazha": 201357,
+      "kPerechisleniyu": 210734.01,
+      "logistics": 53295.42,
+      "storage": 4860.55,
+      "acceptance": 45,
+      "otherHold": 28358,
+      "penalties": 10,
+      "totalPay": 124165.04
+    },
+    {
+      "id": "712859015",
+      "start": "2026-05-04",
+      "end": "2026-05-10",
+      "prodazha": 120867,
+      "kPerechisleniyu": 120236.15,
+      "logistics": 51951.57,
+      "storage": 3783.65,
+      "acceptance": 0,
+      "otherHold": 10107.14,
+      "penalties": 0,
+      "totalPay": 54393.79
+    },
+    {
+      "id": "778300185",
+      "start": "2026-07-06",
+      "end": "2026-07-12",
+      "prodazha": 112223,
+      "kPerechisleniyu": 123743.8,
+      "logistics": 51693.22,
+      "storage": 2898.92,
+      "acceptance": 0,
+      "otherHold": 10000,
+      "penalties": 0,
+      "totalPay": 59151.66
+    },
+    {
+      "id": "650688593",
+      "start": "2026-03-02",
+      "end": "2026-03-08",
+      "prodazha": 172998,
+      "kPerechisleniyu": 184608.51,
+      "logistics": 43414.68,
+      "storage": 5476.71,
+      "acceptance": 15,
+      "otherHold": 28358,
+      "penalties": 0,
+      "totalPay": 107344.12
+    },
+    {
+      "id": "657543539",
+      "start": "2026-03-09",
+      "end": "2026-03-15",
+      "prodazha": 184845,
+      "kPerechisleniyu": 195674.6,
+      "logistics": 42881.36,
+      "storage": 5228.58,
+      "acceptance": 30,
+      "otherHold": 28358,
+      "penalties": 0,
+      "totalPay": 119176.66
+    },
+    {
+      "id": "664575112",
+      "start": "2026-03-16",
+      "end": "2026-03-22",
+      "prodazha": 139680,
+      "kPerechisleniyu": 145334.37,
+      "logistics": 42643.07,
+      "storage": 5024.76,
+      "acceptance": 15,
+      "otherHold": 25358,
+      "penalties": 0,
+      "totalPay": 72293.54
+    },
+    {
+      "id": "786182326",
+      "start": "2026-07-13",
+      "end": "2026-07-19",
+      "prodazha": 85990.12,
+      "kPerechisleniyu": 84788.12,
+      "logistics": 37498,
+      "storage": 2731.45,
+      "acceptance": 0,
+      "otherHold": 7048.56,
+      "penalties": 0,
+      "totalPay": 37510.11
+    },
+    {
+      "id": "620930571",
+      "start": "2026-02-02",
+      "end": "2026-02-08",
+      "prodazha": 159724,
+      "kPerechisleniyu": 166249.38,
+      "logistics": 34560.18,
+      "storage": 5180,
+      "acceptance": 0,
+      "otherHold": 56923.21,
+      "penalties": 0,
+      "totalPay": 69585.99
+    },
+    {
+      "id": "628137550",
+      "start": "2026-02-09",
+      "end": "2026-02-15",
+      "prodazha": 86410,
+      "kPerechisleniyu": 95088.69,
+      "logistics": 31391.2,
+      "storage": 5372.71,
+      "acceptance": 0,
+      "otherHold": 48144.37,
+      "penalties": 0,
+      "totalPay": 10180.41
+    },
+    {
+      "id": "634300238",
+      "start": "2026-02-16",
+      "end": "2026-02-22",
+      "prodazha": 110290,
+      "kPerechisleniyu": 116036.35,
+      "logistics": 29470.01,
+      "storage": 5328.07,
+      "acceptance": 0,
+      "otherHold": 21897.65,
+      "penalties": 60,
+      "totalPay": 59280.62
+    },
+    {
+      "id": "640984225",
+      "start": "2026-02-23",
+      "end": "2026-03-01",
+      "prodazha": 96752,
+      "kPerechisleniyu": 101480.44,
+      "logistics": 27317.28,
+      "storage": 5533.64,
+      "acceptance": 0,
+      "otherHold": 22358,
+      "penalties": 0,
+      "totalPay": 46271.52
+    },
+    {
+      "id": "615075925",
+      "start": "2026-01-26",
+      "end": "2026-02-01",
+      "prodazha": 98392,
+      "kPerechisleniyu": 94802.51,
+      "logistics": 23662.74,
+      "storage": 5221.08,
+      "acceptance": 0,
+      "otherHold": 2258.48,
+      "penalties": 0,
+      "totalPay": 63660.21
+    },
+    {
+      "id": "601766404",
+      "start": "2026-01-12",
+      "end": "2026-01-18",
+      "prodazha": 80681,
+      "kPerechisleniyu": 65967.91,
+      "logistics": 22899.1,
+      "storage": 5045.92,
+      "acceptance": 0,
+      "otherHold": 175324.92,
+      "penalties": 5400,
+      "totalPay": -142702.03
+    },
+    {
+      "id": "608241115",
+      "start": "2026-01-19",
+      "end": "2026-01-25",
+      "prodazha": 47134,
+      "kPerechisleniyu": 40431.45,
+      "logistics": 20850.67,
+      "storage": 5147.81,
+      "acceptance": 0,
+      "otherHold": 47407.08,
+      "penalties": 20,
+      "totalPay": -32994.11
+    },
+    {
+      "id": "594361892",
+      "start": "2026-01-05",
+      "end": "2026-01-11",
+      "prodazha": 74968,
+      "kPerechisleniyu": 59168.43,
+      "logistics": 15444.57,
+      "storage": 4006.24,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 20,
+      "totalPay": 39697.62
+    },
+    {
+      "id": "714615038",
+      "start": "2026-05-04",
+      "end": "2026-05-10",
+      "prodazha": 22177.97,
+      "kPerechisleniyu": 19210.13,
+      "logistics": 9676.29,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 9533.84
+    },
+    {
+      "id": "758291427",
+      "start": "2026-06-15",
+      "end": "2026-06-21",
+      "prodazha": 22053.86,
+      "kPerechisleniyu": 19389.09,
+      "logistics": 8751.97,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 10637.12
+    },
+    {
+      "id": "587965723",
+      "start": "2026-01-01",
+      "end": "2026-01-04",
+      "prodazha": 22894,
+      "kPerechisleniyu": 17875.96,
+      "logistics": 7892.64,
+      "storage": 1814.06,
+      "acceptance": 0,
+      "otherHold": 6000,
+      "penalties": 0,
+      "totalPay": 2169.26
+    },
+    {
+      "id": "699553618",
+      "start": "2026-04-20",
+      "end": "2026-04-26",
+      "prodazha": 15038.72,
+      "kPerechisleniyu": 12929.51,
+      "logistics": 7293.01,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 5636.5
+    },
+    {
+      "id": "751265393",
+      "start": "2026-06-08",
+      "end": "2026-06-14",
+      "prodazha": 5560.39,
+      "kPerechisleniyu": 4836.15,
+      "logistics": 6602.67,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": -1766.52
+    },
+    {
+      "id": "719638120",
+      "start": "2026-05-11",
+      "end": "2026-05-17",
+      "prodazha": 10890.45,
+      "kPerechisleniyu": 8916.48,
+      "logistics": 5863.05,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 3053.43
+    },
+    {
+      "id": "737125394",
+      "start": "2026-05-25",
+      "end": "2026-05-31",
+      "prodazha": 15839.36,
+      "kPerechisleniyu": 12009.27,
+      "logistics": 5722.41,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 6286.86
+    },
+    {
+      "id": "664575142",
+      "start": "2026-03-16",
+      "end": "2026-03-22",
+      "prodazha": 18564.59,
+      "kPerechisleniyu": 15986.21,
+      "logistics": 4984.23,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 11001.98
+    },
+    {
+      "id": "778300188",
+      "start": "2026-07-06",
+      "end": "2026-07-12",
+      "prodazha": 10094.66,
+      "kPerechisleniyu": 9417.26,
+      "logistics": 4774.37,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 4642.89
+    },
+    {
+      "id": "685941636",
+      "start": "2026-04-06",
+      "end": "2026-04-12",
+      "prodazha": 15290.19,
+      "kPerechisleniyu": 13239.52,
+      "logistics": 4657.25,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 8582.27
+    },
+    {
+      "id": "727586133",
+      "start": "2026-05-18",
+      "end": "2026-05-24",
+      "prodazha": 16345.79,
+      "kPerechisleniyu": 12529.57,
+      "logistics": 4636.54,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 7893.03
+    },
+    {
+      "id": "742938174",
+      "start": "2026-06-01",
+      "end": "2026-06-07",
+      "prodazha": 15028.49,
+      "kPerechisleniyu": 12687.61,
+      "logistics": 4526.96,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 8160.65
+    },
+    {
+      "id": "680035826",
+      "start": "2026-03-30",
+      "end": "2026-04-05",
+      "prodazha": 9529.06,
+      "kPerechisleniyu": 8175.07,
+      "logistics": 4060.54,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 4114.53
+    },
+    {
+      "id": "658998750",
+      "start": "2026-03-09",
+      "end": "2026-03-15",
+      "prodazha": 14713.65,
+      "kPerechisleniyu": 12905.55,
+      "logistics": 3465.69,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 9439.86
+    },
+    {
+      "id": "764655780",
+      "start": "2026-06-22",
+      "end": "2026-06-28",
+      "prodazha": 12693.49,
+      "kPerechisleniyu": 11221.33,
+      "logistics": 3264.05,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 7957.28
+    },
+    {
+      "id": "650688594",
+      "start": "2026-03-02",
+      "end": "2026-03-08",
+      "prodazha": 10971.17,
+      "kPerechisleniyu": 9654.23,
+      "logistics": 3196.53,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 6457.7
+    },
+    {
+      "id": "640984211",
+      "start": "2026-02-23",
+      "end": "2026-03-01",
+      "prodazha": 18625.75,
+      "kPerechisleniyu": 16445.79,
+      "logistics": 3180.49,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 13265.3
+    },
+    {
+      "id": "672219427",
+      "start": "2026-03-23",
+      "end": "2026-03-29",
+      "prodazha": 7555.23,
+      "kPerechisleniyu": 6558.92,
+      "logistics": 2978.89,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 3580.03
+    },
+    {
+      "id": "706071293",
+      "start": "2026-04-27",
+      "end": "2026-05-03",
+      "prodazha": 6982.71,
+      "kPerechisleniyu": 5875.04,
+      "logistics": 2782.86,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 3092.18
+    },
+    {
+      "id": "786182329",
+      "start": "2026-07-13",
+      "end": "2026-07-19",
+      "prodazha": 4787.3,
+      "kPerechisleniyu": 3323.16,
+      "logistics": 2217.42,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 1105.74
+    },
+    {
+      "id": "622515175",
+      "start": "2026-02-02",
+      "end": "2026-02-08",
+      "prodazha": 6759.78,
+      "kPerechisleniyu": 5169.86,
+      "logistics": 1981.48,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 3188.38
+    },
+    {
+      "id": "615075926",
+      "start": "2026-01-26",
+      "end": "2026-02-01",
+      "prodazha": 15584.97,
+      "kPerechisleniyu": 12345.41,
+      "logistics": 1938.72,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 10406.69
+    },
+    {
+      "id": "634300242",
+      "start": "2026-02-16",
+      "end": "2026-02-22",
+      "prodazha": 13278.85,
+      "kPerechisleniyu": 11460.03,
+      "logistics": 1900.59,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 9559.44
+    },
+    {
+      "id": "771254352",
+      "start": "2026-06-29",
+      "end": "2026-07-05",
+      "prodazha": -5907.05,
+      "kPerechisleniyu": -5368.7,
+      "logistics": 1758.33,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": -7127.03
+    },
+    {
+      "id": "693424903",
+      "start": "2026-04-13",
+      "end": "2026-04-19",
+      "prodazha": 7200.99,
+      "kPerechisleniyu": 6639.83,
+      "logistics": 1639.27,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 5000.56
+    },
+    {
+      "id": "629848619",
+      "start": "2026-02-09",
+      "end": "2026-02-15",
+      "prodazha": 0,
+      "kPerechisleniyu": 0,
+      "logistics": 1554.48,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": -1554.48
+    },
+    {
+      "id": "594361891",
+      "start": "2026-01-05",
+      "end": "2026-01-11",
+      "prodazha": 4481.98,
+      "kPerechisleniyu": 3434.92,
+      "logistics": 1407.97,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 2026.95
+    },
+    {
+      "id": "608241120",
+      "start": "2026-01-19",
+      "end": "2026-01-25",
+      "prodazha": 0,
+      "kPerechisleniyu": 0,
+      "logistics": 1245.04,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": -1245.04
+    },
+    {
+      "id": "601766405",
+      "start": "2026-01-12",
+      "end": "2026-01-18",
+      "prodazha": 2377.92,
+      "kPerechisleniyu": 2097.53,
+      "logistics": 1151.76,
+      "storage": 0,
+      "acceptance": 0,
+      "otherHold": 0,
+      "penalties": 0,
+      "totalPay": 945.77
+    }
+  ],
+  "db": {
+    "netSales_priceWithDisc": 4979563.05,
+    "grossSales": 6414588.18,
+    "returnedSales": 1435025.13,
+    "salesForPay": 3185290.45,
+    "modelBCommission": 1794272.6,
+    "finishedPrice_net": 3028601.27,
+    "finance": {
+      "COMMISSION": 402753.32,
+      "ACQUIRING": 206469.7,
+      "PPVZ_REWARD": 128143.11,
+      "PPVZ_VW": 537030.02,
+      "OTHER": 315,
+      "ADJUSTMENT": 791988.17,
+      "COMPENSATION": 1396.95,
+      "LOGISTICS": 1391105.41,
+      "RETURN_LOGISTICS": 101554.61,
+      "logistics_total": 1492660.02,
+      "STORAGE": 113272.48,
+      "PENALTY": 6205,
+      "marketplaceFees_display": 1274711.15,
+      "financeNetForPay_signed": 3831458.84,
+      "financeForPayAbs": 5680589.86
+    },
+    "weeklyReports": {
+      "count": 0,
+      "forPaySum": 0,
+      "details": []
+    }
+  },
+  "acceptanceDb": 315,
+  "sellerPayout": 574695.08,
+  "excelOp": 1630983.18,
+  "reconciliation": [
+    {
+      "metric": "Sales (Excel Продажа / DB priceWithDisc net)",
+      "excel": 4071658,
+      "dashboard": 4979563.05,
+      "diff": 907905.05,
+      "note": "Different definitions: Excel «Продажа» = realized retail; DB Sales = priceWithDisc net"
+    },
+    {
+      "metric": "Sales (DB finishedPrice/revenue net)",
+      "excel": 4071658,
+      "dashboard": 3028601.27,
+      "diff": -1043056.73,
+      "note": "finishedPrice closer to Excel Продажа"
+    },
+    {
+      "metric": "К перечислению за товар / goods settlement (Excel)",
+      "excel": 4052731.18,
+      "dashboard": 3831458.84,
+      "diff": -221272.34,
+      "note": "DB = Σ signed wb_finance for_pay (ppvz_for_pay) by operation_date"
+    },
+    {
+      "metric": "К перечислению vs weekly forPaySum (DB reports table)",
+      "excel": 4052731.18,
+      "dashboard": 0,
+      "diff": -4052731.18,
+      "note": "wb_sales_reports.for_pay_sum overlapping weeks"
+    },
+    {
+      "metric": "Commercial Revenue (Sales API forPay) — Dashboard Model B",
+      "excel": 4052731.18,
+      "dashboard": 3185290.45,
+      "diff": -867440.73,
+      "note": "Dashboard Revenue ≠ Excel К перечислению — known dual-base gap"
+    },
+    {
+      "metric": "Implied goods fee (Excel Продажа − К перечислению)",
+      "excel": 18926.82,
+      "dashboard": 1274396.15,
+      "diff": 1255469.33,
+      "note": "Excel implied fee vs abs finance triple+acquiring — not same signed economics"
+    },
+    {
+      "metric": "Model B Commission (priceWithDisc − salesForPay)",
+      "excel": null,
+      "dashboard": 1794272.6,
+      "diff": null,
+      "note": "Not an Excel column — Sales API spread only"
+    },
+    {
+      "metric": "Acquiring (DB acquiring_fee)",
+      "excel": null,
+      "dashboard": 206469.7,
+      "diff": null,
+      "note": "Not a separate Excel weekly column — inside goods settlement"
+    },
+    {
+      "metric": "Logistics",
+      "excel": 1487288.42,
+      "dashboard": 1492660.02,
+      "diff": 5371.6,
+      "note": "DB LOGISTICS + RETURN_LOGISTICS by operation_date"
+    },
+    {
+      "metric": "Storage",
+      "excel": 118902.85,
+      "dashboard": 113272.48,
+      "diff": -5630.37
+    },
+    {
+      "metric": "Acceptance",
+      "excel": 315,
+      "dashboard": 315,
+      "diff": null,
+      "note": "Acceptance is OTHER/suffix acceptance — not equal to OTHER bucket"
+    },
+    {
+      "metric": "Penalties",
+      "excel": 6205,
+      "dashboard": 6205,
+      "diff": 0
+    },
+    {
+      "metric": "Adjustments / Прочие удержания",
+      "excel": 809036.73,
+      "dashboard": 791988.17,
+      "diff": -17048.56
+    },
+    {
+      "metric": "Итого к оплате / Excel settlement result",
+      "excel": 1629586.23,
+      "dashboard": 1630983.18,
+      "diff": 1396.95,
+      "note": "Excel identity: К перечислению − log − stor − accept − other − penalty"
+    },
+    {
+      "metric": "Dashboard Seller Payout (forPay − A − L − S − P − Adj)",
+      "excel": 1629586.23,
+      "dashboard": 574695.08,
+      "diff": -1054891.15,
+      "note": "Different revenue base + acquiring deducted again vs Excel"
+    }
+  ],
+  "waterfall": {
+    "path_excel_settlement": {
+      "steps": [
+        {
+          "name": "Продажа (Excel)",
+          "amount": 4071658
+        },
+        {
+          "name": "− implied goods platform effect (Продажа − К перечислению)",
+          "amount": -18926.82
+        },
+        {
+          "name": "= К перечислению за товар",
+          "amount": 4052731.18
+        },
+        {
+          "name": "− Logistics",
+          "amount": -1487288.42
+        },
+        {
+          "name": "− Storage",
+          "amount": -118902.85
+        },
+        {
+          "name": "− Acceptance",
+          "amount": -315
+        },
+        {
+          "name": "− Other holds",
+          "amount": -809036.73
+        },
+        {
+          "name": "− Penalties",
+          "amount": -6205
+        },
+        {
+          "name": "= Итого к оплате",
+          "amount": 1629586.23
+        }
+      ]
+    },
+    "path_dashboard_commercial": {
+      "steps": [
+        {
+          "name": "Sales priceWithDisc net",
+          "amount": 4979563.05
+        },
+        {
+          "name": "− Model B Commission (spread)",
+          "amount": -1794272.6
+        },
+        {
+          "name": "= Revenue (Sales forPay)",
+          "amount": 3185290.45
+        },
+        {
+          "name": "− Acquiring",
+          "amount": -206469.7
+        },
+        {
+          "name": "− Logistics",
+          "amount": -1492660.02
+        },
+        {
+          "name": "− Storage",
+          "amount": -113272.48
+        },
+        {
+          "name": "− Penalties",
+          "amount": -6205
+        },
+        {
+          "name": "− Adjustments",
+          "amount": -791988.17
+        },
+        {
+          "name": "= Seller Payout",
+          "amount": 574695.08
+        }
+      ]
+    }
+  },
+  "followUp": {
+    "estimatedTax": "DO NOT IMPLEMENT NOW. Confirmed next change: 6% tax from customer sale amount (Sales / WB selling price), NOT from Seller Payout or Revenue."
+  },
+  "sqlNotes": {
+    "sales": "SELECT * FROM wb_sales WHERE marketplace_account_id='1' AND sale_date BETWEEN '2026-01-01' AND '2026-07-19'",
+    "finance": "SELECT * FROM wb_finance WHERE marketplace_account_id='1' AND operation_date BETWEEN '2026-01-01' AND '2026-07-19'",
+    "acquiring": "SUM(ABS(amount)) WHERE suffix=acquiring_fee (via source_key/wb_source_suffix)",
+    "for_pay_finance": "SUM(amount) signed WHERE suffix=for_pay",
+    "sales_for_pay": "SUM(for_pay) purchases − SUM(for_pay) returns on wb_sales"
+  }
+}

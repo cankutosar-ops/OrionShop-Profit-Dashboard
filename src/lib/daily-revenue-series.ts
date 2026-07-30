@@ -1,4 +1,5 @@
 import { computeProductCost } from "@/lib/product-cost";
+import { sumDailySalesAmount } from "@/lib/financial-engine";
 import type { ProductCostHistory, WbSale } from "@/types/database";
 
 function financeDate(value: string): string {
@@ -7,11 +8,16 @@ function financeDate(value: string): string {
 
 export type DailyRevenuePoint = {
   date: string;
+  /** Daily Sales = Σ priceWithDisc (Financial Engine). */
   revenue: number;
+  /** Sales − product cost (gross contribution; not V4 Net Profit). */
   profit: number;
 };
 
-/** Daily revenue trend with gross profit (revenue − product cost) per day. */
+/**
+ * Daily Sales trend (priceWithDisc) for the Revenue chart.
+ * Uses Financial Engine Sales — never wb_sales.revenue (finishedPrice).
+ */
 export function groupSalesByDate(
   sales: WbSale[],
   costHistory: ProductCostHistory[],
@@ -28,7 +34,7 @@ export function groupSalesByDate(
 
   return Array.from(dateMap.entries())
     .map(([date, daySales]) => {
-      const revenue = daySales.reduce((sum, sale) => sum + sale.revenue, 0);
+      const revenue = sumDailySalesAmount(daySales);
       const productCost = computeProductCost(daySales, costHistory, latestCostByProductId);
       return { date, revenue, profit: revenue - productCost };
     })

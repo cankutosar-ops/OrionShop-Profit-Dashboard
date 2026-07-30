@@ -1,0 +1,98 @@
+{
+  "probedAt": "2026-07-22T14:59:10.240Z",
+  "accountId": "1",
+  "accountName": "Wildberries Default",
+  "syncEnabled": true,
+  "note": "Read-only probes. No DB writes.",
+  "v5": [
+    {
+      "label": "known_good_window",
+      "endpoint": "GET statistics-api .../api/v5/supplier/reportDetailByPeriod",
+      "from": "2026-07-01",
+      "to": "2026-07-05",
+      "status": 200,
+      "statusText": "OK",
+      "ms": 574,
+      "contentType": "application/json; charset=utf-8",
+      "xRatelimitRemaining": "9",
+      "retryAfter": null,
+      "bodyBytes": 1797990,
+      "bodyPreview": "[{\"realizationreport_id\":771254347,\"date_from\":\"2026-06-29\",\"date_to\":\"2026-07-05\",\"create_dt\":\"2026-07-06\",\"currency_name\":\"RUB\",\"suppliercontract_code\":null,\"rrd_id\":3128715302445,\"gi_id\":34796463,\"dlv_prc\":2,\"fix_tariff_date_from\":\"2025-12-23T21:00:00Z\",\"fix_tariff_date_to\":\"2026-03-23T21:00:00Z\",\"subject_name\":\"Платья\",\"nm_id\":233020825,\"brand_name\":\"GVOnly\",\"sa_name\":\"arinamor\",\"ts_name\":\"54-",
+      "parseError": null,
+      "isArray": true,
+      "rowCount": 861,
+      "errorObject": null,
+      "sampleRrDtMax": "2026-07-05",
+      "sampleSaleDtMax": "2026-07-05",
+      "sampleRrdId": 3128715302445
+    },
+    {
+      "label": "backfill_tail_after_max_op",
+      "endpoint": "GET statistics-api .../api/v5/supplier/reportDetailByPeriod",
+      "from": "2026-07-06",
+      "to": "2026-07-12",
+      "status": 200,
+      "statusText": "OK",
+      "ms": 636,
+      "contentType": "application/json; charset=utf-8",
+      "xRatelimitRemaining": "8",
+      "retryAfter": null,
+      "bodyBytes": 2088536,
+      "bodyPreview": "[{\"realizationreport_id\":778300185,\"date_from\":\"2026-07-06\",\"date_to\":\"2026-07-12\",\"create_dt\":\"2026-07-13\",\"currency_name\":\"RUB\",\"suppliercontract_code\":null,\"rrd_id\":3129244884457,\"gi_id\":17571850,\"dlv_prc\":0,\"fix_tariff_date_from\":\"\",\"fix_tariff_date_to\":\"\",\"subject_name\":\"Платья\",\"nm_id\":150060261,\"brand_name\":\"GVOnly\",\"sa_name\":\"zaralacivert01\",\"ts_name\":\"54-56\",\"barcode\":\"2037562404944\",\"doc",
+      "parseError": null,
+      "isArray": true,
+      "rowCount": 1000,
+      "errorObject": null,
+      "sampleRrDtMax": "2026-07-12",
+      "sampleSaleDtMax": "2026-07-12",
+      "sampleRrdId": 3129244884457
+    },
+    {
+      "label": "audit_week_missing",
+      "endpoint": "GET statistics-api .../api/v5/supplier/reportDetailByPeriod",
+      "from": "2026-07-13",
+      "to": "2026-07-19",
+      "status": 200,
+      "statusText": "OK",
+      "ms": 590,
+      "contentType": "application/json; charset=utf-8",
+      "xRatelimitRemaining": "7",
+      "retryAfter": null,
+      "bodyBytes": 1899948,
+      "bodyPreview": "[{\"realizationreport_id\":786182326,\"date_from\":\"2026-07-13\",\"date_to\":\"2026-07-19\",\"create_dt\":\"2026-07-20\",\"currency_name\":\"RUB\",\"suppliercontract_code\":null,\"rrd_id\":3130031144251,\"gi_id\":32675559,\"dlv_prc\":1.6,\"fix_tariff_date_from\":\"2025-11-05T21:00:00Z\",\"fix_tariff_date_to\":\"2026-02-03T21:00:00Z\",\"subject_name\":\"Платья\",\"nm_id\":150064437,\"brand_name\":\"GVOnly\",\"sa_name\":\"lilysiyah01\",\"ts_name\"",
+      "parseError": null,
+      "isArray": true,
+      "rowCount": 916,
+      "errorObject": null,
+      "sampleRrDtMax": "2026-07-19",
+      "sampleSaleDtMax": "2026-07-19",
+      "sampleRrdId": 3130031144251
+    }
+  ],
+  "v1": [
+    {
+      "label": "audit_week_missing",
+      "endpoint": "POST finance-api .../api/finance/v1/sales-reports/detailed",
+      "from": "2026-07-13",
+      "to": "2026-07-19",
+      "requestBody": {
+        "dateFrom": "2026-07-13",
+        "dateTo": "2026-07-19",
+        "limit": 1000,
+        "rrdId": 0,
+        "period": "daily"
+      },
+      "status": 200,
+      "statusText": "OK",
+      "ms": 1172,
+      "contentType": "application/json; charset=utf-8",
+      "bodyBytes": 1765805,
+      "bodyPreview": "[{\"reportId\":120228920260713,\"dateFrom\":\"2026-07-13\",\"dateTo\":\"2026-07-13\",\"createDate\":\"2026-07-14\",\"currency\":\"RUB\",\"reportType\":1,\"rrdId\":3130031144251,\"giId\":32675559,\"dlvPrc\":1.6,\"fixTariffDateFrom\":\"2025-11-05T21:00:00Z\",\"fixTariffDateTo\":\"2026-02-03T21:00:00Z\",\"subjectName\":\"Платья\",\"nmId\":150064437,\"brandName\":\"GVOnly\",\"vendorCode\":\"lilysiyah01\",\"title\":\"Вечернее платье больших размеров\",\"techSize\":\"46-48\",\"sku\":\"4627121466438\",\"docTypeName\":\"\",\"quantity\":0,\"retailPrice\":\"0\",\"retailAmoun",
+      "parseError": null,
+      "rowCount": 916,
+      "topLevelKeys": [
+        "(array)"
+      ]
+    }
+  ]
+}

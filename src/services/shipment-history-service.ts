@@ -31,7 +31,7 @@ async function resolveProductNmId(
   productId: string,
   marketplaceAccountId: string
 ): Promise<number | null> {
-  const client = createServerClient();
+  const client = await createServerClient();
   const { data, error } = await client
     .from("products")
     .select("id, nm_id, marketplace_account_id")

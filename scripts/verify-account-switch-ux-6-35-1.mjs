@@ -93,12 +93,24 @@ if (maxLockMatch) {
 if (/180_000|180000/.test(switchCtx)) {
   fails.push("180s safety timeout still present — unlock must not wait that long");
 }
-// URL-match unlock: completion must compare searchParams to target
-if (!switchCtx.includes("accountMatches") || !switchCtx.includes("companyMatches")) {
+// URL-match unlock: completion must compare searchParams / location to target
+if (!switchCtx.includes("targetMatchesParams") && (!switchCtx.includes("accountMatches") || !switchCtx.includes("companyMatches"))) {
   fails.push("Missing URL account/company match unlock logic");
 }
-if (!/target\.account\s*===\s*accountId/.test(switchCtx) || !/target\.company\s*===\s*companyId/.test(switchCtx)) {
-  fails.push("Unlock must compare searchParams account/company to switch target");
+if (
+  !/String\(\s*target\.account\s*\)/.test(switchCtx) &&
+  !/target\.account\s*===\s*accountId/.test(switchCtx)
+) {
+  fails.push("Unlock must compare searchParams account to switch target");
+}
+if (
+  !/String\(\s*target\.company\s*\)/.test(switchCtx) &&
+  !/target\.company\s*===\s*companyId/.test(switchCtx)
+) {
+  fails.push("Unlock must compare searchParams company to switch target");
+}
+if (!switchCtx.includes("window.location.search") && !switchCtx.includes("completeOnUrlMatch")) {
+  fails.push("Account switch should poll window.location as backup for URL match");
 }
 
 console.log("Sprint 6.35.1 — Account switching reliability checks");

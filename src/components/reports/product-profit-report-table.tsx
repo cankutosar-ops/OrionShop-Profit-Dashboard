@@ -1,8 +1,10 @@
 "use client";
 
-import { ArrowDown, ArrowUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import type { ReactNode } from "react";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 import type { ProductProfitReportRow } from "@/services/reports-product-profit-service";
 
@@ -24,13 +26,13 @@ type SortColumn =
   | "netProfit"
   | "marginPercent";
 
-type SortDirection = "asc" | "desc";
+const DEFAULT_SORT = { key: "netProfit" as const, direction: "desc" as const };
 
 type ColumnDef = {
   key: SortColumn;
   label: string;
   align?: "left" | "right";
-  value: (row: ProductProfitReportRow) => string | number;
+  value: (row: ProductProfitReportRow) => SortValue;
   render: (row: ProductProfitReportRow) => ReactNode;
 };
 
@@ -118,31 +120,22 @@ const columns: ColumnDef[] = [
   },
 ];
 
-function compareValue(a: string | number, b: string | number): number {
-  if (typeof a === "number" && typeof b === "number") return a - b;
-  return String(a).localeCompare(String(b), "en", { numeric: true, sensitivity: "base" });
+function columnValue(row: ProductProfitReportRow, key: SortColumn): SortValue {
+  const column = columns.find((item) => item.key === key);
+  return column ? column.value(row) : null;
 }
 
 export function ProductProfitReportTable({ rows }: ProductProfitReportTableProps) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>("netProfit");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortColumn>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: ProductProfitReportRow, key: SortColumn) => columnValue(row, key),
+    []
+  );
 
-  const sortedRows = useMemo(() => {
-    const column = columns.find((item) => item.key === sortColumn);
-    if (!column) return rows;
-
-    const sorted = [...rows].sort((a, b) => compareValue(column.value(a), column.value(b)));
-    return sortDirection === "desc" ? sorted.reverse() : sorted;
-  }, [rows, sortColumn, sortDirection]);
-
-  const toggleSort = (key: SortColumn) => {
-    if (sortColumn === key) {
-      setSortDirection((current) => (current === "desc" ? "asc" : "desc"));
-      return;
-    }
-    setSortColumn(key);
-    setSortDirection("desc");
-  };
+  const sortedRows = useMemo(
+    () => sortRowsBySpec(rows, sort, getValue),
+    [rows, sort, getValue]
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -150,35 +143,19 @@ export function ProductProfitReportTable({ rows }: ProductProfitReportTableProps
         <table className="w-full min-w-[1280px] text-sm">
           <thead>
             <tr className="border-b border-border bg-card">
-              {columns.map((column) => {
-                const active = sortColumn === column.key;
-                return (
-                  <th
-                    key={column.key}
-                    className={cn(
-                      "sticky top-0 z-10 bg-card px-3 py-2.5",
-                      column.align === "right" ? "text-right" : "text-left"
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggleSort(column.key)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground",
-                        column.align === "right" && "ml-auto"
-                      )}
-                    >
-                      {column.label}
-                      {active &&
-                        (sortDirection === "desc" ? (
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        ) : (
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        ))}
-                    </button>
-                  </th>
-                );
-              })}
+              {columns.map((column) => (
+                <SortableTh
+                  key={column.key}
+                  label={column.label}
+                  active={isActive(column.key)}
+                  direction={directionFor(column.key)}
+                  onClick={() => onSort(column.key)}
+                  align={column.align === "right" ? "right" : "left"}
+                  className={cn(
+                    "sticky top-0 z-10 bg-card px-3 py-2.5 text-xs font-semibold uppercase tracking-wide"
+                  )}
+                />
+              ))}
             </tr>
           </thead>
           <tbody>

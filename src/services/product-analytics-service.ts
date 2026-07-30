@@ -38,7 +38,7 @@ export async function getProductAnalytics(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const [products, stockByProductId] = await Promise.all([
     getProductProfitability(scope, client),
     getCurrentStockByProductId(scope.marketplaceAccountId),

@@ -1,7 +1,7 @@
 import {
   calculateModelBMarginPercent,
   calculateModelBNetProfit,
-} from "@/lib/profit-engine-model-b";
+} from "@/lib/financial-engine";
 import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
@@ -53,15 +53,16 @@ export type SmartPricingSolverInputs = {
 };
 
 /**
- * Build Model B unit economics at selling price P (priceWithDisc).
+ * Smart Pricing unit economics at selling price P.
  *
- * Sales = P
- * Commission = α × P
- * forPay = P − Commission
- * Seller Payout S = forPay − Logistics − Storage  (A=Pen=Adj=0 at unit level)
- * Estimated Tax = S × Tax%
- * Operating Profit = S − Product Cost − Marketing
- * Final Net Profit = After Tax Payout − Product Cost − Marketing
+ * INTENTIONAL dual tax model (≠ historical reporting):
+ *   Tax Base = Sale − Marketplace Fee = P × (1 − α)
+ *   Estimated Tax = Tax% × Tax Base
+ *
+ * Reporting uses Tax% × Σ finishedPrice instead — do not unify.
+ * See docs/estimated-tax-models.md
+ *
+ * Flow: Sale → Marketplace Fee → Tax → Logistics / Storage / Cost / Ads → Net Profit
  */
 export function buildModelBUnitMetrics(
   inputs: SmartPricingSolverInputs,
@@ -81,44 +82,33 @@ export function buildModelBUnitMetrics(
     netSales: price,
     netSalesStatus: "ready",
     salesForPay,
+    financeNetForPay: salesForPay,
     acquiring: 0,
     logistics: inputs.historicalLogistics,
     storage: inputs.storagePerUnit,
     penalties: 0,
     adjustments: 0,
+    acceptance: 0,
     productCost: inputs.purchaseCost,
     advertising,
+    // Simulator: tax on amount after Marketplace Fee (not finishedPrice).
+    customerPaid: salesForPay,
     taxPercent,
   });
 }
 
-/** Tax on Seller Payout only — never from selling price, product cost, or marketing. */
-export function calculateTaxOnSellerPayout(
-  sellerPayout: number,
-  taxPercent: number
-): number {
-  if (!Number.isFinite(sellerPayout) || sellerPayout <= 0) return 0;
-  if (!Number.isFinite(taxPercent) || taxPercent <= 0) return 0;
-  return sellerPayout * (taxPercent / 100);
-}
-
 export type SmartPricingAfterTaxMetrics = {
-  /** Model B operating profit (before tax). */
   operatingProfit: number;
-  /** Seller Payout after marketplace fees (excl. product cost & marketing). */
   sellerPayout: number;
-  /** Estimated Tax = Seller Payout × Tax%. */
+  /** Estimated Tax = Tax% × (Sale − Marketplace Fee). */
   tax: number;
-  /** After Tax Payout = Seller Payout − Estimated Tax. */
   afterTaxPayout: number;
-  /** Final Net Profit = After Tax Payout − Product Cost − Marketing. */
   finalNetProfit: number;
-  /** Final Net Profit / Selling Price. */
   finalMarginPercent: number;
 };
 
 /**
- * Final Net Profit = Seller Payout × (1 − Tax%) − Product Cost − Marketing.
+ * Final Net Profit — tax on post–Marketplace Fee amount.
  */
 export function buildSmartPricingAfterTaxMetrics(
   inputs: SmartPricingSolverInputs,
@@ -143,10 +133,10 @@ export function buildSmartPricingAfterTaxMetrics(
 }
 
 /**
- * Target price so Final Net Profit / P = target margin (AFTER tax).
+ * Target price so Final Net Profit / P = target margin.
  *
- * With S = P(1−α) − L − St and π = S(1−τ) − C − βP:
- * P* = [C + (1−τ)(L+St)] / [(1−τ)(1−α) − β − m]
+ * Tax = τ × P(1−α) →
+ * P* = (C + L + St) / [(1−α)(1−τ) − β − m]
  */
 export function solveRecommendedPrice(
   inputs: SmartPricingSolverInputs,
@@ -161,8 +151,7 @@ export function solveRecommendedPrice(
   const oneMinusTau = 1 - tau;
 
   const numerator =
-    inputs.purchaseCost +
-    oneMinusTau * (inputs.historicalLogistics + inputs.storagePerUnit);
+    inputs.purchaseCost + inputs.historicalLogistics + inputs.storagePerUnit;
   const denominator = oneMinusTau * (1 - alpha) - beta - m;
 
   if (denominator <= 0) return null;
@@ -173,7 +162,7 @@ export function solveRecommendedPrice(
   return price;
 }
 
-/** Verify price: Final Net Profit after tax on Seller Payout. */
+/** Verify price using post–Marketplace Fee tax base. */
 export function verifyRecommendedPrice(
   inputs: SmartPricingSolverInputs,
   _targetNetProfitPercent: number,
@@ -213,13 +202,13 @@ export function formatRecommendedPriceFormula(
   const m = targetNetProfitPercent / 100;
   const oneMinusTau = 1 - tau;
   const feeSum = inputs.historicalLogistics + inputs.storagePerUnit;
-  const numerator = inputs.purchaseCost + oneMinusTau * feeSum;
+  const numerator = inputs.purchaseCost + feeSum;
   const denominator = oneMinusTau * (1 - alpha) - beta - m;
 
   return [
-    "Recommended Price (after tax) = [ProductCost + (1−Tax%)×(Logistics+Storage)] / [(1−Tax%)×(1−Commission%) − Marketing% − TargetMargin%]",
-    `Tax = SellerPayout × ${taxPercent}%  (SellerPayout = P×(1−Commission%) − Logistics − Storage)`,
-    `= (${inputs.purchaseCost.toFixed(2)} + ${(oneMinusTau * 100).toFixed(2)}%×${feeSum.toFixed(2)}) / (${(oneMinusTau * 100).toFixed(2)}%×(1-${inputs.marketplaceFeesPercent.toFixed(2)}%) − ${marketingPercent}% − ${targetNetProfitPercent}%)`,
+    "Recommended Price (after tax) = [ProductCost + Logistics + Storage] / [(1−Tax%)×(1−Commission%) − Marketing% − TargetMargin%]",
+    `Tax = ${taxPercent}% × (Sale − Marketplace Fee)  [= P × (1 − ${inputs.marketplaceFeesPercent.toFixed(2)}%)]`,
+    `= (${inputs.purchaseCost.toFixed(2)} + ${feeSum.toFixed(2)}) / (${(oneMinusTau * 100).toFixed(2)}%×(1−${inputs.marketplaceFeesPercent.toFixed(2)}%) − ${marketingPercent}% − ${targetNetProfitPercent}%)`,
     `= ${numerator.toFixed(2)} / ${denominator.toFixed(4)}`,
     price !== null ? `= ${price.toFixed(2)} ₽` : "= —",
   ].join("\n");

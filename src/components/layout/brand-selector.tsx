@@ -3,6 +3,7 @@
 import { Tag } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { notifyDashboardHeaderPopupOpen } from "@/lib/dashboard-header-popup";
 import { replaceUrlIfChanged } from "@/lib/dashboard-lifecycle";
 import { FILTER_PARAMS } from "@/lib/filter-params";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,13 @@ function BrandDropdown({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() =>
+          setOpen((current) => {
+            const next = !current;
+            if (next) notifyDashboardHeaderPopupOpen("brand");
+            return next;
+          })
+        }
         disabled={disabled || options.length === 0}
         className={cn(
           "inline-flex min-w-[160px] items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-card-hover disabled:opacity-50"

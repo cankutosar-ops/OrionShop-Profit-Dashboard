@@ -31,9 +31,15 @@ const {
 const { computeProductCost } = await import("../src/lib/product-cost.ts");
 const {
   buildNetForPayFromDb,
+  buildNetFinishedPriceFromDb,
   buildNetSalesFromDb,
 } = await import("../src/lib/sales-revenue-resolution.ts");
 const { buildLatestCostByProductId } = await import("../src/lib/cost-history-resolution.ts");
+const { calculateEstimatedTax } = await import("../src/lib/financial-engine-tax.ts");
+const {
+  sumAcceptanceFromFinance,
+  sumNetForPayFromFinance,
+} = await import("../src/lib/wb-settlement.ts");
 const {
   DEFAULT_TAX_PERCENT,
   buildModelBUnitMetrics,
@@ -97,75 +103,87 @@ async function loadAccount(accountId) {
   const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
   const netSalesFromDb = buildNetSalesFromDb(sales);
   const salesForPay = buildNetForPayFromDb(sales);
+  const customerPaid = buildNetFinishedPriceFromDb(sales);
+  const financeNetForPay = sumNetForPayFromFinance(finance);
+  const acceptance = sumAcceptanceFromFinance(finance);
 
   const modelB = buildModelBProfitMetrics(netSalesFromDb, {
     salesForPay,
+    financeNetForPay,
     acquiring: categorySummary.ACQUIRING,
     logistics: totalLogistics,
     storage: financeTotals.storage,
     penalties: financeTotals.penalty,
     adjustments: presentation.accountAdjustments,
+    acceptance,
     productCost,
     advertising,
     taxPercent: TAX_PERCENT,
+    customerPaid,
   });
 
-  return { accountId, sales, modelB, netSalesFromDb, salesForPay, financeTotals };
+  return { accountId, sales, modelB, netSalesFromDb, salesForPay, customerPaid, financeTotals };
 }
 
 function validateAccount(ctx, printFullChain) {
-  const { accountId, modelB } = ctx;
+  const { accountId, modelB, customerPaid } = ctx;
   const fails = [];
 
-  const customerPayment = modelB.netSales;
-  const commission = modelB.commission;
-  const acquiring = modelB.acquiring;
-  const logistics = modelB.logistics;
-  const returnLogistics = 0; // already inside modelB.logistics (outbound + return)
-  const storage = modelB.storage;
-  const penalties = modelB.penalties;
-  const adjustments = modelB.adjustments;
-  const sellerPayout = modelB.sellerPayout;
   const estimatedTax = modelB.estimatedTax;
-  const afterTaxPayout = modelB.afterTaxPayout;
   const productCost = modelB.productCost;
   const advertising = modelB.advertising;
   const finalNetProfit = modelB.finalNetProfit;
 
-  const expectedSellerPayout =
-    modelB.revenue - acquiring - logistics - storage - penalties - adjustments;
-  const expectedTax =
-    expectedSellerPayout > 0 ? expectedSellerPayout * (TAX_PERCENT / 100) : 0;
-  const expectedFinal =
-    expectedSellerPayout - expectedTax - productCost - advertising;
+  const expectedTax = calculateEstimatedTax(customerPaid, TAX_PERCENT);
+  const expectedFinal = modelB.operatingProfit - expectedTax;
 
-  if (!near(sellerPayout, expectedSellerPayout)) {
-    fails.push(`Seller Payout mismatch ${sellerPayout} vs ${expectedSellerPayout}`);
-  }
   if (!near(estimatedTax, expectedTax)) {
-    fails.push(`Tax mismatch ${estimatedTax} vs ${expectedTax}`);
+    fails.push(`Tax mismatch ${estimatedTax} vs ${expectedTax} (base finishedPrice=${customerPaid})`);
+  }
+  if (!near(modelB.customerPaid, customerPaid)) {
+    fails.push(`customerPaid on metrics ≠ Σ finishedPrice`);
   }
   if (!near(finalNetProfit, expectedFinal)) {
     fails.push(`Final NP mismatch ${finalNetProfit} vs ${expectedFinal}`);
   }
 
-  // Tax base = Seller Payout only — cost/marketing must not change tax when S fixed
+  // Tax base = finishedPrice only — cost/marketing must not change tax when customerPaid fixed
   const taxIfCostDoubled = buildModelBProfitMetrics(
     { ...ctx.netSalesFromDb },
     {
       salesForPay: ctx.salesForPay,
-      acquiring,
-      logistics,
-      storage,
-      penalties,
-      adjustments,
+      financeNetForPay: modelB.revenue,
+      acquiring: modelB.acquiring,
+      logistics: modelB.logistics,
+      storage: modelB.storage,
+      penalties: modelB.penalties,
+      adjustments: modelB.adjustments,
+      acceptance: modelB.acceptance,
       productCost: productCost * 2,
       advertising: advertising * 2,
       taxPercent: TAX_PERCENT,
+      customerPaid,
     }
   );
   if (!near(taxIfCostDoubled.estimatedTax, estimatedTax)) {
     fails.push("Tax changed when Product Cost / Advertising changed (tax base leak)");
+  }
+
+  // Must NOT equal Seller Payout × tax% (legacy base)
+  const legacySellerPayoutTax =
+    modelB.sellerPayout > 0 ? modelB.sellerPayout * (TAX_PERCENT / 100) : 0;
+  if (
+    Math.abs(customerPaid) > 1 &&
+    near(estimatedTax, legacySellerPayoutTax) &&
+    !near(customerPaid, modelB.sellerPayout)
+  ) {
+    // Only fail if they coincide by accident when bases differ — skip soft check
+  }
+  if (
+    Math.abs(customerPaid - modelB.sellerPayout) > 1 &&
+    near(estimatedTax, legacySellerPayoutTax)
+  ) {
+    fails.push("Tax still equals Seller Payout × tax% (legacy base not removed)");
   }
 
   const opDiff = verifyModelBProfitArithmetic(modelB);
@@ -181,21 +199,13 @@ function validateAccount(ctx, printFullChain) {
 
   if (printFullChain) {
     console.log("\n========== COMPLETE CALCULATION (Account " + accountId + ") ==========");
-    console.log(`Customer Payment          ${fmt(customerPayment)}`);
-    console.log(`  ↓ Commission            ${fmt(commission)}`);
-    console.log(`  ↓ Acquiring             ${fmt(acquiring)}`);
-    console.log(`  ↓ Logistics             ${fmt(logistics)} (incl. return logistics)`);
-    console.log(`  ↓ Return Logistics      ${fmt(returnLogistics)} (rolled into Logistics)`);
-    console.log(`  ↓ Storage               ${fmt(storage)}`);
-    console.log(`  ↓ Penalties             ${fmt(penalties)}`);
-    console.log(`  ↓ Adjustments           ${fmt(adjustments)}`);
-    console.log(`Seller Payout             ${fmt(sellerPayout)}`);
-    console.log(`  ↓ Estimated Tax (${TAX_PERCENT}%) ${fmt(estimatedTax)}`);
-    console.log(`After Tax Payout          ${fmt(afterTaxPayout)}`);
-    console.log(`  ↓ Product Cost          ${fmt(productCost)}`);
-    console.log(`  ↓ Advertising           ${fmt(advertising)}`);
-    console.log(`Final Net Profit          ${fmt(finalNetProfit)}`);
+    console.log(`Sales (priceWithDisc)     ${fmt(modelB.netSales)}`);
+    console.log(`Customer Paid (finishedPrice) ${fmt(customerPaid)}`);
+    console.log(`Revenue (ppvz_for_pay)    ${fmt(modelB.revenue)}`);
+    console.log(`Seller Payout             ${fmt(modelB.sellerPayout)}`);
+    console.log(`  ↓ Estimated Tax (${TAX_PERCENT}% × finishedPrice) ${fmt(estimatedTax)}`);
     console.log(`Operating Profit (pre-tax)${fmt(modelB.operatingProfit)}`);
+    console.log(`Final Net Profit          ${fmt(finalNetProfit)}`);
     console.log("===============================================================\n");
   }
 
@@ -232,8 +242,12 @@ function validateSmartPricingSolver() {
   }
 
   const unit = buildModelBUnitMetrics(inputs, marketing, price, tax);
-  if (!near(unit.estimatedTax, unit.sellerPayout * (tax / 100))) {
-    fails.push("Unit tax ≠ Seller Payout × tax%");
+  const afterFee = price * (1 - inputs.marketplaceFeesPercent / 100);
+  const expectedUnitTax = calculateEstimatedTax(afterFee, tax);
+  if (!near(unit.estimatedTax, expectedUnitTax)) {
+    fails.push(
+      `Unit tax ≠ Tax% × (Sale − Fee) (${unit.estimatedTax} vs ${expectedUnitTax})`
+    );
   }
   if (!near(unit.finalNetProfit, verified.profit)) {
     fails.push("Unit Final NP ≠ verifyRecommendedPrice profit");
@@ -251,14 +265,20 @@ function validateSmartPricingSolver() {
   if (!near(a.estimatedTax, b.estimatedTax)) {
     fails.push("SP: tax changed when cost/marketing changed at fixed price");
   }
-  if (!near(a.sellerPayout, b.sellerPayout)) {
-    fails.push("SP: seller payout changed when cost/marketing changed");
+  const expectedAtPrice = calculateEstimatedTax(
+    atPrice * (1 - inputs.marketplaceFeesPercent / 100),
+    tax
+  );
+  if (!near(a.estimatedTax, expectedAtPrice)) {
+    fails.push("SP: unit tax ≠ Tax% × (P − Marketplace Fee)");
   }
 
   console.log("Smart Pricing solver check:");
   console.log(`  P* for ${targetMargin}% after tax @ ${tax}% tax: ${fmt(price)}`);
   console.log(`  Achieved Final Margin: ${verified.marginPercent.toFixed(3)}%`);
-  console.log(`  Seller Payout: ${fmt(unit.sellerPayout)}  Tax: ${fmt(unit.estimatedTax)}`);
+  console.log(
+    `  Tax base = P×(1−${inputs.marketplaceFeesPercent}%)  Tax: ${fmt(unit.estimatedTax)}`
+  );
   console.log(`  Final Net Profit: ${fmt(unit.finalNetProfit)}\n`);
 
   return fails;
@@ -294,10 +314,10 @@ async function main() {
   }
 
   console.log("OVERALL: PASS");
-  console.log("✓ Tax calculated ONLY from Seller Payout");
+  console.log("✓ Reporting tax = Tax% × Σ finishedPrice (Sales API)");
+  console.log("✓ Smart Pricing tax = Tax% × (Sale − Marketplace Fee) — intentional dual model");
   console.log("✓ Product Cost does not affect tax base");
   console.log("✓ Marketing does not affect tax base");
-  console.log("✓ Dashboard / Breakdown / Smart Pricing share Model B tax math");
   console.log("✓ Breakdown Final Net Profit = Dashboard Final Net Profit");
   console.log("✓ Target Margin achieved AFTER tax");
 }

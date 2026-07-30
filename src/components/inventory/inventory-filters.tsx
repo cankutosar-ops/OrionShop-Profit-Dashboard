@@ -92,10 +92,10 @@ function FilterFallback({ width }: { width: string }) {
   return <div className={cn("h-9 animate-pulse rounded-xl bg-card", width)} />;
 }
 
-function CurrentSnapshotInfo({ accountLastSync }: { accountLastSync: string | null }) {
+function LiveInventoryInfo({ accountLastSync }: { accountLastSync: string | null }) {
   return (
     <div className="text-right text-xs text-muted-foreground">
-      <span className="block font-medium text-foreground/80">Current Snapshot</span>
+      <span className="block font-medium text-foreground/80">Live Inventory</span>
       <span className="tabular-nums">
         {accountLastSync
           ? `Updated ${formatLastSyncTimestamp(accountLastSync)}`
@@ -145,7 +145,7 @@ export function InventoryFilters({
         />
       </div>
       <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-        <CurrentSnapshotInfo accountLastSync={accountLastSync} />
+        <LiveInventoryInfo accountLastSync={accountLastSync} />
         <Suspense fallback={<FilterFallback width="w-32" />}>
           <SyncButton />
         </Suspense>

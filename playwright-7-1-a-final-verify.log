@@ -1,0 +1,135 @@
+
+> orionshop-profit-dashboard@0.3.0 test:e2e
+> playwright test --project=chromium e2e/smoke e2e/contracts/ph-01 --retries=1 --workers=1 --reporter=line
+
+
+Running 33 tests using 1 worker
+
+
+
+[1/33] [setup] › e2e\global.setup.ts:30:6 › establish session state
+[setup] › e2e\global.setup.ts:30:6 › establish session state
+[setup] Session saved → C:\Projects\OrionShop-Profit-Dashboard\e2e\.auth\session.json
+
+
+
+[2/33] [chromium] › e2e\contracts\ph-01\bc-001-net-profit.spec.ts:9:7 › PH-01 Business Contracts · BC-001 Net Profit › [BC-001] [KB:PH-01 / KB Implementation Compliance Audit / Net Profit] [Page:/products] "Net Profit" label must never represent Operating Profit
+[3/33] [chromium] › e2e\contracts\ph-01\bc-001-net-profit.spec.ts:31:7 › PH-01 Business Contracts · BC-001 Net Profit › [BC-001] [KB:PH-01 / KB Implementation Compliance Audit / Net Profit] [Page:/audit/product-profitability] Audit table Net Profit must map to canonical Net Profit
+[4/33] [chromium] › e2e\contracts\ph-01\bc-001-net-profit.spec.ts:56:7 › PH-01 Business Contracts · BC-001 Net Profit › [BC-001] [KB:PH-01 / KB Implementation Compliance Audit / Net Profit] [Page:/] Dashboard must keep Operating Profit and Net Profit explicitly separated
+[5/33] [chromium] › e2e\contracts\ph-01\bc-002-revenue.spec.ts:9:7 › PH-01 Business Contracts · BC-002 Revenue › [BC-002] [KB:PH-01 / KB Implementation Compliance Audit / Revenue] [Page:/] Merchandise trend chart must use Sales terminology, not Revenue
+[6/33] [chromium] › e2e\contracts\ph-01\bc-002-revenue.spec.ts:33:7 › PH-01 Business Contracts · BC-002 Revenue › [BC-002] [KB:PH-01 / KB Implementation Compliance Audit / Revenue] [Page:/inventory/intelligence] Warehouse sales merchandise fields must not be labeled as Revenue
+[7/33] [chromium] › e2e\contracts\ph-01\bc-003-sales.spec.ts:9:7 › PH-01 Business Contracts · BC-003 Sales › [BC-003] [KB:PH-01 / KB Implementation Compliance Audit / Sales] [Page:/inventory/warehouse-sales] Warehouse analytics must keep merchandise wording as Sales
+[8/33] [chromium] › e2e\contracts\ph-01\bc-003-sales.spec.ts:37:7 › PH-01 Business Contracts · BC-003 Sales › [BC-003] [KB:PH-01 / KB Implementation Compliance Audit / Sales] [Page:/] Dashboard merchandise trend must keep Sales naming
+[9/33] [chromium] › e2e\contracts\ph-01\bc-004-warehouse-sales.spec.ts:8:7 › PH-01 Business Contracts · BC-004 Warehouse Sales › [BC-004] [KB:PH-01 / KB Implementation Compliance Audit / Warehouse Sales vs Distribution] [Page:/inventory/warehouse-sales] Warehouse Sales pages must never expose Distribution terminology
+[10/33] [chromium] › e2e\contracts\ph-01\bc-004-warehouse-sales.spec.ts:32:7 › PH-01 Business Contracts · BC-004 Warehouse Sales › [BC-004] [KB:PH-01 / KB Implementation Compliance Audit / Warehouse Sales vs Distribution] [Page:/inventory/intelligence] Inventory intelligence drawer/panel must use Warehouse Sales wording
+[11/33] [chromium] › e2e\contracts\ph-01\bc-005-buyout.spec.ts:9:7 › PH-01 Business Contracts · BC-005 Buyout › [BC-005] [KB:PH-01 / KB Implementation Compliance Audit / Buyout vs Purchase] [Page:/] Customer funnel wording must use Buyout, never Purchases
+[12/33] [chromium] › e2e\contracts\ph-01\bc-005-buyout.spec.ts:33:7 › PH-01 Business Contracts · BC-005 Buyout › [BC-005] [KB:PH-01 / KB Implementation Compliance Audit / Buyout vs Purchase] [Page:/purchases] Procurement module must keep Purchase terminology
+[13/33] [chromium] › e2e\contracts\ph-01\bc-006-live-inventory.spec.ts:8:7 › PH-01 Business Contracts · BC-006 Live Inventory › [BC-006] [KB:PH-01 / KB Implementation Compliance Audit / Live Inventory vs Snapshot] [Page:/inventory] Current inventory must not be presented as Snapshot
+[14/33] [chromium] › e2e\contracts\ph-01\bc-006-live-inventory.spec.ts:30:7 › PH-01 Business Contracts · BC-006 Live Inventory › [BC-006] [KB:PH-01 / KB Implementation Compliance Audit / Live Inventory vs Snapshot] [Page:/inventory/history] Historical inventory must remain a historical concept, not Live Inventory
+[15/33] [chromium] › e2e\smoke\01-app-starts.spec.ts:16:7 › TC-S01 · Application starts › root URL returns a 200 response
+[16/33] [chromium] › e2e\smoke\01-app-starts.spec.ts:21:7 › TC-S01 · Application starts › root page contains a <html> element
+[17/33] [chromium] › e2e\smoke\02-login.spec.ts:20:7 › TC-S02 · Login / session › navigating to root does not redirect to an error page
+[18/33] [chromium] › e2e\smoke\02-login.spec.ts:27:7 › TC-S02 · Login / session › main layout is rendered after initial load
+[19/33] [chromium] › e2e\smoke\03-dashboard-loads.spec.ts:23:7 › TC-S03 · Dashboard loads › sidebar navigation is visible
+[20/33] [chromium] › e2e\smoke\03-dashboard-loads.spec.ts:27:7 › TC-S03 · Dashboard loads › Dashboard nav item is present in the sidebar
+[21/33] [chromium] › e2e\smoke\03-dashboard-loads.spec.ts:33:7 › TC-S03 · Dashboard loads › page does not show an unhandled error
+[22/33] [chromium] › e2e\smoke\04-verification-popup.spec.ts:25:7 › TC-S04 · Verification popup › Verification button is visible in the header
+[23/33] [chromium] › e2e\smoke\04-verification-popup.spec.ts:31:7 › TC-S04 · Verification popup › clicking Verification opens the dialog
+[24/33] [chromium] › e2e\smoke\04-verification-popup.spec.ts:41:7 › TC-S04 · Verification popup › dialog can be closed
+[25/33] [chromium] › e2e\smoke\05-sync-popup.spec.ts:25:7 › TC-S05 · Sync button › Sync Wildberries button is visible in the header
+[26/33] [chromium] › e2e\smoke\05-sync-popup.spec.ts:31:7 › TC-S05 · Sync button › Sync button is enabled (not permanently disabled)
+[27/33] [chromium] › e2e\smoke\06-orders-value-card.spec.ts:23:7 › TC-S06 · Orders Value card › Orders Value card title is present on the Dashboard
+
+
+[28/33] (retries) [chromium] › e2e\smoke\06-orders-value-card.spec.ts:23:7 › TC-S06 · Orders Value card › Orders Value card title is present on the Dashboard (retry #1)
+  1) [chromium] › e2e\smoke\06-orders-value-card.spec.ts:23:7 › TC-S06 · Orders Value card › Orders Value card title is present on the Dashboard 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Orders Value', { exact: true })
+    Expected: visible
+    Timeout: 45000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 45000ms
+      - waiting for getByText('Orders Value', { exact: true })
+
+
+      25 |     await expect(
+      26 |       scopedPage.page.getByText(ORDERS_VALUE_CARD_TITLE, { exact: true })
+    > 27 |     ).toBeVisible({ timeout: 45_000 });
+         |       ^
+      28 |   });
+      29 | });
+      30 |
+        at C:\Projects\OrionShop-Profit-Dashboard\e2e\smoke\06-orders-value-card.spec.ts:27:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium\error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Orders Value', { exact: true })
+    Expected: visible
+    Timeout: 45000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 45000ms
+      - waiting for getByText('Orders Value', { exact: true })
+
+
+      25 |     await expect(
+      26 |       scopedPage.page.getByText(ORDERS_VALUE_CARD_TITLE, { exact: true })
+    > 27 |     ).toBeVisible({ timeout: 45_000 });
+         |       ^
+      28 |   });
+      29 | });
+      30 |
+        at C:\Projects\OrionShop-Profit-Dashboard\e2e\smoke\06-orders-value-card.spec.ts:27:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium-retry1\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium-retry1\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium-retry1\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\smoke-06-orders-value-card-28ecc-is-present-on-the-Dashboard-chromium-retry1\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+[29/33] [chromium] › e2e\smoke\07-product-analytics-loads.spec.ts:22:7 › TC-S07 · Product Analytics page › page does not show an error boundary
+[30/33] [chromium] › e2e\smoke\07-product-analytics-loads.spec.ts:28:7 › TC-S07 · Product Analytics page › main content area is rendered
+[31/33] [chromium] › e2e\smoke\07-product-analytics-loads.spec.ts:32:7 › TC-S07 · Product Analytics page › Product Analytics nav link is active in the sidebar
+[32/33] [chromium] › e2e\smoke\08-warehouse-analytics-loads.spec.ts:22:7 › TC-S08 · Warehouse Analytics page › page does not show an error boundary
+[33/33] [chromium] › e2e\smoke\08-warehouse-analytics-loads.spec.ts:28:7 › TC-S08 · Warehouse Analytics page › main content area is rendered
+[34/33] [chromium] › e2e\smoke\08-warehouse-analytics-loads.spec.ts:32:7 › TC-S08 · Warehouse Analytics page › Inventory nav link is visible in the sidebar
+  1 failed
+    [chromium] › e2e\smoke\06-orders-value-card.spec.ts:23:7 › TC-S06 · Orders Value card › Orders Value card title is present on the Dashboard 
+  32 passed (2.4m)
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+(node:19004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

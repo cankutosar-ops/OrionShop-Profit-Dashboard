@@ -3,13 +3,14 @@ import {
   BusinessReportCard,
   ComingSoonReportCard,
 } from "@/components/reports/business-report-card";
+import { MarketplaceIntelligenceCard } from "@/components/reports/marketplace-intelligence-card";
 import { ProductReportCard } from "@/components/reports/product-report-card";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import {
   type PageScopeSearchParamsInput,
   scopeParamsToSearchParams,
 } from "@/lib/filter-params";
-import { calculateModelBMarginPercent } from "@/lib/profit-engine-model-b";
+import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import {
   inferPeriodPreset,
   periodPresetLabel,
@@ -111,6 +112,12 @@ export default async function ReportsPage({ searchParams }: PageProps) {
             }
           />
         </Suspense>
+
+        <MarketplaceIntelligenceCard
+          previewHref={hrefWithScope("/reports/marketplace")}
+          periodLabel={periodLabel}
+          lastSyncLabel={lastSyncLabel}
+        />
 
         <Suspense
           fallback={

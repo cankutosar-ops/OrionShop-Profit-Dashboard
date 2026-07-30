@@ -1,0 +1,332 @@
+{
+  "range": {
+    "accountId": "1",
+    "from": "2026-06-23",
+    "to": "2026-07-22"
+  },
+  "portfolio": {
+    "netSales": 631084.54,
+    "salesForPay": 393651.48,
+    "modelB_commission": 237433.06,
+    "formula": "max(0, netSales − salesForPay)"
+  },
+  "economic_reconciliation_table": [
+    {
+      "step": "netSales (priceWithDisc net)",
+      "amount": 631084.54,
+      "note": "Seller discounts already inside this number"
+    },
+    {
+      "step": "− Seller discounts (inside this gap)",
+      "amount": 0,
+      "note": "Upstream of priceWithDisc; residual retail_price−pwd ≈ 0 on raw Продажа sample"
+    },
+    {
+      "step": "− Marketplace commission (rate × priceWithDisc)",
+      "amount": -237433.06,
+      "note": "THIS is the entire Model B commission"
+    },
+    {
+      "step": "− Acquiring (inside this gap)",
+      "amount": 0,
+      "note": "Not deducted yet; Sales forPay still includes acquiring vs Finance for_pay"
+    },
+    {
+      "step": "− PPVZ Reward (inside this gap)",
+      "amount": 0,
+      "note": "Settlement ledger; not in Sales forPay formula"
+    },
+    {
+      "step": "− PPVZ VW (inside this gap)",
+      "amount": 0,
+      "note": "Settlement ledger; not in Sales forPay formula"
+    },
+    {
+      "step": "− Any other WB deductions (inside this gap)",
+      "amount": 0,
+      "note": "Logistics/storage etc. deducted AFTER salesForPay in Model B"
+    },
+    {
+      "step": "= salesForPay",
+      "amount": 393651.48,
+      "note": "Running: netSales − commission_rate_wedge"
+    }
+  ],
+  "check": {
+    "netSales_minus_salesForPay": 237433.06,
+    "sum_of_named_deductions_in_table": 237433.06,
+    "residual": 0,
+    "reconciles": true
+  },
+  "raw_wb_proof": {
+    "n_purchase_srids": 70,
+    "gap_equals_pwd_times_commission_pct": {
+      "hits": 70,
+      "of": 70,
+      "pct": 100
+    },
+    "salesForPay_equals_finForPay_plus_acquiring": {
+      "hits": 70,
+      "of": 70,
+      "pct": 100
+    },
+    "sums": {
+      "gap": 126528.9,
+      "rateWedge": 126528.89,
+      "residual_gap_minus_rate": 0.01,
+      "acquiring": 8907.79,
+      "abs_ppvz_sales_commission": 16692.43,
+      "abs_ppvz_reward": 5059.22,
+      "abs_ppvz_vw": 18991.38,
+      "seller_discount_retail_minus_pwd": 0,
+      "spp_pwd_minus_finished": 136561.24
+    },
+    "counterexamples_if_acquiring_were_inside_gap": {
+      "gap_minus_acquiring": 117621.11,
+      "equals_zero": false,
+      "note": "If acquiring filled the gap, gap−acquiring≈0. It does not."
+    },
+    "counterexamples_if_finance_triple_were_the_gap": {
+      "abs_triple": 40743.03,
+      "gap": 126528.9,
+      "delta": 85785.87,
+      "note": "Finance |commission|+|reward|+|vw| ≠ Sales gap"
+    },
+    "examples": [
+      {
+        "srid": "eAu.r80bde2b6e4a84310a135eaa3ef4c48a2.0.0",
+        "priceWithDisc": 5040,
+        "salesForPay": 3301.2,
+        "commission_percent": 34.5,
+        "gap": 1738.8000000000002,
+        "rateGap": 1738.8,
+        "acquiring": 121.76,
+        "ppvz_for_pay": 3179.44,
+        "forPay_minus_finForPay": 121.76,
+        "seller_discount_retail_minus_pwd": 0,
+        "spp_pwd_minus_finished": 1996,
+        "ppvz_sales_commission": -210.82,
+        "ppvz_reward": 121.76,
+        "ppvz_vw": -310.62295081967216
+      },
+      {
+        "srid": "eBD.r076bfe2468a84baa9a3b79c6cdb884aa.0.0",
+        "priceWithDisc": 5400,
+        "salesForPay": 3537,
+        "commission_percent": 34.5,
+        "gap": 1863,
+        "rateGap": 1863,
+        "acquiring": 141.4,
+        "ppvz_for_pay": 3395.6,
+        "forPay_minus_finForPay": 141.4,
+        "seller_discount_retail_minus_pwd": 0,
+        "spp_pwd_minus_finished": 1865,
+        "ppvz_sales_commission": -1.64,
+        "ppvz_reward": 7.02,
+        "ppvz_vw": -7.39344262295082
+      },
+      {
+        "srid": "eAs.r5e2f2f8bc68c4734b9ec8e45bf7f8e52.0.0",
+        "priceWithDisc": 5400,
+        "salesForPay": 3537,
+        "commission_percent": 34.5,
+        "gap": 1863,
+        "rateGap": 1863,
+        "acquiring": 138.88,
+        "ppvz_for_pay": 3398.12,
+        "forPay_minus_finForPay": 138.88,
+        "seller_discount_retail_minus_pwd": 0,
+        "spp_pwd_minus_finished": 1928,
+        "ppvz_sales_commission": -53.28,
+        "ppvz_reward": 5.72,
+        "ppvz_vw": -57.967213114754095
+      },
+      {
+        "srid": "eB8.i84e19efdd2bb89b5b06435a323b2850a.0.0",
+        "priceWithDisc": 5400,
+        "salesForPay": 3537,
+        "commission_percent": 34.5,
+        "gap": 1863,
+        "rateGap": 1863,
+        "acquiring": 120.04,
+        "ppvz_for_pay": 3416.96,
+        "forPay_minus_finForPay": 120.04,
+        "seller_discount_retail_minus_pwd": 0,
+        "spp_pwd_minus_finished": 2399,
+        "ppvz_sales_commission": -439.34,
+        "ppvz_reward": 61.303,
+        "ppvz_vw": -489.59262295081965
+      },
+      {
+        "srid": "eB5.r7f1f6fecc0c243e6b38aec4b19cb0350.0.0",
+        "priceWithDisc": 5041.23,
+        "salesForPay": 3302.01,
+        "commission_percent": 34.5,
+        "gap": 1739.2199999999993,
+        "rateGap": 1739.22,
+        "acquiring": 61.08,
+        "ppvz_for_pay": 3240.92,
+        "forPay_minus_finForPay": 61.09,
+        "seller_discount_retail_minus_pwd": 0,
+        "spp_pwd_minus_finished": 1426.99,
+        "ppvz_sales_commission": 255.93,
+        "ppvz_reward": 0,
+        "ppvz_vw": 255.9262295081967
+      }
+    ]
+  },
+  "matched_db_purchases": {
+    "n": 74,
+    "salesForPay_equals_finForPay_plus_acq": {
+      "hits": 68,
+      "of": 74,
+      "pct": 91.89
+    },
+    "sums": {
+      "priceWithDisc": 424160.09,
+      "salesForPay": 277824.85,
+      "gap": 146335.24,
+      "acquiring": 10124.31,
+      "finance_for_pay": 262914.67,
+      "abs_commission": 28567.91,
+      "abs_reward": 5447.33,
+      "abs_vw": 32246.82
+    },
+    "examples": [
+      {
+        "srid": "eA2.r0083bf2887434382909b5e78f8ab6679.0.0",
+        "priceWithDisc": 4750,
+        "salesForPay": 3111.25,
+        "gap": 1638.75,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 2963.39,
+        "acquiring": 147.86,
+        "finance_for_pay_plus_acquiring": 3111.25,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 66.6,
+        "ppvz_reward": 86.32,
+        "ppvz_vw": 137.35
+      },
+      {
+        "srid": "es.rb3490ba58c7d4c5a82c8ccba58e280c8.0.0",
+        "priceWithDisc": 5160.02,
+        "salesForPay": 3379.81,
+        "gap": 1780.21,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 3280.07,
+        "acquiring": 99.74,
+        "finance_for_pay_plus_acquiring": 3379.81,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 505.44,
+        "ppvz_reward": 0,
+        "ppvz_vw": 515.33
+      },
+      {
+        "srid": "eAy.i686dca012f2177ac318dd8e906ad4d93.0.0",
+        "priceWithDisc": 5160,
+        "salesForPay": 3379.8,
+        "gap": 1780.2,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 3251.12,
+        "acquiring": 128.68,
+        "finance_for_pay_plus_acquiring": 3379.8,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 133.44,
+        "ppvz_reward": 90.44,
+        "ppvz_vw": 207.57
+      },
+      {
+        "srid": "ecb.r326569d6144a41ab88a710b320b8c767.0.0",
+        "priceWithDisc": 3400,
+        "salesForPay": 2227,
+        "gap": 1173,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 2140.88,
+        "acquiring": 86.12,
+        "finance_for_pay_plus_acquiring": 2227,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 60.66,
+        "ppvz_reward": 51.39,
+        "ppvz_vw": 106.21
+      },
+      {
+        "srid": "eE.rd0399e3d2eb74a688e02cebd5aac58a1.0.0",
+        "priceWithDisc": 5625,
+        "salesForPay": 3684.37,
+        "gap": 1940.63,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 3546.3,
+        "acquiring": 138.08,
+        "finance_for_pay_plus_acquiring": 3684.38,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 190.48,
+        "ppvz_reward": 108.09,
+        "ppvz_vw": 287.32
+      },
+      {
+        "srid": "eBf.rcdf47a7063d74eab92d974bafa06bed9.0.0",
+        "priceWithDisc": 5400,
+        "salesForPay": 3537,
+        "gap": 1863,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 3406.48,
+        "acquiring": 130.52,
+        "finance_for_pay_plus_acquiring": 3537,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 224.59,
+        "ppvz_reward": 62.24,
+        "ppvz_vw": 275.61
+      },
+      {
+        "srid": "e1.rccdd134f1be04ecb9b76839f92d24a34.0.0",
+        "priceWithDisc": 5160,
+        "salesForPay": 3379.8,
+        "gap": 1780.2,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 3206.56,
+        "acquiring": 173.24,
+        "finance_for_pay_plus_acquiring": 3379.8,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 139.51,
+        "ppvz_reward": 132.14,
+        "ppvz_vw": 43.03
+      },
+      {
+        "srid": "eAz.r93ea7a8c873248ed84344b878c3db929.0.0",
+        "priceWithDisc": 5280,
+        "salesForPay": 3458.4,
+        "gap": 1821.6,
+        "gap_as_pct_of_pwd": 34.5,
+        "finance_for_pay": 3290.19,
+        "acquiring": 168.21,
+        "finance_for_pay_plus_acquiring": 3458.4,
+        "salesForPay_equals_finForPay_plus_acq": true,
+        "ppvz_sales_commission": 9.34,
+        "ppvz_reward": 60.27,
+        "ppvz_vw": 58.75
+      }
+    ]
+  },
+  "forced_template_amounts": {
+    "netSales_matched": 424160.09,
+    "salesForPay_matched": 277824.85,
+    "gap": 146335.24,
+    "seller_discounts_inside_gap": 0,
+    "marketplace_commission_rate_wedge": 146335.24,
+    "acquiring_inside_gap": 0,
+    "ppvz_reward_inside_gap": 0,
+    "ppvz_vw_inside_gap": 0,
+    "other_wb_deductions_inside_gap": 0,
+    "residual_after_named_components": 0
+  },
+  "algebra": {
+    "identity_1": "Sales forPay = priceWithDisc × (1 − commission_percent/100)   ⟹   gap = priceWithDisc × commission_percent/100",
+    "identity_2": "Sales forPay = Finance ppvz_for_pay + acquiring_fee   (when both present on same SRID)",
+    "implication": "From (2): acquiring_fee = Sales forPay − ppvz_for_pay. Acquiring is a split of Sales forPay into settlement for_pay + acquiring — it is not a term removed between priceWithDisc and Sales forPay.",
+    "therefore": "acquiring ∉ (netSales − salesForPay). The entire gap is the commission-percent wedge on priceWithDisc."
+  },
+  "verdict": {
+    "is_acquiring_economically_inside_netSales_minus_salesForPay": false,
+    "proof": "On 100% of raw matched Продажа SRIDs, (priceWithDisc − salesForPay) = priceWithDisc × commission_percent/100 (residual 0). That identity fully accounts for the gap with no residual slot for acquiring. Separately, salesForPay = ppvz_for_pay + acquiring_fee on the majority of rows — acquiring is the difference between Sales forPay and Finance for_pay, i.e. it remains inside salesForPay, not inside the gap above it."
+  }
+}

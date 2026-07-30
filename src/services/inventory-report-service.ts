@@ -22,7 +22,7 @@ type ProductWithCategory = Product & {
 async function fetchProductsForAccount(
   marketplaceAccountId: string
 ): Promise<ProductWithCategory[]> {
-  const client = createServerClient();
+  const client = await createServerClient();
   // Same products query as before; category join is UI metadata only (filter labels).
   const { data, error } = await client
     .from("products")
@@ -51,7 +51,7 @@ export async function getInventoryReport(scope: ScopedDateRange): Promise<Invent
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const salesScope = buildLast30Scope(scope);
 
   const [inventoryRows, products, sales, account] = await Promise.all([
@@ -112,7 +112,7 @@ export async function getInventoryReport(scope: ScopedDateRange): Promise<Invent
 export async function getCurrentStockByProductId(
   marketplaceAccountId: string
 ): Promise<Map<string, number>> {
-  const client = createServerClient();
+  const client = await createServerClient();
   const rows = await getInventoryForAccount(marketplaceAccountId, client);
   const stockByProduct = aggregateStockByProduct(rows);
 

@@ -1,0 +1,61 @@
+{
+  "sprint": "9.1",
+  "note": "Example Sync Verification report shape (read-only). Values illustrate a Warning overall when Orders/Inventory lag expectedAsOf.",
+  "example": {
+    "marketplaceAccountId": "<account-id>",
+    "expectedAsOf": "2026-07-23",
+    "verifiedAt": "2026-07-23T15:00:00.000Z",
+    "lastSyncAt": "2026-07-23T09:01:55.407+00:00",
+    "lastSuccessfulSyncAt": "2026-07-23T09:01:55.407+00:00",
+    "overall": "warning",
+    "sources": [
+      {
+        "source": "orders",
+        "label": "Orders",
+        "earliestDate": "2026-04-11",
+        "latestDate": "2026-07-12",
+        "recordCount": 2974,
+        "daysBehindExpected": 11,
+        "status": "warning",
+        "warning": "Latest data is 11 days behind expected."
+      },
+      {
+        "source": "sales",
+        "label": "Sales",
+        "earliestDate": "2026-01-18",
+        "latestDate": "2026-07-22",
+        "recordCount": 1563,
+        "daysBehindExpected": 1,
+        "status": "healthy",
+        "warning": null
+      },
+      {
+        "source": "finance",
+        "label": "Finance",
+        "earliestDate": "2026-01-01",
+        "latestDate": "2026-07-19",
+        "recordCount": 66669,
+        "daysBehindExpected": 4,
+        "status": "healthy",
+        "warning": null
+      },
+      {
+        "source": "inventory",
+        "label": "Inventory",
+        "earliestDate": "2026-06-26",
+        "latestDate": "2026-07-09",
+        "recordCount": 1077,
+        "daysBehindExpected": 14,
+        "status": "warning",
+        "warning": "Latest data is 14 days behind expected."
+      }
+    ],
+    "summaryText": "Orders\nDB Range:\n2026-04-11 → 2026-07-12\nRecords: 2974\nWarning:\nLatest data is 11 days behind expected.\n\nSales\nDB Range:\n2026-01-18 → 2026-07-22\nRecords: 1563\nHealthy\n\nFinance\nDB Range:\n2026-01-01 → 2026-07-19\nRecords: 66669\nHealthy\n\nInventory\nDB Range:\n2026-06-26 → 2026-07-09\nRecords: 1077\nWarning:\nLatest data is 14 days behind expected.\n\nOverall:\nVerification Warning"
+  },
+  "thresholdsDays": {
+    "orders": 2,
+    "sales": 2,
+    "finance": 7,
+    "inventory": 2
+  }
+}

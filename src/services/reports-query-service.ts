@@ -8,9 +8,16 @@ import {
   type FinanceCategorySummary,
 } from "@/lib/finance-rollup";
 import { computeProductCost } from "@/lib/product-cost";
-import { buildModelBProfitMetrics } from "@/lib/profit-engine-model-b";
+import { buildModelBProfitMetrics } from "@/lib/financial-engine";
 import { buildModelCProfitMetrics } from "@/lib/profit-engine-model-c";
-import { buildNetForPayFromDb } from "@/lib/sales-revenue-resolution";
+import {
+  buildNetFinishedPriceFromDb,
+  buildNetForPayFromDb,
+} from "@/lib/sales-revenue-resolution";
+import {
+  sumAcceptanceFromFinance,
+  sumNetForPayFromFinance,
+} from "@/lib/wb-settlement";
 import {
   fetchAdsInRange,
   fetchCostHistory,
@@ -40,7 +47,7 @@ export async function getFinanceCategoryReport(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
   });
@@ -66,13 +73,16 @@ export async function getFinanceCategoryReport(
   const categorySummary = summarizeFinanceByCategory(finance);
   const modelBProfit = buildModelBProfitMetrics(netSalesResolution, {
     salesForPay: buildNetForPayFromDb(sales),
+    financeNetForPay: sumNetForPayFromFinance(finance),
     acquiring: categorySummary.ACQUIRING,
     logistics: totalLogistics,
     storage: financeTotals.storage,
     penalties: financeTotals.penalty,
     adjustments: presentation.accountAdjustments,
+    acceptance: sumAcceptanceFromFinance(finance),
     productCost,
     advertising,
+    customerPaid: buildNetFinishedPriceFromDb(sales),
   });
   const wbSettlement = await getWbSettlementMetrics(scope, finance, totalLogistics);
   const settlementAvailable = wbSettlement.availability?.available !== false;

@@ -2,12 +2,13 @@
 /**
  * Backfill wb_finance history from Wildberries reportDetailByPeriod.
  *
+ * Finance Sync V2: progress JSON is audit-only. Windows are always revalidated
+ * (delayed WB realization reports must never be treated as permanently complete).
+ *
  * Usage:
  *   npx tsx scripts/backfill-finance-history.mjs [accountId] [from] [to] [strategy]
  *
  * strategy: monthly (default) | rolling30 | single
- *
- * Progress is written to exports/finance-backfill/progress-{accountId}.json for safe restart.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve } from "path";

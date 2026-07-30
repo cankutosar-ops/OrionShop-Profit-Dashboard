@@ -1,16 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   formatDaysLeft,
   InventoryStatusBadge,
 } from "@/components/inventory/inventory-status-badge";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import type { InventoryShipmentEntry } from "@/lib/inventory-shipment-history";
-import type { InventoryModelDetail } from "@/lib/inventory-types";
+import type {
+  InventoryDisplayStatus,
+  InventoryModelDetail,
+  InventorySkuRow,
+  InventoryWarehouseRow,
+} from "@/lib/inventory-types";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { formatKpiCount } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
 
 type TabId = "overview" | "sku" | "warehouses" | "history";
@@ -21,6 +29,65 @@ const tabs: { id: TabId; label: string }[] = [
   { id: "warehouses", label: "Warehouses" },
   { id: "history", label: "History" },
 ];
+
+const STATUS_RANK: Record<InventoryDisplayStatus, number> = {
+  "Out of Stock": 0,
+  "Low Stock": 1,
+  Healthy: 2,
+};
+
+const SKU_DEFAULT_SORT = { key: "currentStock" as const, direction: "desc" as const };
+const WAREHOUSE_DEFAULT_SORT = { key: "currentStock" as const, direction: "desc" as const };
+
+type SkuSortKey =
+  | "size"
+  | "currentStock"
+  | "availableStock"
+  | "reservedStock"
+  | "purchases30Day"
+  | "dailySales"
+  | "daysLeft"
+  | "status";
+
+type WarehouseSortKey =
+  | "warehouse"
+  | "currentStock"
+  | "availableStock"
+  | "reservedStock";
+
+function skuSortValue(row: InventorySkuRow, key: SkuSortKey): SortValue {
+  switch (key) {
+    case "size":
+      return row.size;
+    case "currentStock":
+      return row.currentStock;
+    case "availableStock":
+      return row.availableStock;
+    case "reservedStock":
+      return row.reservedStock;
+    case "purchases30Day":
+      return row.purchases30Day;
+    case "dailySales":
+      return row.dailySales;
+    case "daysLeft":
+      return row.daysLeft ?? Number.POSITIVE_INFINITY;
+    case "status":
+      return STATUS_RANK[row.status];
+  }
+}
+
+function warehouseSortValue(row: InventoryWarehouseRow, key: WarehouseSortKey): SortValue {
+  switch (key) {
+    case "warehouse":
+      return formatWarehouseName(row.warehouse);
+    case "currentStock":
+      return row.currentStock;
+    case "availableStock":
+      return row.availableStock;
+    case "reservedStock":
+      return row.reservedStock;
+  }
+}
 
 function OverviewTab({ detail }: { detail: InventoryModelDetail }) {
   const { overview } = detail;
@@ -81,30 +148,94 @@ function OverviewTab({ detail }: { detail: InventoryModelDetail }) {
 }
 
 function SkuTab({ detail }: { detail: InventoryModelDetail }) {
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SkuSortKey>(SKU_DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: InventorySkuRow, key: SkuSortKey) => skuSortValue(row, key),
+    []
+  );
+  const sorted = useMemo(
+    () => sortRowsBySpec(detail.skus, sort, getValue),
+    [detail.skus, sort, getValue]
+  );
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="px-3 py-2 font-medium">Size</th>
-            <th className="px-3 py-2 text-right font-medium">Current Stock</th>
-            <th className="px-3 py-2 text-right font-medium">Available Stock</th>
-            <th className="px-3 py-2 text-right font-medium">Reserved Stock</th>
-            <th className="px-3 py-2 text-right font-medium">30 Day Sales</th>
-            <th className="px-3 py-2 text-right font-medium">Daily Sales</th>
-            <th className="px-3 py-2 text-right font-medium">Days Left</th>
-            <th className="px-3 py-2 font-medium">Status</th>
+            <SortableTh
+              label="Size"
+              active={isActive("size")}
+              direction={directionFor("size")}
+              onClick={() => onSort("size")}
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Current Stock"
+              active={isActive("currentStock")}
+              direction={directionFor("currentStock")}
+              onClick={() => onSort("currentStock")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Available Stock"
+              active={isActive("availableStock")}
+              direction={directionFor("availableStock")}
+              onClick={() => onSort("availableStock")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Reserved Stock"
+              active={isActive("reservedStock")}
+              direction={directionFor("reservedStock")}
+              onClick={() => onSort("reservedStock")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="30 Day Sales"
+              active={isActive("purchases30Day")}
+              direction={directionFor("purchases30Day")}
+              onClick={() => onSort("purchases30Day")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Daily Sales"
+              active={isActive("dailySales")}
+              direction={directionFor("dailySales")}
+              onClick={() => onSort("dailySales")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Days Left"
+              active={isActive("daysLeft")}
+              direction={directionFor("daysLeft")}
+              onClick={() => onSort("daysLeft")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Status"
+              active={isActive("status")}
+              direction={directionFor("status")}
+              onClick={() => onSort("status")}
+              className="px-3 py-2"
+            />
           </tr>
         </thead>
         <tbody>
-          {detail.skus.length === 0 ? (
+          {sorted.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
                 No SKU stock rows for this model
               </td>
             </tr>
           ) : (
-            detail.skus.map((sku) => (
+            sorted.map((sku) => (
               <tr key={`${sku.size}-${sku.barcode ?? ""}`} className="border-b border-border/50">
                 <td className="px-3 py-2.5 font-medium">{sku.size}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
@@ -138,26 +269,64 @@ function SkuTab({ detail }: { detail: InventoryModelDetail }) {
 }
 
 function WarehousesTab({ detail }: { detail: InventoryModelDetail }) {
+  const { sort, onSort, directionFor, isActive } =
+    useCycleSort<WarehouseSortKey>(WAREHOUSE_DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: InventoryWarehouseRow, key: WarehouseSortKey) => warehouseSortValue(row, key),
+    []
+  );
+  const sorted = useMemo(
+    () => sortRowsBySpec(detail.warehouses, sort, getValue),
+    [detail.warehouses, sort, getValue]
+  );
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="px-3 py-2 font-medium">Warehouse</th>
-            <th className="px-3 py-2 text-right font-medium">Current Stock</th>
-            <th className="px-3 py-2 text-right font-medium">Available Stock</th>
-            <th className="px-3 py-2 text-right font-medium">Reserved Stock</th>
+            <SortableTh
+              label="Warehouse"
+              active={isActive("warehouse")}
+              direction={directionFor("warehouse")}
+              onClick={() => onSort("warehouse")}
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Current Stock"
+              active={isActive("currentStock")}
+              direction={directionFor("currentStock")}
+              onClick={() => onSort("currentStock")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Available Stock"
+              active={isActive("availableStock")}
+              direction={directionFor("availableStock")}
+              onClick={() => onSort("availableStock")}
+              align="right"
+              className="px-3 py-2"
+            />
+            <SortableTh
+              label="Reserved Stock"
+              active={isActive("reservedStock")}
+              direction={directionFor("reservedStock")}
+              onClick={() => onSort("reservedStock")}
+              align="right"
+              className="px-3 py-2"
+            />
           </tr>
         </thead>
         <tbody>
-          {detail.warehouses.length === 0 ? (
+          {sorted.length === 0 ? (
             <tr>
               <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
                 No warehouse stock rows for this model
               </td>
             </tr>
           ) : (
-            detail.warehouses.map((row) => (
+            sorted.map((row) => (
               <tr key={row.warehouse} className="border-b border-border/50">
                 <td className="px-3 py-2.5 font-medium">
                   {formatWarehouseName(row.warehouse)}

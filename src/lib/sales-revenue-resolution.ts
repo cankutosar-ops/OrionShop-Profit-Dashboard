@@ -36,6 +36,31 @@ function sumForPayFromDbByReturnFlag(sales: WbSale[], isReturn: boolean): number
     .reduce((sum, sale) => sum + Math.abs(Number(sale.for_pay ?? 0)) * sale.quantity, 0);
 }
 
+function sumFinishedPriceFromDbByReturnFlag(sales: WbSale[], isReturn: boolean): number {
+  return sales
+    .filter((sale) => sale.is_return === isReturn)
+    .reduce((sum, sale) => {
+      // wb_sales.revenue persists Sales API finishedPrice (see mapApiSaleToDb).
+      return sum + Math.abs(Number(sale.revenue ?? 0)) * sale.quantity;
+    }, 0);
+}
+
+/**
+ * Net customer-paid amount = Σ finishedPrice (purchases − returns).
+ * Tax base for Estimated Tax — never priceWithDisc / forPay / ppvz_for_pay.
+ */
+export function buildNetFinishedPriceFromDb(sales: WbSale[]): number {
+  return (
+    sumFinishedPriceFromDbByReturnFlag(sales, false) -
+    sumFinishedPriceFromDbByReturnFlag(sales, true)
+  );
+}
+
+/** Σ finishedPrice on return rows — display KPI (amount refunded to customers). */
+export function sumReturnedFinishedPriceFromDb(sales: WbSale[]): number {
+  return sumFinishedPriceFromDbByReturnFlag(sales, true);
+}
+
 /** Net Sales API forPay from persisted wb_sales.for_pay. */
 export function buildNetForPayFromDb(sales: WbSale[]): number {
   return sumForPayFromDbByReturnFlag(sales, false) - sumForPayFromDbByReturnFlag(sales, true);

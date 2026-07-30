@@ -1,0 +1,399 @@
+{
+  "snapshotDate": "2026-07-23",
+  "totalQuantity": 1489,
+  "warehouseCount": 42,
+  "warehouseTotals": [
+    {
+      "warehouse": "Электросталь",
+      "quantity": 435
+    },
+    {
+      "warehouse": "Коледино",
+      "quantity": 286
+    },
+    {
+      "warehouse": "Невинномысск",
+      "quantity": 190
+    },
+    {
+      "warehouse": "Краснодар",
+      "quantity": 133
+    },
+    {
+      "warehouse": "Новосемейкино",
+      "quantity": 91
+    },
+    {
+      "warehouse": "Казань",
+      "quantity": 52
+    },
+    {
+      "warehouse": "Тула",
+      "quantity": 48
+    },
+    {
+      "warehouse": "Екатеринбург - Перспективная 14",
+      "quantity": 47
+    },
+    {
+      "warehouse": "Рязань (Тюшевское)",
+      "quantity": 35
+    },
+    {
+      "warehouse": "Владимир WB",
+      "quantity": 31
+    },
+    {
+      "warehouse": "Воронеж WB",
+      "quantity": 25
+    },
+    {
+      "warehouse": "СК Ереван",
+      "quantity": 20
+    },
+    {
+      "warehouse": "Волгоград",
+      "quantity": 17
+    },
+    {
+      "warehouse": "Сарапул WB",
+      "quantity": 16
+    },
+    {
+      "warehouse": "Склад СПБ Шушары Московское",
+      "quantity": 16
+    },
+    {
+      "warehouse": "Котовск",
+      "quantity": 12
+    },
+    {
+      "warehouse": "Актобе",
+      "quantity": 11
+    },
+    {
+      "warehouse": "Пенза WB",
+      "quantity": 8
+    },
+    {
+      "warehouse": "Атакент",
+      "quantity": 5
+    },
+    {
+      "warehouse": "Калининград",
+      "quantity": 4
+    },
+    {
+      "warehouse": "Астана Карагандинское шоссе",
+      "quantity": 2
+    },
+    {
+      "warehouse": "СК Тверь Эммаусское WB",
+      "quantity": 2
+    },
+    {
+      "warehouse": "СЦ Ереван Арташисян 106",
+      "quantity": 2
+    },
+    {
+      "warehouse": "Владивосток WB",
+      "quantity": 1
+    },
+    {
+      "warehouse": "Вёшки",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Внуково",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Гомель 2",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Екатеринбург - Испытателей 14г",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Истра WB",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Крыловская",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Курск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Махачкала Сепараторная",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Омск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Остальные",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Подольск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Пушкино",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Симферополь, Молодежненское",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Сургут",
+      "quantity": 0
+    },
+    {
+      "warehouse": "СЦ Барнаул",
+      "quantity": 0
+    },
+    {
+      "warehouse": "СЦ Шушары",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Томск",
+      "quantity": 0
+    },
+    {
+      "warehouse": "Ульяновск",
+      "quantity": 0
+    }
+  ],
+  "skuCount": 42,
+  "skuSizeCount": 135,
+  "recordCount": 761,
+  "top100Skus": [
+    {
+      "sellerSku": "ALEXALACIVERT",
+      "nmId": "203803475",
+      "quantity": 128
+    },
+    {
+      "sellerSku": "ZARASIYAH01",
+      "nmId": "150060262",
+      "quantity": 117
+    },
+    {
+      "sellerSku": "ZARALACIVERT01",
+      "nmId": "150060261",
+      "quantity": 111
+    },
+    {
+      "sellerSku": "ALEXASIYAH01",
+      "nmId": "150065294",
+      "quantity": 109
+    },
+    {
+      "sellerSku": "ARINAMOR",
+      "nmId": "233020825",
+      "quantity": 95
+    },
+    {
+      "sellerSku": "ARINALACIVERT",
+      "nmId": "233020824",
+      "quantity": 77
+    },
+    {
+      "sellerSku": "SONNASIYAH",
+      "nmId": "150171052",
+      "quantity": 67
+    },
+    {
+      "sellerSku": "ARINABORDO",
+      "nmId": "233020826",
+      "quantity": 66
+    },
+    {
+      "sellerSku": "ZARAYESIL",
+      "nmId": "233025592",
+      "quantity": 63
+    },
+    {
+      "sellerSku": "ZARAMOR",
+      "nmId": "233025594",
+      "quantity": 60
+    },
+    {
+      "sellerSku": "SONNAYESIL",
+      "nmId": "233025590",
+      "quantity": 58
+    },
+    {
+      "sellerSku": "ARISIYAH01",
+      "nmId": "155298180",
+      "quantity": 57
+    },
+    {
+      "sellerSku": "SONNAMOR",
+      "nmId": "172997224",
+      "quantity": 54
+    },
+    {
+      "sellerSku": "SONNASAKSMAVI",
+      "nmId": "233025589",
+      "quantity": 45
+    },
+    {
+      "sellerSku": "ALEXAMOR",
+      "nmId": "172996093",
+      "quantity": 43
+    },
+    {
+      "sellerSku": "SONNALACIVERT",
+      "nmId": "172997228",
+      "quantity": 42
+    },
+    {
+      "sellerSku": "ZARASAKSMAVI",
+      "nmId": "233025591",
+      "quantity": 41
+    },
+    {
+      "sellerSku": "ALEXABORDO",
+      "nmId": "172994281",
+      "quantity": 40
+    },
+    {
+      "sellerSku": "ALEXASAKSMAVI",
+      "nmId": "233025615",
+      "quantity": 35
+    },
+    {
+      "sellerSku": "ZARASAMPANYA",
+      "nmId": "233025595",
+      "quantity": 25
+    },
+    {
+      "sellerSku": "ZARABORDO",
+      "nmId": "233025593",
+      "quantity": 25
+    },
+    {
+      "sellerSku": "ALEXAYESIL",
+      "nmId": "233025616",
+      "quantity": 20
+    },
+    {
+      "sellerSku": "SONNABORDO",
+      "nmId": "172997223",
+      "quantity": 15
+    },
+    {
+      "sellerSku": "ESMASAKSMAVI",
+      "nmId": "233025603",
+      "quantity": 11
+    },
+    {
+      "sellerSku": "GV006",
+      "nmId": "189553331",
+      "quantity": 10
+    },
+    {
+      "sellerSku": "ESMALACIVERT",
+      "nmId": "233025599",
+      "quantity": 9
+    },
+    {
+      "sellerSku": "LILYSIYAH01",
+      "nmId": "150064437",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "ESMAMOR",
+      "nmId": "233025600",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "ESMAYESIL",
+      "nmId": "233025602",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "GV015",
+      "nmId": "190897171",
+      "quantity": 8
+    },
+    {
+      "sellerSku": "ESMASIYAH",
+      "nmId": "233025598",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "INT 22 1204",
+      "nmId": "152577015",
+      "quantity": 7
+    },
+    {
+      "sellerSku": "ARINASIYAH01",
+      "nmId": "155297552",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "ESMABORDO",
+      "nmId": "233025601",
+      "quantity": 5
+    },
+    {
+      "sellerSku": "GV013",
+      "nmId": "190677432",
+      "quantity": 4
+    },
+    {
+      "sellerSku": "LILYYESIL01",
+      "nmId": "197648828",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "LILYBORDO01",
+      "nmId": "150064438",
+      "quantity": 2
+    },
+    {
+      "sellerSku": "GV005",
+      "nmId": "189523274",
+      "quantity": 1
+    },
+    {
+      "sellerSku": "КЛАССИКПЛТ",
+      "nmId": "198528756",
+      "quantity": 1
+    },
+    {
+      "sellerSku": "ZINASIYAH01",
+      "nmId": "150170232",
+      "quantity": 0
+    },
+    {
+      "sellerSku": "KARMENSIYAH01",
+      "nmId": "150658618",
+      "quantity": 0
+    },
+    {
+      "sellerSku": "LILYVISNE01",
+      "nmId": "197650450",
+      "quantity": 0
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "duplicateWarehouseSkuSize": 0,
+    "emptyWarehouse": 0,
+    "emptySku": 0,
+    "emptySize": 0,
+    "nonNumericQuantity": 0,
+    "sampleErrors": []
+  }
+}

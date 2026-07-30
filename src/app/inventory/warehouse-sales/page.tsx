@@ -34,7 +34,7 @@ export default async function WarehouseSalesAnalyticsPage({ searchParams }: Page
     <>
       <PageHeader
         title="Warehouse Sales Analytics"
-        description="Completed sales by fulfilling warehouse — from wb_sales only"
+        description="Orders from wb_orders · Units and Revenue from completed wb_sales"
       />
 
       <div className="mb-4">
@@ -58,13 +58,16 @@ export default async function WarehouseSalesAnalyticsPage({ searchParams }: Page
               {" · "}
               {report.rows.length} warehouses
               {" · "}
-              {report.sourceRowCount.toLocaleString("ru-RU")} completed sales with warehouse
+              {report.sourceOrderCount.toLocaleString("ru-RU")} orders
+              {" · "}
+              {report.sourceSaleCount.toLocaleString("ru-RU")} completed sales
               {" · "}
               loaded in {report.loadTimeMs} ms
             </p>
             <p className="mt-1.5 text-xs leading-relaxed">
-              Metrics from wb_sales.warehouse · NULL warehouses excluded · Revenue = Σ price_with_disc
-              · Order Share = warehouse orders ÷ total orders
+              Orders = COUNT(wb_orders) · Orders Amount = Σ order value (price_with_disc) · Units /
+              Revenue = completed wb_sales · NULL warehouse → Unknown Warehouse · Order Share =
+              orders ÷ total orders
             </p>
           </div>
 

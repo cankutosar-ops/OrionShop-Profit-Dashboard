@@ -1,0 +1,1549 @@
+{
+  "oneErr": null,
+  "columnCount": 10,
+  "columns": [
+    "id",
+    "product_id",
+    "nm_id",
+    "operation_date",
+    "operation_type",
+    "amount",
+    "description",
+    "source_key",
+    "srid",
+    "marketplace_account_id"
+  ],
+  "dateLike": [
+    "operation_date"
+  ],
+  "latestOperationDates": [
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    },
+    {
+      "operation_date": "2026-07-05"
+    }
+  ],
+  "earliestOperationDates": [
+    {
+      "operation_date": "2026-01-01"
+    },
+    {
+      "operation_date": "2026-01-01"
+    },
+    {
+      "operation_date": "2026-01-01"
+    },
+    {
+      "operation_date": "2026-01-01"
+    },
+    {
+      "operation_date": "2026-01-01"
+    }
+  ],
+  "latestByField": {
+    "operation_date": [
+      {
+        "operation_date": "2026-07-05"
+      },
+      {
+        "operation_date": "2026-07-05"
+      },
+      {
+        "operation_date": "2026-07-05"
+      }
+    ]
+  },
+  "julyCounts": {
+    "operation_date": {
+      "count": 1505,
+      "error": null
+    }
+  },
+  "step1": {
+    "osnRows": 916,
+    "vykRows": 18,
+    "osnUnique": 573,
+    "vykUnique": 9,
+    "onlyOsn": 564,
+    "onlyVyk": 0,
+    "both": 9,
+    "onlyVykSrids": [],
+    "bothCompare": [
+      {
+        "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Логистика"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Логистика"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4650372580189",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 4.16,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-14"
+          },
+          {
+            "type": "Основной",
+            "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580189",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 180.56,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "Основной",
+            "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580189",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580189",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 180.56,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580189",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 241.96,
+            "vyk": 241.96,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 4.16,
+            "vyk": 0,
+            "delta": 4.16,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 2,
+            "vyk": 0,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Продажа"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Продажа"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4627121466490",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 17.03,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "Основной",
+            "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "197650450",
+            "barcode": "4627121466490",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 188.96,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-13"
+          },
+          {
+            "type": "Основной",
+            "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+            "justification": "Продажа",
+            "docType": "Продажа",
+            "nmId": "197650450",
+            "barcode": "4627121466490",
+            "qty": 1,
+            "ppvz": 3635.39,
+            "logistics": 0,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-13"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "197650450",
+            "barcode": "4627121466490",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 188.96,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-13"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+            "justification": "Продажа",
+            "docType": "Продажа",
+            "nmId": "197650450",
+            "barcode": "4627121466490",
+            "qty": 1,
+            "ppvz": 3635.39,
+            "logistics": 0,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-13"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 3635.39,
+            "vyk": 3635.39,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 188.96,
+            "vyk": 188.96,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 17.03,
+            "vyk": 0,
+            "delta": 17.03,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 3,
+            "vyk": 1,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Логистика"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Логистика"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4650372580158",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 6.95,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "Основной",
+            "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580158",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 102.23,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "Основной",
+            "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580158",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580158",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 102.23,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "233025595",
+            "barcode": "4650372580158",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 163.63,
+            "vyk": 163.63,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 6.95,
+            "vyk": 0,
+            "delta": 6.95,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 2,
+            "vyk": 0,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Логистика"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Логистика"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4627121466360",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 19.34,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "Основной",
+            "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064438",
+            "barcode": "4627121466360",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 246.36,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "Основной",
+            "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064438",
+            "barcode": "4627121466360",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064438",
+            "barcode": "4627121466360",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 246.36,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064438",
+            "barcode": "4627121466360",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 307.76,
+            "vyk": 307.76,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 19.34,
+            "vyk": 0,
+            "delta": 19.34,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 2,
+            "vyk": 0,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Возврат"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Возврат"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4627121466445",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 6.23,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-18"
+          },
+          {
+            "type": "Основной",
+            "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064437",
+            "barcode": "4627121466445",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 145.96,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "Основной",
+            "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+            "justification": "Возврат",
+            "docType": "Возврат",
+            "nmId": "150064437",
+            "barcode": "4627121466445",
+            "qty": 1,
+            "ppvz": 4239.7,
+            "logistics": 0,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064437",
+            "barcode": "4627121466445",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 145.96,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+            "justification": "Возврат",
+            "docType": "Возврат",
+            "nmId": "150064437",
+            "barcode": "4627121466445",
+            "qty": 1,
+            "ppvz": 4239.7,
+            "logistics": 0,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 4239.7,
+            "vyk": 4239.7,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 145.96,
+            "vyk": 145.96,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 6.23,
+            "vyk": 0,
+            "delta": 6.23,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 3,
+            "vyk": 1,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Логистика"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Логистика"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4627121466438",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 3.06,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-18"
+          },
+          {
+            "type": "Основной",
+            "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064437",
+            "barcode": "",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 351.86,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "Основной",
+            "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064437",
+            "barcode": "",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 145.96,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064437",
+            "barcode": "",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 351.86,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064437",
+            "barcode": "",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 145.96,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 497.82,
+            "vyk": 497.82,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 3.06,
+            "vyk": 0,
+            "delta": 3.06,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 2,
+            "vyk": 0,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Логистика"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Логистика"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4627121466216",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 1.92,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-18"
+          },
+          {
+            "type": "Основной",
+            "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "155297552",
+            "barcode": "4627121466216",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 233.7,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "Основной",
+            "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "155297552",
+            "barcode": "4627121466216",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "155297552",
+            "barcode": "4627121466216",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 233.7,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "155297552",
+            "barcode": "4627121466216",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-15"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 295.1,
+            "vyk": 295.1,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 1.92,
+            "vyk": 0,
+            "delta": 1.92,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 2,
+            "vyk": 0,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Продажа"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Продажа"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "4627121466377",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 30.3,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-18"
+          },
+          {
+            "type": "Основной",
+            "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064438",
+            "barcode": "4627121466377",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 122.67,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "Основной",
+            "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+            "justification": "Продажа",
+            "docType": "Продажа",
+            "nmId": "150064438",
+            "barcode": "4627121466377",
+            "qty": 1,
+            "ppvz": 3927.47,
+            "logistics": 0,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150064438",
+            "barcode": "4627121466377",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 122.67,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+            "justification": "Продажа",
+            "docType": "Продажа",
+            "nmId": "150064438",
+            "barcode": "4627121466377",
+            "qty": 1,
+            "ppvz": 3927.47,
+            "logistics": 0,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-17"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 3927.47,
+            "vyk": 3927.47,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 122.67,
+            "vyk": 122.67,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 30.3,
+            "vyk": 0,
+            "delta": 30.3,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 3,
+            "vyk": 1,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      },
+      {
+        "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+        "osnLines": 3,
+        "vykLines": 2,
+        "osnJustifications": [
+          "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "Логистика",
+          "Логистика"
+        ],
+        "vykJustifications": [
+          "Логистика",
+          "Логистика"
+        ],
+        "osn": [
+          {
+            "type": "Основной",
+            "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+            "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+            "docType": "",
+            "nmId": "0",
+            "barcode": "2037562406986",
+            "qty": 2,
+            "ppvz": 0,
+            "logistics": 0,
+            "rebill": 12.33,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-18"
+          },
+          {
+            "type": "Основной",
+            "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150060262",
+            "barcode": "2037562406986",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 192.16,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-19"
+          },
+          {
+            "type": "Основной",
+            "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150060262",
+            "barcode": "2037562406986",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-19"
+          }
+        ],
+        "vyk": [
+          {
+            "type": "По выкупам",
+            "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150060262",
+            "barcode": "2037562406986",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 192.16,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-19"
+          },
+          {
+            "type": "По выкупам",
+            "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+            "justification": "Логистика",
+            "docType": "",
+            "nmId": "150060262",
+            "barcode": "2037562406986",
+            "qty": 0,
+            "ppvz": 0,
+            "logistics": 61.4,
+            "rebill": 0,
+            "storage": 0,
+            "penalties": 0,
+            "acceptance": 0,
+            "holds": 0,
+            "saleDate": "2026-07-19"
+          }
+        ],
+        "fieldDiffs": {
+          "ppvz": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "logistics": {
+            "osn": 253.56,
+            "vyk": 253.56,
+            "delta": 0,
+            "same": true
+          },
+          "rebill": {
+            "osn": 12.33,
+            "vyk": 0,
+            "delta": 12.33,
+            "same": false
+          },
+          "storage": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "penalties": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "acceptance": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "holds": {
+            "osn": 0,
+            "vyk": 0,
+            "delta": 0,
+            "same": true
+          },
+          "qty": {
+            "osn": 2,
+            "vyk": 0,
+            "delta": 2,
+            "same": false
+          }
+        },
+        "anyValueDiff": true
+      }
+    ],
+    "bothWithValueDiffs": 9,
+    "bothIdenticalValues": 0
+  },
+  "sridHits": [
+    {
+      "srid": "eBs.i70140a05ef97b212165bb26a07c847bc.0.0",
+      "error": null,
+      "count": 0,
+      "sample": []
+    },
+    {
+      "srid": "ebZ.i516e1ee79943b9a49d41726c57e09d34.1.0",
+      "error": null,
+      "count": 0,
+      "sample": []
+    },
+    {
+      "srid": "eb7.r9cd2cfa335e04739ab2713819bde2e10.0.0",
+      "error": null,
+      "count": 0,
+      "sample": []
+    },
+    {
+      "srid": "eb3.i9af478f9af5cbdb2985ab96b1bf7054d.0.0",
+      "error": null,
+      "count": 0,
+      "sample": []
+    },
+    {
+      "srid": "eA4.r5a1c8e77b7ce41e38bb8927b96b2af77.0.0",
+      "error": null,
+      "count": 0,
+      "sample": []
+    }
+  ]
+}

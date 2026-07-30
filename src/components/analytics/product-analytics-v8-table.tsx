@@ -1,11 +1,15 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { LogisticsBreakdownHint } from "@/components/analytics/logistics-breakdown-hint";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { useProductSkuAnalytics } from "@/hooks/use-product-sku-analytics";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
+import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
 import { getOperationalMarginBand } from "@/lib/product-operational-metrics";
 import type { ProductAnalyticsSkuRow, ProductAnalyticsV3Row } from "@/types/database";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
@@ -34,6 +38,80 @@ const stickyModelHeader =
   "sticky left-10 z-20 min-w-[6.5rem] bg-card border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]";
 const stickyExpandHeader = "sticky left-0 z-20 w-10 min-w-10 bg-card";
 
+type MainSortKey =
+  | "model"
+  | "product"
+  | "currentStock"
+  | "orders"
+  | "purchases"
+  | "conversion"
+  | "revenue"
+  | "marketplaceFees"
+  | "totalLogistics"
+  | "productCost"
+  | "operationalProfit"
+  | "operationalMargin";
+
+type SkuSortKey =
+  | "size"
+  | "barcode"
+  | "currentStock"
+  | "orders"
+  | "purchases"
+  | "conversion"
+  | "revenue";
+
+const MAIN_DEFAULT_SORT = { key: "revenue" as const, direction: "desc" as const };
+const SKU_DEFAULT_SORT = { key: "revenue" as const, direction: "desc" as const };
+
+function mainSortValue(row: ProductAnalyticsV3Row, key: MainSortKey): SortValue {
+  switch (key) {
+    case "model":
+      return row.supplierArticle;
+    case "product":
+      return row.productName;
+    case "currentStock":
+      return row.currentStock;
+    case "orders":
+      return row.orders;
+    case "purchases":
+      return row.purchases;
+    case "conversion":
+      return row.conversionPercent;
+    case "revenue":
+      return row.revenue;
+    case "marketplaceFees":
+      return row.marketplaceFees;
+    case "totalLogistics":
+      return row.totalLogistics;
+    case "productCost":
+      return row.productCost;
+    case "operationalProfit":
+      return row.operationalProfit;
+    case "operationalMargin":
+      return row.operationalMarginPercent;
+  }
+}
+
+function skuSortValue(row: ProductAnalyticsSkuRow, key: SkuSortKey): SortValue {
+  switch (key) {
+    case "size":
+      return row.size;
+    case "barcode":
+      return row.barcode ?? "";
+    case "currentStock":
+      return row.currentStock;
+    case "orders":
+      return row.orders;
+    case "purchases":
+      return row.purchases;
+    case "conversion":
+      return row.conversionPercent;
+    case "revenue":
+      return row.revenue;
+  }
+}
+
 function SkuChildRows({
   productId,
   from,
@@ -48,6 +126,15 @@ function SkuChildRows({
   colSpan: number;
 }) {
   const { data, isLoading, isError, error } = useProductSkuAnalytics(productId, from, to, isOpen);
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SkuSortKey>(SKU_DEFAULT_SORT);
+  const getSkuValue = useCallback(
+    (row: ProductAnalyticsSkuRow, key: SkuSortKey) => skuSortValue(row, key),
+    []
+  );
+  const sortedSkus = useMemo(() => {
+    if (!data?.skus.length) return [];
+    return sortRowsBySpec(data.skus, sort, getSkuValue);
+  }, [data?.skus, sort, getSkuValue]);
 
   if (!isOpen) return null;
 
@@ -73,22 +160,67 @@ function SkuChildRows({
           )}
           {data && data.skus.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-sm">
+              <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted-foreground">
-                    <th className="px-2 py-1.5 font-medium">Size</th>
-                    <th className="px-2 py-1.5 font-medium">Barcode</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Current Stock</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Orders</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Purchases</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Conversion %</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Cancelled</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Cancel %</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Revenue</th>
+                    <SortableTh
+                      label="Size"
+                      active={isActive("size")}
+                      direction={directionFor("size")}
+                      onClick={() => onSort("size")}
+                      className="px-2 py-1.5"
+                    />
+                    <SortableTh
+                      label="Barcode"
+                      active={isActive("barcode")}
+                      direction={directionFor("barcode")}
+                      onClick={() => onSort("barcode")}
+                      className="px-2 py-1.5"
+                    />
+                    <SortableTh
+                      label="Current Stock"
+                      active={isActive("currentStock")}
+                      direction={directionFor("currentStock")}
+                      onClick={() => onSort("currentStock")}
+                      align="right"
+                      className="px-2 py-1.5"
+                    />
+                    <SortableTh
+                      label="Orders"
+                      active={isActive("orders")}
+                      direction={directionFor("orders")}
+                      onClick={() => onSort("orders")}
+                      align="right"
+                      className="px-2 py-1.5"
+                    />
+                    <SortableTh
+                      label="Buyout"
+                      active={isActive("purchases")}
+                      direction={directionFor("purchases")}
+                      onClick={() => onSort("purchases")}
+                      align="right"
+                      className="px-2 py-1.5"
+                    />
+                    <SortableTh
+                      label="Conversion %"
+                      active={isActive("conversion")}
+                      direction={directionFor("conversion")}
+                      onClick={() => onSort("conversion")}
+                      align="right"
+                      className="px-2 py-1.5"
+                    />
+                    <SortableTh
+                      label="Revenue"
+                      active={isActive("revenue")}
+                      direction={directionFor("revenue")}
+                      onClick={() => onSort("revenue")}
+                      align="right"
+                      className="px-2 py-1.5"
+                    />
                   </tr>
                 </thead>
                 <tbody>
-                  {data.skus.map((sku) => (
+                  {sortedSkus.map((sku) => (
                     <SkuRow key={sku.variantKey} sku={sku} />
                   ))}
                 </tbody>
@@ -121,16 +253,42 @@ function SkuRow({ sku }: { sku: ProductAnalyticsSkuRow }) {
         {hasOrders ? formatPercent(sku.conversionPercent) : "—"}
       </td>
       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
-        {formatNumber(sku.cancelled)}
-      </td>
-      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
-        {hasOrders ? formatPercent(sku.cancellationPercent) : "—"}
-      </td>
-      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
         {formatCurrency(sku.revenue)}
       </td>
     </tr>
   );
+}
+
+function filterProductAnalyticsRows(
+  rows: ProductAnalyticsV3Row[],
+  productParam: string,
+  skuParam: string
+): ProductAnalyticsV3Row[] {
+  if (productParam) {
+    return rows.filter((row) => String(row.productId) === productParam);
+  }
+  if (skuParam) {
+    const skuLower = skuParam.toLowerCase();
+    const exact = rows.filter((row) => row.supplierArticle.toLowerCase() === skuLower);
+    if (exact.length > 0) return exact;
+    return rows.filter((row) => row.supplierArticle.toLowerCase().includes(skuLower));
+  }
+  return rows;
+}
+
+function resolveDeepLinkExpandProductId(
+  displayRows: ProductAnalyticsV3Row[],
+  productParam: string,
+  skuParam: string
+): string | null {
+  if (productParam) {
+    const match = displayRows.find((row) => String(row.productId) === productParam);
+    return match ? String(match.productId) : null;
+  }
+  if (!skuParam || displayRows.length === 0) return null;
+  const skuLower = skuParam.toLowerCase();
+  const exact = displayRows.find((row) => row.supplierArticle.toLowerCase() === skuLower);
+  return String((exact ?? displayRows[0]).productId);
 }
 
 export function ProductAnalyticsV8Table({
@@ -142,6 +300,39 @@ export function ProductAnalyticsV8Table({
 }: ProductAnalyticsV8TableProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const searchParams = useSearchParams();
+
+  const skuParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku)?.trim() ?? "";
+  const productParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.product)?.trim() ?? "";
+  const isDeepLinkFiltered = Boolean(productParam || skuParam);
+
+  const filteredRows = useMemo(
+    () => filterProductAnalyticsRows(rows, productParam, skuParam),
+    [rows, productParam, skuParam]
+  );
+
+  const { sort, onSort, directionFor, isActive } = useCycleSort<MainSortKey>(MAIN_DEFAULT_SORT);
+  const getMainValue = useCallback(
+    (row: ProductAnalyticsV3Row, key: MainSortKey) => mainSortValue(row, key),
+    []
+  );
+  const displayRows = useMemo(
+    () => sortRowsBySpec(filteredRows, sort, getMainValue),
+    [filteredRows, sort, getMainValue]
+  );
+
+  const deepLinkExpandProductId = useMemo(
+    () => resolveDeepLinkExpandProductId(displayRows, productParam, skuParam),
+    [displayRows, productParam, skuParam]
+  );
+
+  useEffect(() => {
+    if (!deepLinkExpandProductId) return;
+    setExpanded((current) =>
+      current[deepLinkExpandProductId]
+        ? current
+        : { ...current, [deepLinkExpandProductId]: true }
+    );
+  }, [deepLinkExpandProductId]);
 
   const inventoryHref = (productId: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -158,13 +349,20 @@ export function ProductAnalyticsV8Table({
     () => Object.values(expanded).filter(Boolean).length,
     [expanded]
   );
-  const parentColSpan = 15;
+  const parentColSpan = 13;
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-4 py-2.5">
         <h3 className="text-base font-semibold">{title}</h3>
         {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
+        {isDeepLinkFiltered && (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Showing {displayRows.length} of {rows.length} product
+            {rows.length === 1 ? "" : "s"}
+            {skuParam ? ` matching “${skuParam}”` : ""}
+          </p>
+        )}
         {expandedCount > 0 && (
           <p className="mt-1 text-xs text-muted-foreground">
             {expandedCount} model(s) expanded · SKU data cached via React Query
@@ -172,35 +370,119 @@ export function ProductAnalyticsV8Table({
         )}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1200px] text-sm">
+        <table className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
               <th className={cn("px-2 py-2", stickyExpandHeader)} />
-              <th className={cn("px-3 py-2 font-medium", stickyModelHeader)}>Model</th>
-              <th className="px-3 py-2 font-medium">Product</th>
-              <th className="px-3 py-2 text-right font-medium">Current Stock</th>
-              <th className="px-3 py-2 text-right font-medium">Orders</th>
-              <th className="px-3 py-2 text-right font-medium">Purchases</th>
-              <th className="px-3 py-2 text-right font-medium">Conv. %</th>
-              <th className="px-3 py-2 text-right font-medium">Cancelled</th>
-              <th className="px-3 py-2 text-right font-medium">Cancel. %</th>
-              <th className="px-3 py-2 text-right font-medium">Revenue</th>
-              <th className="px-3 py-2 text-right font-medium">Marketplace Fees</th>
-              <th className="px-3 py-2 text-right font-medium">Total Logistics</th>
-              <th className="px-3 py-2 text-right font-medium">Product Cost</th>
-              <th className="px-3 py-2 text-right font-medium">Oper. Profit</th>
-              <th className="px-3 py-2 text-right font-medium">Oper. Margin</th>
+              <SortableTh
+                label="Model"
+                active={isActive("model")}
+                direction={directionFor("model")}
+                onClick={() => onSort("model")}
+                align="left"
+                className={cn("px-3 py-2", stickyModelHeader)}
+              />
+              <SortableTh
+                label="Product"
+                active={isActive("product")}
+                direction={directionFor("product")}
+                onClick={() => onSort("product")}
+                align="left"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Current Stock"
+                active={isActive("currentStock")}
+                direction={directionFor("currentStock")}
+                onClick={() => onSort("currentStock")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Orders"
+                active={isActive("orders")}
+                direction={directionFor("orders")}
+                onClick={() => onSort("orders")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Buyout"
+                active={isActive("purchases")}
+                direction={directionFor("purchases")}
+                onClick={() => onSort("purchases")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Conv. %"
+                active={isActive("conversion")}
+                direction={directionFor("conversion")}
+                onClick={() => onSort("conversion")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Revenue"
+                active={isActive("revenue")}
+                direction={directionFor("revenue")}
+                onClick={() => onSort("revenue")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Marketplace Fees"
+                active={isActive("marketplaceFees")}
+                direction={directionFor("marketplaceFees")}
+                onClick={() => onSort("marketplaceFees")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Total Logistics"
+                active={isActive("totalLogistics")}
+                direction={directionFor("totalLogistics")}
+                onClick={() => onSort("totalLogistics")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Product Cost"
+                active={isActive("productCost")}
+                direction={directionFor("productCost")}
+                onClick={() => onSort("productCost")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Oper. Profit"
+                active={isActive("operationalProfit")}
+                direction={directionFor("operationalProfit")}
+                onClick={() => onSort("operationalProfit")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Oper. Margin"
+                active={isActive("operationalMargin")}
+                direction={directionFor("operationalMargin")}
+                onClick={() => onSort("operationalMargin")}
+                align="right"
+                className="px-3 py-2"
+              />
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {displayRows.length === 0 ? (
               <tr>
                 <td colSpan={parentColSpan} className="px-4 py-8 text-center text-muted-foreground">
-                  No product data for the selected period
+                  {isDeepLinkFiltered
+                    ? "No products match the deep-link filter"
+                    : "No product data for the selected period"}
                 </td>
               </tr>
             ) : (
-              rows.map((row) => {
+              displayRows.map((row) => {
                 const productKey = String(row.productId);
                 const isOpen = Boolean(expanded[productKey]);
                 const variant = operationalVariant(row.operationalMarginPercent);
@@ -250,12 +532,6 @@ export function ProductAnalyticsV8Table({
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         {formatPercent(row.conversionPercent)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                        {formatNumber(row.cancelled)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                        {formatPercent(row.cancellationPercent)}
                       </td>
                       <td className="px-3 py-2 text-right font-medium tabular-nums">
                         {formatCurrency(row.revenue)}

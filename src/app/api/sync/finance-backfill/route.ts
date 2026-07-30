@@ -3,7 +3,7 @@ import { runFinanceHistoryBackfill } from "@/lib/wildberries/finance-history-bac
 import { createWbSyncService } from "@/lib/wildberries/sync-service";
 import { syncLog } from "@/lib/wildberries/sync-log";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { resolveMarketplaceAccountId } from "@/services/marketplace-account-service";
+import { authorize, authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import type { WbFinance } from "@/types/database";
 
 export const maxDuration = 300;
@@ -17,7 +17,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      marketplaceAccountId,
       dateFrom,
       dateTo,
       strategy = "monthly",
@@ -28,22 +27,26 @@ export async function POST(request: Request) {
       strategy?: "monthly" | "rolling30" | "single";
     };
 
+    const authz = await authorizeRequestScope(request, {
+      body,
+      requireMarketplaceAccount: true,
+      allowDefaultAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
+
+    const marketplaceAccountId = authz.marketplaceAccountId!;
     const endDate = dateTo ?? new Date().toISOString().slice(0, 10);
     const year = endDate.slice(0, 4);
     const startDate = dateFrom ?? `${year}-01-01`;
 
-    const resolved = marketplaceAccountId
-      ? { marketplaceAccountId }
-      : await resolveMarketplaceAccountId(null, null);
-
     syncLog("finance-backfill-route", "START", {
-      marketplaceAccountId: resolved.marketplaceAccountId,
+      marketplaceAccountId,
       dateFrom: startDate,
       dateTo: endDate,
       strategy,
     });
 
-    const syncService = await createWbSyncService(resolved.marketplaceAccountId);
+    const syncService = await createWbSyncService(marketplaceAccountId);
     const supabase = createAdminClient();
 
     async function fetchFinanceInRange(from: string, to: string): Promise<WbFinance[]> {
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
         const { data, error } = await supabase
           .from("wb_finance")
           .select("*")
-          .eq("marketplace_account_id", resolved.marketplaceAccountId)
+          .eq("marketplace_account_id", marketplaceAccountId)
           .gte("operation_date", from)
           .lte("operation_date", to)
           .range(offset, offset + 999);
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: result.completed,
-      marketplaceAccountId: resolved.marketplaceAccountId,
+      marketplaceAccountId,
       dateFrom: startDate,
       dateTo: endDate,
       strategy,
@@ -93,7 +96,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authz = await authorize(request);
+  if (isAuthzFailure(authz)) return authz;
   return NextResponse.json({
     status: "ready",
     message:

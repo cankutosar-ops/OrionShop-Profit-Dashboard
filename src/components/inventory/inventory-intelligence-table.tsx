@@ -1,7 +1,9 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Download, HelpCircle, Search } from "lucide-react";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { ProductIntelligenceDrawer } from "@/components/inventory/product-intelligence-drawer";
 import { ProductThumbnail } from "@/components/inventory/product-thumbnail";
 import { StockHealthBadge } from "@/components/inventory/stock-health-badge";
@@ -15,6 +17,7 @@ import type {
   StockHealthStatus,
   StockHealthThresholds,
 } from "@/lib/inventory-intelligence-types";
+import { sortRowsBySpec, type SortSpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
 
 type InventoryIntelligenceTableProps = {
@@ -74,22 +77,28 @@ function matchesWarehouseBucket(count: number, bucket: WarehouseCountBucket): bo
   return count >= 4;
 }
 
-function compareNullableNumber(
-  a: number | null,
-  b: number | null,
-  nullAs: "high" | "low"
-): number {
-  const fill = nullAs === "high" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
-  const av = a ?? fill;
-  const bv = b ?? fill;
-  return av - bv;
-}
+const DEFAULT_SORT: SortSpec<SortKey> = { key: "daysSinceLastSale", direction: "desc" };
 
-function compareNullableDate(a: string | null, b: string | null): number {
-  if (a === b) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  return a.localeCompare(b);
+function intelligenceSortValue(row: InventoryIntelligenceSkuRow, key: SortKey): SortValue {
+  switch (key) {
+    case "sku":
+      return row.sku;
+    case "productName":
+      return row.productName;
+    case "currentStock":
+      return row.currentStock;
+    case "warehouseCount":
+      return row.warehouseCount;
+    case "totalSales":
+      return totalSalesFromDistribution(row);
+    case "lastSaleDate":
+      return row.lastSaleDate;
+    case "daysSinceLastSale":
+      // Never sold (null) → treat as highest days for DESC attention-first sorting.
+      return row.daysSinceLastSale ?? Number.POSITIVE_INFINITY;
+    case "stockHealth":
+      return HEALTH_SORT_RANK[row.stockHealth];
+  }
 }
 
 function stockHealthTooltip(thresholds: StockHealthThresholds): string {
@@ -112,8 +121,11 @@ export function InventoryIntelligenceTable({
   const [healthFilter, setHealthFilter] = useState<"all" | StockHealthStatus>("all");
   const [warehouseBucket, setWarehouseBucket] = useState<WarehouseCountBucket>("all");
   const [categoryId, setCategoryId] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("daysSinceLastSale");
-  const [sortAsc, setSortAsc] = useState(false);
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortKey>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: InventoryIntelligenceSkuRow, key: SortKey) => intelligenceSortValue(row, key),
+    []
+  );
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
@@ -155,51 +167,8 @@ export function InventoryIntelligenceTable({
       );
     });
 
-    list.sort((a, b) => {
-      let cmp = 0;
-      switch (sortKey) {
-        case "sku":
-          cmp = a.sku.localeCompare(b.sku);
-          break;
-        case "productName":
-          cmp = a.productName.localeCompare(b.productName);
-          break;
-        case "currentStock":
-          cmp = a.currentStock - b.currentStock;
-          break;
-        case "warehouseCount":
-          cmp = a.warehouseCount - b.warehouseCount;
-          break;
-        case "totalSales":
-          cmp = totalSalesFromDistribution(a) - totalSalesFromDistribution(b);
-          break;
-        case "lastSaleDate":
-          cmp = compareNullableDate(a.lastSaleDate, b.lastSaleDate);
-          break;
-        case "daysSinceLastSale":
-          // Never sold (null) sorts as highest days → attention first when DESC.
-          cmp = compareNullableNumber(a.daysSinceLastSale, b.daysSinceLastSale, "high");
-          break;
-        case "stockHealth":
-          cmp = HEALTH_SORT_RANK[a.stockHealth] - HEALTH_SORT_RANK[b.stockHealth];
-          break;
-      }
-      if (cmp === 0) cmp = a.sku.localeCompare(b.sku);
-      return sortAsc ? cmp : -cmp;
-    });
-
-    return list;
-  }, [rows, query, healthFilter, warehouseBucket, categoryId, sortKey, sortAsc]);
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortAsc((value) => !value);
-    } else {
-      setSortKey(key);
-      // Default new column to DESC for attention metrics, ASC for labels.
-      setSortAsc(key === "sku" || key === "productName");
-    }
-  }
+    return sortRowsBySpec(list, sort, getValue);
+  }, [rows, query, healthFilter, warehouseBucket, categoryId, sort, getValue]);
 
   function toggleExpand(productId: string) {
     setExpanded((current) => ({ ...current, [productId]: !current[productId] }));
@@ -221,35 +190,6 @@ export function InventoryIntelligenceTable({
       rangeFrom,
       rangeTo,
     });
-  }
-
-  function SortHeader({
-    label,
-    column,
-    align = "left",
-    title,
-  }: {
-    label: string;
-    column: SortKey;
-    align?: "left" | "right";
-    title?: string;
-  }) {
-    const active = sortKey === column;
-    return (
-      <button
-        type="button"
-        onClick={() => toggleSort(column)}
-        title={title}
-        className={cn(
-          "inline-flex items-center gap-1 font-medium hover:text-foreground",
-          align === "right" && "flex-row-reverse",
-          active ? "text-foreground" : "text-muted-foreground"
-        )}
-      >
-        {label}
-        {active && <span className="text-[10px]">{sortAsc ? "↑" : "↓"}</span>}
-      </button>
-    );
   }
 
   const selectClass =
@@ -380,36 +320,66 @@ export function InventoryIntelligenceTable({
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
               <th className="w-10 px-2 py-3" aria-label="Expand" />
-              <th className="px-3 py-3">
-                <SortHeader label="SKU / Product" column="sku" />
-              </th>
-              <th className="px-3 py-3 text-right">
-                <SortHeader label="Current Stock" column="currentStock" align="right" />
-              </th>
-              <th className="px-3 py-3 text-right">
-                <SortHeader
-                  label="Warehouse Count"
-                  column="warehouseCount"
-                  align="right"
-                  title="Distinct warehouses with current stock (wb_stock)"
-                />
-              </th>
-              <th className="px-3 py-3 text-right">
-                <SortHeader label="Total Sales" column="totalSales" align="right" />
-              </th>
-              <th className="px-3 py-3 text-right">
-                <SortHeader label="Last Sale Date" column="lastSaleDate" align="right" />
-              </th>
-              <th className="px-3 py-3 text-right">
-                <SortHeader label="Days Since Last Sale" column="daysSinceLastSale" align="right" />
-              </th>
-              <th className="px-3 py-3">
-                <SortHeader
-                  label="Stock Health"
-                  column="stockHealth"
-                  title={healthHelp}
-                />
-              </th>
+              <SortableTh
+                label="SKU / Product"
+                active={isActive("sku")}
+                direction={directionFor("sku")}
+                onClick={() => onSort("sku")}
+                className="px-3 py-3 font-medium"
+              />
+              <SortableTh
+                label="Current Stock"
+                active={isActive("currentStock")}
+                direction={directionFor("currentStock")}
+                onClick={() => onSort("currentStock")}
+                align="right"
+                className="px-3 py-3 font-medium"
+              />
+              <SortableTh
+                label={
+                  <span title="Distinct warehouses with current stock (wb_stock)">
+                    Warehouse Count
+                  </span>
+                }
+                active={isActive("warehouseCount")}
+                direction={directionFor("warehouseCount")}
+                onClick={() => onSort("warehouseCount")}
+                align="right"
+                className="px-3 py-3 font-medium"
+              />
+              <SortableTh
+                label="Total Sales"
+                active={isActive("totalSales")}
+                direction={directionFor("totalSales")}
+                onClick={() => onSort("totalSales")}
+                align="right"
+                className="px-3 py-3 font-medium"
+              />
+              <SortableTh
+                label="Last Sale Date"
+                active={isActive("lastSaleDate")}
+                direction={directionFor("lastSaleDate")}
+                onClick={() => onSort("lastSaleDate")}
+                align="right"
+                className="px-3 py-3 font-medium"
+              />
+              <SortableTh
+                label="Days Since Last Sale"
+                active={isActive("daysSinceLastSale")}
+                direction={directionFor("daysSinceLastSale")}
+                onClick={() => onSort("daysSinceLastSale")}
+                align="right"
+                className="px-3 py-3 font-medium"
+              />
+              <SortableTh
+                label={
+                  <span title={healthHelp}>Stock Health</span>
+                }
+                active={isActive("stockHealth")}
+                direction={directionFor("stockHealth")}
+                onClick={() => onSort("stockHealth")}
+                className="px-3 py-3 font-medium"
+              />
             </tr>
           </thead>
           <tbody>
@@ -450,8 +420,8 @@ export function InventoryIntelligenceTable({
                             aria-expanded={isOpen}
                             aria-label={
                               isOpen
-                                ? `Collapse warehouse distribution for ${row.sku}`
-                                : `Expand warehouse distribution for ${row.sku}`
+                                ? `Collapse warehouse sales for ${row.sku}`
+                                : `Expand warehouse sales for ${row.sku}`
                             }
                           >
                             {isOpen ? (
@@ -528,14 +498,14 @@ export function InventoryIntelligenceTable({
       </div>
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Distribution period {rangeFrom} → {rangeTo}
+        Warehouse sales period {rangeFrom} → {rangeTo}
         {" · "}
         Health as of {asOfDate}
         {" · "}
         Thresholds: Healthy ≤{thresholds.healthyMaxDays}d · Slow ≤{thresholds.slowMaxDays}d · At
         Risk ≤{thresholds.atRiskMaxDays}d · else Dead Stock
         {" · "}
-        Total Sales = Σ warehouseDistribution.orders (period)
+        Total Sales = Σ warehouse sales orders (period)
         {" · "}
         Warehouse Count = distinct warehouses with current stock
         {" · "}

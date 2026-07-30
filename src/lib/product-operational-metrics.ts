@@ -9,8 +9,8 @@ export function calculateTotalLogistics(
 }
 
 /**
- * Storage, penalties, and reimbursements outside Marketplace Fees KPI.
- * Account adjustments are included in marketplaceFees.
+ * Storage, penalties, and reimbursements outside Marketplace Fee.
+ * Account adjustments are deducted inside V4 Net Profit via `adjustments`.
  */
 export function calculateOtherMarketplaceCosts(
   product: Pick<ProductProfitability, "storage" | "penalties" | "reimbursements">
@@ -19,19 +19,11 @@ export function calculateOtherMarketplaceCosts(
 }
 
 /**
- * Operational P&L for Product Analytics (decision tool).
- * Uses the same approved Marketplace Fees definition as the Dashboard.
+ * Commercial Performance Net Profit (V4) for Product Analytics.
+ * Uses Financial Engine finalNetProfit — does NOT deduct Marketplace Fee or Acquiring again.
  */
 export function calculateOperationalProfit(product: ProductProfitability): number {
-  return (
-    product.revenue -
-    product.productCost -
-    product.marketplaceFees -
-    calculateTotalLogistics(product) -
-    product.returnLogistics -
-    product.advertising -
-    calculateOtherMarketplaceCosts(product)
-  );
+  return product.finalNetProfit;
 }
 
 export function calculateOperationalMarginPercent(
@@ -61,7 +53,7 @@ export type ProductOperationalMetrics = {
   otherMarketplaceCosts: number;
   operationalProfit: number;
   operationalMarginPercent: number;
-  /** Financial net profit (Model B engine). */
+  /** Financial Net Profit (V4 engine, after tax). */
   financialNetProfit: number;
   financialMarginPercent: number;
 };
@@ -79,8 +71,14 @@ export function buildProductOperationalMetrics(
     marketplaceFees: product.marketplaceFees,
     otherMarketplaceCosts: calculateOtherMarketplaceCosts(product),
     operationalProfit,
-    operationalMarginPercent: calculateOperationalMarginPercent(product.revenue, operationalProfit),
-    financialNetProfit: product.netProfit,
-    financialMarginPercent: calculateNetMarginPercent(product.revenue, product.netProfit),
+    operationalMarginPercent: calculateOperationalMarginPercent(
+      product.revenue,
+      operationalProfit
+    ),
+    financialNetProfit: product.finalNetProfit,
+    financialMarginPercent: calculateNetMarginPercent(
+      product.revenue,
+      product.finalNetProfit
+    ),
   };
 }

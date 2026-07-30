@@ -1,0 +1,7 @@
+{
+  "sprint": "6.46.3",
+  "pass": true,
+  "failed": 0,
+  "warehouseCountMeaning": "Distinct warehouses with current wb_stock rows (summarizeProductStock). Not sales-period distribution length.",
+  "generatedAt": "2026-07-20T19:01:45.427Z"
+}

@@ -10,8 +10,8 @@ import type {
   WbSale,
 } from "@/types/database";
 
-function getClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 /** Read-only persisted data access shared by Dashboard and Reports. */
@@ -20,7 +20,7 @@ export async function fetchProductsWithRelations(
   client?: SupabaseClient,
   options?: { brandId?: string; columns?: string }
 ): Promise<ProductWithRelations[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
 
   let query = supabase
     .from("products")
@@ -41,7 +41,7 @@ export async function fetchOrdersInRange(
   client?: SupabaseClient,
   options?: { productIds?: string[]; columns?: string }
 ): Promise<WbOrder[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   return fetchAllInDateRange<WbOrder>(supabase, "wb_orders", {
     column: "order_date",
     from: scope.from,
@@ -59,7 +59,7 @@ export async function fetchSalesInRange(
   client?: SupabaseClient,
   options?: { productIds?: string[]; columns?: string }
 ): Promise<WbSale[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   return fetchAllInDateRange<WbSale>(supabase, "wb_sales", {
     column: "sale_date",
     from: scope.from,
@@ -85,7 +85,7 @@ export async function fetchFinanceInRange(
   client?: SupabaseClient,
   options?: { productIds?: string[]; columns?: string }
 ): Promise<WbFinance[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const rangeFilter = {
     column: "operation_date" as const,
     from: scope.from,
@@ -124,7 +124,7 @@ export async function fetchAdsInRange(
   client?: SupabaseClient,
   options?: { productIds?: string[]; supplierArticles?: string[]; columns?: string }
 ): Promise<WbAd[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const selectColumns = options?.columns;
 
   if (options?.productIds || options?.supplierArticles) {
@@ -183,7 +183,7 @@ export async function fetchCostHistory(
   client?: SupabaseClient,
   options?: { productIds?: string[]; columns?: string }
 ): Promise<ProductCostHistory[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const productIds =
     options?.productIds ??
     (

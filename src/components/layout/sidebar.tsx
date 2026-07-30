@@ -5,12 +5,14 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Coins,
+  Activity,
   FileText,
   LayoutDashboard,
   LineChart,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  LogOut,
   Settings,
   ShoppingBag,
   Tag,
@@ -51,6 +53,7 @@ export const SIDEBAR_PRIMARY_NAVIGATION: SidebarNavItem[] = [
   { name: "Purchases", href: "/purchases", icon: ShoppingBag },
   { name: "Cost Management", href: "/costs", icon: Coins },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Production Health", href: "/monitoring", icon: Activity },
 ];
 
 /** Settings stays separated from operational workflow. */
@@ -285,10 +288,22 @@ export function Sidebar() {
         </Suspense>
       </nav>
 
-      <div className={cn("border-t border-border", collapsed ? "p-2" : "p-3")}>
+      <div className={cn("space-y-1 border-t border-border", collapsed ? "p-2" : "p-3")}>
         <Suspense fallback={<SidebarFooterLink href="/settings/companies" collapsed={collapsed} />}>
           <SidebarFooterWithScope collapsed={collapsed} />
         </Suspense>
+        <a
+          href="/auth/logout"
+          title={collapsed ? "Sign out" : undefined}
+          className={cn(
+            "flex items-center text-muted-foreground transition-ui hover:bg-card-hover/80 hover:text-foreground",
+            "rounded-[var(--radius-control)]",
+            collapsed ? "justify-center p-2" : "gap-3 px-3 py-2 text-xs font-medium"
+          )}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Sign out</span>}
+        </a>
       </div>
     </aside>
   );

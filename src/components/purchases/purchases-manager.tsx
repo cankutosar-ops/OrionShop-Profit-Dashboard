@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, FileSpreadsheet, Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { useProductContextQueryString } from "@/hooks/use-product-context-query";
 import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import type { PurchaseCurrency, PurchaseListItem } from "@/types/database";
 import { PURCHASE_CURRENCIES } from "@/types/database";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
@@ -30,6 +33,36 @@ const defaultHeader = (): ImportHeaderState => ({
   exchange_rate: "",
   notes: "",
 });
+
+type PurchaseSortKey =
+  | "purchaseDate"
+  | "supplier"
+  | "currency"
+  | "exchangeRate"
+  | "lines"
+  | "created";
+
+const PURCHASE_DEFAULT_SORT = {
+  key: "purchaseDate" as const,
+  direction: "desc" as const,
+};
+
+function purchaseSortValue(row: PurchaseListItem, key: PurchaseSortKey): SortValue {
+  switch (key) {
+    case "purchaseDate":
+      return row.purchase_date;
+    case "supplier":
+      return row.supplier;
+    case "currency":
+      return row.currency;
+    case "exchangeRate":
+      return row.exchange_rate;
+    case "lines":
+      return row.line_count;
+    case "created":
+      return row.created_at;
+  }
+}
 
 export function PurchasesManager({ purchases, productCount }: PurchasesManagerProps) {
   const router = useRouter();
@@ -71,6 +104,17 @@ export function PurchasesManager({ purchases, productCount }: PurchasesManagerPr
         purchase.supplierArticles.some((article) => article.toLowerCase().includes(query))
     );
   }, [purchases, search, skuParam]);
+
+  const { sort, onSort, directionFor, isActive } =
+    useCycleSort<PurchaseSortKey>(PURCHASE_DEFAULT_SORT);
+  const getPurchaseValue = useCallback(
+    (row: PurchaseListItem, key: PurchaseSortKey) => purchaseSortValue(row, key),
+    []
+  );
+  const sortedPurchases = useMemo(
+    () => sortRowsBySpec(filteredPurchases, sort, getPurchaseValue),
+    [filteredPurchases, sort, getPurchaseValue]
+  );
 
   function purchaseHref(purchaseId: string) {
     const base = `/purchases/${purchaseId}`;
@@ -327,7 +371,7 @@ export function PurchasesManager({ purchases, productCount }: PurchasesManagerPr
           />
         </div>
         <p className="text-sm text-muted-foreground">
-          {filteredPurchases.length} of {purchases.length} purchases
+          {sortedPurchases.length} of {purchases.length} purchases
         </p>
       </div>
 
@@ -336,16 +380,52 @@ export function PurchasesManager({ purchases, productCount }: PurchasesManagerPr
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="px-6 py-3 font-medium">Purchase Date</th>
-                <th className="px-6 py-3 font-medium">Supplier</th>
-                <th className="px-6 py-3 font-medium">Currency</th>
-                <th className="px-6 py-3 font-medium">Exchange Rate</th>
-                <th className="px-6 py-3 font-medium">Lines</th>
-                <th className="px-6 py-3 font-medium">Created</th>
+                <SortableTh
+                  label="Purchase Date"
+                  active={isActive("purchaseDate")}
+                  direction={directionFor("purchaseDate")}
+                  onClick={() => onSort("purchaseDate")}
+                  className="px-6 py-3"
+                />
+                <SortableTh
+                  label="Supplier"
+                  active={isActive("supplier")}
+                  direction={directionFor("supplier")}
+                  onClick={() => onSort("supplier")}
+                  className="px-6 py-3"
+                />
+                <SortableTh
+                  label="Currency"
+                  active={isActive("currency")}
+                  direction={directionFor("currency")}
+                  onClick={() => onSort("currency")}
+                  className="px-6 py-3"
+                />
+                <SortableTh
+                  label="Exchange Rate"
+                  active={isActive("exchangeRate")}
+                  direction={directionFor("exchangeRate")}
+                  onClick={() => onSort("exchangeRate")}
+                  className="px-6 py-3"
+                />
+                <SortableTh
+                  label="Lines"
+                  active={isActive("lines")}
+                  direction={directionFor("lines")}
+                  onClick={() => onSort("lines")}
+                  className="px-6 py-3"
+                />
+                <SortableTh
+                  label="Created"
+                  active={isActive("created")}
+                  direction={directionFor("created")}
+                  onClick={() => onSort("created")}
+                  className="px-6 py-3"
+                />
               </tr>
             </thead>
             <tbody>
-              {filteredPurchases.length === 0 ? (
+              {sortedPurchases.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                     {purchases.length === 0
@@ -354,7 +434,7 @@ export function PurchasesManager({ purchases, productCount }: PurchasesManagerPr
                   </td>
                 </tr>
               ) : (
-                filteredPurchases.map((purchase) => (
+                sortedPurchases.map((purchase) => (
                   <tr
                     key={purchase.id}
                     className={cn(

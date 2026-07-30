@@ -4,7 +4,11 @@ import { Suspense } from "react";
 import { LastSyncLabel } from "@/components/dashboard/last-sync-label";
 import { MarketplaceDateScope } from "@/components/dashboard/marketplace-date-scope";
 
-/** Dashboard header controls (scope + last sync). */
+/**
+ * Dashboard toolbar extras.
+ * MarketplaceDateScope is side-effect only (no UI).
+ * Settlement status chip intentionally omitted — ambiguous for business users.
+ */
 export function DashboardHeaderExtras() {
   return (
     <>

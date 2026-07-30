@@ -5,6 +5,7 @@ import { logScopeAudit } from "@/lib/scope-audit-log";
 import {
   aggregateWarehouseProductSales,
   aggregateWarehouseSales,
+  type WarehouseOrderInput,
   type WarehouseProductSalesRow,
   type WarehouseSaleInput,
   type WarehouseSalesRow,
@@ -18,6 +19,8 @@ const PAGE_SIZE = 1000;
 const SALE_COLUMNS =
   "warehouse, quantity, price_with_disc, is_return, product_id, nm_id";
 
+const ORDER_COLUMNS = "warehouse, product_id, quantity, price_with_disc, price";
+
 export type WarehouseSalesAnalyticsReport = {
   range: ScopedDateRange;
   rows: WarehouseSalesRow[];
@@ -26,21 +29,83 @@ export type WarehouseSalesAnalyticsReport = {
   drillDownWarehouse: string | null;
   products: WarehouseProductSalesRow[] | null;
   loadTimeMs: number;
-  /** Rows fetched from wb_sales after SQL filters (completed + non-null warehouse). */
+  /** Completed wb_sales rows in scope (units/revenue source). */
+  sourceSaleCount: number;
+  /** wb_orders rows in scope (orders source). */
+  sourceOrderCount: number;
+  /** @deprecated Use sourceSaleCount — kept for callers expecting sale row count. */
   sourceRowCount: number;
 };
 
-function getClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 /**
- * Fetch completed sales with non-null warehouse for the scope.
- * Filters pushed to SQL: marketplace_account_id, sale_date range, is_return=false, warehouse NOT NULL.
- * Optional brand scope via product_id IN (...).
- * Aggregation stays in application code (no DB RPC / schema change).
+ * Fetch all marketplace orders for the scope (Orders KPI).
+ * Includes NULL warehouse rows (aggregated as Unknown Warehouse).
  */
-async function fetchCompletedSalesWithWarehouse(
+async function fetchOrdersForWarehouseAnalytics(
+  scope: ScopedDateRange,
+  client: SupabaseClient,
+  productIds?: string[]
+): Promise<WarehouseOrderInput[]> {
+  if (productIds && productIds.length === 0) return [];
+
+  const started = Date.now();
+  const rows: WarehouseOrderInput[] = [];
+  let offset = 0;
+  let pages = 0;
+
+  while (true) {
+    let query = client
+      .from("wb_orders")
+      .select(ORDER_COLUMNS)
+      .eq("marketplace_account_id", scope.marketplaceAccountId)
+      .gte("order_date", scope.from)
+      .lte("order_date", scope.to)
+      .order("order_date", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (productIds) {
+      query = query.in("product_id", productIds);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      throw new Error(`Failed to fetch wb_orders for warehouse analytics: ${error.message}`);
+    }
+
+    const page = (data ?? []) as WarehouseOrderInput[];
+    rows.push(...page);
+    pages += 1;
+
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  recordPerfEvent({
+    category: "sql",
+    name: "sql.wb_orders.warehouse_sales_analytics",
+    durationMs: Date.now() - started,
+    meta: {
+      table: "wb_orders",
+      rows: rows.length,
+      pages,
+      queryName: "wb_orders.warehouse_sales_analytics",
+      from: scope.from,
+      to: scope.to,
+    },
+  });
+
+  return rows;
+}
+
+/**
+ * Fetch completed sales for Units / Revenue.
+ * NULL warehouses are included (aggregated as Unknown Warehouse).
+ */
+async function fetchCompletedSalesForWarehouseAnalytics(
   scope: ScopedDateRange,
   client: SupabaseClient,
   productIds?: string[]
@@ -60,7 +125,6 @@ async function fetchCompletedSalesWithWarehouse(
       .gte("sale_date", scope.from)
       .lte("sale_date", scope.to)
       .eq("is_return", false)
-      .not("warehouse", "is", null)
       .order("sale_date", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
@@ -106,7 +170,7 @@ export async function getWarehouseSalesAnalytics(
   if (!env.isConfigured) return null;
 
   const started = Date.now();
-  const client = getClient(options?.client);
+  const client = await getClient(options?.client);
 
   const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
@@ -114,9 +178,12 @@ export async function getWarehouseSalesAnalytics(
   });
 
   const productIds = scope.brandId ? products.map((p) => String(p.id)) : undefined;
-  const sales = await fetchCompletedSalesWithWarehouse(scope, client, productIds);
+  const [orders, sales] = await Promise.all([
+    fetchOrdersForWarehouseAnalytics(scope, client, productIds),
+    fetchCompletedSalesForWarehouseAnalytics(scope, client, productIds),
+  ]);
 
-  const { rows, totals } = aggregateWarehouseSales(sales);
+  const { rows, totals } = aggregateWarehouseSales({ orders, sales });
 
   const productLookup = new Map(
     products.map((p) => [
@@ -132,7 +199,7 @@ export async function getWarehouseSalesAnalytics(
   }
 
   logScopeAudit("Warehouse Sales Analytics", scope, scope, {
-    orders: 0,
+    orders: orders.length,
     sales: sales.length,
     finance: 0,
   });
@@ -144,6 +211,8 @@ export async function getWarehouseSalesAnalytics(
     drillDownWarehouse,
     products: productRows,
     loadTimeMs: Date.now() - started,
+    sourceSaleCount: sales.length,
+    sourceOrderCount: orders.length,
     sourceRowCount: sales.length,
   };
 }

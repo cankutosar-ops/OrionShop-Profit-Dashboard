@@ -1,0 +1,296 @@
+{
+  "id": "dad95448-608a-4ef3-aab6-94c68d811a6c",
+  "marketplace_account_id": "1",
+  "expected_as_of": "2026-07-29",
+  "health_score": 66,
+  "overall_result": "WARNING",
+  "schema_status": "PASS",
+  "orders_status": "healthy",
+  "sales_status": "healthy",
+  "finance_status": "healthy",
+  "inventory_status": "critical",
+  "sync_status": "partial",
+  "sync_request_id": "c8bd4ebd",
+  "sync_duration_ms": 2743839,
+  "snapshot": {
+    "version": 1,
+    "verifiedAt": "2026-07-29T09:53:39.332Z",
+    "marketplaceAccountId": "1",
+    "healthScore": 66,
+    "schemaStatus": "PASS",
+    "overallResult": "WARNING",
+    "orders": {
+      "entity": "orders",
+      "label": "Orders",
+      "latestApiDate": "2026-07-29",
+      "latestDbDate": "2026-07-29",
+      "gapDays": 0,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 3321
+    },
+    "sales": {
+      "entity": "sales",
+      "label": "Sales",
+      "latestApiDate": "2026-07-29",
+      "latestDbDate": "2026-07-29",
+      "gapDays": 0,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 1591
+    },
+    "finance": {
+      "entity": "finance",
+      "label": "Finance",
+      "latestApiDate": "2026-07-29",
+      "latestDbDate": "2026-07-26",
+      "gapDays": 3,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 68344
+    },
+    "inventory": {
+      "entity": "inventory",
+      "label": "Inventory",
+      "latestApiDate": null,
+      "latestDbDate": "2026-07-09",
+      "gapDays": null,
+      "coverageStatus": "critical",
+      "status": "critical",
+      "recordCount": 1077
+    },
+    "synchronization": {
+      "durationMs": 2743839,
+      "rowsInserted": 0,
+      "rowsUpdated": 3499,
+      "errors": [
+        "warning: report_discovery: WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller d4987350-11ef-4a93-a20d-c356c5d0a8ef; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"c83d675b549ebbb284efb9cf070d521a\",\n    \"origin\": \"s2s-fin",
+        "warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration",
+        "warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs"
+      ],
+      "warnings": [],
+      "finalStatus": "partial"
+    },
+    "operationalAlerts": [
+      {
+        "id": "coverage-inventory",
+        "severity": "critical",
+        "title": "Inventory behind API freshness target",
+        "detail": "Database latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+        "entity": "inventory"
+      },
+      {
+        "id": "sync-partial",
+        "severity": "warning",
+        "title": "Partial sync",
+        "detail": "Last sync completed with partial/warning status.",
+        "entity": "sync"
+      },
+      {
+        "id": "sync-entity-finance",
+        "severity": "warning",
+        "title": "Sync errors: finance",
+        "detail": "warning: report_discovery: WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller d4987350-11ef-4a93-a20d-c356c5d0a8ef; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"c83d675b549ebbb284efb9cf070d521a\",\n    \"origin\": \"s2s-fin · warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration · warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs",
+        "entity": "sync"
+      }
+    ],
+    "failures": [
+      {
+        "category": "inventory_stale",
+        "affectedEntity": "inventory",
+        "reason": "Inventory DB latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+        "detectedAt": "2026-07-29T09:53:39.331Z",
+        "recommendedAction": "Run a full Sync including stock, or investigate deprecated stocks API coverage."
+      },
+      {
+        "category": "partial_sync",
+        "affectedEntity": "sync",
+        "reason": "Synchronization completed with partial or warning status.",
+        "detectedAt": "2026-07-29T09:53:39.331Z",
+        "recommendedAction": "Review entity-level sync errors and re-run affected entities only."
+      }
+    ],
+    "productionHealth": {
+      "marketplaceAccountId": "1",
+      "generatedAt": "2026-07-29T09:53:17.285Z",
+      "expectedAsOf": "2026-07-29",
+      "lastAccountSyncAt": "2026-07-29T09:53:17.081+00:00",
+      "lastAccountSyncStatus": "partial",
+      "freshness": [
+        {
+          "entity": "orders",
+          "label": "Orders",
+          "latestDbDate": "2026-07-29",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 0,
+          "recordCount": 3321,
+          "status": "healthy"
+        },
+        {
+          "entity": "sales",
+          "label": "Sales",
+          "latestDbDate": "2026-07-29",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 0,
+          "recordCount": 1591,
+          "status": "healthy"
+        },
+        {
+          "entity": "finance",
+          "label": "Finance",
+          "latestDbDate": "2026-07-26",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 3,
+          "recordCount": 68344,
+          "status": "healthy"
+        },
+        {
+          "entity": "inventory",
+          "label": "Inventory",
+          "latestDbDate": "2026-07-09",
+          "expectedAsOf": "2026-07-29",
+          "daysBehind": 20,
+          "recordCount": 1077,
+          "status": "critical"
+        }
+      ],
+      "coverage": [
+        {
+          "entity": "orders",
+          "label": "Orders",
+          "databaseLatestDate": "2026-07-29",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 0,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "sales",
+          "label": "Sales",
+          "databaseLatestDate": "2026-07-29",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 0,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "finance",
+          "label": "Finance",
+          "databaseLatestDate": "2026-07-26",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 3,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "inventory",
+          "label": "Inventory",
+          "databaseLatestDate": "2026-07-09",
+          "expectedLatestApiDate": "2026-07-29",
+          "gapDays": 20,
+          "status": "critical",
+          "behindApi": true
+        }
+      ],
+      "syncExecution": {
+        "overallStatus": "partial",
+        "startedAt": "2026-07-29T09:07:33.442Z",
+        "finishedAt": "2026-07-29T09:53:17.283Z",
+        "requestId": "c8bd4ebd",
+        "error": null,
+        "entities": [
+          {
+            "entity": "orders",
+            "startedAt": "2026-07-29T09:07:33.442Z",
+            "finishedAt": "2026-07-29T09:53:17.283Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 759,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "success"
+          },
+          {
+            "entity": "sales",
+            "startedAt": "2026-07-29T09:07:33.442Z",
+            "finishedAt": "2026-07-29T09:53:17.283Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 158,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "success"
+          },
+          {
+            "entity": "finance",
+            "startedAt": "2026-07-29T09:07:33.442Z",
+            "finishedAt": "2026-07-29T09:53:17.283Z",
+            "durationMs": null,
+            "rowsInserted": 0,
+            "rowsUpdated": 2582,
+            "rowsSkipped": null,
+            "errors": [
+              "warning: report_discovery: WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller d4987350-11ef-4a93-a20d-c356c5d0a8ef; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"c83d675b549ebbb284efb9cf070d521a\",\n    \"origin\": \"s2s-fin",
+              "warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration",
+              "warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs"
+            ],
+            "warnings": [],
+            "result": "partial"
+          }
+        ]
+      },
+      "schema": {
+        "status": "PASS",
+        "checkedAt": "2026-07-29T09:53:18.146Z",
+        "missing": []
+      },
+      "alerts": [
+        {
+          "id": "coverage-inventory",
+          "severity": "critical",
+          "title": "Inventory behind API freshness target",
+          "detail": "Database latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+          "entity": "inventory"
+        },
+        {
+          "id": "sync-partial",
+          "severity": "warning",
+          "title": "Partial sync",
+          "detail": "Last sync completed with partial/warning status.",
+          "entity": "sync"
+        },
+        {
+          "id": "sync-entity-finance",
+          "severity": "warning",
+          "title": "Sync errors: finance",
+          "detail": "warning: report_discovery: WB API error 429: {\n    \"title\": \"too many requests\",\n    \"detail\": \"Limited by global limiter, per seller d4987350-11ef-4a93-a20d-c356c5d0a8ef; See https://dev.wildberries.ru/openapi/api-information\",\n    \"code\": \"461a0b83d6bd 2950e93b5fda\",\n    \"requestId\": \"c83d675b549ebbb284efb9cf070d521a\",\n    \"origin\": \"s2s-fin · warning: finance_category column missing on wb_finance — run npm run apply:finance-category-migration · warning: realizationreport_id column missing on wb_finance — run npx tsx scripts/apply-finance-sync-v2-migration.mjs",
+          "entity": "sync"
+        }
+      ],
+      "score": {
+        "value": 66,
+        "label": "Needs Attention"
+      }
+    }
+  },
+  "failures": [
+    {
+      "category": "inventory_stale",
+      "affectedEntity": "inventory",
+      "reason": "Inventory DB latest 2026-07-09 is 20 day(s) behind expected 2026-07-29.",
+      "detectedAt": "2026-07-29T09:53:39.331Z",
+      "recommendedAction": "Run a full Sync including stock, or investigate deprecated stocks API coverage."
+    },
+    {
+      "category": "partial_sync",
+      "affectedEntity": "sync",
+      "reason": "Synchronization completed with partial or warning status.",
+      "detectedAt": "2026-07-29T09:53:39.331Z",
+      "recommendedAction": "Review entity-level sync errors and re-run affected entities only."
+    }
+  ],
+  "verified_at": "2026-07-29T09:53:39.332Z",
+  "created_at": "2026-07-29T09:53:39.332Z"
+}

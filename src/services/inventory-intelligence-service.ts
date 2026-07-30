@@ -26,8 +26,8 @@ const DISTRIBUTION_SALE_COLUMNS =
 
 const LAST_SALE_COLUMNS = "product_id, sale_date, is_return";
 
-function getClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 function todayYmd(): string {
@@ -202,7 +202,7 @@ export async function getInventoryIntelligence(
   if (!env.isConfigured) return null;
 
   const started = Date.now();
-  const client = getClient(options?.client);
+  const client = await getClient(options?.client);
   const thresholds = options?.thresholds ?? DEFAULT_STOCK_HEALTH_THRESHOLDS;
   const asOfDate = options?.asOfDate ?? todayYmd();
 

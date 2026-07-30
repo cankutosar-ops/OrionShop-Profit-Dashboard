@@ -55,7 +55,7 @@ export default async function InventoryIntelligencePage({ searchParams }: PagePr
         <div className="space-y-4">
           <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             <p>
-              Period (warehouse distribution):{" "}
+              Period (warehouse sales):{" "}
               <span className="font-medium text-foreground">
                 {formatDate(scope.from)} → {formatDate(scope.to)}
               </span>
@@ -69,7 +69,7 @@ export default async function InventoryIntelligencePage({ searchParams }: PagePr
             </p>
             <p className="mt-1.5 text-xs leading-relaxed">
               Stock Health from days since last sale (service) · Total Sales = Σ period orders from
-              warehouse distribution · Last Sale Date is all-time MAX(sale_date)
+              warehouse sales · Last Sale Date is all-time MAX(sale_date)
             </p>
           </div>
 

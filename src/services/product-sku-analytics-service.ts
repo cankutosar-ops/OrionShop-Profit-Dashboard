@@ -25,7 +25,7 @@ async function fetchOrdersForProduct(
   marketplaceAccountId: string,
   range: ScopedDateRange
 ): Promise<WbOrder[]> {
-  const client = createServerClient();
+  const client = await createServerClient();
   const { data, error } = await client
     .from("wb_orders")
     .select("*")
@@ -43,7 +43,7 @@ async function fetchSalesForProduct(
   marketplaceAccountId: string,
   range: ScopedDateRange
 ): Promise<WbSale[]> {
-  const client = createServerClient();
+  const client = await createServerClient();
   const { data, error } = await client
     .from("wb_sales")
     .select("*")
@@ -57,7 +57,7 @@ async function fetchSalesForProduct(
 }
 
 async function fetchVariants(productId: string, marketplaceAccountId: string): Promise<ProductVariant[]> {
-  const client = createServerClient();
+  const client = await createServerClient();
   const { data, error } = await client
     .from("product_variants")
     .select("*")
@@ -79,7 +79,7 @@ export async function getProductSkuAnalytics(
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
 
-  const client = createServerClient();
+  const client = await createServerClient();
   const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
   });
@@ -113,7 +113,7 @@ export async function getProductSkuAnalytics(
 }
 
 export async function getCohortMaxOrders(scope: ScopedDateRange): Promise<number> {
-  const client = createServerClient();
+  const client = await createServerClient();
   const { data, error } = await client
     .from("wb_orders")
     .select("quantity, product_id")

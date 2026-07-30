@@ -48,10 +48,17 @@ export type FinanceHistoryBackfillOptions = {
    * - `single` — one request for the full range (fastest when API allows)
    */
   strategy?: "monthly" | "rolling30" | "single";
-  /** Skip windows already marked complete in progressState. */
+  /** Windows already marked complete in durable progress. */
   resumeFromProgress?: Map<string, boolean>;
-  /** Called after each window completes. */
-  onPeriodComplete?: (result: FinanceBackfillPeriodResult) => void;
+  /**
+   * When true (new-account lifecycle resume), skip completed windows.
+   * When false/omitted (manual CLI/API), revalidate previously completed windows.
+   */
+  skipCompletedWindows?: boolean;
+  /** Called after each window completes (may be async — awaited). */
+  onPeriodComplete?: (
+    result: FinanceBackfillPeriodResult
+  ) => void | Promise<void>;
   /** Fetch existing finance rows for before/after counts. */
   fetchFinanceInRange: (
     from: string,
@@ -191,9 +198,12 @@ export async function runFinanceHistoryBackfill(
 
   for (const window of windows) {
     const key = windowProgressKey(window);
-    if (options.resumeFromProgress?.get(key)) {
-      syncLog("finance-backfill", "SKIP (already complete)", { window: window.label });
-      periodResults.push({
+    const previouslyCompleted = Boolean(options.resumeFromProgress?.get(key));
+    if (previouslyCompleted && options.skipCompletedWindows) {
+      syncLog("finance-backfill", "SKIP (lifecycle resume — already completed)", {
+        window: window.label,
+      });
+      const skipped: FinanceBackfillPeriodResult = {
         window,
         apiRowsProcessed: 0,
         financeLinesUpserted: 0,
@@ -204,8 +214,16 @@ export async function runFinanceHistoryBackfill(
         netForPayAfter: 0,
         errors: [],
         skipped: true,
-      });
+      };
+      periodResults.push(skipped);
+      await options.onPeriodComplete?.(skipped);
       continue;
+    }
+    // Manual / revalidation path: never permanently skip delayed WB reports.
+    if (previouslyCompleted) {
+      syncLog("finance-backfill", "REVALIDATE (previously marked complete)", {
+        window: window.label,
+      });
     }
 
     syncLog("finance-backfill", "Processing window", {
@@ -235,7 +253,7 @@ export async function runFinanceHistoryBackfill(
         skipped: false,
       };
       periodResults.push(failed);
-      options.onPeriodComplete?.(failed);
+      await options.onPeriodComplete?.(failed);
       break;
     }
 
@@ -256,7 +274,7 @@ export async function runFinanceHistoryBackfill(
     };
 
     periodResults.push(periodResult);
-    options.onPeriodComplete?.(periodResult);
+    await options.onPeriodComplete?.(periodResult);
 
     syncLog("finance-backfill", "Window complete", {
       window: window.label,

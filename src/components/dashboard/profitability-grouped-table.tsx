@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   groupedNetMarginPercent,
   type ProfitabilityDimension,
 } from "@/lib/dimension-profitability";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 import type { GroupedProfitability } from "@/types/database";
 
@@ -16,10 +19,37 @@ type ProfitabilityGroupedTableProps = {
   defaultDimension?: ProfitabilityDimension;
 };
 
+type SortKey =
+  | "name"
+  | "productCount"
+  | "revenue"
+  | "finalNetProfit"
+  | "netMargin"
+  | "returnRate";
+
+const DEFAULT_SORT = { key: "revenue" as const, direction: "desc" as const };
+
 const DIMENSION_LABEL: Record<ProfitabilityDimension, string> = {
   category: "Category",
   brand: "Brand",
 };
+
+function sortValue(row: GroupedProfitability, key: SortKey): SortValue {
+  switch (key) {
+    case "name":
+      return row.name;
+    case "productCount":
+      return row.productCount;
+    case "revenue":
+      return row.revenue;
+    case "finalNetProfit":
+      return row.finalNetProfit;
+    case "netMargin":
+      return groupedNetMarginPercent(row);
+    case "returnRate":
+      return row.returnRate;
+  }
+}
 
 /**
  * Reusable Model B profitability rollup — Category / Brand (future: Supplier, …).
@@ -34,6 +64,16 @@ export function ProfitabilityGroupedTable({
   const [dimension, setDimension] = useState<ProfitabilityDimension>(defaultDimension);
   const rows = dimension === "brand" ? brands : categories;
   const nameHeader = DIMENSION_LABEL[dimension];
+
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortKey>(DEFAULT_SORT);
+  const getValue = useCallback(
+    (row: GroupedProfitability, key: SortKey) => sortValue(row, key),
+    []
+  );
+  const sorted = useMemo(
+    () => sortRowsBySpec(rows, sort, getValue),
+    [rows, sort, getValue]
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -73,23 +113,64 @@ export function ProfitabilityGroupedTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="px-6 py-3 font-medium">{nameHeader}</th>
-              <th className="px-6 py-3 text-right font-medium">Products</th>
-              <th className="px-6 py-3 text-right font-medium">Revenue</th>
-              <th className="px-6 py-3 text-right font-medium">Final Net Profit</th>
-              <th className="px-6 py-3 text-right font-medium">Net Margin</th>
-              <th className="px-6 py-3 text-right font-medium">Return Rate</th>
+              <SortableTh
+                label={nameHeader}
+                active={isActive("name")}
+                direction={directionFor("name")}
+                onClick={() => onSort("name")}
+                className="px-6 py-3"
+              />
+              <SortableTh
+                label="Products"
+                active={isActive("productCount")}
+                direction={directionFor("productCount")}
+                onClick={() => onSort("productCount")}
+                align="right"
+                className="px-6 py-3"
+              />
+              <SortableTh
+                label="Revenue"
+                active={isActive("revenue")}
+                direction={directionFor("revenue")}
+                onClick={() => onSort("revenue")}
+                align="right"
+                className="px-6 py-3"
+              />
+              <SortableTh
+                label="Final Net Profit"
+                active={isActive("finalNetProfit")}
+                direction={directionFor("finalNetProfit")}
+                onClick={() => onSort("finalNetProfit")}
+                align="right"
+                className="px-6 py-3"
+              />
+              <SortableTh
+                label="Net Margin"
+                active={isActive("netMargin")}
+                direction={directionFor("netMargin")}
+                onClick={() => onSort("netMargin")}
+                align="right"
+                className="px-6 py-3"
+              />
+              <SortableTh
+                label="Return Rate"
+                active={isActive("returnRate")}
+                direction={directionFor("returnRate")}
+                onClick={() => onSort("returnRate")}
+                align="right"
+                className="px-6 py-3"
+              />
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {sorted.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                   No {nameHeader.toLowerCase()} data available for the selected period
                 </td>
               </tr>
             ) : (
-              rows.map((row) => {
+              sorted.map((row) => {
                 const margin = groupedNetMarginPercent(row);
                 return (
                   <tr
@@ -114,10 +195,14 @@ export function ProfitabilityGroupedTable({
                     <td
                       className={cn(
                         "px-6 py-3.5 text-right",
-                        margin >= 0 ? "text-success" : "text-danger"
+                        margin === null
+                          ? "text-muted-foreground"
+                          : margin >= 0
+                            ? "text-success"
+                            : "text-danger"
                       )}
                     >
-                      {formatPercent(margin)}
+                      {margin === null ? "—" : formatPercent(margin)}
                     </td>
                     <td className="px-6 py-3.5 text-right text-muted-foreground">
                       {formatPercent(row.returnRate)}

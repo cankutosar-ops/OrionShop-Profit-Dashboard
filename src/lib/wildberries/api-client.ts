@@ -4,10 +4,12 @@ import {
   WB_FINANCE_PAGE_DELAY_MS,
   WB_RATE_LIMIT_MAX_RETRIES,
   WB_RATE_LIMIT_MS,
+  WB_SELLER_ANALYTICS_API,
   WB_STATISTICS_API,
   WB_SUPPLIES_API,
 } from "./constants";
 import { recordPerfEvent } from "@/lib/perf/perf-recorder";
+import { redactSecrets } from "@/lib/security/secrets";
 import { syncLog } from "./sync-log";
 import type {
   WbApiCardsResponse,
@@ -22,6 +24,8 @@ import type {
   WbAccountBalance,
   WbSalesReportListItem,
   WbSupplyListRequest,
+  WbWarehouseStockItem,
+  WbWarehousesStockResponse,
 } from "./types";
 
 export type WbApiConfig = {
@@ -35,6 +39,11 @@ export type WbSyncResult = {
   recordsUpdated: number;
   errors: string[];
   syncedAt: string;
+  /** Finance Sync V2: distinct realizationreport_id values from fetched detail rows. */
+  reportIds?: number[];
+  /** Finance Sync V2: min/max operation_date from mapped lines. */
+  returnedFrom?: string | null;
+  returnedTo?: string | null;
 };
 
 export type WbSyncOptions = {
@@ -144,7 +153,7 @@ export class WbApiClient {
         });
         const body = await response.text();
         throw new WbApiError(
-          `WB API error ${response.status}: ${body.slice(0, 300)}`,
+          `WB API error ${response.status}: ${redactSecrets(body.slice(0, 300))}`,
           response.status,
           path
         );
@@ -225,6 +234,37 @@ export class WbApiClient {
   /** Current warehouse stock snapshot from WB Statistics API. */
   async fetchStocks(dateFrom = "2019-01-01"): Promise<WbApiStockRow[]> {
     return this.fetchPaginatedStatistics<WbApiStockRow>("/api/v1/supplier/stocks", dateFrom);
+  }
+
+  /**
+   * Current WB warehouses inventory (Analytics).
+   * Replaces deprecated Statistics GET /api/v1/supplier/stocks.
+   * One row = one size (chrtId) on one warehouse. Updated ~every 30 minutes.
+   */
+  async fetchWbWarehousesStock(): Promise<WbWarehouseStockItem[]> {
+    const all: WbWarehouseStockItem[] = [];
+    let offset = 0;
+    const limit = 100_000;
+
+    syncLog("wb-api", "WB warehouses stock START", {});
+
+    while (true) {
+      const body = { limit, offset };
+      const res = await this.request<WbWarehousesStockResponse>(
+        WB_SELLER_ANALYTICS_API,
+        "/api/analytics/v1/stocks-report/wb-warehouses",
+        { method: "POST", body: JSON.stringify(body) }
+      );
+      const batch = res?.data?.items ?? [];
+      if (!batch.length) break;
+      all.push(...batch);
+      if (batch.length < limit) break;
+      offset += limit;
+      if (offset > 1_000_000) break;
+    }
+
+    syncLog("wb-api", "WB warehouses stock END", { totalRows: all.length });
+    return all;
   }
 
   /**

@@ -33,12 +33,17 @@ export async function DashboardWbDeferredSection({
   totalOrdersCount,
   ordersCount,
   ordersValueCount,
+  estimatedTax = 0,
+  taxPercent = 6,
 }: {
   scope: ScopedDateRange;
   isEmptyPeriod: boolean;
   totalOrdersCount: number;
   ordersCount: number;
   ordersValueCount: number;
+  /** Financial Engine Estimated Tax (finishedPrice base) for the same range. */
+  estimatedTax?: number;
+  taxPercent?: number;
 }) {
   const strip = await loadDashboardWbStrip(scope);
   const emptyValue = "—";
@@ -122,7 +127,12 @@ export async function DashboardWbDeferredSection({
         </div>
       </KpiSection>
 
-      <WbSettlementWidget settlement={strip.wbSettlement} isEmptyPeriod={isEmptyPeriod} />
+      <WbSettlementWidget
+        settlement={strip.wbSettlement}
+        isEmptyPeriod={isEmptyPeriod}
+        estimatedTax={estimatedTax}
+        taxPercent={taxPercent}
+      />
     </div>
   );
 }

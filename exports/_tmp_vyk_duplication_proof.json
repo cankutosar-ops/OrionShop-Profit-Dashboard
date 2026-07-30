@@ -1,0 +1,288 @@
+{
+  "vykPayLineCount": 3,
+  "allPayLinesDuplicatedInOsn": true,
+  "payCompare": [
+    {
+      "vyk": {
+        "type": "По выкупам",
+        "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+        "justification": "Продажа",
+        "ppvz": 3635.39,
+        "logistics": 0,
+        "rebill": 0,
+        "saleDate": "2026-07-13",
+        "nmId": "197650450",
+        "barcode": "4627121466490"
+      },
+      "exactMatchInOsn": true,
+      "exactMatches": [
+        {
+          "type": "Основной",
+          "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+          "justification": "Продажа",
+          "ppvz": 3635.39,
+          "logistics": 0,
+          "rebill": 0,
+          "saleDate": "2026-07-13",
+          "nmId": "197650450",
+          "barcode": "4627121466490"
+        }
+      ],
+      "osnLinesForSrid": [
+        {
+          "type": "Основной",
+          "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+          "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "ppvz": 0,
+          "logistics": 0,
+          "rebill": 17.03,
+          "saleDate": "2026-07-15",
+          "nmId": "0",
+          "barcode": "4627121466490"
+        },
+        {
+          "type": "Основной",
+          "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+          "justification": "Логистика",
+          "ppvz": 0,
+          "logistics": 188.96,
+          "rebill": 0,
+          "saleDate": "2026-07-13",
+          "nmId": "197650450",
+          "barcode": "4627121466490"
+        },
+        {
+          "type": "Основной",
+          "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+          "justification": "Продажа",
+          "ppvz": 3635.39,
+          "logistics": 0,
+          "rebill": 0,
+          "saleDate": "2026-07-13",
+          "nmId": "197650450",
+          "barcode": "4627121466490"
+        }
+      ]
+    },
+    {
+      "vyk": {
+        "type": "По выкупам",
+        "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+        "justification": "Возврат",
+        "ppvz": 4239.7,
+        "logistics": 0,
+        "rebill": 0,
+        "saleDate": "2026-07-15",
+        "nmId": "150064437",
+        "barcode": "4627121466445"
+      },
+      "exactMatchInOsn": true,
+      "exactMatches": [
+        {
+          "type": "Основной",
+          "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+          "justification": "Возврат",
+          "ppvz": 4239.7,
+          "logistics": 0,
+          "rebill": 0,
+          "saleDate": "2026-07-15",
+          "nmId": "150064437",
+          "barcode": "4627121466445"
+        }
+      ],
+      "osnLinesForSrid": [
+        {
+          "type": "Основной",
+          "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+          "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "ppvz": 0,
+          "logistics": 0,
+          "rebill": 6.23,
+          "saleDate": "2026-07-18",
+          "nmId": "0",
+          "barcode": "4627121466445"
+        },
+        {
+          "type": "Основной",
+          "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+          "justification": "Логистика",
+          "ppvz": 0,
+          "logistics": 145.96,
+          "rebill": 0,
+          "saleDate": "2026-07-15",
+          "nmId": "150064437",
+          "barcode": "4627121466445"
+        },
+        {
+          "type": "Основной",
+          "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+          "justification": "Возврат",
+          "ppvz": 4239.7,
+          "logistics": 0,
+          "rebill": 0,
+          "saleDate": "2026-07-15",
+          "nmId": "150064437",
+          "barcode": "4627121466445"
+        }
+      ]
+    },
+    {
+      "vyk": {
+        "type": "По выкупам",
+        "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+        "justification": "Продажа",
+        "ppvz": 3927.47,
+        "logistics": 0,
+        "rebill": 0,
+        "saleDate": "2026-07-17",
+        "nmId": "150064438",
+        "barcode": "4627121466377"
+      },
+      "exactMatchInOsn": true,
+      "exactMatches": [
+        {
+          "type": "Основной",
+          "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+          "justification": "Продажа",
+          "ppvz": 3927.47,
+          "logistics": 0,
+          "rebill": 0,
+          "saleDate": "2026-07-17",
+          "nmId": "150064438",
+          "barcode": "4627121466377"
+        }
+      ],
+      "osnLinesForSrid": [
+        {
+          "type": "Основной",
+          "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+          "justification": "Возмещение издержек по перевозке/по складским операциям с товаром",
+          "ppvz": 0,
+          "logistics": 0,
+          "rebill": 30.3,
+          "saleDate": "2026-07-18",
+          "nmId": "0",
+          "barcode": "4627121466377"
+        },
+        {
+          "type": "Основной",
+          "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+          "justification": "Логистика",
+          "ppvz": 0,
+          "logistics": 122.67,
+          "rebill": 0,
+          "saleDate": "2026-07-17",
+          "nmId": "150064438",
+          "barcode": "4627121466377"
+        },
+        {
+          "type": "Основной",
+          "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+          "justification": "Продажа",
+          "ppvz": 3927.47,
+          "logistics": 0,
+          "rebill": 0,
+          "saleDate": "2026-07-17",
+          "nmId": "150064438",
+          "barcode": "4627121466377"
+        }
+      ]
+    }
+  ],
+  "vykLogisticsLines": 15,
+  "allLogisticsDuplicatedInOsn": true,
+  "logisticsDuplicatedCount": 15,
+  "logCompare": [
+    {
+      "srid": "eBl.r4700765d3a054397854f6ac106bc2db5.0.0",
+      "logistics": 188.96,
+      "saleDate": "2026-07-13",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "ebX.i84e62ba568faac1c1f0d7fdb36c06635.0.0",
+      "logistics": 145.96,
+      "saleDate": "2026-07-15",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+      "logistics": 351.86,
+      "saleDate": "2026-07-15",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eBp.i8aebd7fb43c82b2c22ed59834b671219.0.0",
+      "logistics": 145.96,
+      "saleDate": "2026-07-15",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+      "logistics": 233.7,
+      "saleDate": "2026-07-15",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "e0.rb6d08138d1d24b7f8d7d321f907e5660.0.0",
+      "logistics": 61.4,
+      "saleDate": "2026-07-15",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+      "logistics": 246.36,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eAC.rdb5ba13e7b3c4c46b860684c281e0ad2.0.0",
+      "logistics": 61.4,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eAj.r2b87496d038249f98b34afe2e829e056.0.0",
+      "logistics": 122.67,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+      "logistics": 180.56,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eB3.febe4d10223d410da4bf86ad35adbdfe.1.0",
+      "logistics": 61.4,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+      "logistics": 102.23,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "eb1.i0a08f8bc8debac21f3293604dcaf1fed.5.0",
+      "logistics": 61.4,
+      "saleDate": "2026-07-17",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+      "logistics": 192.16,
+      "saleDate": "2026-07-19",
+      "duplicatedInOsn": true
+    },
+    {
+      "srid": "ebC.r57bd35c96d5649048f645c578211f06d.0.0",
+      "logistics": 61.4,
+      "saleDate": "2026-07-19",
+      "duplicatedInOsn": true
+    }
+  ],
+  "implication": "If every По выкупам Продажа/Возврат/Логистика line also exists with identical amounts in Основной detail, then summing both reports double-counts. Summary Excel still lists them as separate report № with separate К totals — settlement packaging differs from detail-file SRID membership."
+}

@@ -1,5 +1,5 @@
 import { buildDimensionProfitability } from "@/lib/dimension-profitability";
-import { calculateModelBMarginPercent } from "@/lib/profit-engine-model-b";
+import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import { buildPriorPeriodScope } from "@/lib/reports/business-report-insights";
 import { buildProductExecutiveInsights } from "@/lib/reports/product-report-insights";
 import { provideBusinessInventorySummary } from "@/lib/reports/report-providers";

@@ -1,4 +1,4 @@
-import { calculateModelBMarginPercent } from "@/lib/profit-engine-model-b";
+import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import type { GroupedProfitability, ModelBProfitMetrics, ProductProfitability } from "@/types/database";
 
 /**
@@ -108,13 +108,17 @@ export function alignGroupedProfitabilityToModelB(
   }
 
   const withoutPrior = rows.filter((row) => row.id !== UNALLOCATED_ID);
+  // Snap float dust to 0 so Unallocated never carries a near-zero divisor that
+  // formats as 0 ₽ but produces absurd Net Margin % (e.g. 1e-11 residual).
+  const revenue = Math.abs(residualRevenue) < 0.005 ? 0 : residualRevenue;
+  const finalNetProfit = Math.abs(residualProfit) < 0.005 ? 0 : residualProfit;
   return [
     ...withoutPrior,
     {
       id: UNALLOCATED_ID,
       name: UNALLOCATED_NAME,
-      revenue: residualRevenue,
-      finalNetProfit: residualProfit,
+      revenue,
+      finalNetProfit,
       productCount: 0,
       returnRate: 0,
     },
@@ -136,11 +140,19 @@ export function sumGroupedProfitability(rows: GroupedProfitability[]): {
   );
 }
 
-/** Net Margin % = Final Net Profit ÷ Model B Revenue (forPay). */
+/**
+ * Net Margin % = Final Net Profit ÷ Model B Revenue (forPay).
+ * Returns null when margin is undefined (revenue <= 0 or non-finite) — UI shows "—".
+ * Does not alter Model B `calculateModelBMarginPercent` semantics for valid revenue.
+ */
 export function groupedNetMarginPercent(
   row: Pick<GroupedProfitability, "revenue" | "finalNetProfit">
-): number {
-  return calculateModelBMarginPercent(row.revenue, row.finalNetProfit);
+): number | null {
+  if (!(row.revenue > 0) || !Number.isFinite(row.revenue) || !Number.isFinite(row.finalNetProfit)) {
+    return null;
+  }
+  const margin = calculateModelBMarginPercent(row.revenue, row.finalNetProfit);
+  return Number.isFinite(margin) ? margin : null;
 }
 
 /** @deprecated Use buildDimensionProfitability(products, "category"). */

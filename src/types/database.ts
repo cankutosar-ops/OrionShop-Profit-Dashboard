@@ -10,9 +10,103 @@ export type MarketplaceType = "wildberries" | "ozon" | "lamoda";
 
 export const MARKETPLACE_TYPES: MarketplaceType[] = ["wildberries", "ozon", "lamoda"];
 
-export type SyncStatus = "idle" | "running" | "success" | "partial" | "failed";
+export type SyncStatus = "idle" | "running" | "success" | "partial" | "failed" | "warning";
 
-export const SYNC_STATUSES: SyncStatus[] = ["idle", "running", "success", "partial", "failed"];
+export const SYNC_STATUSES: SyncStatus[] = [
+  "idle",
+  "running",
+  "success",
+  "partial",
+  "failed",
+  "warning",
+];
+
+/** Durable new-account onboarding lifecycle (finance historical → incremental). */
+export type SyncLifecycleStatus =
+  | "NEW_ACCOUNT"
+  | "ACCOUNT_VERIFICATION"
+  | "HISTORICAL_BACKFILL_RUNNING"
+  | "HISTORICAL_BACKFILL_VERIFYING"
+  | "HISTORICAL_BACKFILL_COMPLETE"
+  | "INCREMENTAL_SYNC_ACTIVE"
+  | "HEALTHY"
+  | "FAILED"
+  | "PARTIAL"
+  | "RECOVERING";
+
+export const SYNC_LIFECYCLE_STATUSES: SyncLifecycleStatus[] = [
+  "NEW_ACCOUNT",
+  "ACCOUNT_VERIFICATION",
+  "HISTORICAL_BACKFILL_RUNNING",
+  "HISTORICAL_BACKFILL_VERIFYING",
+  "HISTORICAL_BACKFILL_COMPLETE",
+  "INCREMENTAL_SYNC_ACTIVE",
+  "HEALTHY",
+  "FAILED",
+  "PARTIAL",
+  "RECOVERING",
+];
+
+export type FinanceBackfillProgress = {
+  completedWindows?: Record<string, boolean>;
+  failedWindows?: Record<string, string>;
+  pendingWindows?: string[];
+  lastWindow?: string | null;
+  strategy?: "monthly" | "rolling30" | "single";
+  from?: string;
+  to?: string;
+};
+
+export type SyncRunTrigger = "manual" | "auto" | "recover" | "backfill";
+
+export type SyncRunStatus = "running" | "success" | "partial" | "failed" | "warning";
+
+export type FinanceSyncReportStatus = "discovered" | "imported" | "missing" | "late";
+
+export type SyncRun = {
+  id: string;
+  marketplace_account_id: string;
+  request_id: string | null;
+  trigger: SyncRunTrigger;
+  entities: string[];
+  status: SyncRunStatus;
+  requested_from: string | null;
+  requested_to: string | null;
+  finance_lookback_days: number | null;
+  returned_from: string | null;
+  returned_to: string | null;
+  report_ids: number[];
+  rows_fetched: number;
+  rows_upserted: number;
+  rows_inserted: number;
+  rows_updated: number;
+  missing_days: string[];
+  late_report_ids: number[];
+  recovered_report_ids: number[];
+  errors: unknown[];
+  warnings: unknown[];
+  started_at: string;
+  heartbeat_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+  gap_days: number | null;
+  latest_operation_date: string | null;
+  latest_report_id: number | null;
+  created_at: string;
+};
+
+export type FinanceSyncReportRow = {
+  id: string;
+  sync_run_id: string;
+  marketplace_account_id: string;
+  realizationreport_id: number;
+  date_from: string | null;
+  date_to: string | null;
+  create_dt: string | null;
+  status: FinanceSyncReportStatus;
+  detail_rows_upserted: number;
+  created_at: string;
+};
 
 export type Company = {
   id: string;
@@ -39,6 +133,24 @@ export type MarketplaceAccount = {
   last_sync_at: string | null;
   last_successful_sync_at: string | null;
   last_sync_status: SyncStatus | null;
+  finance_lookback_days?: number;
+  finance_gap_warn_days?: number;
+  sync_heartbeat_at?: string | null;
+  sync_lock_expires_at?: string | null;
+  finance_latest_operation_date?: string | null;
+  finance_latest_report_id?: number | null;
+  finance_gap_days?: number | null;
+  finance_recovery_needed?: boolean;
+  finance_last_sync_run_id?: string | null;
+  sync_lifecycle_status?: SyncLifecycleStatus;
+  finance_backfill_from?: string | null;
+  finance_backfill_to?: string | null;
+  finance_backfill_strategy?: string | null;
+  finance_backfill_started_at?: string | null;
+  finance_backfill_completed_at?: string | null;
+  finance_backfill_verified_at?: string | null;
+  finance_backfill_error?: string | null;
+  finance_backfill_progress?: FinanceBackfillProgress;
   created_at: string;
   updated_at: string;
 };
@@ -57,6 +169,14 @@ export type MarketplaceAccountPublic = {
   last_successful_sync_at: string | null;
   last_sync_status: SyncStatus | null;
   has_api_key: boolean;
+  finance_lookback_days?: number;
+  finance_gap_warn_days?: number;
+  finance_latest_operation_date?: string | null;
+  finance_latest_report_id?: number | null;
+  finance_gap_days?: number | null;
+  finance_recovery_needed?: boolean;
+  sync_lifecycle_status?: SyncLifecycleStatus;
+  finance_backfill_error?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -132,7 +252,7 @@ export type WbSale = {
   barcode: string | null;
 };
 
-/** Profit Engine V3 — Model B (commercial performance layer). */
+/** Profit Engine V4 — Commercial Performance. */
 export type ModelBProfitMetrics = {
   grossSales: number;
   returnedSales: number;
@@ -140,35 +260,56 @@ export type ModelBProfitMetrics = {
   netSales: number;
   /** When not `ready`, dependent KPIs must not show temporary zero values. */
   netSalesStatus: import("@/lib/sales-revenue-resolution").NetSalesStatus;
-  /** priceWithDisc − Sales API forPay (net). */
+  /**
+   * Marketplace Fee = Sales − Sales API forPay (net).
+   * Not from ppvz_sales_commission / ppvz_reward / ppvz_vw.
+   */
   commission: number;
-  /** Finance acquiring_fee. */
+  /** Alias of commission — Marketplace Fee. */
+  marketplaceFee?: number;
+  /** Finance acquiring_fee (display; not deducted again in Net Profit). */
   acquiring: number;
-  /** Sales API forPay (net) — commercial revenue baseline before other marketplace fees. */
+  /** Revenue = Finance Σ ppvz_for_pay (signed for_pay lines). */
   revenue: number;
   logistics: number;
   storage: number;
   penalties: number;
-  /** Monthly operational adjustments (ADJUSTMENT category). */
+  /** Other Marketplace Expenses (ADJUSTMENT category). */
   adjustments: number;
+  /** Finance acceptance. */
+  acceptance: number;
   productCost: number;
   advertising: number;
   /**
-   * Operating Profit = Seller Payout − Product Cost − Advertising (before tax).
+   * Operating Profit before tax =
+   * Revenue − PC − Logistics − Storage − Acceptance − Penalties − Other − Ads.
    * Kept as `netProfit` for backward compatibility.
    */
   netProfit: number;
-  /** Seller Payout after all marketplace deductions (excl. product cost & marketing). */
+  /**
+   * Seller Payout =
+   * Revenue − Logistics − Storage − Acceptance − Penalties − Other.
+   * Not the Estimated Tax base (tax uses Σ finishedPrice).
+   */
   sellerPayout: number;
   /** Alias of netProfit — Operating Profit before tax. */
   operatingProfit: number;
-  /** Tax rate % applied to Seller Payout. */
+  /** Tax rate % applied to Σ finishedPrice (customer paid). */
   taxPercent: number;
-  /** Estimated Tax = Seller Payout × Tax%. */
+  /** Σ Sales API finishedPrice (net) — Estimated Tax base. */
+  customerPaid: number;
+  /**
+   * Estimated Tax = Tax% × Σ finishedPrice (historical reporting).
+   * Smart Pricing uses a different base — see docs/estimated-tax-models.md.
+   */
   estimatedTax: number;
   /** After Tax Payout = Seller Payout − Estimated Tax. */
   afterTaxPayout: number;
-  /** Final Net Profit = After Tax Payout − Product Cost − Advertising. */
+  /**
+   * Net Profit (V4) =
+   * Revenue − PC − Logistics − Storage − Acceptance − Penalties − Other − Ads − Tax.
+   * Does not subtract Marketplace Fee or Acquiring again.
+   */
   finalNetProfit: number;
   /** @deprecated Legacy aggregate — not shown on Commercial Performance dashboard. */
   marketplaceFees?: number;
@@ -225,6 +366,8 @@ export type QuantityMetrics = {
   unitsSold: number;
   unitsReturned: number;
   netUnits: number;
+  /** Σ finishedPrice on returns — amount refunded to customers (display only). */
+  returnedValue: number;
 };
 
 export type { FinanceCategory, FinanceNature, FinanceOperationType, MarketplaceFeesPresentation };
@@ -250,6 +393,12 @@ export type WbFinance = {
   supplier_oper_name?: string | null;
   /** Reserved for a future FinanceNature dimension. */
   finance_nature?: string | null;
+  /** WB realization report id — Finance Sync V2 discovery/health. */
+  realizationreport_id?: number | null;
+  /** WB rrd_id denormalized from source_key. */
+  rrd_id?: number | null;
+  /** WB rr_dt when distinct from operation_date. */
+  rr_dt?: string | null;
 };
 
 export type WbAd = {
@@ -399,7 +548,7 @@ export type ProductProfitability = ProfitBreakdown & {
   brandName: string;
   /**
    * Model B Net Sales (priceWithDisc net) — Customer Payment baseline.
-   * `revenue` on this row is Model B Revenue (Sales API forPay).
+   * `revenue` on this row is Commercial Performance Revenue (Finance ppvz_for_pay).
    */
   netSales: number;
   /**
@@ -407,7 +556,7 @@ export type ProductProfitability = ProfitBreakdown & {
    * `netProfit` remains Operating Profit (before tax) for Smart Pricing / ops compatibility.
    */
   finalNetProfit: number;
-  /** Approved Marketplace Fees (COMMISSION + ACQUIRING + PPVZ + OTHER). */
+  /** Marketplace Fee = Sales − Sales API forPay (Financial Engine V4). */
   marketplaceFees: number;
   /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
   accountAdjustments: number;
@@ -588,6 +737,24 @@ export type WbStock = {
   last_synced_at: string;
 };
 
+/** Sprint 10 — historical warehouse inventory snapshot row. */
+export type HistoricalInventorySnapshotRow = {
+  id: number;
+  snapshot_date: string;
+  marketplace_account_id: number;
+  warehouse_name: string;
+  brand: string;
+  subject: string;
+  seller_article: string;
+  nm_id: number;
+  barcode: string;
+  size: string;
+  quantity: number;
+  in_way_to_client: number;
+  in_way_from_client: number;
+  created_at: string;
+};
+
 /**
  * Dimension rollup (Category / Brand / future) from Model B product outputs.
  * `revenue` = Model B forPay; `finalNetProfit` = Model B after-tax profit.
@@ -748,6 +915,27 @@ type PublicTables = {
     Update: Partial<WbFinance>;
     Relationships: NoRelationships;
   };
+  sync_runs: {
+    Row: SyncRun;
+    Insert: Partial<Omit<SyncRun, "id" | "created_at">> & {
+      marketplace_account_id: string;
+      trigger: SyncRunTrigger;
+      entities: string[];
+      id?: string;
+      created_at?: string;
+    };
+    Update: Partial<SyncRun>;
+    Relationships: NoRelationships;
+  };
+  finance_sync_reports: {
+    Row: FinanceSyncReportRow;
+    Insert: Omit<FinanceSyncReportRow, "id" | "created_at"> & {
+      id?: string;
+      created_at?: string;
+    };
+    Update: Partial<FinanceSyncReportRow>;
+    Relationships: NoRelationships;
+  };
   wb_ads: {
     Row: WbAd;
     Insert: Omit<WbAd, "id"> & { id?: string };
@@ -793,6 +981,99 @@ type PublicTables = {
     Row: WbStock;
     Insert: Omit<WbStock, "id"> & { id?: string };
     Update: Partial<WbStock>;
+    Relationships: NoRelationships;
+  };
+  historical_inventory_snapshots: {
+    Row: HistoricalInventorySnapshotRow;
+    Insert: Omit<HistoricalInventorySnapshotRow, "id" | "created_at"> & {
+      id?: number;
+      created_at?: string;
+    };
+    Update: Partial<HistoricalInventorySnapshotRow>;
+    Relationships: NoRelationships;
+  };
+  warehouse_entity_sync_state: {
+    Row: {
+      id: number;
+      marketplace_account_id: number;
+      entity: string;
+      stage: string;
+      progress: Record<string, unknown>;
+      started_at: string | null;
+      completed_at: string | null;
+      last_successful_sync_at: string | null;
+      last_failed_sync_at: string | null;
+      current_dataset: string | null;
+      current_page: number | null;
+      error_message: string | null;
+      retry_count: number;
+      updated_at: string;
+      created_at: string;
+    };
+    Insert: {
+      marketplace_account_id: number;
+      entity: string;
+      stage?: string;
+      progress?: Record<string, unknown>;
+      id?: number;
+    };
+    Update: Partial<{
+      stage: string;
+      progress: Record<string, unknown>;
+      started_at: string | null;
+      completed_at: string | null;
+      last_successful_sync_at: string | null;
+      last_failed_sync_at: string | null;
+      current_dataset: string | null;
+      current_page: number | null;
+      error_message: string | null;
+      retry_count: number;
+      updated_at: string;
+    }>;
+    Relationships: NoRelationships;
+  };
+  warehouse_import_audit: {
+    Row: {
+      id: string;
+      marketplace_account_id: number;
+      entity: string;
+      trigger: string;
+      status: string;
+      started_at: string;
+      finished_at: string | null;
+      duration_ms: number | null;
+      current_dataset: string | null;
+      current_page: number | null;
+      records_read: number;
+      rows_inserted: number;
+      rows_updated: number;
+      rows_skipped: number;
+      validation_result: string | null;
+      errors: unknown[];
+      meta: Record<string, unknown>;
+      created_at: string;
+    };
+    Insert: {
+      marketplace_account_id: number;
+      entity: string;
+      trigger?: string;
+      status?: string;
+      id?: string;
+    };
+    Update: Partial<{
+      status: string;
+      finished_at: string | null;
+      duration_ms: number | null;
+      current_dataset: string | null;
+      current_page: number | null;
+      records_read: number;
+      rows_inserted: number;
+      rows_updated: number;
+      rows_skipped: number;
+      validation_result: string | null;
+      errors: unknown[];
+      meta: Record<string, unknown>;
+    }>;
     Relationships: NoRelationships;
   };
 };

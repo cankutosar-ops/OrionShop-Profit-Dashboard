@@ -134,3 +134,27 @@
     transition-timing-function: var(--ease-standard);
   }
 }
+
+/* Business Report Preview — print readiness (Sprint 7.7) */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .report-preview {
+    max-width: none !important;
+  }
+
+  .report-preview-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  aside,
+  nav[aria-label],
+  .print\:hidden {
+    display: none !important;
+  }
+}
+

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { parsePurchaseExcel } from "@/lib/purchase-excel";
-import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import { importPurchaseFromExcel } from "@/services/purchase-service";
 import { PURCHASE_CURRENCIES, type PurchaseCurrency } from "@/types/database";
 
@@ -51,7 +51,11 @@ function parseHeader(formData: FormData) {
 
 export async function POST(request: Request) {
   try {
-    const scope = await resolveScopedDateRangeFromUrl(new URL(request.url));
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
     const parsed = parsePurchaseExcel(buffer);
     const result = await importPurchaseFromExcel(
       {
-        marketplace_account_id: scope.marketplaceAccountId,
+        marketplace_account_id: authz.marketplaceAccountId!,
         ...header,
       },
       parsed

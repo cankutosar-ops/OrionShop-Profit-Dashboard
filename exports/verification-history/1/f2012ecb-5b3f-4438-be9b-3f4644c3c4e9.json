@@ -1,0 +1,248 @@
+{
+  "id": "f2012ecb-5b3f-4438-be9b-3f4644c3c4e9",
+  "marketplace_account_id": "1",
+  "expected_as_of": "2026-07-24",
+  "health_score": 68,
+  "overall_result": "WARNING",
+  "schema_status": "PASS",
+  "orders_status": "healthy",
+  "sales_status": "healthy",
+  "finance_status": "healthy",
+  "inventory_status": "critical",
+  "sync_status": "manual",
+  "sync_request_id": "sprint95-smoke",
+  "sync_duration_ms": 1234,
+  "snapshot": {
+    "version": 1,
+    "verifiedAt": "2026-07-24T18:53:06.408Z",
+    "marketplaceAccountId": "1",
+    "healthScore": 68,
+    "schemaStatus": "PASS",
+    "overallResult": "WARNING",
+    "orders": {
+      "entity": "orders",
+      "label": "Orders",
+      "latestApiDate": "2026-07-24",
+      "latestDbDate": "2026-07-24",
+      "gapDays": 0,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 3225
+    },
+    "sales": {
+      "entity": "sales",
+      "label": "Sales",
+      "latestApiDate": "2026-07-24",
+      "latestDbDate": "2026-07-22",
+      "gapDays": 2,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 1563
+    },
+    "finance": {
+      "entity": "finance",
+      "label": "Finance",
+      "latestApiDate": "2026-07-19",
+      "latestDbDate": "2026-07-19",
+      "gapDays": 0,
+      "coverageStatus": "healthy",
+      "status": "healthy",
+      "recordCount": 66669
+    },
+    "inventory": {
+      "entity": "inventory",
+      "label": "Inventory",
+      "latestApiDate": null,
+      "latestDbDate": "2026-07-09",
+      "gapDays": null,
+      "coverageStatus": "critical",
+      "status": "critical",
+      "recordCount": 1077
+    },
+    "synchronization": {
+      "durationMs": 1234,
+      "rowsInserted": 0,
+      "rowsUpdated": 10,
+      "errors": [],
+      "warnings": [],
+      "finalStatus": "manual"
+    },
+    "operationalAlerts": [
+      {
+        "id": "coverage-inventory",
+        "severity": "critical",
+        "title": "Inventory behind API freshness target",
+        "detail": "Database latest 2026-07-09 is 15 day(s) behind expected 2026-07-24.",
+        "entity": "inventory"
+      },
+      {
+        "id": "sync-partial",
+        "severity": "warning",
+        "title": "Partial sync",
+        "detail": "Last sync completed with partial/warning status.",
+        "entity": "sync"
+      }
+    ],
+    "failures": [
+      {
+        "category": "inventory_stale",
+        "affectedEntity": "inventory",
+        "reason": "Inventory DB latest 2026-07-09 is 15 day(s) behind expected 2026-07-24.",
+        "detectedAt": "2026-07-24T18:53:06.408Z",
+        "recommendedAction": "Run a full Sync including stock, or investigate deprecated stocks API coverage."
+      }
+    ],
+    "productionHealth": {
+      "marketplaceAccountId": "1",
+      "generatedAt": "2026-07-24T18:52:35.209Z",
+      "expectedAsOf": "2026-07-24",
+      "lastAccountSyncAt": "2026-07-23T09:01:55.407+00:00",
+      "lastAccountSyncStatus": "partial",
+      "freshness": [
+        {
+          "entity": "orders",
+          "label": "Orders",
+          "latestDbDate": "2026-07-24",
+          "expectedAsOf": "2026-07-24",
+          "daysBehind": 0,
+          "recordCount": 3225,
+          "status": "healthy"
+        },
+        {
+          "entity": "sales",
+          "label": "Sales",
+          "latestDbDate": "2026-07-22",
+          "expectedAsOf": "2026-07-24",
+          "daysBehind": 2,
+          "recordCount": 1563,
+          "status": "healthy"
+        },
+        {
+          "entity": "finance",
+          "label": "Finance",
+          "latestDbDate": "2026-07-19",
+          "expectedAsOf": "2026-07-24",
+          "daysBehind": 5,
+          "recordCount": 66669,
+          "status": "healthy"
+        },
+        {
+          "entity": "inventory",
+          "label": "Inventory",
+          "latestDbDate": "2026-07-09",
+          "expectedAsOf": "2026-07-24",
+          "daysBehind": 15,
+          "recordCount": 1077,
+          "status": "critical"
+        }
+      ],
+      "coverage": [
+        {
+          "entity": "orders",
+          "label": "Orders",
+          "databaseLatestDate": "2026-07-24",
+          "expectedLatestApiDate": "2026-07-24",
+          "gapDays": 0,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "sales",
+          "label": "Sales",
+          "databaseLatestDate": "2026-07-22",
+          "expectedLatestApiDate": "2026-07-24",
+          "gapDays": 2,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "finance",
+          "label": "Finance",
+          "databaseLatestDate": "2026-07-19",
+          "expectedLatestApiDate": "2026-07-19",
+          "gapDays": 0,
+          "status": "healthy",
+          "behindApi": false
+        },
+        {
+          "entity": "inventory",
+          "label": "Inventory",
+          "databaseLatestDate": "2026-07-09",
+          "expectedLatestApiDate": "2026-07-24",
+          "gapDays": 15,
+          "status": "critical",
+          "behindApi": true
+        }
+      ],
+      "syncExecution": {
+        "overallStatus": "partial",
+        "startedAt": "2026-07-23T09:01:55.407+00:00",
+        "finishedAt": null,
+        "requestId": null,
+        "error": null,
+        "entities": [
+          {
+            "entity": "(last job)",
+            "startedAt": "2026-07-23T09:01:55.407+00:00",
+            "finishedAt": "2026-07-23T09:01:55.407+00:00",
+            "durationMs": null,
+            "rowsInserted": null,
+            "rowsUpdated": null,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "partial"
+          },
+          {
+            "entity": "finance",
+            "startedAt": "2026-07-23T09:01:55.407+00:00",
+            "finishedAt": null,
+            "durationMs": null,
+            "rowsInserted": null,
+            "rowsUpdated": null,
+            "rowsSkipped": null,
+            "errors": [],
+            "warnings": [],
+            "result": "unknown"
+          }
+        ]
+      },
+      "schema": {
+        "status": "PASS",
+        "checkedAt": "2026-07-24T18:52:36.854Z",
+        "missing": []
+      },
+      "alerts": [
+        {
+          "id": "coverage-inventory",
+          "severity": "critical",
+          "title": "Inventory behind API freshness target",
+          "detail": "Database latest 2026-07-09 is 15 day(s) behind expected 2026-07-24.",
+          "entity": "inventory"
+        },
+        {
+          "id": "sync-partial",
+          "severity": "warning",
+          "title": "Partial sync",
+          "detail": "Last sync completed with partial/warning status.",
+          "entity": "sync"
+        }
+      ],
+      "score": {
+        "value": 68,
+        "label": "Needs Attention"
+      }
+    }
+  },
+  "failures": [
+    {
+      "category": "inventory_stale",
+      "affectedEntity": "inventory",
+      "reason": "Inventory DB latest 2026-07-09 is 15 day(s) behind expected 2026-07-24.",
+      "detectedAt": "2026-07-24T18:53:06.408Z",
+      "recommendedAction": "Run a full Sync including stock, or investigate deprecated stocks API coverage."
+    }
+  ],
+  "verified_at": "2026-07-24T18:53:06.408Z",
+  "created_at": "2026-07-24T18:53:06.408Z"
+}

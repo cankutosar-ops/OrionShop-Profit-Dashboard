@@ -17,7 +17,11 @@ import {
 import {
   getMarketplaceAccountSyncState,
   markAccountSyncStarted,
+  releaseStaleSyncLockIfNeeded,
 } from "@/services/marketplace-account-service";
+import { getLatestSyncRun } from "@/services/sync-run-service";
+import { scheduleDailyInventorySnapshot } from "@/services/inventory-daily-snapshot-service";
+import { schedulePostSyncVerification } from "@/services/sync-verification-audit-service";
 
 export class SyncAlreadyRunningError extends Error {
   constructor(marketplaceAccountId: string) {
@@ -27,6 +31,8 @@ export class SyncAlreadyRunningError extends Error {
 }
 
 export async function assertSyncNotRunning(marketplaceAccountId: string): Promise<void> {
+  await releaseStaleSyncLockIfNeeded(marketplaceAccountId);
+
   if (isSyncJobRunning(marketplaceAccountId)) {
     throw new SyncAlreadyRunningError(marketplaceAccountId);
   }
@@ -67,10 +73,26 @@ export async function scheduleBackgroundDashboardSync(
         result.results,
         timing
       );
+      schedulePostSyncVerification({
+        marketplaceAccountId: request.marketplaceAccountId,
+        syncStatus: result.lastSyncStatus,
+        syncRequestId: requestId,
+        syncResults: result.results,
+        syncTiming: timing,
+      });
+      if (result.lastSyncStatus !== "failed") {
+        scheduleDailyInventorySnapshot(request.marketplaceAccountId);
+      }
       endSyncTrace(requestId, result.success);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed";
       failSyncJob(request.marketplaceAccountId, message);
+      schedulePostSyncVerification({
+        marketplaceAccountId: request.marketplaceAccountId,
+        syncStatus: "failed",
+        syncRequestId: requestId,
+        syncError: message,
+      });
       endSyncTrace(requestId, false);
     }
   });
@@ -101,13 +123,27 @@ export async function runBlockingDashboardSync(
       result.results,
       timing
     );
+    schedulePostSyncVerification({
+      marketplaceAccountId: request.marketplaceAccountId,
+      syncStatus: result.lastSyncStatus,
+      syncRequestId: requestId,
+      syncResults: result.results,
+      syncTiming: timing,
+    });
+    if (result.lastSyncStatus !== "failed") {
+      scheduleDailyInventorySnapshot(request.marketplaceAccountId);
+    }
     endSyncTrace(requestId, result.success);
     return result;
   } catch (error) {
-    failSyncJob(
-      request.marketplaceAccountId,
-      error instanceof Error ? error.message : "Sync failed"
-    );
+    const message = error instanceof Error ? error.message : "Sync failed";
+    failSyncJob(request.marketplaceAccountId, message);
+    schedulePostSyncVerification({
+      marketplaceAccountId: request.marketplaceAccountId,
+      syncStatus: "failed",
+      syncRequestId: requestId,
+      syncError: message,
+    });
     endSyncTrace(requestId, false);
     throw error;
   }
@@ -126,13 +162,43 @@ export type SyncStatusQuery = {
   error: string | null;
   startedAt: string | null;
   finishedAt: string | null;
+  financeHealth: {
+    lookbackDays: number | null;
+    gapWarnDays: number | null;
+    latestOperationDate: string | null;
+    latestReportId: number | null;
+    gapDays: number | null;
+    recoveryNeeded: boolean;
+    lastSyncRunId: string | null;
+    lastSyncRunStatus: string | null;
+    missingDays: string[];
+    lateReportIds: number[];
+    rowsUpserted: number | null;
+    warnings: unknown[];
+  } | null;
+  accountLifecycle: {
+    status: string | null;
+    error: string | null;
+  } | null;
 };
 
 export async function getDashboardSyncStatus(
   marketplaceAccountId: string
 ): Promise<SyncStatusQuery> {
+  await releaseStaleSyncLockIfNeeded(marketplaceAccountId);
+
+  // Kick existing-account verification once — never auto-HEALTHY from migration alone.
+  const { getAccountLifecycleState, scheduleAccountLifecycle } = await import(
+    "@/services/account-lifecycle-service"
+  );
+  const lifecycle = await getAccountLifecycleState(marketplaceAccountId).catch(() => null);
+  if (lifecycle?.sync_lifecycle_status === "ACCOUNT_VERIFICATION") {
+    scheduleAccountLifecycle(marketplaceAccountId);
+  }
+
   const job = getSyncJob(marketplaceAccountId);
   const account = await getMarketplaceAccountSyncState(marketplaceAccountId);
+  const latestRun = await getLatestSyncRun(marketplaceAccountId);
 
   const status = job?.status ?? account?.last_sync_status ?? "idle";
 
@@ -145,6 +211,28 @@ export async function getDashboardSyncStatus(
     error: job?.error ?? null,
     startedAt: job?.startedAt ?? account?.last_sync_at ?? null,
     finishedAt: job?.finishedAt ?? null,
+    financeHealth: account
+      ? {
+          lookbackDays: account.finance_lookback_days,
+          gapWarnDays: account.finance_gap_warn_days,
+          latestOperationDate: account.finance_latest_operation_date,
+          latestReportId: account.finance_latest_report_id,
+          gapDays: account.finance_gap_days,
+          recoveryNeeded: account.finance_recovery_needed,
+          lastSyncRunId: account.finance_last_sync_run_id,
+          lastSyncRunStatus: latestRun?.status ?? null,
+          missingDays: latestRun?.missing_days ?? [],
+          lateReportIds: latestRun?.late_report_ids ?? [],
+          rowsUpserted: latestRun?.rows_upserted ?? null,
+          warnings: latestRun?.warnings ?? [],
+        }
+      : null,
+    accountLifecycle: account
+      ? {
+          status: account.sync_lifecycle_status ?? null,
+          error: account.finance_backfill_error ?? null,
+        }
+      : null,
   };
 }
 

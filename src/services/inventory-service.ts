@@ -3,8 +3,8 @@ import { indexProductsById, mapDbStockRowToInventory } from "@/lib/inventory-map
 import type { InventoryStockRow } from "@/lib/inventory-types";
 import type { Product, WbStock } from "@/types/database";
 
-function getClient(client?: SupabaseClient): SupabaseClient {
-  return client ?? createServerClient();
+async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
+  return client ?? (await createServerClient());
 }
 
 async function fetchProductsForAccount(
@@ -51,7 +51,7 @@ export async function getInventoryForAccount(
   marketplaceAccountId: string,
   client?: SupabaseClient
 ): Promise<InventoryStockRow[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const [products, stockRows] = await Promise.all([
     fetchProductsForAccount(marketplaceAccountId, supabase),
     fetchStockRowsForAccount(marketplaceAccountId, supabase),
@@ -65,7 +65,7 @@ export async function getInventoryForProduct(
   marketplaceAccountId: string,
   client?: SupabaseClient
 ): Promise<InventoryStockRow[]> {
-  const supabase = getClient(client);
+  const supabase = await getClient(client);
   const { data, error } = await supabase
     .from("wb_stock")
     .select("*")

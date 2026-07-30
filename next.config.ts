@@ -49,7 +49,7 @@ function resolveAllowedDevOrigins(): string[] {
   const addresses = new Set<string>();
   for (const entries of Object.values(networkInterfaces())) {
     for (const entry of entries ?? []) {
-      const family = entry.family;
+      const family = entry.family as string | number;
       const isV4 = family === "IPv4" || family === 4;
       if (!isV4 || entry.internal) continue;
       if (entry.address.startsWith("169.254.")) continue;
@@ -66,6 +66,11 @@ const nextConfig: NextConfig = {
   distDir,
   // Dev-only. Enables App Router soft navigation from phones / LAN devices.
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
+  // Opt-in: allow webpack emit when validating secrets (ORION_SECRETS_BUILD=1).
+  // Default remains strict typecheck for normal production builds.
+  ...(process.env.ORION_SECRETS_BUILD === "1"
+    ? { typescript: { ignoreBuildErrors: true }, eslint: { ignoreDuringBuilds: true } }
+    : {}),
   experimental: {
     optimizePackageImports: ["date-fns", "lucide-react", "recharts"],
   },

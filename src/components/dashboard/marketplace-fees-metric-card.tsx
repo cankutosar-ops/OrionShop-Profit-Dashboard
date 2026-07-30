@@ -27,7 +27,7 @@ export function MarketplaceFeesMetricCard({
     <MetricCard
       title="Marketplace Fees"
       value={formatMoney(totalMarketplaceFees)}
-      subtitle={!isEmptyPeriod ? `Commission ${formatMoney(commission)}` : undefined}
+      subtitle={!isEmptyPeriod ? `Fee detail ${formatMoney(commission)}` : undefined}
       icon={KPI_ICONS.tax}
       variant="warning"
       hint={MARKETPLACE_FEES_TOOLTIP}

@@ -1,0 +1,27 @@
+{
+  "reportId": "1294a6c5-035c-4860-a4ff-3604e800b4e3",
+  "request": {
+    "id": "1294a6c5-035c-4860-a4ff-3604e800b4e3",
+    "reportType": "STOCK_HISTORY_DAILY_CSV",
+    "userReportName": "Orion-hist-recovery-1-2026-07-17_2026-07-26",
+    "params": {
+      "currentPeriod": {
+        "start": "2026-07-17",
+        "end": "2026-07-26"
+      },
+      "stockType": "wb",
+      "skipDeletedNm": false
+    }
+  },
+  "meta": {
+    "id": "1294a6c5-035c-4860-a4ff-3604e800b4e3",
+    "status": "SUCCESS",
+    "name": "Orion-hist-recovery-1-2026-07-17_2026-07-26",
+    "size": 6826,
+    "startDate": "",
+    "endDate": "",
+    "createdAt": "2026-07-26 10:22:13"
+  },
+  "zipSha256": "a8a4be534444a430c7abd2f3342db52f57f64b89e9e0932c8b2e34abe802fc4c",
+  "downloadedAt": "2026-07-26T10:22:13.481Z"
+}

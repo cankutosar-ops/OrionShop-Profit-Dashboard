@@ -1,7 +1,8 @@
 import {
-  buildNetForPayFromDb,
-  buildNetSalesFromDb,
-} from "@/lib/sales-revenue-resolution";
+  marketplaceFeeFromSales,
+  saleUnitSalesAmount,
+  sumSalesAndMarketplaceFee,
+} from "@/lib/financial-engine";
 import type { WbFinance, WbSale } from "@/types/database";
 
 /** Minimum completed sales for product-level weighted marketplace fees. */
@@ -11,35 +12,27 @@ export const SMART_PRICING_MIN_PRODUCT_SALES = 20;
 export const SMART_PRICING_MIN_CATEGORY_SALES = 50;
 
 export type MarketplaceFeesTotals = {
-  /** Model B commission ₽ = max(0, netSales − salesForPay). */
+  /** Marketplace Fee ₽ = max(0, Sales − Sales API forPay). */
   marketplaceFees: number;
-  /** Model B Sales (net priceWithDisc). */
+  /** Sales (net priceWithDisc) — not V4 Revenue. */
   revenue: number;
-  /** Model B Sales API forPay (net). */
+  /** Sales API forPay (net). */
   salesForPay: number;
   unitsSold: number;
 };
 
-/**
- * Model B Sales API commission for a sales set.
- * Commission = max(0, priceWithDisc_net − forPay_net)
- * — never finance COMMISSION rows.
- */
+/** Marketplace Fee metrics from Sales API via Financial Engine. */
 export function sumSalesApiCommissionMetrics(sales: WbSale[]): MarketplaceFeesTotals {
-  const { netSales } = buildNetSalesFromDb(sales);
-  const salesForPay = buildNetForPayFromDb(sales);
-  const completed = sales.filter((row) => !row.is_return);
-  const unitsSold = completed.reduce((sum, row) => sum + row.quantity, 0);
-
+  const totals = sumSalesAndMarketplaceFee(sales);
   return {
-    marketplaceFees: Math.max(0, netSales - salesForPay),
-    revenue: netSales,
-    salesForPay,
-    unitsSold,
+    marketplaceFees: totals.marketplaceFee,
+    revenue: totals.netSales,
+    salesForPay: totals.salesForPay,
+    unitsSold: totals.unitsSold,
   };
 }
 
-/** @deprecated Use sumSalesApiCommissionMetrics — finance COMMISSION is not Model B. */
+/** @deprecated Finance COMMISSION is not Marketplace Fee. */
 export function sumProductMarketplaceFees(_finance: WbFinance[]): number {
   return 0;
 }
@@ -52,18 +45,11 @@ export function sumCompletedSalesRevenue(sales: WbSale[]): {
   return { revenue: metrics.revenue, unitsSold: metrics.unitsSold };
 }
 
-/** Unit commercial sales amount for fee-weighting (priceWithDisc preferred). */
-export function saleUnitSalesAmount(sale: WbSale): number {
-  const priceWithDisc = Number(sale.price_with_disc);
-  if (Number.isFinite(priceWithDisc) && priceWithDisc > 0) {
-    return Math.abs(priceWithDisc) * sale.quantity;
-  }
-  return Math.abs(Number(sale.revenue ?? 0));
-}
+export { saleUnitSalesAmount };
 
 /**
- * Model B commission totals for Smart Pricing.
- * Finance argument is ignored — Sales API only.
+ * Marketplace Fee totals for Smart Pricing — Financial Engine only.
+ * Finance argument is ignored.
  */
 export function sumProductMarketplaceFeesMetrics(
   sales: WbSale[],
@@ -72,13 +58,13 @@ export function sumProductMarketplaceFeesMetrics(
   return sumSalesApiCommissionMetrics(sales);
 }
 
-/** Weighted Sales API commission %: SUM(commission) / SUM(priceWithDisc) × 100. */
+/** Weighted Marketplace Fee %: SUM(fee) / SUM(Sales) × 100. */
 export function weightedMarketplaceFeesPercent(
   feesTotal: number,
-  revenueTotal: number
+  salesTotal: number
 ): number | null {
-  if (revenueTotal <= 0) return null;
-  return (feesTotal / revenueTotal) * 100;
+  if (salesTotal <= 0) return null;
+  return (feesTotal / salesTotal) * 100;
 }
 
 function emptyFeesTotals(): MarketplaceFeesTotals {
@@ -95,8 +81,7 @@ function mergeFeesTotals(
     revenue,
     salesForPay,
     unitsSold: a.unitsSold + b.unitsSold,
-    // Recompute on pooled nets so account/category matches Model B clamping.
-    marketplaceFees: Math.max(0, revenue - salesForPay),
+    marketplaceFees: marketplaceFeeFromSales(revenue, salesForPay),
   };
 }
 

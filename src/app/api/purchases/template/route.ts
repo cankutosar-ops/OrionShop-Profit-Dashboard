@@ -1,14 +1,18 @@
 import { buildPurchaseTemplateFilename, buildPurchaseTemplateWorkbook } from "@/lib/purchase-excel";
-import { resolveScopedDateRangeFromUrl } from "@/lib/marketplace-scope";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import { buildPurchaseTemplateRows } from "@/services/purchase-service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const scope = await resolveScopedDateRangeFromUrl(new URL(request.url));
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
 
-    const rows = await buildPurchaseTemplateRows(scope.marketplaceAccountId);
+    const rows = await buildPurchaseTemplateRows(authz.marketplaceAccountId!);
     const buffer = buildPurchaseTemplateWorkbook(rows);
     const filename = buildPurchaseTemplateFilename();
 

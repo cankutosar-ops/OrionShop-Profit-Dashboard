@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-07-24T16:36:55.526Z",
+  "account": "1",
+  "window": {
+    "from": "2026-07-13",
+    "to": "2026-07-24"
+  },
+  "schemaCompatible": true,
+  "syncResult": {
+    "processed": 335,
+    "updated": 335,
+    "errors": [],
+    "ok": true
+  },
+  "orders": {
+    "dbInWindow": 237,
+    "dbLatest": "2026-07-24",
+    "apiInWindow": 237,
+    "apiLatest": "2026-07-24",
+    "matchLatest": true,
+    "matchCount": true
+  },
+  "regression": {
+    "sales": {
+      "inWindow": 55,
+      "latest": "2026-07-22"
+    },
+    "finance": {
+      "inWindow": 1649,
+      "latest": "2026-07-19"
+    },
+    "inventory": {
+      "total": 1077,
+      "latestSynced": "2026-07-09"
+    },
+    "note": "Sales/Finance/Inventory not re-synced; extents checked for presence/health only."
+  }
+}

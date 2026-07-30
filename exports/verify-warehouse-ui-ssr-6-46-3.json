@@ -1,0 +1,73 @@
+{
+  "contexts": {
+    "Коледино": {
+      "count": 1,
+      "samples": [
+        "Percent\\\":10.596026490066226,\\\"revenueSharePercent\\\":10.396834886779024},{\\\"warehouse\\\":\\\"Коледино\\\",\\\"orders\\\":14,\\\"units\\\":14,\\\"revenue\\\":90755.1,\\\"orderSharePercent\\\":9.271523178807946,"
+      ]
+    },
+    "Электросталь": {
+      "count": 1,
+      "samples": [
+        "Percent\\\":10.596026490066226,\\\"revenueSharePercent\\\":10.534240172011238},{\\\"warehouse\\\":\\\"Электросталь\\\",\\\"orders\\\":16,\\\"units\\\":16,\\\"revenue\\\":95340,\\\"orderSharePercent\\\":10.596026490066226,\\"
+      ]
+    },
+    "Краснодар": {
+      "count": 1,
+      "samples": [
+        "Percent\\\":15.894039735099339,\\\"revenueSharePercent\\\":16.097435594612204},{\\\"warehouse\\\":\\\"Краснодар\\\",\\\"orders\\\":16,\\\"units\\\":16,\\\"revenue\\\":96600.02,\\\"orderSharePercent\\\":10.59602649006622"
+      ]
+    },
+    "Самара": {
+      "count": 1,
+      "samples": [
+        "rePercent\\\":7.28476821192053,\\\"revenueSharePercent\\\":7.5609874855760815},{\\\"warehouse\\\":\\\"Самара (Новосемейкино)\\\",\\\"orders\\\":12,\\\"units\\\":12,\\\"revenue\\\":69140,\\\"orderSharePercent\\\":7.94"
+      ]
+    },
+    "Koledino": {
+      "count": 1,
+      "samples": [
+        "6-06-20&amp;to=2026-07-20&amp;warehouse=%D0%9A%D0%BE%D0%BB%D0%B5%D0%B4%D0%B8%D0%BD%D0%BE\">Koledino</a></td><td class=\"px-4 py-2.5 text-right tabular-nums\">14</td><td class=\"px-4 py-2.5 tex"
+      ]
+    },
+    "Elektrostal": {
+      "count": 1,
+      "samples": [
+        "0&amp;warehouse=%D0%AD%D0%BB%D0%B5%D0%BA%D1%82%D1%80%D0%BE%D1%81%D1%82%D0%B0%D0%BB%D1%8C\">Elektrostal</a></td><td class=\"px-4 py-2.5 text-right tabular-nums\">16</td><td class=\"px-4 py-2.5 tex"
+      ]
+    },
+    "Krasnodar": {
+      "count": 1,
+      "samples": [
+        "0&amp;to=2026-07-20&amp;warehouse=%D0%9A%D1%80%D0%B0%D1%81%D0%BD%D0%BE%D0%B4%D0%B0%D1%80\">Krasnodar</a></td><td class=\"px-4 py-2.5 text-right tabular-nums\">16</td><td class=\"px-4 py-2.5 tex"
+      ]
+    },
+    "Samara": {
+      "count": 1,
+      "samples": [
+        "%B0+%28%D0%9D%D0%BE%D0%B2%D0%BE%D1%81%D0%B5%D0%BC%D0%B5%D0%B9%D0%BA%D0%B8%D0%BD%D0%BE%29\">Samara (Novosemeykino)</a></td><td class=\"px-4 py-2.5 text-right tabular-nums\">12</td><td class="
+      ]
+    }
+  },
+  "primaryLinkLabels": [
+    "Nevinnomyssk",
+    "Krasnodar",
+    "Elektrostal",
+    "Koledino",
+    "Tula",
+    "Yekaterinburg - Perspektivnaya 14",
+    "Voronezh",
+    "Samara (Novosemeykino)",
+    "Vladimir",
+    "Volgograd",
+    "Kotovsk",
+    "Sarapul",
+    "Ryazan (Tyushevskoye)",
+    "Kazan",
+    "SPB Shushary",
+    "SC Yerevan"
+  ],
+  "cyrillicPrimaryLabels": [],
+  "hasLatinDisplay": true,
+  "passVisible": true
+}

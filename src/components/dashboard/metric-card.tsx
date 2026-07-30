@@ -22,6 +22,8 @@ type MetricCardProps = {
   variant?: "default" | "success" | "warning" | "danger" | "muted";
   /** Override icon gradient (Model B commercial palette). */
   iconClassName?: string;
+  /** Optional value color override (presentation only). */
+  valueClassName?: string;
   hint?: string;
   /** Card wrapper classes (e.g. Net Profit emphasis). */
   className?: string;
@@ -80,6 +82,7 @@ export function MetricCard({
   trend,
   variant = "default",
   iconClassName,
+  valueClassName,
   className,
   size = "default",
   hint,
@@ -91,14 +94,14 @@ export function MetricCard({
     <div
       title={hint}
       className={cn(
-        "group relative overflow-hidden border border-border bg-card transition-ui hover:border-primary/30 hover:bg-card-hover",
+        "group relative flex h-full flex-col overflow-hidden border border-border bg-card transition-ui hover:border-primary/30 hover:bg-card-hover",
         "rounded-[var(--radius-card)]",
-        compact ? "p-3" : "p-6",
+        compact ? "p-3" : "p-5",
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className={cn("min-w-0", compact ? "space-y-1" : "space-y-2")}>
+      <div className="flex flex-1 items-start justify-between gap-3">
+        <div className={cn("min-w-0 flex-1", compact ? "space-y-1" : "space-y-2")}>
           <p className={cn("text-kpi-label", compact && "text-xs")}>{title}</p>
           <div
             className={cn(
@@ -106,14 +109,17 @@ export function MetricCard({
               size === "hero" && "text-3xl leading-none",
               size === "default" && "text-2xl",
               size === "compact" && "text-lg leading-tight",
-              variantValueStyles[variant]
+              variantValueStyles[variant],
+              valueClassName
             )}
           >
             {value}
           </div>
           {subtitle ? (
-            <div className="text-secondary-label text-muted">{subtitle}</div>
-          ) : null}
+            <div className="text-secondary-label min-h-[1.25rem] text-muted">{subtitle}</div>
+          ) : (
+            <div className="min-h-[1.25rem]" aria-hidden />
+          )}
           {trendDisplay ? <TrendLine trend={trendDisplay} /> : null}
         </div>
         <div

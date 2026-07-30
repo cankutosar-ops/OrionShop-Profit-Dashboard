@@ -1,0 +1,2562 @@
+{
+  "accountId": "1",
+  "from": "2026-05-01",
+  "to": "2026-05-31",
+  "sourceField": "WB Finance API acquiring_fee → sync suffix acquiring_fee → category ACQUIRING (abs sum)",
+  "count": 319,
+  "total_abs": 41038.56,
+  "rows": [
+    {
+      "srid": "eBK.r225a3e96475541319219d82890c0341f.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 187.1,
+      "amount_signed": 187.1,
+      "source_key": "rrd:3125263635026:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eB2.r4c351f903f674b7ca1484af98f45f7a8.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 182.12,
+      "amount_signed": 182.12,
+      "source_key": "rrd:3122881311332:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eA9.r055c9c701d6046458539dc7e4eaee65e.4.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 181.68,
+      "amount_signed": 181.68,
+      "source_key": "rrd:3124266759291:acquiring_fee",
+      "product_id": 14
+    },
+    {
+      "srid": "eA9.r055c9c701d6046458539dc7e4eaee65e.4.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 181.68,
+      "amount_signed": 181.68,
+      "source_key": "rrd:3125358035583:acquiring_fee",
+      "product_id": 14
+    },
+    {
+      "srid": "eK.rb2eab5d991764e0da3655e6f06c73100.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 181.63,
+      "amount_signed": 181.63,
+      "source_key": "rrd:3124457392561:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "7032394300711304314.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 179.05,
+      "amount_signed": 179.05,
+      "source_key": "rrd:3123290311028:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "ei.r8e137c871f2c4db084d71e919747925c.4.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 177.49,
+      "amount_signed": 177.49,
+      "source_key": "rrd:3124649988386:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ei.r8e137c871f2c4db084d71e919747925c.5.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 177.49,
+      "amount_signed": 177.49,
+      "source_key": "rrd:3124649988388:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ei.r8e137c871f2c4db084d71e919747925c.5.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 177.49,
+      "amount_signed": 177.49,
+      "source_key": "rrd:3124649988400:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ei.r8e137c871f2c4db084d71e919747925c.4.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 177.49,
+      "amount_signed": 177.49,
+      "source_key": "rrd:3124649988402:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eB7.i41d02f295eab734b9abea4f4f22dbfdc.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 177.05,
+      "amount_signed": 177.05,
+      "source_key": "rrd:3123341836312:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAr.rfbd889aa7eef4c66ab6b101a0823c2c5.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 176.56,
+      "amount_signed": 176.56,
+      "source_key": "rrd:3125263635054:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "7430272919379162583.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 175.73,
+      "amount_signed": 175.73,
+      "source_key": "rrd:3122213854425:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "7430272919379162583.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 175.73,
+      "amount_signed": 175.73,
+      "source_key": "rrd:3122802791758:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eBc.icbca82c3cdb66fab5136ff3f83f5b944.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 173.39,
+      "amount_signed": 173.39,
+      "source_key": "rrd:3122213854461:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eR.rc8d44b96d54e466d9e4c670be51bf7e6.0.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 173.39,
+      "amount_signed": 173.39,
+      "source_key": "rrd:3124509500043:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eL.r961e06ef8ceb4333b47ef2a8951dec8d.2.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 173.09,
+      "amount_signed": 173.09,
+      "source_key": "rrd:3124804829939:acquiring_fee",
+      "product_id": 12
+    },
+    {
+      "srid": "eL.r961e06ef8ceb4333b47ef2a8951dec8d.2.0",
+      "operation_date": "2026-05-25",
+      "amount_abs": 173.09,
+      "amount_signed": 173.09,
+      "source_key": "rrd:3124916232184:acquiring_fee",
+      "product_id": 12
+    },
+    {
+      "srid": "ebU.id58f977cc7df322e7b2344c378ca9d7e.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 172.46,
+      "amount_signed": 172.46,
+      "source_key": "rrd:3124649988442:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eN.rf2adf925527247cfba58227e247b8e34.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 172.46,
+      "amount_signed": 172.46,
+      "source_key": "rrd:3125012441838:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebo.rf2ed8e543785405aaa3136962cf2eacf.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 171.82,
+      "amount_signed": 171.82,
+      "source_key": "rrd:3122426587583:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "ecb.rf9f5018f56db449dbd2aaf92fdc91b34.0.0",
+      "operation_date": "2026-05-25",
+      "amount_abs": 171.29,
+      "amount_signed": 171.29,
+      "source_key": "rrd:3124916232208:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ecb.rf9f5018f56db449dbd2aaf92fdc91b34.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 171.29,
+      "amount_signed": 171.29,
+      "source_key": "rrd:3125012441846:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ebk.430ac7a96b7948ce8f3bd84800f8365b.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 171.19,
+      "amount_signed": 171.19,
+      "source_key": "rrd:3124804829953:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAf.r7a46e1ae812c4e3e99ff2d763eb4bfea.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 171.19,
+      "amount_signed": 171.19,
+      "source_key": "rrd:3125012441848:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebF.r48fe0884765f4a37bd0115250d9648cd.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 170.46,
+      "amount_signed": 170.46,
+      "source_key": "rrd:3122459862802:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAS.rf577501e47164dceb19424f9f129b78f.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 170.46,
+      "amount_signed": 170.46,
+      "source_key": "rrd:3122459862818:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eBS.rf3b7b9e8e7f0476fb7eafb413a775f30.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 169.73,
+      "amount_signed": 169.73,
+      "source_key": "rrd:3125358035531:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eB4.r52b9f6cb7edd47cbad61e83b1bd26883.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 169.19,
+      "amount_signed": 169.19,
+      "source_key": "rrd:3123290311018:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb8.i096305014fdc7c653d22ec3c6a541a96.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 168.7,
+      "amount_signed": 168.7,
+      "source_key": "rrd:3125358035547:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eq.r207ddda9c62640558eee35d3a7888f56.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 167.24,
+      "amount_signed": 167.24,
+      "source_key": "rrd:3123984284094:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebk.rec8d24bc868a45a995779a34e02d7a7b.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 166.65,
+      "amount_signed": 166.65,
+      "source_key": "rrd:3123290311000:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eA1.rb9428394896e481999af3067eb7b0fe4.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 166.16,
+      "amount_signed": 166.16,
+      "source_key": "rrd:3124649988424:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBQ.ibc01d14b7eb60570309dea0a55569559.2.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 166.16,
+      "amount_signed": 166.16,
+      "source_key": "rrd:3125462619736:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eR.i1efae19dbf5c5f3cc0889c9f7508b768.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 166.02,
+      "amount_signed": 166.02,
+      "source_key": "rrd:3124649988432:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAA.r06ff4ce248ea4daaa54616eb10f760f0.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 165.48,
+      "amount_signed": 165.48,
+      "source_key": "rrd:3124110081624:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eAe.r69c0025c1b47463d9e966e0b5ab326aa.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 164.9,
+      "amount_signed": 164.9,
+      "source_key": "rrd:3124266759311:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBO.ie2297a60f64eb801c83badd1344c214b.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 164.65,
+      "amount_signed": 164.65,
+      "source_key": "rrd:3123125389043:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBO.ie2297a60f64eb801c83badd1344c214b.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 164.65,
+      "amount_signed": 164.65,
+      "source_key": "rrd:3123341836296:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eK.i0e948625f29c03d16357cdc1dcf97f72.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 164.07,
+      "amount_signed": 164.07,
+      "source_key": "rrd:3123125389017:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebE.re6fab35978e44752a6c33c802bf6d9d8.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 162.89,
+      "amount_signed": 162.89,
+      "source_key": "rrd:3123726946121:acquiring_fee",
+      "product_id": 16
+    },
+    {
+      "srid": "eAx.ic569306e9c5d4c9eca41088b1666a1b1.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 162.41,
+      "amount_signed": 162.41,
+      "source_key": "rrd:3125462619784:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "e1.i57845fbf476555dd6193818edcd4d95f.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 162.31,
+      "amount_signed": 162.31,
+      "source_key": "rrd:3123984284090:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eq.i9ea716abbccd9e644cd0e487648095d0.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 162.06,
+      "amount_signed": 162.06,
+      "source_key": "rrd:3125068031826:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eAz.rf19e740494da48449870f58a99ba9d58.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 161.63,
+      "amount_signed": 161.63,
+      "source_key": "rrd:3122684212339:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eO.114780f62f5f4307993e3727639e2b63.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 161.58,
+      "amount_signed": 161.58,
+      "source_key": "rrd:3122426587579:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eO.114780f62f5f4307993e3727639e2b63.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 161.58,
+      "amount_signed": 161.58,
+      "source_key": "rrd:3122459862796:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eO.r18bf8182ba7540f1bacbe000418cbc62.1.0",
+      "operation_date": "2026-05-05",
+      "amount_abs": 161.58,
+      "amount_signed": 161.58,
+      "source_key": "rrd:3122593218507:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eO.r18bf8182ba7540f1bacbe000418cbc62.1.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 161.58,
+      "amount_signed": 161.58,
+      "source_key": "rrd:3122684212329:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBc.ia9ba1c7402cdffe70861b470c29f67de.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 159.92,
+      "amount_signed": 159.92,
+      "source_key": "rrd:3124457392543:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "em.id6bf7ec04f3a3eee734dce08246414a6.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 159.87,
+      "amount_signed": 159.87,
+      "source_key": "rrd:3123726946133:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebp.rd1963c8486294b2d999867d962dc96a7.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 159.09,
+      "amount_signed": 159.09,
+      "source_key": "rrd:3122426587565:acquiring_fee",
+      "product_id": 22
+    },
+    {
+      "srid": "eB4.re5980d72f59a4996b22cd3556fe8adc1.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 158.75,
+      "amount_signed": 158.75,
+      "source_key": "rrd:3125358035569:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eBC.r63762d7fca0d495cb641b2d02d6d38ee.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 158.7,
+      "amount_signed": 158.7,
+      "source_key": "rrd:3125358035549:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eE.iaeb2ee7558bf25da7f33153295a5e7b3.0.0",
+      "operation_date": "2026-05-05",
+      "amount_abs": 158.6,
+      "amount_signed": 158.6,
+      "source_key": "rrd:3122593218483:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAx.id6226a5a383b8ca7daaba8b4ea54fecf.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 158.6,
+      "amount_signed": 158.6,
+      "source_key": "rrd:3124804829901:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAx.ib074fdd3c3fec64cf5d72340d68a8161.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 158.6,
+      "amount_signed": 158.6,
+      "source_key": "rrd:3124804829903:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAx.id6226a5a383b8ca7daaba8b4ea54fecf.0.0",
+      "operation_date": "2026-05-25",
+      "amount_abs": 158.6,
+      "amount_signed": 158.6,
+      "source_key": "rrd:3124916232196:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAx.ib074fdd3c3fec64cf5d72340d68a8161.0.0",
+      "operation_date": "2026-05-25",
+      "amount_abs": 158.6,
+      "amount_signed": 158.6,
+      "source_key": "rrd:3124916232198:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBC.r789bbb3414a042d6a7b89c5454d956ed.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 158.06,
+      "amount_signed": 158.06,
+      "source_key": "rrd:3123290311004:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "e8.rf0b55f8b5a7d4ba38c082160ec1a6a5e.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 157.87,
+      "amount_signed": 157.87,
+      "source_key": "rrd:3122802791756:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb6.rb90421d8dc004064bace9cd366b5e466.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 157.87,
+      "amount_signed": 157.87,
+      "source_key": "rrd:3122802791766:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ez.re897a9a9ed1b47ba96667e3c652af895.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 157.87,
+      "amount_signed": 157.87,
+      "source_key": "rrd:3122881311260:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eF.r1669203f8a7b42989955662cc7937123.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 157.87,
+      "amount_signed": 157.87,
+      "source_key": "rrd:3123125389007:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebU.ia0ef83111b30f8871b18ac4add157e00.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 156.16,
+      "amount_signed": 156.16,
+      "source_key": "rrd:3124649988444:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eB7.ie90f3a7333829221f9c37bae3f4c8fd9.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 156.16,
+      "amount_signed": 156.16,
+      "source_key": "rrd:3125012441852:acquiring_fee",
+      "product_id": 20
+    },
+    {
+      "srid": "eAm.i7f0b44ffab6394e9f6602bf89612d3bf.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 155.77,
+      "amount_signed": 155.77,
+      "source_key": "rrd:3123125389056:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eBl.rf8675b70aae5455580f10135a34b2343.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 155.28,
+      "amount_signed": 155.28,
+      "source_key": "rrd:3124649988418:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eAO.ie41e7a67e7a302db5e182916f40a062f.0.0",
+      "operation_date": "2026-05-14",
+      "amount_abs": 154.6,
+      "amount_signed": 154.6,
+      "source_key": "rrd:3123424756687:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eAO.ie41e7a67e7a302db5e182916f40a062f.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 154.6,
+      "amount_signed": 154.6,
+      "source_key": "rrd:3124266759285:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eh.r92adcc107e2f40d0be95f69f07c3c194.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 154.35,
+      "amount_signed": 154.35,
+      "source_key": "rrd:3122802791796:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "5139707784751049884.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 154.21,
+      "amount_signed": 154.21,
+      "source_key": "rrd:3122684212347:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "e7.r385752346da7468f9989cdffa74ef873.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 152.94,
+      "amount_signed": 152.94,
+      "source_key": "rrd:3122802791784:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ea.ee7fc0beb5254ca080d72366298bffe2.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 152.3,
+      "amount_signed": 152.3,
+      "source_key": "rrd:3122684212341:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eBu.rb015ffd7b23247ab929a5039b41ddb63.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 151.52,
+      "amount_signed": 151.52,
+      "source_key": "rrd:3124457392545:acquiring_fee",
+      "product_id": 46
+    },
+    {
+      "srid": "eAk.r7f05d2d3fb4d40b9bd4a1d43b1a4c1af.0.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 151.23,
+      "amount_signed": 151.23,
+      "source_key": "rrd:3125148493831:acquiring_fee",
+      "product_id": 20
+    },
+    {
+      "srid": "eBp.r4682666409204aafa3abc89f7640b849.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 150.3,
+      "amount_signed": 150.3,
+      "source_key": "rrd:3122881311264:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBp.r4682666409204aafa3abc89f7640b849.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 150.3,
+      "amount_signed": 150.3,
+      "source_key": "rrd:3122881311272:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "8489255010964042133.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 150.26,
+      "amount_signed": 150.26,
+      "source_key": "rrd:3122213854427:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eA5.rcf3c6d0d69ad4b22a82690350b19acd3.0.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 149.92,
+      "amount_signed": 149.92,
+      "source_key": "rrd:3125148493837:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eo.r25cffc43cb1e487fb41768bf5ae0811d.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 149.47,
+      "amount_signed": 149.47,
+      "source_key": "rrd:3123984284122:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eBL.rea365fc95db94eb0b89e97efe158dcce.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 147.44,
+      "amount_signed": 147.44,
+      "source_key": "rrd:3125462619730:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eAp.id73a8428f8d85aa43149f89d7ceca7c1.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 146.84,
+      "amount_signed": 146.84,
+      "source_key": "rrd:3124457392565:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eAl.r792741a4d74c4475961b57c92f6abdf3.0.0",
+      "operation_date": "2026-05-14",
+      "amount_abs": 145.84,
+      "amount_signed": 145.84,
+      "source_key": "rrd:3123424756693:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eBp.r6cc83994c69f47128c1f394d03703e87.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 145.62,
+      "amount_signed": 145.62,
+      "source_key": "rrd:3122881311266:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eBp.r6cc83994c69f47128c1f394d03703e87.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 145.62,
+      "amount_signed": 145.62,
+      "source_key": "rrd:3123125389027:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebi.rc1d02f4d7221442883e1ad6b9e2083cf.1.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 145.08,
+      "amount_signed": 145.08,
+      "source_key": "rrd:3123547308993:acquiring_fee",
+      "product_id": 12
+    },
+    {
+      "srid": "eBo.r06a2d3b3c72e452f8141d084f00e3579.0.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 145.08,
+      "amount_signed": 145.08,
+      "source_key": "rrd:3124509500061:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eBo.r06a2d3b3c72e452f8141d084f00e3579.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 145.08,
+      "amount_signed": 145.08,
+      "source_key": "rrd:3124649988456:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eQ.r6a8accbb805848db9e0e8dc2203cf3c5.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 144.92,
+      "amount_signed": 144.92,
+      "source_key": "rrd:3123547309035:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eba.r43209efc3a1943a3b1aa21c5439f9af5.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 144.4,
+      "amount_signed": 144.4,
+      "source_key": "rrd:3125012441866:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eB3.i674c805f2dee31551deb929fa2a36fea.3.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 143,
+      "amount_signed": 143,
+      "source_key": "rrd:3125358035567:acquiring_fee",
+      "product_id": 12
+    },
+    {
+      "srid": "eb1.r3942fb2481b84877a788ea384a7fd5aa.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 142.56,
+      "amount_signed": 142.56,
+      "source_key": "rrd:3125358035563:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eb1.r3942fb2481b84877a788ea384a7fd5aa.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 142.56,
+      "amount_signed": 142.56,
+      "source_key": "rrd:3125462619796:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAv.r65d19aad013845de9659b0a8b123bf1a.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 142.44,
+      "amount_signed": 142.44,
+      "source_key": "rrd:3124457392579:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eL.i8e57688bcb0930c0fc0e695a17905e3c.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 142.12,
+      "amount_signed": 142.12,
+      "source_key": "rrd:3125263635016:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebk.ra35671c122474f7aa7cf542d5a907740.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 141.86,
+      "amount_signed": 141.86,
+      "source_key": "rrd:3123125389037:acquiring_fee",
+      "product_id": 7
+    },
+    {
+      "srid": "7113154231755159184.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 141.32,
+      "amount_signed": 141.32,
+      "source_key": "rrd:3125012441892:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eBC.icdaf27d7c82859d56fe57a9f688103ea.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 141.08,
+      "amount_signed": 141.08,
+      "source_key": "rrd:3122802791768:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eBX.r2c52eb83f8ca43cc98343660a517db7e.0.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 141.08,
+      "amount_signed": 141.08,
+      "source_key": "rrd:3124509500013:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebQ.r55b0b576250045e4892f062ed88f13bb.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 140.4,
+      "amount_signed": 140.4,
+      "source_key": "rrd:3125462619798:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eBU.r4ac19d61035b4abeaf3c4b601115e09b.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 140.28,
+      "amount_signed": 140.28,
+      "source_key": "rrd:3124457392527:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eBu.r578dd35b135e446aad24251de866e9cb.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 139.88,
+      "amount_signed": 139.88,
+      "source_key": "rrd:3122213854451:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eV.r7678948737a248599ebc5bc2387974b4.1.0",
+      "operation_date": "2026-05-10",
+      "amount_abs": 139.57,
+      "amount_signed": 139.57,
+      "source_key": "rrd:3123055923913:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eBa.id082d50ec569119a7c1827382f046a00.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 138.28,
+      "amount_signed": 138.28,
+      "source_key": "rrd:3125462619750:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eBc.ia2033b7de7892d46da2aed5afc4b782d.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 138.06,
+      "amount_signed": 138.06,
+      "source_key": "rrd:3124266759305:acquiring_fee",
+      "product_id": 15
+    },
+    {
+      "srid": "6086252306529148241.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 137.64,
+      "amount_signed": 137.64,
+      "source_key": "rrd:3124457392501:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eAe.r29db176cc760490eb958ceead44b5b34.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 137.6,
+      "amount_signed": 137.6,
+      "source_key": "rrd:3122684212361:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "5953192781519574292.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 137.2,
+      "amount_signed": 137.2,
+      "source_key": "rrd:3123984284116:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "5953192781519574292.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 137.2,
+      "amount_signed": 137.2,
+      "source_key": "rrd:3124110081662:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eA3.r928bda6df83c4fb99f01d980245e79b6.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 137.08,
+      "amount_signed": 137.08,
+      "source_key": "rrd:3124649988376:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAS.i46b1146002f37b81e991b2f64b94fc5e.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 137.08,
+      "amount_signed": 137.08,
+      "source_key": "rrd:3125462619762:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebU.r6f75a6ae28794164aa2e2804404f35d2.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 136.56,
+      "amount_signed": 136.56,
+      "source_key": "rrd:3125263635060:acquiring_fee",
+      "product_id": 12
+    },
+    {
+      "srid": "eG.r45d1e2de39784000a1626f9da6a59496.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 136.36,
+      "amount_signed": 136.36,
+      "source_key": "rrd:3123125389074:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "ebK.r2249c79dd919485ab6651c7921421ce7.0.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 136.16,
+      "amount_signed": 136.16,
+      "source_key": "rrd:3125148493803:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "ebg.r0413e58bb8684b819ec2697b6857668d.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 136.08,
+      "amount_signed": 136.08,
+      "source_key": "rrd:3124649988366:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eE.i3067913fc9ad0b249f562fee7fb05ac3.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 136.08,
+      "amount_signed": 136.08,
+      "source_key": "rrd:3124649988404:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAx.r691be8f29af640079a6032eaee3b39c1.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122213854455:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eB4.i1453eddb1d7e478bb478919171886a61.1.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122213854473:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAx.rba098e68456d4fbca59fa4c3c79ddcf0.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122266372991:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAx.r60e6a4f6e2504e9c9212ca060f02927f.1.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122266372993:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAx.r60e6a4f6e2504e9c9212ca060f02927f.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122266372995:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ebD.rf03f025b2fdb488cb8dbb31cdce5970d.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122266373015:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eA7.i55724e33bdfe7635e09cb7e44256363e.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122426587575:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eA7.i1eb7708e7a16712bf62a19baa2920923.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122426587577:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAx.rcabd308b49064646ab3ef9eedf2b827b.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122426587581:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eU.r29986dc7ca944c56a11026c44c82fdcf.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122426587591:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAx.r691be8f29af640079a6032eaee3b39c1.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122426587593:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ebV.6e9a4e5fe7e341839fc2fbce70ec4297.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122426587625:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ecC.i07993c2ff9d0bbddcf4dbdcaa6329064.0.0",
+      "operation_date": "2026-05-05",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122593218455:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAx.r60e6a4f6e2504e9c9212ca060f02927f.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 135.52,
+      "amount_signed": 135.52,
+      "source_key": "rrd:3122684212383:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ebK.i3c9d7988480a5cda79e0a722b30e29c3.0.0",
+      "operation_date": "2026-05-25",
+      "amount_abs": 135.12,
+      "amount_signed": 135.12,
+      "source_key": "rrd:3124916232168:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eB7.re5d875a0b49c482fa8d7e8f096c60a4a.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 135.12,
+      "amount_signed": 135.12,
+      "source_key": "rrd:3125358035533:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eq.r84bb197f4a8b4a5886e7188b0864b828.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 135.12,
+      "amount_signed": 135.12,
+      "source_key": "rrd:3125462619746:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "ed.8499a156737f40fe9cf32efa3dc70acb.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 134.88,
+      "amount_signed": 134.88,
+      "source_key": "rrd:3124110081634:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "ed.8499a156737f40fe9cf32efa3dc70acb.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 134.88,
+      "amount_signed": 134.88,
+      "source_key": "rrd:3124457392535:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eBn.ra7464cc00beb4cccbe29810e7c0fd1f1.1.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 134.56,
+      "amount_signed": 134.56,
+      "source_key": "rrd:3123984284080:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eA4.i5a792390f6c586660f7f284e38c0bfcf.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 134.36,
+      "amount_signed": 134.36,
+      "source_key": "rrd:3123547308991:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "ecC.ra5445591a2ca4007a9ee3162e069c7b5.0.0",
+      "operation_date": "2026-05-17",
+      "amount_abs": 134.25,
+      "amount_signed": 134.25,
+      "source_key": "rrd:3123754404014:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "ebk.i842f5ca5f52c72ed55646d11b47dbc46.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 134.12,
+      "amount_signed": 134.12,
+      "source_key": "rrd:3124457392525:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBC.r4b40751d17574683838fb33b807ee791.0.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 134.12,
+      "amount_signed": 134.12,
+      "source_key": "rrd:3124509500051:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "8595985009408724886.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 133.22,
+      "amount_signed": 133.22,
+      "source_key": "rrd:3124804829975:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "ebB.r723514f93ae842e5bf54d7e82e62672a.0.0",
+      "operation_date": "2026-05-17",
+      "amount_abs": 133.16,
+      "amount_signed": 133.16,
+      "source_key": "rrd:3123754403950:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "et.red1c9d7ded324ecaab0667122482c31f.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 133.04,
+      "amount_signed": 133.04,
+      "source_key": "rrd:3124266759321:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eU.rf444f669d50c4b00a2349a205de4b530.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 132.98,
+      "amount_signed": 132.98,
+      "source_key": "rrd:3122684212379:acquiring_fee",
+      "product_id": 43
+    },
+    {
+      "srid": "eBu.r9b37f1f854634df98aa0f19a4c462e69.0.0",
+      "operation_date": "2026-05-14",
+      "amount_abs": 132.48,
+      "amount_signed": 132.48,
+      "source_key": "rrd:3123424756673:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBG.r4c8b46b55fb1487ba0d2b40b12bd2b74.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 132.48,
+      "amount_signed": 132.48,
+      "source_key": "rrd:3123726946119:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBG.r4c8b46b55fb1487ba0d2b40b12bd2b74.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 132.48,
+      "amount_signed": 132.48,
+      "source_key": "rrd:3125263635044:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ey.i368422e96143d8958e4e474e7e724921.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 132.36,
+      "amount_signed": 132.36,
+      "source_key": "rrd:3123290310969:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "ey.i368422e96143d8958e4e474e7e724921.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 132.36,
+      "amount_signed": 132.36,
+      "source_key": "rrd:3123341836286:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "ebV.i96f56b7395b7c8a1d43318d702b47dd2.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 132.32,
+      "amount_signed": 132.32,
+      "source_key": "rrd:3122881311256:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eBX.r95450ccb128c48dcbb6085a0d5f7f7bd.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 132.08,
+      "amount_signed": 132.08,
+      "source_key": "rrd:3124649988426:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebX.i0a9fb46321ee650dce1c286faba33753.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 132.08,
+      "amount_signed": 132.08,
+      "source_key": "rrd:3125462619758:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eq.i17ec33c9bab4ba0b1a4299402887aaed.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 131.52,
+      "amount_signed": 131.52,
+      "source_key": "rrd:3122266373021:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebi.r58688066578c44bfa32a25386e733070.0.0",
+      "operation_date": "2026-05-09",
+      "amount_abs": 131.52,
+      "amount_signed": 131.52,
+      "source_key": "rrd:3123009071188:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebi.r58688066578c44bfa32a25386e733070.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 131.52,
+      "amount_signed": 131.52,
+      "source_key": "rrd:3123290310998:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "ebV.rc2418343e2f545749b72be0f8fc9852d.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 131.52,
+      "amount_signed": 131.52,
+      "source_key": "rrd:3124804829897:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "e9.ifcb450f155e69e62f4a3e31bdf38f29f.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 131.28,
+      "amount_signed": 131.28,
+      "source_key": "rrd:3123290310973:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eL.i258422c0d5ae1625a46b997849762f93.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 131.08,
+      "amount_signed": 131.08,
+      "source_key": "rrd:3123726946131:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eL.i258422c0d5ae1625a46b997849762f93.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 131.08,
+      "amount_signed": 131.08,
+      "source_key": "rrd:3124457392573:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAx.r3769e99c2f2049dc9cdaa1adf804b49c.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 131.08,
+      "amount_signed": 131.08,
+      "source_key": "rrd:3125012441894:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eA3.rf3755aa4266b46dfa015c73c317953e5.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 131.08,
+      "amount_signed": 131.08,
+      "source_key": "rrd:3125012441896:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eAf.rb92cf3fb45f245a087e12255a2171aaa.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 131.08,
+      "amount_signed": 131.08,
+      "source_key": "rrd:3125068031834:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebw.i47332cd83df13634049f7699664e6e1b.0.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 130.96,
+      "amount_signed": 130.96,
+      "source_key": "rrd:3124509499991:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebU.i5d0185f04889efa8e15980deb626dc6f.0.0",
+      "operation_date": "2026-05-05",
+      "amount_abs": 130.76,
+      "amount_signed": 130.76,
+      "source_key": "rrd:3122593218457:acquiring_fee",
+      "product_id": 12
+    },
+    {
+      "srid": "ed.59bc4b9ca5194596825335e87a44da3f.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 130.52,
+      "amount_signed": 130.52,
+      "source_key": "rrd:3124110081632:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ed.59bc4b9ca5194596825335e87a44da3f.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 130.52,
+      "amount_signed": 130.52,
+      "source_key": "rrd:3124110081654:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eG.r02c0924f60a845c38c9e10581fcdd3bd.0.0",
+      "operation_date": "2026-05-09",
+      "amount_abs": 130.4,
+      "amount_signed": 130.4,
+      "source_key": "rrd:3123009071218:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eG.r02c0924f60a845c38c9e10581fcdd3bd.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 130.4,
+      "amount_signed": 130.4,
+      "source_key": "rrd:3123125389015:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBY.ab64472470cd4f358d8a1bfcd3a8cc9e.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 130.32,
+      "amount_signed": 130.32,
+      "source_key": "rrd:3122881311300:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ecC.ieba3ec17a26f7bca894b410272967d58.1.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 130.12,
+      "amount_signed": 130.12,
+      "source_key": "rrd:3125068031828:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAK.r6dd2e565918243fe8e28848dc92bb8b1.0.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 130.12,
+      "amount_signed": 130.12,
+      "source_key": "rrd:3125148493801:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eg.redeb86903b9d4f61b4b371e7f43d5ae7.0.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 130.12,
+      "amount_signed": 130.12,
+      "source_key": "rrd:3125148493861:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAF.r7bb71854a30b488b94dcea5fbd906f2d.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 130.12,
+      "amount_signed": 130.12,
+      "source_key": "rrd:3125263635062:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebb.rf089315d4ddb4a1b8142a5c6daa11c90.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 130.12,
+      "amount_signed": 130.12,
+      "source_key": "rrd:3125263635068:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ecb.r2e9547628b2046f697689667e7a03d26.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 130.12,
+      "amount_signed": 130.12,
+      "source_key": "rrd:3125358035537:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebm.r246f12d2fe0c4a96b71dacce522014cc.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 130,
+      "amount_signed": 130,
+      "source_key": "rrd:3125012441854:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "7287828900268738420.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 129.68,
+      "amount_signed": 129.68,
+      "source_key": "rrd:3122213854421:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eY.r416968c5e15e4149a1df0631e5327bd9.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 129.68,
+      "amount_signed": 129.68,
+      "source_key": "rrd:3122426587595:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "e6.r3d7670653f7047fba5711044fcb044a1.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 129.48,
+      "amount_signed": 129.48,
+      "source_key": "rrd:3122684212343:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAj.id61c06baa413b5f34af6ce662e8815f5.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 129.4,
+      "amount_signed": 129.4,
+      "source_key": "rrd:3122684212351:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAr.rf708cb5f31444603b15cb8be5b7e76c2.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 129.4,
+      "amount_signed": 129.4,
+      "source_key": "rrd:3123341836348:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebH.rabca1286e2454dde8583a477c34904d4.0.0",
+      "operation_date": "2026-05-17",
+      "amount_abs": 129.4,
+      "amount_signed": 129.4,
+      "source_key": "rrd:3123754403946:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBz.rd28d8cfa5af04dd3bd9259a741ff3aa8.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 129.32,
+      "amount_signed": 129.32,
+      "source_key": "rrd:3122802791776:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "e7.r7e6529d14b1e459fbb897e16c9f40309.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 129.12,
+      "amount_signed": 129.12,
+      "source_key": "rrd:3124804829943:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAd.i51b5aa4f2e48d709b84a68a5d31300d2.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 129.04,
+      "amount_signed": 129.04,
+      "source_key": "rrd:3124266759267:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAY.i2d6ca49eb61d6139ca5f9917774405fa.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 129.04,
+      "amount_signed": 129.04,
+      "source_key": "rrd:3125068031854:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBR.rff8811cb3110445eabbf0662323dbd4f.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 129,
+      "amount_signed": 129,
+      "source_key": "rrd:3125068031812:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAv.rcfd44f12a4fc485e8d2a04e24086f70c.0.0",
+      "operation_date": "2026-05-10",
+      "amount_abs": 128.92,
+      "amount_signed": 128.92,
+      "source_key": "rrd:3123055923879:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "es.r97d1e6af16bb48728bd0bbfcc5e63b2d.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 128.48,
+      "amount_signed": 128.48,
+      "source_key": "rrd:3122266373027:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eY.r4d1265c04e20494a87b2ba7fb32caef8.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 128.48,
+      "amount_signed": 128.48,
+      "source_key": "rrd:3122426587587:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebj.i37d74e1143946376951e7700d061695a.0.0",
+      "operation_date": "2026-05-09",
+      "amount_abs": 128.44,
+      "amount_signed": 128.44,
+      "source_key": "rrd:3123009071194:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBY.1683a10f0a364c6a86b503453a2cc290.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 128.08,
+      "amount_signed": 128.08,
+      "source_key": "rrd:3122802791770:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBY.1683a10f0a364c6a86b503453a2cc290.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 128.08,
+      "amount_signed": 128.08,
+      "source_key": "rrd:3122881311290:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "8882917271623806004.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 127.48,
+      "amount_signed": 127.48,
+      "source_key": "rrd:3122266373001:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eB2.ia575ae6e65ad4f68ca2407a4ac460004.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 127.28,
+      "amount_signed": 127.28,
+      "source_key": "rrd:3123290310991:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebH.r45774307023f466e9217569800e8ff57.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 127.28,
+      "amount_signed": 127.28,
+      "source_key": "rrd:3123726946139:acquiring_fee",
+      "product_id": 7
+    },
+    {
+      "srid": "7964302669308830689.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 127.12,
+      "amount_signed": 127.12,
+      "source_key": "rrd:3122684212323:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "eAC.rd80c176f0b9c4aae8044723678dc019e.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 127.08,
+      "amount_signed": 127.08,
+      "source_key": "rrd:3125012441834:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "9129892075916083251.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 127.08,
+      "amount_signed": 127.08,
+      "source_key": "rrd:3125462619790:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebZ.id8b6c2f2e6341fab277e2c051e42ee2d.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 126.72,
+      "amount_signed": 126.72,
+      "source_key": "rrd:3122266372989:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBw.ifa03d88788470613df3f8370e409489b.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 126.68,
+      "amount_signed": 126.68,
+      "source_key": "rrd:3122266372985:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eB6.r1979ae135d2a4fb09cc74f4eb4e628cc.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 126.52,
+      "amount_signed": 126.52,
+      "source_key": "rrd:3123984284074:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBT.r33522b61f194412abbed132908abd78e.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 126.48,
+      "amount_signed": 126.48,
+      "source_key": "rrd:3122426587567:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAQ.i9b8db16dd099c08e5b9591a3fb4cf5f0.2.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 126.48,
+      "amount_signed": 126.48,
+      "source_key": "rrd:3123547309025:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "em.if5237b6545f889d8f3753ce02f88a9a6.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 126.36,
+      "amount_signed": 126.36,
+      "source_key": "rrd:3122426587585:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "eb1.re15758c5802d441a9a2e59c874aa41de.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 126.16,
+      "amount_signed": 126.16,
+      "source_key": "rrd:3125462619800:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eb2.r088a735d3f0e4a40b5e86309dff7cf5e.1.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 126.08,
+      "amount_signed": 126.08,
+      "source_key": "rrd:3122213854457:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eBy.r9e192f9688c948f497757e417385d59c.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 126.08,
+      "amount_signed": 126.08,
+      "source_key": "rrd:3125068031818:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBQ.i8bda0c684a999712ba385ec66266ae99.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 125.48,
+      "amount_signed": 125.48,
+      "source_key": "rrd:3122684212325:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb1.redc05613d6384dca8bda2b18c14859e8.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 125.4,
+      "amount_signed": 125.4,
+      "source_key": "rrd:3125358035559:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eb1.redc05613d6384dca8bda2b18c14859e8.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 125.4,
+      "amount_signed": 125.4,
+      "source_key": "rrd:3125462619794:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eAn.r8d951d1fedf44319a64ab66c077868e2.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 125.36,
+      "amount_signed": 125.36,
+      "source_key": "rrd:3122459862786:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "et.r98f49c114b1340a8874197c50ca26c73.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 125.32,
+      "amount_signed": 125.32,
+      "source_key": "rrd:3124649988374:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eAq.i745e970a9d2bcf300abdb081909d5fca.1.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 125.12,
+      "amount_signed": 125.12,
+      "source_key": "rrd:3125462619760:acquiring_fee",
+      "product_id": 22
+    },
+    {
+      "srid": "ep.iae7474b738231d952b1cb3ab84ace636.9.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 124.48,
+      "amount_signed": 124.48,
+      "source_key": "rrd:3122426587633:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb8.r3a9e4830f11e4455a4313d6eb62107a9.0.0",
+      "operation_date": "2026-05-05",
+      "amount_abs": 124.48,
+      "amount_signed": 124.48,
+      "source_key": "rrd:3122593218493:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "7943890643829512506.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 124.48,
+      "amount_signed": 124.48,
+      "source_key": "rrd:3122684212335:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "el.i0fab2a4cb282850e3a05dae21e06e1db.0.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 124.48,
+      "amount_signed": 124.48,
+      "source_key": "rrd:3124509500011:acquiring_fee",
+      "product_id": 16
+    },
+    {
+      "srid": "ed.rbdbbbfb3d78c49d4816a973c2f4495e8.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 124.16,
+      "amount_signed": 124.16,
+      "source_key": "rrd:3123726946149:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ed.rbdbbbfb3d78c49d4816a973c2f4495e8.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 124.16,
+      "amount_signed": 124.16,
+      "source_key": "rrd:3124266759269:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebT.iec24a20aed11f163d004349f08d333aa.5.0",
+      "operation_date": "2026-05-22",
+      "amount_abs": 124.16,
+      "amount_signed": 124.16,
+      "source_key": "rrd:3124509500041:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAo.r2507d68948bb404783cd8ea9c75499e9.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 124.16,
+      "amount_signed": 124.16,
+      "source_key": "rrd:3125012441868:acquiring_fee",
+      "product_id": 20
+    },
+    {
+      "srid": "eBY.rb5608dffa6f24908aec5da3e9d01c619.3.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 124.16,
+      "amount_signed": 124.16,
+      "source_key": "rrd:3125462619734:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebB.radeced5ec4d148c396a60e05add8796f.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 124.12,
+      "amount_signed": 124.12,
+      "source_key": "rrd:3125068031867:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb9.i3a265ab16a5e16b1a56d07606068f6e6.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 123.92,
+      "amount_signed": 123.92,
+      "source_key": "rrd:3123125389054:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebD.r46b72e80a11944268fa7a454e46a1581.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 123.8,
+      "amount_signed": 123.8,
+      "source_key": "rrd:3123547308981:acquiring_fee",
+      "product_id": 7
+    },
+    {
+      "srid": "ebL.e9249f3549144689917c5784ac5ef280.1.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 123.56,
+      "amount_signed": 123.56,
+      "source_key": "rrd:3122802791802:acquiring_fee",
+      "product_id": 20
+    },
+    {
+      "srid": "ebL.e9249f3549144689917c5784ac5ef280.1.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 123.56,
+      "amount_signed": 123.56,
+      "source_key": "rrd:3123290311026:acquiring_fee",
+      "product_id": 20
+    },
+    {
+      "srid": "eAd.r1d9a200dcc104267be12c2cf9d9dd2c3.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 123.56,
+      "amount_signed": 123.56,
+      "source_key": "rrd:3123341836308:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebo.ib52c11d510e2155840ca103606711424.0.0",
+      "operation_date": "2026-05-21",
+      "amount_abs": 123.44,
+      "amount_signed": 123.44,
+      "source_key": "rrd:3124457392509:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eBp.r5b0f386c5ab7485a98f5bb31e806b2e8.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 123.16,
+      "amount_signed": 123.16,
+      "source_key": "rrd:3123341836340:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBa.i6cd55488c14aa2eb50356a63c2daa743.1.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 123.16,
+      "amount_signed": 123.16,
+      "source_key": "rrd:3123984284114:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb5.i188510c9428cc94719062459a9e5185b.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 123.08,
+      "amount_signed": 123.08,
+      "source_key": "rrd:3125263635018:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eb9.r043013051e0a47e8af870e3c2068ff2e.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 122.8,
+      "amount_signed": 122.8,
+      "source_key": "rrd:3122266372975:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eA1.ra212bf32ecc940aebf7542cce44a7511.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 122.76,
+      "amount_signed": 122.76,
+      "source_key": "rrd:3122881311276:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eo.r5964acfa9b1440238b0cf1186f131664.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3123984284072:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eBe.rf19beb7680ce40d8951c83740c3faea6.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3124804829899:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ee.r49f511eba6bb4a78b971837d7907a7b2.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3125012441870:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "ecd.i3c9dc5e628d8658134c736ed36577998.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3125068031822:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "ecd.i3c9dc5e628d8658134c736ed36577998.0.0",
+      "operation_date": "2026-05-27",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3125068031848:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eD.r360cf3a423c54055acebe6b802df80d0.0.0",
+      "operation_date": "2026-05-30",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3125358035575:acquiring_fee",
+      "product_id": 2
+    },
+    {
+      "srid": "ea.r67530bda73614a229de3597c64321e51.0.0",
+      "operation_date": "2026-05-31",
+      "amount_abs": 121.6,
+      "amount_signed": 121.6,
+      "source_key": "rrd:3125462619770:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eI.r74d0dd53ddd246bd88a3aff2ff1cbda2.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 121.52,
+      "amount_signed": 121.52,
+      "source_key": "rrd:3122459862828:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebA.i04bda9cc7163786a2745cce1c51e21ef.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 121.08,
+      "amount_signed": 121.08,
+      "source_key": "rrd:3123547308995:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eB6.r0c5131b570d24d06a5a679e5889f8828.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 121.04,
+      "amount_signed": 121.04,
+      "source_key": "rrd:3123726946107:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eAs.r7f59e72587a546c9b94742a6d78f1e4d.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 120.8,
+      "amount_signed": 120.8,
+      "source_key": "rrd:3122459862826:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAs.r7f59e72587a546c9b94742a6d78f1e4d.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 120.8,
+      "amount_signed": 120.8,
+      "source_key": "rrd:3122802791786:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBg.if2b4bc7a9a2f487f0551ec04ecec5e52.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 120.68,
+      "amount_signed": 120.68,
+      "source_key": "rrd:3122684212363:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBw.r03cee9ad4efa43b98fffc388a7926774.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 120.6,
+      "amount_signed": 120.6,
+      "source_key": "rrd:3122426587617:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eM.8b9b8f370f1c4de186464b087675ce53.0.0",
+      "operation_date": "2026-05-14",
+      "amount_abs": 120.6,
+      "amount_signed": 120.6,
+      "source_key": "rrd:3123424756705:acquiring_fee",
+      "product_id": 22
+    },
+    {
+      "srid": "ebR.re5354ecdc3534468a9fb32cbef871823.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 119.84,
+      "amount_signed": 119.84,
+      "source_key": "rrd:3122266373013:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eAC.r553768fe03c441909522bdb90323a17b.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 119.84,
+      "amount_signed": 119.84,
+      "source_key": "rrd:3123290310993:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBB.r78d39eb4f4e84b0b8cfd049ead7c4655.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 119.64,
+      "amount_signed": 119.64,
+      "source_key": "rrd:3123984284088:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eB8.r894a025e33f6482ab512631dd5603722.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 118.8,
+      "amount_signed": 118.8,
+      "source_key": "rrd:3123341836288:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eA5.id1c5c872e810373549977bdc746e73ef.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 118.72,
+      "amount_signed": 118.72,
+      "source_key": "rrd:3124110081630:acquiring_fee",
+      "product_id": 46
+    },
+    {
+      "srid": "eAI.rcf4f2bf643dc494fa2bcb63010dcf0b1.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 118.52,
+      "amount_signed": 118.52,
+      "source_key": "rrd:3123984284092:acquiring_fee",
+      "product_id": 3
+    },
+    {
+      "srid": "eAI.rb900e56929c04e4e97f2cfb495ca8772.0.0",
+      "operation_date": "2026-05-14",
+      "amount_abs": 117.08,
+      "amount_signed": 117.08,
+      "source_key": "rrd:3123424756681:acquiring_fee",
+      "product_id": 3
+    },
+    {
+      "srid": "eAI.rb900e56929c04e4e97f2cfb495ca8772.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 117.08,
+      "amount_signed": 117.08,
+      "source_key": "rrd:3123547309013:acquiring_fee",
+      "product_id": 3
+    },
+    {
+      "srid": "eAy.i31267af7b61a83f11f8c2711fb374a17.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 116.44,
+      "amount_signed": 116.44,
+      "source_key": "rrd:3122266373023:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eB0.r8a5e6d61300c46f8a66af41ad4f8f029.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 115.72,
+      "amount_signed": 115.72,
+      "source_key": "rrd:3122802791814:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "eAL.r5d7af6625a5747ffa74e8fa5c25d6859.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 114.88,
+      "amount_signed": 114.88,
+      "source_key": "rrd:3122802791806:acquiring_fee",
+      "product_id": 46
+    },
+    {
+      "srid": "eAL.r5d7af6625a5747ffa74e8fa5c25d6859.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 114.88,
+      "amount_signed": 114.88,
+      "source_key": "rrd:3122881311280:acquiring_fee",
+      "product_id": 46
+    },
+    {
+      "srid": "eA4.r49fad19d3534471895059919f6be0f63.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 112.92,
+      "amount_signed": 112.92,
+      "source_key": "rrd:3123125389019:acquiring_fee",
+      "product_id": 46
+    },
+    {
+      "srid": "eBd.r070278ff2699447e8031ba283cb51375.0.0",
+      "operation_date": "2026-05-05",
+      "amount_abs": 112.52,
+      "amount_signed": 112.52,
+      "source_key": "rrd:3122593218459:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eb0.i377ed9fce73c7585db8143b96624b008.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 110.8,
+      "amount_signed": 110.8,
+      "source_key": "rrd:3124110081638:acquiring_fee",
+      "product_id": 36
+    },
+    {
+      "srid": "ei.i33991d5ddb517e9130c41e37b0927b3a.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 108.64,
+      "amount_signed": 108.64,
+      "source_key": "rrd:3122459862824:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "eBd.r3c975fd8c92d4d16bd19467612c912c9.8.0",
+      "operation_date": "2026-05-09",
+      "amount_abs": 108.32,
+      "amount_signed": 108.32,
+      "source_key": "rrd:3123009071198:acquiring_fee",
+      "product_id": 15
+    },
+    {
+      "srid": "eBn.rec452d822854445188148c3e0bc786b0.0.0",
+      "operation_date": "2026-05-01",
+      "amount_abs": 107.2,
+      "amount_signed": 107.2,
+      "source_key": "rrd:3122213854435:acquiring_fee",
+      "product_id": 36
+    },
+    {
+      "srid": "eBn.rec452d822854445188148c3e0bc786b0.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 107.2,
+      "amount_signed": 107.2,
+      "source_key": "rrd:3122684212353:acquiring_fee",
+      "product_id": 36
+    },
+    {
+      "srid": "eo.r9fdb0094a36946eb9bd00392be6af981.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 105.8,
+      "amount_signed": 105.8,
+      "source_key": "rrd:3124266759497:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eAb.rfaf8217b04424fd39735812bc5c3a631.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 105.63,
+      "amount_signed": 105.63,
+      "source_key": "rrd:3125263635215:acquiring_fee",
+      "product_id": 24
+    },
+    {
+      "srid": "59893970623384620.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 104.6,
+      "amount_signed": 104.6,
+      "source_key": "rrd:3122426587615:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "59893970623384620.0.0",
+      "operation_date": "2026-05-03",
+      "amount_abs": 104.6,
+      "amount_signed": 104.6,
+      "source_key": "rrd:3122426587623:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "eBa.re7a31e7ae0f84ced9a434f73bb8bcf83.0.0",
+      "operation_date": "2026-05-10",
+      "amount_abs": 102.96,
+      "amount_signed": 102.96,
+      "source_key": "rrd:3123055923875:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "ebF.r4677f968f3aa4c75862b7f8668cef18e.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 102.68,
+      "amount_signed": 102.68,
+      "source_key": "rrd:3123726946306:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eAW.i70dffe8cfe08afcc781ef06ba53dfcec.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 102.64,
+      "amount_signed": 102.64,
+      "source_key": "rrd:3124266759313:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "eAW.i70dffe8cfe08afcc781ef06ba53dfcec.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 102.64,
+      "amount_signed": 102.64,
+      "source_key": "rrd:3124804829947:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "eBD.r22c125973db549368f38e0ec6d6af26d.0.0",
+      "operation_date": "2026-05-24",
+      "amount_abs": 101.69,
+      "amount_signed": 101.69,
+      "source_key": "rrd:3124804830128:acquiring_fee",
+      "product_id": 18
+    },
+    {
+      "srid": "ec.i91f41b98ab9ac365da07e156021f72ea.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 101.67,
+      "amount_signed": 101.67,
+      "source_key": "rrd:3123290311171:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ec.i91f41b98ab9ac365da07e156021f72ea.0.0",
+      "operation_date": "2026-05-17",
+      "amount_abs": 101.67,
+      "amount_signed": 101.67,
+      "source_key": "rrd:3123754404280:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebM.r6ffdee43d2dc408884efe7911060c9ca.0.0",
+      "operation_date": "2026-05-17",
+      "amount_abs": 100.87,
+      "amount_signed": 100.87,
+      "source_key": "rrd:3123754404010:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "ebM.ibae6aa297ee1049b7c7be805d24314e4.0.0",
+      "operation_date": "2026-05-10",
+      "amount_abs": 97.96,
+      "amount_signed": 97.96,
+      "source_key": "rrd:3123055923843:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAc.r2b62baf869884160ab9ae341e25a42bd.0.0",
+      "operation_date": "2026-05-18",
+      "amount_abs": 97.02,
+      "amount_signed": 97.02,
+      "source_key": "rrd:3123984284243:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eBG.r5efd482ed47d49db9d9ed57469655d56.0.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 96.76,
+      "amount_signed": 96.76,
+      "source_key": "rrd:3125012442058:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eA5.r25fea67f92d146e4b12bf0d1f8986e37.0.0",
+      "operation_date": "2026-05-11",
+      "amount_abs": 96.6,
+      "amount_signed": 96.6,
+      "source_key": "rrd:3123125389050:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "eAT.r64c80c4628fb44cbabd54a7d128571b5.4.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 90.09,
+      "amount_signed": 90.09,
+      "source_key": "rrd:3125012442056:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "ee.r4b23784cbaf044e093080489557d2d89.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 89.68,
+      "amount_signed": 89.68,
+      "source_key": "rrd:3124649988394:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "eAU.r2fdec294c1314234bf3abf6be984f716.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 89.08,
+      "amount_signed": 89.08,
+      "source_key": "rrd:3124110081666:acquiring_fee",
+      "product_id": 5
+    },
+    {
+      "srid": "eBS.rd35d6280b02444bfaa6173c8dbfdea13.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 88.12,
+      "amount_signed": 88.12,
+      "source_key": "rrd:3122881311496:acquiring_fee",
+      "product_id": 9
+    },
+    {
+      "srid": "ebk.rfbc48c98ff96414995affb25c2a9795a.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 87.92,
+      "amount_signed": 87.92,
+      "source_key": "rrd:3122266372973:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "ebm.rafc4c3f5697245c09f7973e8de27f7e3.0.0",
+      "operation_date": "2026-05-12",
+      "amount_abs": 83.9,
+      "amount_signed": 83.9,
+      "source_key": "rrd:3123290311175:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eBf.r8ccc85b0ed54475a8fb309e8060a295a.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 82.44,
+      "amount_signed": 82.44,
+      "source_key": "rrd:3125263635024:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "e9.r27ef485c89ef4e2b8a745091ceaee5ed.0.0",
+      "operation_date": "2026-05-04",
+      "amount_abs": 80.76,
+      "amount_signed": 80.76,
+      "source_key": "rrd:3122459862816:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "e9.r27ef485c89ef4e2b8a745091ceaee5ed.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 80.76,
+      "amount_signed": 80.76,
+      "source_key": "rrd:3123547309007:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "eBY.r030e00b0aa0d4c879634725ec229e94e.0.0",
+      "operation_date": "2026-05-02",
+      "amount_abs": 78.39,
+      "amount_signed": 78.39,
+      "source_key": "rrd:3122266373168:acquiring_fee",
+      "product_id": 37
+    },
+    {
+      "srid": "eBD.r0d73cc3040e045f9adf99b3aaa1aa0e8.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 77.04,
+      "amount_signed": 77.04,
+      "source_key": "rrd:3123726946141:acquiring_fee",
+      "product_id": 31
+    },
+    {
+      "srid": "ebb.ibd88c24fab670d26f480050bfc28c349.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 65.85,
+      "amount_signed": 65.85,
+      "source_key": "rrd:3123341836501:acquiring_fee",
+      "product_id": 6
+    },
+    {
+      "srid": "er.rdbeed61b6f0646f2a4b50cb04f3d706e.0.0",
+      "operation_date": "2026-05-08",
+      "amount_abs": 65.56,
+      "amount_signed": 65.56,
+      "source_key": "rrd:3122881311482:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "e4.r99f6b2894204404ab2d70e966a283a3f.0.0",
+      "operation_date": "2026-05-09",
+      "amount_abs": 65.02,
+      "amount_signed": 65.02,
+      "source_key": "rrd:3123009071350:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebR.rd481cbb8b50b42b999f4231dc8b14f9b.0.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 63.96,
+      "amount_signed": 63.96,
+      "source_key": "rrd:3125148493766:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAM.r1b7f83df8ce049dc866c5a513c807cb2.0.0",
+      "operation_date": "2026-05-10",
+      "amount_abs": 59.41,
+      "amount_signed": 59.41,
+      "source_key": "rrd:3123055923841:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eAe.rde2a6dd82e7645bf8b8af0cb4eef4414.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 58.78,
+      "amount_signed": 58.78,
+      "source_key": "rrd:3122684212508:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "eg.ie9600341bc50839c5cea98e633f1a0e7.0.0",
+      "operation_date": "2026-05-23",
+      "amount_abs": 58.77,
+      "amount_signed": 58.77,
+      "source_key": "rrd:3124649988631:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eBU.id17c5f68ee65268d2d2a61bbac9882f7.2.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 24.24,
+      "amount_signed": 24.24,
+      "source_key": "rrd:3123726946151:acquiring_fee",
+      "product_id": 89
+    },
+    {
+      "srid": "ecD.i43015ae874fab7a01961643b8c1f5295.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 19.46,
+      "amount_signed": 19.46,
+      "source_key": "rrd:3123726946300:acquiring_fee",
+      "product_id": 70
+    },
+    {
+      "srid": "eBD.re62b5ea556bc4583a11e76a963f0fcf9.0.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 15.01,
+      "amount_signed": 15.01,
+      "source_key": "rrd:3124110081684:acquiring_fee",
+      "product_id": 19
+    },
+    {
+      "srid": "eBw.r53fc0e90ecc244828e40e16312a9de07.2.0",
+      "operation_date": "2026-05-19",
+      "amount_abs": 13.83,
+      "amount_signed": 13.83,
+      "source_key": "rrd:3124110081668:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eB0.rde1799d2c4f44e018a1edec79d0908db.2.0",
+      "operation_date": "2026-05-26",
+      "amount_abs": 13.83,
+      "amount_signed": 13.83,
+      "source_key": "rrd:3125012441840:acquiring_fee",
+      "product_id": 21
+    },
+    {
+      "srid": "eL.r994bd141f5dc4180b29ede0598919327.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 13.5,
+      "amount_signed": 13.5,
+      "source_key": "rrd:3125263635046:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "ebg.r2aecdd3ef93a447ca8b0cbc1baeb7039.0.0",
+      "operation_date": "2026-05-15",
+      "amount_abs": 13.35,
+      "amount_signed": 13.35,
+      "source_key": "rrd:3123547308985:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebw.iec901e8915135c190289b4bd2587be2f.0.0",
+      "operation_date": "2026-05-29",
+      "amount_abs": 13.3,
+      "amount_signed": 13.3,
+      "source_key": "rrd:3125263635010:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "68441528624780320.4.0",
+      "operation_date": "2026-05-28",
+      "amount_abs": 13.21,
+      "amount_signed": 13.21,
+      "source_key": "rrd:3125148493817:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebq.r1282e93a65ad44f3a43019c37d9c38fe.0.0",
+      "operation_date": "2026-05-17",
+      "amount_abs": 13.2,
+      "amount_signed": 13.2,
+      "source_key": "rrd:3123754403962:acquiring_fee",
+      "product_id": 17
+    },
+    {
+      "srid": "eU.r877c0e69203d497bab92599eb2f96b26.0.0",
+      "operation_date": "2026-05-16",
+      "amount_abs": 12.94,
+      "amount_signed": 12.94,
+      "source_key": "rrd:3123726946153:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebP.r9f86d681214842879d1a6d34cf5a18c0.0.0",
+      "operation_date": "2026-05-07",
+      "amount_abs": 12.42,
+      "amount_signed": 12.42,
+      "source_key": "rrd:3122802791764:acquiring_fee",
+      "product_id": 23
+    },
+    {
+      "srid": "ebx.i3ae12013f0e173f0d639a7e8abee4464.0.0",
+      "operation_date": "2026-05-06",
+      "amount_abs": 12.11,
+      "amount_signed": 12.11,
+      "source_key": "rrd:3122684212371:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eAj.r0d691215207643beb3ec6bd73c3f2121.0.0",
+      "operation_date": "2026-05-13",
+      "amount_abs": 11.62,
+      "amount_signed": 11.62,
+      "source_key": "rrd:3123341836300:acquiring_fee",
+      "product_id": 25
+    },
+    {
+      "srid": "eBW.r8e3b710e99b04d5fac89ccc397034c49.0.0",
+      "operation_date": "2026-05-20",
+      "amount_abs": 11.23,
+      "amount_signed": 11.23,
+      "source_key": "rrd:3124266759309:acquiring_fee",
+      "product_id": 15
+    }
+  ]
+}

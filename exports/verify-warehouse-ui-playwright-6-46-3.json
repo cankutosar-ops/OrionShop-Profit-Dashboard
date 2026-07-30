@@ -1,0 +1,66 @@
+{
+  "pages": {
+    "warehouseSales": {
+      "labels": [
+        "Nevinnomyssk",
+        "Krasnodar",
+        "Elektrostal",
+        "Koledino",
+        "Tula",
+        "Yekaterinburg - Perspektivnaya 14",
+        "Voronezh",
+        "Samara (Novosemeykino)",
+        "Vladimir",
+        "Volgograd",
+        "Kotovsk",
+        "Sarapul",
+        "Ryazan (Tyushevskoye)",
+        "Kazan",
+        "SPB Shushary",
+        "SC Yerevan"
+      ],
+      "cyrillicLabels": [],
+      "pass": true
+    },
+    "intelligence": {
+      "distributionLabels": [
+        "Nevinnomyssk",
+        "5 040 ₽"
+      ],
+      "cyrillicLabels": [],
+      "pass": true
+    },
+    "stockWarehouses": {
+      "labels": [
+        "Koledino",
+        "Elektrostal",
+        "Krasnodar",
+        "Samara (Novosemeykino)",
+        "Tula",
+        "Ryazan (Tyushevskoye)",
+        "Kotovsk",
+        "Nevinnomyssk",
+        "Other warehouses",
+        "Voronezh",
+        "Sarapul",
+        "Vladimir",
+        "Volgograd",
+        "SPB Shushary",
+        "Yekaterinburg - Perspektivnaya 14",
+        "SC Astrakhan (Solyanka)",
+        "Aktobe",
+        "SC Yerevan",
+        "Radumlya 1",
+        "Pushkino",
+        "SC Grodno",
+        "SC Vnukovo",
+        "Belaya Dacha",
+        "SC Yerevan"
+      ],
+      "cyrillicLabels": [],
+      "pass": true
+    }
+  },
+  "pass": true,
+  "errors": []
+}

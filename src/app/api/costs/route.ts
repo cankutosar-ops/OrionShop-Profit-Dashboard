@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import { createCostRecord, type CostInput } from "@/services/cost-service";
 
 function parseCostInput(body: unknown): CostInput {
@@ -22,9 +23,15 @@ function parseCostInput(body: unknown): CostInput {
 
 export async function POST(request: Request) {
   try {
+    const authz = await authorizeRequestScope(request, {
+      allowDefaultAccount: true,
+      requireMarketplaceAccount: true,
+    });
+    if (isAuthzFailure(authz)) return authz;
+
     const body = await request.json();
     const input = parseCostInput(body);
-    const record = await createCostRecord(input);
+    const record = await createCostRecord(input, authz.marketplaceAccountId!);
     return NextResponse.json(record, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create cost";

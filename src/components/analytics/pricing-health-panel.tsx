@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   HEALTH_CONFIDENCE_LABEL,
   HEALTH_STATUS_LABEL,
@@ -18,8 +18,11 @@ import {
 } from "@/lib/smart-pricing-constants";
 import type { ProductPricingHealthRow } from "@/services/smart-pricing-service";
 import { MetricCard } from "@/components/dashboard/metric-card";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { formatKpiCount, formatKpiPercent } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
+import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 
 type SortKey = "health" | "margin" | "price30" | "difference" | "recovery";
@@ -47,6 +50,8 @@ const HEALTH_STATUS_VARIANT: Record<HealthScoreStatus, string> = {
   critical: "text-danger",
 };
 
+const DEFAULT_SORT = { key: "health" as const, direction: "desc" as const };
+
 function formatPrice(value: number | null): string {
   if (value === null) return "—";
   return formatCurrency(value);
@@ -60,8 +65,7 @@ export function PricingHealthPanel({
   const [targetMargin, setTargetMargin] = useState(initialTargetMargin);
   const [marketing, setMarketing] = useState(initialMarketing);
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("health");
-  const [sortAsc, setSortAsc] = useState(false);
+  const { sort, onSort, directionFor, isActive } = useCycleSort<SortKey>(DEFAULT_SORT);
 
   const rows = useMemo(() => {
     return initialRows.map((initial) => {
@@ -108,6 +112,23 @@ export function PricingHealthPanel({
     };
   }, [rows]);
 
+  type EnrichedRow = (typeof rows)[number];
+
+  const getSortValue = useCallback((row: EnrichedRow, key: SortKey): SortValue => {
+    switch (key) {
+      case "health":
+        return row.healthScore;
+      case "margin":
+        return row.currentNetMarginPercent;
+      case "price30":
+        return row.priceFor30 ?? -1;
+      case "difference":
+        return row.differencePercent ?? -999;
+      case "recovery":
+        return RECOVERY_ORDER[row.recoveryStatus];
+    }
+  }, []);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const list = q
@@ -118,56 +139,8 @@ export function PricingHealthPanel({
         )
       : [...rows];
 
-    list.sort((a, b) => {
-      let cmp = 0;
-      switch (sortKey) {
-        case "health":
-          cmp = a.healthScore - b.healthScore;
-          break;
-        case "margin":
-          cmp = a.currentNetMarginPercent - b.currentNetMarginPercent;
-          break;
-        case "price30":
-          cmp = (a.priceFor30 ?? -1) - (b.priceFor30 ?? -1);
-          break;
-        case "difference":
-          cmp = (a.differencePercent ?? -999) - (b.differencePercent ?? -999);
-          break;
-        case "recovery":
-          cmp = RECOVERY_ORDER[a.recoveryStatus] - RECOVERY_ORDER[b.recoveryStatus];
-          break;
-      }
-      return sortAsc ? cmp : -cmp;
-    });
-
-    return list;
-  }, [rows, search, sortKey, sortAsc]);
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortAsc((value) => !value);
-    } else {
-      setSortKey(key);
-      setSortAsc(false);
-    }
-  }
-
-  function SortHeader({ label, column }: { label: string; column: SortKey }) {
-    const active = sortKey === column;
-    return (
-      <button
-        type="button"
-        onClick={() => toggleSort(column)}
-        className={cn(
-          "inline-flex items-center gap-1 font-medium hover:text-foreground",
-          active ? "text-foreground" : "text-muted-foreground"
-        )}
-      >
-        {label}
-        {active && <span className="text-[10px]">{sortAsc ? "↑" : "↓"}</span>}
-      </button>
-    );
-  }
+    return sortRowsBySpec(list, sort, getSortValue);
+  }, [rows, search, sort, getSortValue]);
 
   return (
     <div className="space-y-5">
@@ -274,9 +247,14 @@ export function PricingHealthPanel({
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 font-medium">SKU</th>
                 <th className="px-3 py-2 font-medium">Product</th>
-                <th className="border-l border-border/60 px-3 py-2 text-right font-medium">
-                  <SortHeader label="Health Score" column="health" />
-                </th>
+                <SortableTh
+                  label="Health Score"
+                  active={isActive("health")}
+                  direction={directionFor("health")}
+                  onClick={() => onSort("health")}
+                  align="right"
+                  className="border-l border-border/60 px-3 py-2"
+                />
                 <th className="px-3 py-2 font-medium">Status</th>
                 <th className="px-3 py-2 font-medium">Confidence</th>
                 <th className="px-3 py-2 font-medium">Main Weakness</th>
@@ -285,21 +263,36 @@ export function PricingHealthPanel({
                 </th>
                 <th className="px-3 py-2 text-right font-medium">Oper. 20%</th>
                 <th className="px-3 py-2 text-right font-medium">Oper. 25%</th>
-                <th className="px-3 py-2 text-right font-medium">
-                  <SortHeader label="Oper. 30%" column="price30" />
-                </th>
+                <SortableTh
+                  label="Oper. 30%"
+                  active={isActive("price30")}
+                  direction={directionFor("price30")}
+                  onClick={() => onSort("price30")}
+                  align="right"
+                  className="px-3 py-2"
+                />
                 <th className="px-3 py-2 text-right font-medium">Oper. 35%</th>
                 <th className="px-3 py-2 text-right font-medium">Operational Target</th>
                 <th className="px-3 py-2 text-right font-medium text-muted-foreground">
                   Financial Target
                 </th>
                 <th className="px-3 py-2 text-right font-medium">Diff (₽)</th>
-                <th className="px-3 py-2 text-right font-medium">
-                  <SortHeader label="Diff (%)" column="difference" />
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  <SortHeader label="Recovery Status" column="recovery" />
-                </th>
+                <SortableTh
+                  label="Diff (%)"
+                  active={isActive("difference")}
+                  direction={directionFor("difference")}
+                  onClick={() => onSort("difference")}
+                  align="right"
+                  className="px-3 py-2"
+                />
+                <SortableTh
+                  label="Recovery Status"
+                  active={isActive("recovery")}
+                  direction={directionFor("recovery")}
+                  onClick={() => onSort("recovery")}
+                  align="left"
+                  className="px-3 py-2"
+                />
               </tr>
             </thead>
             <tbody>
