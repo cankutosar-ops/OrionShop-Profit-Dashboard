@@ -5,6 +5,7 @@ import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { fetchProductOptions } from "@/services/cost-service";
+import { getCompanyById } from "@/services/marketplace-account-service";
 import { fetchPurchases } from "@/services/purchase-service";
 
 export const dynamic = "force-dynamic";
@@ -33,20 +34,27 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
 
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
-  const [purchases, products] = await Promise.all([
+  const [purchases, products, company] = await Promise.all([
     fetchPurchases(scope.marketplaceAccountId),
     fetchProductOptions(scope.marketplaceAccountId),
+    getCompanyById(scope.companyId),
   ]);
+
+  const baseCurrency = (company?.currency || "TRY").toUpperCase();
 
   return (
     <>
       <PageHeader
         title="Purchases"
-        description="Purchase history and cost imports — not inventory"
+        description="Purchase ledger for Product Cost History — not inventory"
         showFilters={true}
       />
       <ProductContextBannerSection />
-      <PurchasesManager purchases={purchases} productCount={products.length} />
+      <PurchasesManager
+        purchases={purchases}
+        productCount={products.length}
+        baseCurrency={baseCurrency}
+      />
     </>
   );
 }

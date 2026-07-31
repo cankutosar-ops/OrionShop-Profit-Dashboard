@@ -460,6 +460,8 @@ export type Purchase = {
   supplier: string;
   currency: PurchaseCurrency;
   exchange_rate: number | null;
+  /** Optional supplier invoice / document number. */
+  invoice_number: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -479,17 +481,33 @@ export type PurchaseLine = {
 export type PurchaseWithLines = Purchase & {
   lines: PurchaseLine[];
   line_count: number;
+  /** Σ quantity × unit_cost for this purchase (purchase currency). */
+  total_cost: number;
+};
+
+export type PurchaseListLinePreview = {
+  id: string;
+  supplier_article: string;
+  product_name?: string | null;
+  quantity: number;
+  unit_cost: number;
 };
 
 export type PurchaseListItem = Purchase & {
   line_count: number;
   /** Distinct supplier_article values from purchase lines (deep-link search). */
   supplierArticles: string[];
+  /** Σ quantity × unit_cost (purchase currency). */
+  total_cost: number;
+  /** Line previews for inline expansion (cost history ledger). */
+  lines: PurchaseListLinePreview[];
 };
 
 export type PurchaseImportResult = {
   purchaseId: string;
   productsImported: number;
+  /** Products that received their first cost-history row in this import. */
+  newProducts: number;
   skipped: number;
   errors: { row: number; message: string }[];
 };
@@ -1073,6 +1091,209 @@ type PublicTables = {
       validation_result: string | null;
       errors: unknown[];
       meta: Record<string, unknown>;
+    }>;
+    Relationships: NoRelationships;
+  };
+  warehouse_entity_catalog: {
+    Row: {
+      entity: string;
+      label: string;
+      layer: string;
+      description: string;
+      is_required_for_healthy: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      entity: string;
+      label: string;
+      layer?: string;
+      description?: string;
+      is_required_for_healthy?: boolean;
+    };
+    Update: Partial<{
+      label: string;
+      layer: string;
+      description: string;
+      is_required_for_healthy: boolean;
+      updated_at: string;
+    }>;
+    Relationships: NoRelationships;
+  };
+  warehouse_checkpoints: {
+    Row: {
+      id: number;
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      entity: string;
+      mode: string;
+      shard: string;
+      cursor: string | null;
+      window_start: string | null;
+      window_end: string | null;
+      status: string;
+      progress: Record<string, unknown>;
+      retry_count: number;
+      last_successful_sync_at: string | null;
+      last_attempted_sync_at: string | null;
+      lease_owner: string | null;
+      lease_until: string | null;
+      error_code: string | null;
+      error_message: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      entity: string;
+      mode: string;
+      shard?: string;
+      cursor?: string | null;
+      window_start?: string | null;
+      window_end?: string | null;
+      status?: string;
+      progress?: Record<string, unknown>;
+      retry_count?: number;
+      last_successful_sync_at?: string | null;
+      last_attempted_sync_at?: string | null;
+      lease_owner?: string | null;
+      lease_until?: string | null;
+      error_code?: string | null;
+      error_message?: string | null;
+      id?: number;
+    };
+    Update: Partial<{
+      cursor: string | null;
+      window_start: string | null;
+      window_end: string | null;
+      status: string;
+      progress: Record<string, unknown>;
+      retry_count: number;
+      last_successful_sync_at: string | null;
+      last_attempted_sync_at: string | null;
+      lease_owner: string | null;
+      lease_until: string | null;
+      error_code: string | null;
+      error_message: string | null;
+      updated_at: string;
+    }>;
+    Relationships: NoRelationships;
+  };
+  warehouse_sync_sessions: {
+    Row: {
+      id: string;
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      entity: string;
+      mode: string;
+      trigger_source: string;
+      status: string;
+      started_at: string | null;
+      finished_at: string | null;
+      checkpoint_id: number | null;
+      statistics: Record<string, unknown>;
+      error_code: string | null;
+      error_message: string | null;
+      meta: Record<string, unknown>;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      entity: string;
+      mode: string;
+      trigger_source?: string;
+      status?: string;
+      started_at?: string | null;
+      finished_at?: string | null;
+      checkpoint_id?: number | null;
+      statistics?: Record<string, unknown>;
+      error_code?: string | null;
+      error_message?: string | null;
+      meta?: Record<string, unknown>;
+      id?: string;
+    };
+    Update: Partial<{
+      status: string;
+      started_at: string | null;
+      finished_at: string | null;
+      checkpoint_id: number | null;
+      statistics: Record<string, unknown>;
+      error_code: string | null;
+      error_message: string | null;
+      meta: Record<string, unknown>;
+      updated_at: string;
+    }>;
+    Relationships: NoRelationships;
+  };
+  warehouse_raw_intake_meta: {
+    Row: {
+      id: string;
+      session_id: string | null;
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      entity: string;
+      endpoint_family: string;
+      request_fingerprint: string | null;
+      window_from: string | null;
+      window_to: string | null;
+      cursor_before: string | null;
+      cursor_after: string | null;
+      http_status_class: string | null;
+      payload_digest: string | null;
+      records_read: number;
+      meta: Record<string, unknown>;
+      created_at: string;
+    };
+    Insert: {
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      entity: string;
+      session_id?: string | null;
+      endpoint_family?: string;
+      request_fingerprint?: string | null;
+      window_from?: string | null;
+      window_to?: string | null;
+      cursor_before?: string | null;
+      cursor_after?: string | null;
+      http_status_class?: string | null;
+      payload_digest?: string | null;
+      records_read?: number;
+      meta?: Record<string, unknown>;
+      id?: string;
+    };
+    Update: Partial<{
+      records_read: number;
+      meta: Record<string, unknown>;
+      cursor_after: string | null;
+      http_status_class: string | null;
+      payload_digest: string | null;
+    }>;
+    Relationships: NoRelationships;
+  };
+  warehouse_layer_registry: {
+    Row: {
+      layer: string;
+      label: string;
+      description: string;
+      created_at: string;
+    };
+    Insert: {
+      layer: string;
+      label: string;
+      description: string;
+    };
+    Update: Partial<{
+      label: string;
+      description: string;
     }>;
     Relationships: NoRelationships;
   };

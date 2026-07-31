@@ -18,6 +18,7 @@ const PURCHASES_COLUMNS = [
   "supplier",
   "currency",
   "exchange_rate",
+  "invoice_number",
   "notes",
   "created_at",
   "updated_at",
@@ -56,9 +57,10 @@ function printAudit() {
 Verify schema: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
 
 Apply DDL (pick one):
-  A) SQL Editor — run both files in order:
+  A) SQL Editor — run migration files in order:
      supabase/migrations/20260628120000_purchase_records.sql
      supabase/migrations/20260629120000_purchase_ux_revision.sql
+     supabase/migrations/20260731120000_purchase_invoice_number.sql
   B) Management API — SUPABASE_ACCESS_TOKEN or \`supabase login\`
   C) PostgreSQL — SUPABASE_DB_URL or SUPABASE_DB_PASSWORD
 ────────────────────────────────────────────────────────────
@@ -184,9 +186,10 @@ async function main() {
   const migrations = [
     "20260628120000_purchase_records.sql",
     "20260629120000_purchase_ux_revision.sql",
+    "20260731120000_purchase_invoice_number.sql",
   ];
 
-  console.log("=== Sprint 5 — purchase migrations ===\n");
+  console.log("=== Purchase migrations (incl. Sprint 8.2 invoice_number) ===\n");
 
   let before = await checkSchema();
   console.log("Before purchases columns:", before.purchasesColumns.join(", ") || "(table missing)");
@@ -199,9 +202,14 @@ async function main() {
       console.log(`\nApplying ${file}...`);
       const applyResult = await applyMigration(sql);
       if (!applyResult.applied) {
-        printAudit();
-        console.log(`Manual apply: ${migrationPath}\n`);
-        process.exit(1);
+        // Still try remaining files if early ones already applied
+        if (file === "20260731120000_purchase_invoice_number.sql") {
+          printAudit();
+          console.log(`Manual apply: ${migrationPath}\n`);
+          process.exit(1);
+        }
+        console.warn(`Could not apply ${file} (may already be applied). Continuing…`);
+        continue;
       }
       console.log(`Applied via ${applyResult.via}.`);
     }

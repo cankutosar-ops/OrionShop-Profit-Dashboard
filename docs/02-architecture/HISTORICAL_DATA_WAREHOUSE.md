@@ -48,6 +48,7 @@ Related Documents
 
 - [Database](./DATABASE.md)
 - [Sync Engine](./SYNC_ENGINE.md)
+- [Historical Data Warehouse Platform — Sprint 10.0](./HISTORICAL_DATA_WAREHOUSE_PLATFORM.md)
 - [System Architecture](./SYSTEM_ARCHITECTURE.md)
 - [Decisions Index](../06-decisions/INDEX.md)
 

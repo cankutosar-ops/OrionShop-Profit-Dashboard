@@ -1,0 +1,16 @@
+﻿Report Name;Product Profit
+Generated At;2026-07-31T10:05:16.972Z
+Company;Orion Test Co
+Marketplace;Wildberries
+Date Range;2026-07-01 → 2026-07-31
+Source;financialEngine.products
+
+Summary
+Metric;Value
+Total Revenue;1 000,00 ₽
+Total Net Profit;400,00 ₽
+Average Margin;40 %
+Total Units Sold;10
+
+SKU;Product Name;Brand;Category;Units Sold;Net Sales;Revenue (Settlement);Product Cost;Marketplace Fees;Logistics;Storage;Advertising;Net Profit;Net Margin %;ROI;Recommended Price
+SKU-1;Alpha;Brand X;Cat A;10;1 200,00 ₽;1 000,00 ₽;200,00 ₽;150,00 ₽;50,00 ₽;20,00 ₽;30,00 ₽;400,00 ₽;40 %;200 %;—

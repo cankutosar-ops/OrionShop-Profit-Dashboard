@@ -176,18 +176,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   );
 }
 
-/** Start cached SQL/WB work immediately so Suspense children share warm results. */
+/** Start cached SQL + warehouse KPI work so Suspense children share warm results. */
 async function prefetchDashboardBackground(scope: ScopedDateRange) {
   const [
     { getCachedDashboardSql },
     { loadWbWeeklySalesReports },
     { getWbBalanceMetrics },
-    { fetchWbOrdersApi },
   ] = await Promise.all([
     import("@/services/dashboard-service"),
     import("@/services/wb-sales-reports-service"),
     import("@/services/wb-balance-service"),
-    import("@/services/orders-value-service"),
   ]);
   void getCachedDashboardSql(
     scope.marketplaceAccountId,
@@ -198,5 +196,4 @@ async function prefetchDashboardBackground(scope: ScopedDateRange) {
   );
   void loadWbWeeklySalesReports(scope);
   void getWbBalanceMetrics(scope.marketplaceAccountId);
-  void fetchWbOrdersApi(scope);
 }

@@ -59,16 +59,9 @@ export function resolveOrdersValueFromSources(params: {
   scopeFrom: string;
   scopeTo: string;
 }): OrdersValueResolution {
-  if (params.apiOrders?.length) {
-    return {
-      ordersValue: buildOrdersValueFromApiOrders(
-        params.apiOrders,
-        params.scopeFrom,
-        params.scopeTo
-      ),
-      dataSource: "orders_api",
-    };
-  }
+  // Sprint 10.6 — Warehouse DB is the only Orders Value source.
+  // Ignore apiOrders even if passed (legacy callers).
+  void params.apiOrders;
 
   if (params.orders.length === 0) {
     return { ordersValue: 0, dataSource: "db" };

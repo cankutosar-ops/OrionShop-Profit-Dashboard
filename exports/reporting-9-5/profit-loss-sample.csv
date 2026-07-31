@@ -1,0 +1,25 @@
+﻿Report Name;Profit & Loss
+Generated At;2026-07-31T10:05:16.971Z
+Company;Orion Test Co
+Marketplace;Wildberries
+Date Range;2026-07-01 → 2026-07-31
+Source;financialEngine.modelB
+
+Summary
+Metric;Value
+Net Sales;1 000,00 ₽
+Revenue (WB Settlement);850,00 ₽
+Net Profit;435,00 ₽
+Net Margin %;51,18 %
+
+Line;Amount;Percent
+Net Sales;1 000,00 ₽;—
+Revenue (WB Settlement);850,00 ₽;—
+Marketplace Fees;150,00 ₽;—
+Logistics;80,00 ₽;—
+Storage;25,00 ₽;—
+Product Cost;200,00 ₽;—
+Advertising;30,00 ₽;—
+Estimated Tax;60,00 ₽;—
+Net Profit;435,00 ₽;—
+Net Margin %;—;51,18 %

@@ -19,7 +19,7 @@ type PurchaseLinesTableProps = {
   currency: string;
 };
 
-type SortKey = "article" | "product" | "quantity" | "unitCost";
+type SortKey = "article" | "product" | "quantity" | "unitCost" | "totalCost";
 
 const DEFAULT_SORT = { key: "article" as const, direction: "asc" as const };
 
@@ -33,6 +33,8 @@ function sortValue(row: PurchaseLineRow, key: SortKey): SortValue {
       return row.quantity;
     case "unitCost":
       return row.unit_cost;
+    case "totalCost":
+      return row.quantity * row.unit_cost;
   }
 }
 
@@ -50,16 +52,14 @@ export function PurchaseLinesTable({ lines, currency }: PurchaseLinesTableProps)
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-6 py-4">
-        <p className="text-sm text-muted-foreground">
-          {lines.length} imported product lines
-        </p>
+        <p className="text-sm text-muted-foreground">{lines.length} imported products</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
               <SortableTh
-                label="Supplier Article"
+                label="SKU"
                 active={isActive("article")}
                 direction={directionFor("article")}
                 onClick={() => onSort("article")}
@@ -86,13 +86,20 @@ export function PurchaseLinesTable({ lines, currency }: PurchaseLinesTableProps)
                 onClick={() => onSort("unitCost")}
                 className="px-6 py-3"
               />
+              <SortableTh
+                label="Total Cost"
+                active={isActive("totalCost")}
+                direction={directionFor("totalCost")}
+                onClick={() => onSort("totalCost")}
+                className="px-6 py-3"
+              />
             </tr>
           </thead>
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                  No lines imported for this purchase.
+                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                  No products imported for this purchase.
                 </td>
               </tr>
             ) : (
@@ -105,6 +112,9 @@ export function PurchaseLinesTable({ lines, currency }: PurchaseLinesTableProps)
                   <td className="px-6 py-3.5">{formatNumber(line.quantity)}</td>
                   <td className="px-6 py-3.5 font-medium">
                     {formatCurrency(line.unit_cost, currency)}
+                  </td>
+                  <td className="px-6 py-3.5 font-medium">
+                    {formatCurrency(line.quantity * line.unit_cost, currency)}
                   </td>
                 </tr>
               ))

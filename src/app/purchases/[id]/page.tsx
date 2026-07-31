@@ -6,7 +6,7 @@ import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { scopeParamsToSearchParams, type PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { fetchPurchaseById } from "@/services/purchase-service";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +59,7 @@ export default async function PurchaseDetailPage({ params, searchParams }: PageP
           Back to purchases
         </Link>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">Purchase Date</p>
             <p className="mt-1 font-medium">{formatDate(purchase.purchase_date)}</p>
@@ -67,6 +67,10 @@ export default async function PurchaseDetailPage({ params, searchParams }: PageP
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">Supplier</p>
             <p className="mt-1 font-medium">{purchase.supplier || "—"}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">Invoice No</p>
+            <p className="mt-1 font-medium">{purchase.invoice_number || "—"}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">Currency</p>
@@ -77,8 +81,10 @@ export default async function PurchaseDetailPage({ params, searchParams }: PageP
             <p className="mt-1 font-medium">{purchase.exchange_rate ?? "—"}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Product Lines</p>
-            <p className="mt-1 font-medium">{formatNumber(purchase.line_count)}</p>
+            <p className="text-xs text-muted-foreground">Total Cost</p>
+            <p className="mt-1 font-medium">
+              {formatCurrency(purchase.total_cost, purchase.currency)}
+            </p>
           </div>
         </div>
 

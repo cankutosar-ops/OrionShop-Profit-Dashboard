@@ -103,7 +103,10 @@ Architecture documentation rules and index. Product architecture content lives i
 
 ## Canonical data platform
 
-[HISTORICAL_DATA_WAREHOUSE.md](./HISTORICAL_DATA_WAREHOUSE.md) is the authoritative Historical Data Warehouse architecture (Production). Sync and database docs refine mechanisms; they must preserve its principles.
+[HISTORICAL_DATA_WAREHOUSE.md](./HISTORICAL_DATA_WAREHOUSE.md) is the authoritative Historical Data Warehouse **philosophy** (Production).  
+[HISTORICAL_DATA_WAREHOUSE_PLATFORM.md](./HISTORICAL_DATA_WAREHOUSE_PLATFORM.md) is the Sprint **10.0 operational blueprint** (layers, checkpoints, sync pipeline, roadmap) for implementation sprints 10.1+.
+
+Sync and database docs refine mechanisms; they must preserve warehouse principles.
 
 ## Canonical synchronization
 
@@ -176,7 +179,8 @@ Architecture documentation rules and index. Product architecture content lives i
 |------|--------|--------|
 | `SYSTEM_ARCHITECTURE.md` | End-to-end system blueprint | Production |
 | `APPLICATION_ARCHITECTURE.md` | Application Layer capability blueprint | Production |
-| `HISTORICAL_DATA_WAREHOUSE.md` | Data platform / warehouse architecture | Production |
+| `HISTORICAL_DATA_WAREHOUSE.md` | Data platform / warehouse philosophy | Production |
+| `HISTORICAL_DATA_WAREHOUSE_PLATFORM.md` | Sprint 10.0 warehouse platform blueprint | Draft |
 | `SYNC_ENGINE.md` | Synchronization architecture | Production |
 | `DATABASE.md` | Schema / data architecture | Draft skeleton |
 | `SECURITY.md` | AuthN/Z, secrets, tenancy | Draft skeleton |

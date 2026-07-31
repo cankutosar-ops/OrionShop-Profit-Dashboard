@@ -1,180 +1,93 @@
+import Link from "next/link";
 import { Suspense } from "react";
-import {
-  BusinessReportCard,
-  ComingSoonReportCard,
-} from "@/components/reports/business-report-card";
-import { MarketplaceIntelligenceCard } from "@/components/reports/marketplace-intelligence-card";
-import { ProductReportCard } from "@/components/reports/product-report-card";
 import { ReportsHeader } from "@/components/reports/reports-header";
+import { ReportNav } from "@/components/reporting/report-nav";
 import {
   type PageScopeSearchParamsInput,
   scopeParamsToSearchParams,
 } from "@/lib/filter-params";
-import { calculateModelBMarginPercent } from "@/lib/financial-engine";
-import {
-  inferPeriodPreset,
-  periodPresetLabel,
-} from "@/lib/reports/report-period";
-import { resolveScopedDateRange } from "@/lib/marketplace-scope";
-import { formatLastSyncTimestamp } from "@/lib/marketplace-sync-date";
-import { getBrandsForMarketplaceAccount } from "@/services/brand-service";
-import {
-  getOverviewMetrics,
-  getProductProfitability,
-} from "@/services/dashboard-service";
-import {
-  getCompanyById,
-  getMarketplaceAccountSyncState,
-} from "@/services/marketplace-account-service";
+import { REPORTING_CATALOG } from "@/lib/reporting/module/report-catalog";
+import { REPORT_FILTER_PARAMS } from "@/lib/reporting/module/report-filters";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<PageScopeSearchParamsInput>;
+  searchParams: Promise<PageScopeSearchParamsInput & { category?: string }>;
 };
 
 export default async function ReportsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const scopeQuery = scopeParamsToSearchParams(params).toString();
-  const hrefWithScope = (href: string) =>
-    scopeQuery ? `${href}?${scopeQuery}` : href;
-
-  const scope = await resolveScopedDateRange(params);
-  const [overview, products, company, syncState, brands] = await Promise.all([
-    getOverviewMetrics(scope).catch(() => null),
-    getProductProfitability(scope).catch(() => []),
-    getCompanyById(scope.companyId),
-    getMarketplaceAccountSyncState(scope.marketplaceAccountId),
-    scope.brandId
-      ? getBrandsForMarketplaceAccount(scope.marketplaceAccountId)
-      : Promise.resolve([]),
-  ]);
-
-  const currency = company?.currency?.trim() || "RUB";
-  const brandLabel = scope.brandId
-    ? brands.find((b) => b.id === scope.brandId)?.name ?? scope.brandId
-    : null;
-
-  const preset = inferPeriodPreset(scope.from, scope.to);
-  const periodLabel = `${scope.from} → ${scope.to} · ${periodPresetLabel(preset)}`;
-  const lastSyncLabel = syncState?.last_successful_sync_at
-    ? formatLastSyncTimestamp(syncState.last_successful_sync_at)
-    : "—";
-
-  const hasKpis =
-    overview &&
-    (overview.revenue !== 0 ||
-      overview.netProfit !== 0 ||
-      overview.ordersPurchases.ordersCount !== 0);
-
-  const productsWithSales = products.filter(
-    (p) => p.purchases > 0 || p.revenue > 0 || p.unitsSold > 0
-  ).length;
-  const productRevenue = products.reduce((sum, p) => sum + p.revenue, 0);
-  const productProfit = products.reduce((sum, p) => sum + p.finalNetProfit, 0);
-  const averageMargin =
-    productRevenue > 0
-      ? calculateModelBMarginPercent(productRevenue, productProfit)
-      : null;
-  const hasProductKpis =
-    products.length > 0 &&
-    (productRevenue !== 0 || productsWithSales !== 0);
+  const scopeQuery = scopeParamsToSearchParams(params);
+  if (params.category?.trim()) {
+    scopeQuery.set(REPORT_FILTER_PARAMS.category, params.category.trim());
+  }
+  const qs = scopeQuery.toString();
+  const hrefWithScope = (href: string) => (qs ? `${href}?${qs}` : href);
 
   return (
     <>
       <ReportsHeader
-        title="Reports"
-        description="Management reporting workspace — professional documents from trusted dashboard data"
+        title="Reporting"
+        description="Financial and operational reports — powered by the Financial Engine, not a second dashboard"
       />
 
-      <div className="space-y-6">
-        <Suspense
-          fallback={
-            <div className="h-64 animate-pulse rounded-2xl border border-border bg-card" />
-          }
-        >
-          <BusinessReportCard
-            previewHref={hrefWithScope("/reports/business")}
-            periodLabel={periodLabel}
-            lastSyncLabel={lastSyncLabel}
-            lastGeneratedLabel="On export"
-            brandLabel={brandLabel}
-            kpis={
-              hasKpis && overview
-                ? {
-                    revenue: overview.revenue,
-                    profit: overview.netProfit,
-                    orders: overview.ordersPurchases.ordersCount,
-                    conversion: overview.ordersPurchases.conversionRate,
-                    currency,
-                  }
-                : null
-            }
-          />
+      <div className="mb-6">
+        <Suspense fallback={<div className="h-9 animate-pulse rounded-xl bg-card" />}>
+          <ReportNav />
         </Suspense>
-
-        <MarketplaceIntelligenceCard
-          previewHref={hrefWithScope("/reports/marketplace")}
-          periodLabel={periodLabel}
-          lastSyncLabel={lastSyncLabel}
-        />
-
-        <Suspense
-          fallback={
-            <div className="h-64 animate-pulse rounded-2xl border border-border bg-card" />
-          }
-        >
-          <ProductReportCard
-            previewHref={hrefWithScope("/reports/product")}
-            periodLabel={periodLabel}
-            lastSyncLabel={lastSyncLabel}
-            lastGeneratedLabel="On export"
-            brandLabel={brandLabel}
-            kpis={
-              hasProductKpis
-                ? {
-                    products: products.length,
-                    productsWithSales,
-                    revenue: productRevenue,
-                    averageMargin,
-                    currency,
-                  }
-                : null
-            }
-          />
-        </Suspense>
-
-        <section>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Upcoming reports
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <ComingSoonReportCard
-              name="Financial Report"
-              description="Settlement, Model B, and finance category packs."
-            />
-            <ComingSoonReportCard
-              name="Inventory Report"
-              description="Stock health, warehouse, and inventory value pack."
-            />
-            <ComingSoonReportCard
-              name="Executive Report"
-              description="Leadership composite of company KPIs and risks."
-            />
-          </div>
-        </section>
-
-        <p className="text-xs text-muted-foreground">
-          Legacy Product Profit preview remains available at{" "}
-          <a
-            href={hrefWithScope("/reports/product-profit")}
-            className="text-primary hover:underline"
-          >
-            /reports/product-profit
-          </a>
-          .
-        </p>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {REPORTING_CATALOG.map((report) => (
+          <Link
+            key={report.id}
+            href={hrefWithScope(report.href)}
+            className={cn(
+              "rounded-2xl border border-border bg-card p-5 transition-ui hover:bg-card-hover",
+              report.status === "ready" && "border-primary/30"
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-base font-semibold">{report.title}</h2>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+                  report.status === "ready"
+                    ? "bg-primary/12 text-primary"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {report.status === "ready" ? "Ready" : "Soon"}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{report.description}</p>
+          </Link>
+        ))}
+      </div>
+
+      <p className="mt-8 text-xs text-muted-foreground">
+        Legacy document previews remain available:{" "}
+        <a href={hrefWithScope("/reports/business")} className="text-primary hover:underline">
+          Business
+        </a>
+        ,{" "}
+        <a href={hrefWithScope("/reports/marketplace")} className="text-primary hover:underline">
+          Marketplace
+        </a>
+        ,{" "}
+        <a href={hrefWithScope("/reports/product")} className="text-primary hover:underline">
+          Product
+        </a>
+        ,{" "}
+        <a
+          href={hrefWithScope("/reports/product-profit")}
+          className="text-primary hover:underline"
+        >
+          Product Profit (legacy)
+        </a>
+        .
+      </p>
     </>
   );
 }

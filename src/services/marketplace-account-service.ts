@@ -757,9 +757,8 @@ export async function testMarketplaceAccountConnection(
     const account = await getMarketplaceAccountForSync(accountId);
 
     if (account.marketplace === "wildberries") {
-      const { WbApiClient } = await import("@/lib/wildberries/api-client");
-      const client = new WbApiClient(account.apiKey);
-      await client.fetchOrders(new Date(Date.now() - 86400000).toISOString());
+      const { testWildberriesConnection } = await import("@/lib/marketplace-adapters");
+      await testWildberriesConnection(account.apiKey);
       return { ok: true, message: `Connected to ${account.account_name} (Wildberries)` };
     }
 

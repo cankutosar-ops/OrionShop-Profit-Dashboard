@@ -32,7 +32,7 @@ import {
   recordPerfEvent,
   runWithPerfRequest,
 } from "@/lib/perf/perf-recorder";
-import { fetchWbOrdersApi, resolveOrdersValue } from "@/services/orders-value-service";
+import { resolveOrdersValue } from "@/services/orders-value-service";
 import { resolveNetSales } from "@/services/sales-revenue-service";
 import { getWbSettlementMetrics } from "@/services/wb-settlement-service";
 import { logScopeAudit } from "@/lib/scope-audit-log";
@@ -56,7 +56,6 @@ import {
   fetchProductsWithRelations,
   fetchSalesInRange,
 } from "@/services/persisted-query-service";
-import type { WbApiOrder } from "@/lib/wildberries/types";
 import type {
   CategoryProfitability,
   GroupedProfitability,
@@ -103,7 +102,6 @@ type ScopedDashboardRaw = ScopedDashboardSqlRaw & {
   cashReceived: CashReceivedMetrics;
   expectedWbPayout: ExpectedWbPayoutMetrics;
   wbBalance: WbBalanceMetrics;
-  apiOrders: WbApiOrder[] | undefined;
 };
 
 async function isDatabaseEmpty(
@@ -214,23 +212,18 @@ async function loadSqlForScope(
   return fetchScopedDashboardSql(scope, client);
 }
 
-/** Single scoped fetch: SQL + independent WB requests in parallel. */
+/** Single scoped fetch: SQL + warehouse KPI snapshots in parallel (no marketplace HTTP). */
 async function fetchScopedDashboardRaw(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<ScopedDashboardRaw> {
   const sqlPromise = loadSqlForScope(scope, client);
-  // Kick WB work immediately — do not wait for SQL to finish first.
-  const wbPromise = Promise.all([
+  const kpiPromise = Promise.all([
     loadWbWeeklySalesReports(scope),
     getWbBalanceMetrics(scope.marketplaceAccountId),
-    fetchWbOrdersApi(scope),
   ]);
 
-  const [sql, [salesReports, wbBalance, apiOrders]] = await Promise.all([
-    sqlPromise,
-    wbPromise,
-  ]);
+  const [sql, [salesReports, wbBalance]] = await Promise.all([sqlPromise, kpiPromise]);
 
   const cashReceived = buildCashReceivedMetricsFromReports(scope, salesReports);
   const expectedWbPayout = buildExpectedWbPayoutMetricsFromReports(scope, salesReports);
@@ -241,7 +234,6 @@ async function fetchScopedDashboardRaw(
     cashReceived,
     expectedWbPayout,
     wbBalance,
-    apiOrders,
   };
 }
 
@@ -299,7 +291,6 @@ function buildSqlOnlyRaw(sql: ScopedDashboardSqlRaw): ScopedDashboardRaw {
       currency: null,
       unavailableReason: "Loading…",
     },
-    apiOrders: undefined,
   };
 }
 
@@ -334,10 +325,7 @@ async function buildOverviewMetricsFromRaw(
     penalties,
   });
   const ordersPurchasesBase = buildOrdersPurchasesKpis(raw.orders, raw.sales);
-  const ordersValueResolution = await resolveOrdersValue(scope, raw.orders, {
-    preloadedApiOrders: raw.apiOrders,
-    skipApiFetch: true,
-  });
+  const ordersValueResolution = await resolveOrdersValue(scope, raw.orders);
   const ordersPurchases = {
     ...ordersPurchasesBase,
     ordersValue: ordersValueResolution.ordersValue,
@@ -525,7 +513,7 @@ export type DashboardWbStripPayload = {
   wbSettlement: WbSettlementMetrics;
 };
 
-/** Deferred WB enrichment — runs in parallel Suspense; shares SQL via react.cache. */
+/** Deferred warehouse KPI strip — shares SQL via react.cache. No marketplace HTTP. */
 export const getDashboardWbStripData = cache(
   async (scopeKey: string, scopeJson: string): Promise<DashboardWbStripPayload | null> => {
     const scope = JSON.parse(scopeJson) as ScopedDateRange;
@@ -538,17 +526,14 @@ export const getDashboardWbStripData = cache(
         const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
         if (empty) return null;
 
-        const [sql, salesReports, wbBalance, apiOrders] = await Promise.all([
+        const [sql, salesReports, wbBalance] = await Promise.all([
           loadSqlForScope(scope),
           loadWbWeeklySalesReports(scope),
           getWbBalanceMetrics(scope.marketplaceAccountId),
-          fetchWbOrdersApi(scope),
         ]);
 
         const expectedWbPayout = buildExpectedWbPayoutMetricsFromReports(scope, salesReports);
-        const ordersValueResolution = await resolveOrdersValue(scope, sql.orders, {
-          preloadedApiOrders: apiOrders,
-        });
+        const ordersValueResolution = await resolveOrdersValue(scope, sql.orders);
         const financeTotals = rollupCategoriesToProfitBuckets(sql.finance);
         const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
         const wbSettlement = await getWbSettlementMetrics(

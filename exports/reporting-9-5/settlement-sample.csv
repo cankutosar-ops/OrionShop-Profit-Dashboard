@@ -1,0 +1,27 @@
+﻿Report Name;Settlement
+Generated At;2026-07-31T10:05:16.972Z
+Company;Orion Test Co
+Marketplace;Wildberries
+Date Range;2026-07-01 → 2026-07-31
+Source;financialEngine.modelB
+
+Summary
+Metric;Value
+Gross Sales;1 200,00 ₽
+Net Sales;1 000,00 ₽
+Revenue (Settlement / For Pay);850,00 ₽
+Net Transfer;715,00 ₽
+
+Section;Line;Amount
+sales;Gross Sales;1 200,00 ₽
+sales;Returns;200,00 ₽
+sales;Net Sales;1 000,00 ₽
+wb;Revenue (Settlement / For Pay);850,00 ₽
+wb;Marketplace Fees;150,00 ₽
+costs;Logistics;50,00 ₽
+costs;Return Logistics;30,00 ₽
+costs;Storage;25,00 ₽
+costs;Acceptance;10,00 ₽
+costs;Penalties;5,00 ₽
+costs;Other Deductions;15,00 ₽
+result;Net Transfer;715,00 ₽

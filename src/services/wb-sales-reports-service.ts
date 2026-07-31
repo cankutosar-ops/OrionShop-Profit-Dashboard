@@ -1,44 +1,39 @@
+/**
+ * Sprint 10.6 — Sales reports / Cash Received / Expected Payout from warehouse snapshots.
+ * No Marketplace HTTP.
+ */
+
 import {
-  expandSalesReportFetchWindow,
   sumCashReceivedFromSalesReports,
 } from "@/lib/cash-received";
 import { sumExpectedWbPayoutFromSalesReports } from "@/lib/expected-wb-payout";
 import { sanitizeUserFacingError } from "@/lib/user-facing-errors";
-import { cachedExternalRequest } from "@/lib/wb/wb-request-cache";
-import { WbApiClient } from "@/lib/wildberries/api-client";
-import type { WbSalesReportListItem } from "@/lib/wildberries/types";
-import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
+import {
+  loadSalesReportsFromWarehouse,
+  type WarehouseSalesReportsLoadResult,
+} from "@/services/warehouse-kpi-read-service";
 import type {
   CashReceivedMetrics,
   ExpectedWbPayoutMetrics,
   ScopedDateRange,
 } from "@/types/database";
 
-export type WbSalesReportsLoadResult =
-  | { kind: "wildberries"; reports: WbSalesReportListItem[] }
-  | { kind: "unsupported" }
-  | { kind: "error"; error: unknown };
+export type WbSalesReportsLoadResult = WarehouseSalesReportsLoadResult;
 
-/** Single WB Finance sales-reports fetch shared by Cash Received, Expected Payout, and Settlement. */
+/** Warehouse-backed weekly sales reports (Cash Received, Expected Payout, Settlement). */
 export async function loadWbWeeklySalesReports(
   scope: ScopedDateRange
 ): Promise<WbSalesReportsLoadResult> {
-  const cacheKey = `wb-weekly-reports:${scope.marketplaceAccountId}:${scope.from}:${scope.to}`;
-  return cachedExternalRequest(cacheKey, async () => {
-    try {
-      const account = await getMarketplaceAccountForSync(scope.marketplaceAccountId);
-      if (account.marketplace !== "wildberries") {
-        return { kind: "unsupported" as const };
-      }
-
-      const client = new WbApiClient(account.apiKey);
-      const { fetchFrom, fetchTo } = expandSalesReportFetchWindow(scope.from, scope.to);
-      const reports = await client.fetchSalesReportsList(fetchFrom, fetchTo, "weekly");
-      return { kind: "wildberries" as const, reports };
-    } catch (error) {
-      return { kind: "error" as const, error };
-    }
-  });
+  const loaded = await loadSalesReportsFromWarehouse(scope);
+  if (loaded.kind === "empty") {
+    return {
+      kind: "error",
+      error: new Error(
+        "Settlement reports not yet synced to warehouse — run warehouse sync"
+      ),
+    };
+  }
+  return loaded;
 }
 
 export function buildCashReceivedMetricsFromReports(
@@ -50,6 +45,15 @@ export function buildCashReceivedMetricsFromReports(
       amount: null,
       payoutCount: 0,
       unavailableReason: "Cash Received is available for Wildberries accounts only",
+    };
+  }
+
+  if (loadResult.kind === "empty") {
+    return {
+      amount: null,
+      payoutCount: 0,
+      unavailableReason:
+        "Settlement reports not yet synced to warehouse — run warehouse sync",
     };
   }
 
@@ -78,6 +82,15 @@ export function buildExpectedWbPayoutMetricsFromReports(
       amount: null,
       reportCount: 0,
       unavailableReason: "Expected WB Payout is available for Wildberries accounts only",
+    };
+  }
+
+  if (loadResult.kind === "empty") {
+    return {
+      amount: null,
+      reportCount: 0,
+      unavailableReason:
+        "Settlement reports not yet synced to warehouse — run warehouse sync",
     };
   }
 
