@@ -60,6 +60,7 @@ export async function POST(request: Request) {
 
     const marketplaceAccountId = authz.marketplaceAccountId!;
     const trigger = body.trigger ?? "lifecycle";
+    const correlationId = crypto.randomUUID();
 
     const result =
       trigger === "rebuild_history"
@@ -81,8 +82,28 @@ export async function POST(request: Request) {
             companyId: body.companyId,
           });
 
+    const { recordAuditEvent } = await import("@/services/administration-audit-service");
+    void recordAuditEvent({
+      userId: authz.user.id,
+      userEmail: authz.user.email ?? null,
+      companyId: authz.companyId,
+      module: "warehouse",
+      action: trigger === "rebuild_history" ? "rebuild_history" : "historical_backfill",
+      entityType: "marketplace_account",
+      entityId: marketplaceAccountId,
+      result: result.status === "success" ? "success" : "failure",
+      eventKind: "audit",
+      correlationId,
+      reason:
+        typeof (body as { reason?: string }).reason === "string"
+          ? (body as { reason?: string }).reason
+          : null,
+      metadata: { status: result.status, trigger },
+    });
+
     return NextResponse.json({
       ok: result.status === "success",
+      correlationId,
       result,
     });
   } catch (error) {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { getAppLanguage } from "@/lib/app-locale";
 import "./globals.css";
 
@@ -16,9 +17,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang={getAppLanguage()} className={inter.variable}>
+    <html lang={getAppLanguage()} className={inter.variable} suppressHydrationWarning>
       <body className={`${inter.className} bg-background text-foreground antialiased`}>
-        <AppShell>{children}</AppShell>
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -59,6 +59,7 @@ export async function POST(request: Request) {
 
     const marketplaceAccountId = authz.marketplaceAccountId!;
     const trigger = body.trigger ?? "api";
+    const correlationId = crypto.randomUUID();
 
     const result =
       trigger === "scheduled"
@@ -78,9 +79,34 @@ export async function POST(request: Request) {
           });
 
     const ok = result.status === "success" || result.status === "partial";
+    const { recordAuditEvent } = await import("@/services/administration-audit-service");
+    void recordAuditEvent({
+      userId: authz.user.id,
+      userEmail: authz.user.email ?? null,
+      companyId: authz.companyId,
+      module: "warehouse",
+      action: "incremental_sync",
+      entityType: "marketplace_account",
+      entityId: marketplaceAccountId,
+      result:
+        result.status === "blocked"
+          ? "denied"
+          : ok
+            ? "success"
+            : "failure",
+      eventKind: "audit",
+      correlationId,
+      reason:
+        typeof (body as { reason?: string }).reason === "string"
+          ? (body as { reason?: string }).reason
+          : null,
+      metadata: { status: result.status, trigger },
+    });
+
     return NextResponse.json({
       ok: result.status === "blocked" ? false : ok,
       blocked: result.status === "blocked",
+      correlationId,
       result,
     });
   } catch (error) {

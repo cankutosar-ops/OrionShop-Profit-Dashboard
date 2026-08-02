@@ -101,4 +101,18 @@ export class WarehouseScheduler {
     });
     return this.store.updateScheduleInterval(accountId, entity, intervalMs);
   }
+
+  /** Pause / resume a schedule without changing interval (Sprint 11.3). */
+  setEnabled(
+    accountId: string,
+    entity: IncrementalSyncEntity,
+    enabled: boolean
+  ): WarehouseScheduleConfig {
+    this.store.ensureDefaultSchedules({
+      marketplaceType: "wildberries",
+      companyId: "0",
+      marketplaceAccountId: accountId,
+    });
+    return this.store.updateScheduleEnabled(accountId, entity, enabled);
+  }
 }

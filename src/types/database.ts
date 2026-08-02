@@ -10,6 +10,9 @@ export type MarketplaceType = "wildberries" | "ozon" | "lamoda";
 
 export const MARKETPLACE_TYPES: MarketplaceType[] = ["wildberries", "ozon", "lamoda"];
 
+/** Platforms that can be connected today (others show Coming Soon). */
+export const MARKETPLACE_CONNECTABLE: MarketplaceType[] = ["wildberries"];
+
 export type SyncStatus = "idle" | "running" | "success" | "partial" | "failed" | "warning";
 
 export const SYNC_STATUSES: SyncStatus[] = [
@@ -108,6 +111,8 @@ export type FinanceSyncReportRow = {
   created_at: string;
 };
 
+export type CompanyStatus = "active" | "archived";
+
 export type Company = {
   id: string;
   name: string;
@@ -116,6 +121,10 @@ export type Company = {
   timezone: string;
   language: string;
   is_default: boolean;
+  /** Soft archive — Sprint 11.2. Defaults to active when column absent. */
+  status: CompanyStatus;
+  /** Tax rate input (%) — not Estimated Tax. Defaults to 6 when column absent. */
+  default_tax_percent: number;
   created_at: string;
   updated_at: string;
 };
@@ -869,6 +878,8 @@ type PublicTables = {
       timezone?: string;
       language?: string;
       is_default?: boolean;
+      status?: CompanyStatus;
+      default_tax_percent?: number;
       id?: string;
       created_at?: string;
       updated_at?: string;

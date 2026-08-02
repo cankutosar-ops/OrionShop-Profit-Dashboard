@@ -10,12 +10,18 @@ function isAuthShellPath(pathname: string | null): boolean {
   return AUTH_SHELL_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+function isAdminShellPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname === "/administration" || pathname.startsWith("/administration/");
+}
+
 /**
- * Uses dashboard chrome for app pages; bare shell for login/auth routes.
+ * Dashboard chrome for app pages; bare passthrough for auth and Administration
+ * (Administration uses its own layout + auth gate under app/administration).
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  if (isAuthShellPath(pathname)) {
+  if (isAuthShellPath(pathname) || isAdminShellPath(pathname)) {
     return <>{children}</>;
   }
   return <DashboardLayout>{children}</DashboardLayout>;

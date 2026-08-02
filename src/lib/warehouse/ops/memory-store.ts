@@ -78,6 +78,24 @@ export class InMemoryWarehouseOpsStore {
     return next;
   }
 
+  updateScheduleEnabled(
+    accountId: string,
+    entity: IncrementalSyncEntity,
+    enabled: boolean
+  ): WarehouseScheduleConfig {
+    const key = this.scheduleKey(accountId, entity);
+    const existing = this.schedules.get(key);
+    if (!existing) throw new Error(`Schedule not found for ${entity}`);
+    const next = {
+      ...existing,
+      enabled,
+      updatedAt: nowIso(),
+      meta: { ...existing.meta, source: "override" },
+    };
+    this.schedules.set(key, next);
+    return next;
+  }
+
   listSchedules(accountId: string): WarehouseScheduleConfig[] {
     return [...this.schedules.values()].filter(
       (s) => s.marketplaceAccountId === String(accountId)

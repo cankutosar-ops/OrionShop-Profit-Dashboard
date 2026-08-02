@@ -37,6 +37,9 @@ import { marketplaceAdapterRegistry } from "@/lib/warehouse/adapters/registry";
 /** Process-local ops orchestrator for simulate / single-node tick. */
 const simulateOrchestrators = new Map<string, WarehouseOpsOrchestrator>();
 
+/** Process-local live orchestrators so Control Center queue/schedule share tick state. */
+const liveOrchestrators = new Map<string, WarehouseOpsOrchestrator>();
+
 function getSimulateOrchestrator(accountId: string): WarehouseOpsOrchestrator {
   let ops = simulateOrchestrators.get(accountId);
   if (!ops) {
@@ -88,6 +91,16 @@ function getSimulateOrchestrator(accountId: string): WarehouseOpsOrchestrator {
       },
     });
     simulateOrchestrators.set(accountId, ops);
+  }
+  return ops;
+}
+
+function getOrCreateLiveOrchestrator(scope: WarehouseScope, apiKey: string): WarehouseOpsOrchestrator {
+  const key = scope.marketplaceAccountId;
+  let ops = liveOrchestrators.get(key);
+  if (!ops) {
+    ops = createLiveOrchestrator(scope, apiKey);
+    liveOrchestrators.set(key, ops);
   }
   return ops;
 }
@@ -163,7 +176,7 @@ export async function runWarehouseOpsTick(input: WarehouseOpsTickInput) {
 
   const scope = await resolveScope(input.marketplaceAccountId, input);
   const account = await getMarketplaceAccountForSync(input.marketplaceAccountId);
-  const ops = createLiveOrchestrator(scope, account.apiKey);
+  const ops = getOrCreateLiveOrchestrator(scope, account.apiKey);
   if (input.forceDue) {
     ops.scheduler.markAllDue(scope, new Date(0).toISOString());
   }
@@ -190,11 +203,10 @@ export async function getWarehouseOpsMonitoring(
     return ops.getMonitoring(marketplaceAccountId);
   }
 
-  // Live monitoring from a fresh orchestrator store is empty unless we persist —
-  // expose admin bundle from simulate-capable status via checkpoints/sessions for eligibility,
-  // and return empty-queue monitoring with unknown health when no process-local state.
+  // Live monitoring from process-local live orchestrator (shared with tick/enqueue).
   const scope = await resolveScope(marketplaceAccountId, options);
-  const ops = new WarehouseOpsOrchestrator();
+  const account = await getMarketplaceAccountForSync(marketplaceAccountId);
+  const ops = getOrCreateLiveOrchestrator(scope, account.apiKey);
   ops.store.ensureDefaultSchedules(scope);
   return ops.getMonitoring(marketplaceAccountId);
 }
@@ -203,17 +215,20 @@ export async function getWarehouseAdminBundle(
   marketplaceAccountId: string,
   options?: { simulate?: boolean; companyId?: string; marketplaceType?: WarehouseMarketplaceType }
 ): Promise<WarehouseAdminStatusBundle> {
-  const scope: WarehouseScope = options?.simulate
-    ? {
-        marketplaceType: options.marketplaceType ?? "wildberries",
-        companyId: options.companyId ?? "1",
-        marketplaceAccountId: String(marketplaceAccountId),
-      }
-    : await resolveScope(marketplaceAccountId, options);
+  if (options?.simulate) {
+    const scope: WarehouseScope = {
+      marketplaceType: options.marketplaceType ?? "wildberries",
+      companyId: options.companyId ?? "1",
+      marketplaceAccountId: String(marketplaceAccountId),
+    };
+    const ops = getSimulateOrchestrator(marketplaceAccountId);
+    const admin = new WarehouseAdminReadinessService(ops);
+    return admin.getFullBundle(scope);
+  }
 
-  const ops = options?.simulate
-    ? getSimulateOrchestrator(marketplaceAccountId)
-    : new WarehouseOpsOrchestrator();
+  const scope = await resolveScope(marketplaceAccountId, options);
+  const account = await getMarketplaceAccountForSync(marketplaceAccountId);
+  const ops = getOrCreateLiveOrchestrator(scope, account.apiKey);
   const admin = new WarehouseAdminReadinessService(ops);
   return admin.getFullBundle(scope);
 }
@@ -243,7 +258,7 @@ export async function enqueueManualWarehouseSync(input: {
 
   const scope = await resolveScope(input.marketplaceAccountId, input);
   const account = await getMarketplaceAccountForSync(input.marketplaceAccountId);
-  const ops = createLiveOrchestrator(scope, account.apiKey);
+  const ops = getOrCreateLiveOrchestrator(scope, account.apiKey);
   const enqueued = ops.enqueueManual(scope, input.entities);
   const process =
     input.processNow === false ? null : await ops.processNext(scope);
@@ -254,10 +269,17 @@ export async function cancelWarehouseQueueJobs(input: {
   marketplaceAccountId: string;
   jobId?: string;
   simulate?: boolean;
+  companyId?: string;
+  marketplaceType?: WarehouseMarketplaceType;
 }) {
-  const ops = input.simulate
-    ? getSimulateOrchestrator(input.marketplaceAccountId)
-    : new WarehouseOpsOrchestrator();
+  if (input.simulate) {
+    const ops = getSimulateOrchestrator(input.marketplaceAccountId);
+    const cancelled = ops.queue.cancelWaiting(input.marketplaceAccountId, input.jobId);
+    return { cancelled };
+  }
+  const scope = await resolveScope(input.marketplaceAccountId, input);
+  const account = await getMarketplaceAccountForSync(input.marketplaceAccountId);
+  const ops = getOrCreateLiveOrchestrator(scope, account.apiKey);
   const cancelled = ops.queue.cancelWaiting(input.marketplaceAccountId, input.jobId);
   return { cancelled };
 }
@@ -270,14 +292,20 @@ export async function setWarehouseScheduleInterval(input: {
   companyId?: string;
   marketplaceType?: WarehouseMarketplaceType;
 }) {
-  const scope: WarehouseScope = {
-    marketplaceType: input.marketplaceType ?? "wildberries",
-    companyId: input.companyId ?? "1",
-    marketplaceAccountId: String(input.marketplaceAccountId),
-  };
+  const scope = input.simulate
+    ? ({
+        marketplaceType: input.marketplaceType ?? "wildberries",
+        companyId: input.companyId ?? "1",
+        marketplaceAccountId: String(input.marketplaceAccountId),
+      } satisfies WarehouseScope)
+    : await resolveScope(input.marketplaceAccountId, input);
+
   const ops = input.simulate
     ? getSimulateOrchestrator(input.marketplaceAccountId)
-    : new WarehouseOpsOrchestrator();
+    : getOrCreateLiveOrchestrator(
+        scope,
+        (await getMarketplaceAccountForSync(input.marketplaceAccountId)).apiKey
+      );
   ops.store.ensureDefaultSchedules(scope);
   const schedule = ops.store.updateScheduleInterval(
     input.marketplaceAccountId,
@@ -287,8 +315,45 @@ export async function setWarehouseScheduleInterval(input: {
   return { schedule };
 }
 
+/** Enable / disable entity schedule (reuses Sprint 10.4 scheduler store). */
+export async function setWarehouseScheduleEnabled(input: {
+  marketplaceAccountId: string;
+  entity: IncrementalSyncEntity;
+  enabled: boolean;
+  simulate?: boolean;
+  companyId?: string;
+  marketplaceType?: WarehouseMarketplaceType;
+}) {
+  const scope = input.simulate
+    ? ({
+        marketplaceType: input.marketplaceType ?? "wildberries",
+        companyId: input.companyId ?? "1",
+        marketplaceAccountId: String(input.marketplaceAccountId),
+      } satisfies WarehouseScope)
+    : await resolveScope(input.marketplaceAccountId, input);
+
+  const ops = input.simulate
+    ? getSimulateOrchestrator(input.marketplaceAccountId)
+    : getOrCreateLiveOrchestrator(
+        scope,
+        (await getMarketplaceAccountForSync(input.marketplaceAccountId)).apiKey
+      );
+  ops.store.ensureDefaultSchedules(scope);
+  const schedule = ops.scheduler.setEnabled(
+    input.marketplaceAccountId,
+    input.entity,
+    input.enabled
+  );
+  return { schedule };
+}
+
 /** Test helper — reset simulate orchestrator state. */
 export function resetSimulatedWarehouseOps(marketplaceAccountId?: string): void {
-  if (marketplaceAccountId) simulateOrchestrators.delete(String(marketplaceAccountId));
-  else simulateOrchestrators.clear();
+  if (marketplaceAccountId) {
+    simulateOrchestrators.delete(String(marketplaceAccountId));
+    liveOrchestrators.delete(String(marketplaceAccountId));
+  } else {
+    simulateOrchestrators.clear();
+    liveOrchestrators.clear();
+  }
 }

@@ -5,6 +5,8 @@ import {
   isAuthzFailure,
 } from "@/lib/security/authorize";
 import {
+  archiveCompany,
+  createCompany,
   deleteCompany,
   getCompanyById,
   updateCompany,
@@ -59,10 +61,19 @@ export async function DELETE(request: Request, context: RouteContext) {
     const forbidden = assertCompanyInAuthz(authz, id);
     if (forbidden) return forbidden;
 
-    await deleteCompany(id);
-    return NextResponse.json({ success: true });
+    const url = new URL(request.url);
+    const mode = url.searchParams.get("mode");
+
+    // Soft archive by default (Sprint 11.2). Hard delete only with ?mode=hard.
+    if (mode === "hard") {
+      await deleteCompany(id);
+      return NextResponse.json({ success: true, mode: "hard" });
+    }
+
+    const company = await archiveCompany(id);
+    return NextResponse.json({ success: true, mode: "archive", company });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to delete company";
+    const message = error instanceof Error ? error.message : "Failed to archive company";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -14,6 +14,7 @@ import {
   PanelLeftOpen,
   LogOut,
   Settings,
+  Shield,
   ShoppingBag,
   Tag,
   TrendingUp,
@@ -58,6 +59,7 @@ export const SIDEBAR_PRIMARY_NAVIGATION: SidebarNavItem[] = [
 
 /** Settings stays separated from operational workflow. */
 export const SIDEBAR_SETTINGS_NAVIGATION: SidebarNavItem[] = [
+  { name: "Administration", href: "/administration", icon: Shield },
   { name: "Settings", href: "/settings/companies", icon: Settings },
 ];
 
@@ -69,6 +71,7 @@ export const SIDEBAR_NAVIGATION: SidebarNavItem[] = [
 
 function isNavItemActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
+  if (href === "/administration") return pathname.startsWith("/administration");
   if (href === "/settings/companies") return pathname.startsWith("/settings");
   if (href === "/inventory") return pathname.startsWith("/inventory");
   return pathname.startsWith(href);

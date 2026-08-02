@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAuthServerClient } from "@/lib/supabase/auth-server";
+import {
+  clientIpFromRequest,
+  deviceFromRequest,
+  maskIp,
+  newCorrelationId,
+  recordAuditEvent,
+  recordPlatformSecurityEvent,
+} from "@/services/administration-audit-service";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +59,30 @@ export async function POST(request: Request) {
 
   const supabase = await createAuthServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const device = deviceFromRequest(request);
+  const ipMasked = maskIp(clientIpFromRequest(request));
+
   if (error || !data.user) {
+    const correlationId = newCorrelationId();
+    void recordAuditEvent({
+      userEmail: email,
+      module: "authentication",
+      action: "login_failure",
+      result: "failure",
+      eventKind: "login",
+      correlationId,
+      device,
+      ipMasked,
+    });
+    void recordPlatformSecurityEvent({
+      userEmail: email,
+      module: "authentication",
+      action: "login_failure",
+      result: "failure",
+      correlationId,
+      device,
+      ipMasked,
+    });
     if (wantsJson) {
       return NextResponse.json(
         {
@@ -64,6 +95,18 @@ export async function POST(request: Request) {
     }
     return NextResponse.redirect(new URL("/login?error=invalid", request.url), 303);
   }
+
+  void recordAuditEvent({
+    userId: data.user.id,
+    userEmail: data.user.email ?? email,
+    module: "authentication",
+    action: "login_success",
+    result: "success",
+    eventKind: "login",
+    correlationId: newCorrelationId(),
+    device,
+    ipMasked,
+  });
 
   if (wantsJson) {
     return NextResponse.json({

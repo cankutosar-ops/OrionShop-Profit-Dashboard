@@ -6,11 +6,31 @@ import {
 } from "@/lib/credentials/encryption";
 import type {
   Company,
+  CompanyStatus,
   CompanyWithAccounts,
   MarketplaceAccountPublic,
   SyncLifecycleStatus,
   SyncStatus,
 } from "@/types/database";
+
+function mapCompanyRow(row: Record<string, unknown>): Company {
+  const statusRaw = String(row.status ?? "active");
+  const status: CompanyStatus = statusRaw === "archived" ? "archived" : "active";
+  const tax = Number(row.default_tax_percent);
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ""),
+    country: (row.country as string | null) ?? null,
+    currency: String(row.currency ?? "RUB"),
+    timezone: String(row.timezone ?? "Europe/Moscow"),
+    language: String(row.language ?? "ru"),
+    is_default: Boolean(row.is_default),
+    status,
+    default_tax_percent: Number.isFinite(tax) ? tax : 6,
+    created_at: String(row.created_at ?? ""),
+    updated_at: String(row.updated_at ?? ""),
+  };
+}
 
 const ACCOUNT_PUBLIC_COLUMNS =
   "id, company_id, marketplace, account_name, seller_id, is_active, is_default, sync_enabled, last_sync_at, last_successful_sync_at, last_sync_status, created_at, updated_at";
@@ -102,7 +122,10 @@ async function clearOtherDefaultAccounts(companyId: string, accountId: string): 
     .neq("id", accountId);
 }
 
-export async function listCompanies(client?: SupabaseClient): Promise<CompanyWithAccounts[]> {
+export async function listCompanies(
+  client?: SupabaseClient,
+  options?: { includeArchived?: boolean }
+): Promise<CompanyWithAccounts[]> {
   // Credential presence (api_key_encrypted) requires service_role column privilege.
   const supabase = client ?? createAdminClient();
   const { data: companies, error: companyError } = await supabase
@@ -133,18 +156,23 @@ export async function listCompanies(client?: SupabaseClient): Promise<CompanyWit
     accountsByCompany.set(companyId, list);
   }
 
-  return (companies ?? []).map((company) => ({
-    ...(company as Company),
-    id: String(company.id),
-    accounts: accountsByCompany.get(String(company.id)) ?? [],
-  }));
+  const mapped = (companies ?? []).map((company) => {
+    const base = mapCompanyRow(company as Record<string, unknown>);
+    return {
+      ...base,
+      accounts: accountsByCompany.get(base.id) ?? [],
+    };
+  });
+
+  if (options?.includeArchived) return mapped;
+  return mapped.filter((c) => c.status !== "archived");
 }
 
 export async function getCompanyById(
   companyId: string,
   client?: SupabaseClient
 ): Promise<CompanyWithAccounts | null> {
-  const companies = await listCompanies(client);
+  const companies = await listCompanies(client, { includeArchived: true });
   return companies.find((c) => c.id === companyId) ?? null;
 }
 
@@ -155,22 +183,38 @@ export async function createCompany(input: {
   timezone?: string;
   language?: string;
   is_default?: boolean;
+  default_tax_percent?: number;
 }): Promise<Company> {
   const supabase = createAdminClient();
   const isDefault = input.is_default ?? false;
+  const tax =
+    input.default_tax_percent !== undefined && Number.isFinite(input.default_tax_percent)
+      ? Number(input.default_tax_percent)
+      : 6;
 
-  const { data, error } = await supabase
+  const baseRow = {
+    name: input.name.trim(),
+    country: input.country?.trim() || null,
+    currency: input.currency?.trim() || "RUB",
+    timezone: input.timezone?.trim() || "Europe/Moscow",
+    language: input.language?.trim() || "ru",
+    is_default: isDefault,
+  };
+
+  let { data, error } = await supabase
     .from("companies")
     .insert({
-      name: input.name.trim(),
-      country: input.country?.trim() || null,
-      currency: input.currency?.trim() || "RUB",
-      timezone: input.timezone?.trim() || "Europe/Moscow",
-      language: input.language?.trim() || "ru",
-      is_default: isDefault,
-    })
+      ...baseRow,
+      status: "active",
+      default_tax_percent: tax,
+    } as never)
     .select("*")
     .single();
+
+  // Pre-migration fallback (Sprint 11.2 columns missing).
+  if (error && /status|default_tax_percent/i.test(error.message)) {
+    ({ data, error } = await supabase.from("companies").insert(baseRow).select("*").single());
+  }
 
   if (error) throw new Error(`Failed to create company: ${error.message}`);
 
@@ -178,7 +222,7 @@ export async function createCompany(input: {
     await clearOtherDefaultCompanies(String(data.id));
   }
 
-  return { ...(data as Company), id: String(data.id) };
+  return mapCompanyRow(data as Record<string, unknown>);
 }
 
 export async function updateCompany(
@@ -190,31 +234,41 @@ export async function updateCompany(
     timezone: string;
     language: string;
     is_default: boolean;
+    status: CompanyStatus;
+    default_tax_percent: number;
   }>
 ): Promise<Company> {
   const supabase = createAdminClient();
-  const patch: {
-    updated_at: string;
-    name?: string;
-    country?: string | null;
-    currency?: string;
-    timezone?: string;
-    language?: string;
-    is_default?: boolean;
-  } = { updated_at: new Date().toISOString() };
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (input.name !== undefined) patch.name = input.name.trim();
   if (input.country !== undefined) patch.country = input.country?.trim() || null;
   if (input.currency !== undefined) patch.currency = input.currency.trim();
   if (input.timezone !== undefined) patch.timezone = input.timezone.trim();
   if (input.language !== undefined) patch.language = input.language.trim();
   if (input.is_default !== undefined) patch.is_default = input.is_default;
+  if (input.status !== undefined) patch.status = input.status;
+  if (input.default_tax_percent !== undefined) {
+    patch.default_tax_percent = Number(input.default_tax_percent);
+  }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("companies")
-    .update(patch)
+    .update(patch as never)
     .eq("id", companyId)
     .select("*")
     .single();
+
+  if (error && /status|default_tax_percent/i.test(error.message)) {
+    const legacy = { ...patch };
+    delete legacy.status;
+    delete legacy.default_tax_percent;
+    ({ data, error } = await supabase
+      .from("companies")
+      .update(legacy as never)
+      .eq("id", companyId)
+      .select("*")
+      .single());
+  }
 
   if (error) throw new Error(`Failed to update company: ${error.message}`);
 
@@ -222,7 +276,12 @@ export async function updateCompany(
     await clearOtherDefaultCompanies(companyId);
   }
 
-  return { ...(data as Company), id: String(data.id) };
+  return mapCompanyRow(data as Record<string, unknown>);
+}
+
+/** Soft-archive a company. Historical warehouse data is retained. */
+export async function archiveCompany(companyId: string): Promise<Company> {
+  return updateCompany(companyId, { status: "archived", is_default: false });
 }
 
 export async function deleteCompany(companyId: string): Promise<void> {
@@ -752,24 +811,49 @@ export async function deleteMarketplaceAccount(accountId: string): Promise<void>
 
 export async function testMarketplaceAccountConnection(
   accountId: string
-): Promise<{ ok: boolean; message: string }> {
+): Promise<{
+  ok: boolean;
+  message: string;
+  healthy: boolean;
+  latencyMs: number | null;
+  testedAt: string;
+  failureReason: string | null;
+}> {
+  const testedAt = new Date().toISOString();
+  const started = Date.now();
   try {
     const account = await getMarketplaceAccountForSync(accountId);
 
     if (account.marketplace === "wildberries") {
       const { testWildberriesConnection } = await import("@/lib/marketplace-adapters");
       await testWildberriesConnection(account.apiKey);
-      return { ok: true, message: `Connected to ${account.account_name} (Wildberries)` };
+      return {
+        ok: true,
+        message: `Connected to ${account.account_name} (Wildberries)`,
+        healthy: true,
+        latencyMs: Date.now() - started,
+        testedAt,
+        failureReason: null,
+      };
     }
 
     return {
       ok: false,
       message: `Connection test for ${account.marketplace} is not implemented yet`,
+      healthy: false,
+      latencyMs: Date.now() - started,
+      testedAt,
+      failureReason: `Connection test for ${account.marketplace} is not implemented yet`,
     };
   } catch (err) {
+    const failureReason = err instanceof Error ? err.message : "Connection failed";
     return {
       ok: false,
-      message: err instanceof Error ? err.message : "Connection failed",
+      message: failureReason,
+      healthy: false,
+      latencyMs: Date.now() - started,
+      testedAt,
+      failureReason,
     };
   }
 }

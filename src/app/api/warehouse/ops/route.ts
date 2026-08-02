@@ -6,22 +6,18 @@ import {
   getWarehouseAdminBundle,
   getWarehouseOpsMonitoring,
   runWarehouseOpsTick,
+  setWarehouseScheduleEnabled,
   setWarehouseScheduleInterval,
 } from "@/services/warehouse-ops-service";
+import { getWarehouseControlCenter } from "@/services/warehouse-control-center-service";
 import type { IncrementalSyncEntity } from "@/lib/warehouse/incremental/constants";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * GET /api/warehouse/ops?marketplaceAccountId=&view=monitoring|admin
- * Administration-ready operational status (no Admin UI).
- *
- * POST actions:
- * - tick: scheduler enqueue + optional queue process
- * - enqueue: manual sync job
- * - cancel: cancel waiting queue jobs
- * - schedule: update entity interval_ms
+ * GET /api/warehouse/ops?marketplaceAccountId=&view=monitoring|admin|control
+ * POST actions: tick | enqueue | cancel | schedule | schedule_enable
  */
 export async function GET(request: Request) {
   const authz = await authorizeRequestScope(request, { requireMarketplaceAccount: true });
@@ -39,6 +35,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, monitoring });
     }
 
+    if (view === "control") {
+      const control = await getWarehouseControlCenter(authz.marketplaceAccountId!, {
+        simulate,
+      });
+      return NextResponse.json({ ok: true, ...control });
+    }
+
     const bundle = await getWarehouseAdminBundle(authz.marketplaceAccountId!, { simulate });
     return NextResponse.json({ ok: true, ...bundle });
   } catch (error) {
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       marketplaceAccountId?: string;
-      action?: "tick" | "enqueue" | "cancel" | "schedule";
+      action?: "tick" | "enqueue" | "cancel" | "schedule" | "schedule_enable";
       simulate?: boolean;
       processQueue?: boolean;
       forceDue?: boolean;
@@ -61,6 +64,7 @@ export async function POST(request: Request) {
       entities?: IncrementalSyncEntity[];
       entity?: IncrementalSyncEntity;
       intervalMs?: number;
+      enabled?: boolean;
       companyId?: string;
     };
 
@@ -100,6 +104,7 @@ export async function POST(request: Request) {
         marketplaceAccountId,
         jobId: body.jobId,
         simulate: body.simulate,
+        companyId: body.companyId,
       });
       return NextResponse.json({ ok: true, action, result });
     }
@@ -115,6 +120,23 @@ export async function POST(request: Request) {
         marketplaceAccountId,
         entity: body.entity,
         intervalMs: body.intervalMs,
+        simulate: body.simulate,
+        companyId: body.companyId,
+      });
+      return NextResponse.json({ ok: true, action, result });
+    }
+
+    if (action === "schedule_enable") {
+      if (!body.entity || typeof body.enabled !== "boolean") {
+        return NextResponse.json(
+          { error: "entity and enabled are required for schedule_enable" },
+          { status: 400 }
+        );
+      }
+      const result = await setWarehouseScheduleEnabled({
+        marketplaceAccountId,
+        entity: body.entity,
+        enabled: body.enabled,
         simulate: body.simulate,
         companyId: body.companyId,
       });

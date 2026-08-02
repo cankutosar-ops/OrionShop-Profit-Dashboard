@@ -46,6 +46,27 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = await request.json();
     const account = await updateMarketplaceAccount(id, body);
+    const credentialTouched =
+      body?.apiKey !== undefined ||
+      body?.api_key !== undefined ||
+      body?.credential !== undefined;
+    if (credentialTouched) {
+      const { newCorrelationId, recordPlatformSecurityEvent } = await import(
+        "@/services/administration-audit-service"
+      );
+      void recordPlatformSecurityEvent({
+        userId: authz.user.id,
+        userEmail: authz.user.email ?? null,
+        companyId: authz.companyId,
+        module: "connections",
+        action: "credential_update",
+        entityType: "marketplace_account",
+        entityId: id,
+        result: "success",
+        correlationId: newCorrelationId(),
+        reason: typeof body.reason === "string" ? body.reason : null,
+      });
+    }
     return NextResponse.json({ account });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update marketplace account";
@@ -79,6 +100,21 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (action === "test") {
       const result = await testMarketplaceAccountConnection(marketplaceAccountId);
+      const { newCorrelationId, recordPlatformSecurityEvent } = await import(
+        "@/services/administration-audit-service"
+      );
+      void recordPlatformSecurityEvent({
+        userId: authz.user.id,
+        userEmail: authz.user.email ?? null,
+        companyId: authz.companyId,
+        module: "connections",
+        action: "marketplace_credential_test",
+        entityType: "marketplace_account",
+        entityId: marketplaceAccountId,
+        result: result.ok ? "success" : "failure",
+        correlationId: newCorrelationId(),
+        metadata: { ok: result.ok, latencyMs: result.latencyMs ?? null },
+      });
       return NextResponse.json(result, { status: result.ok ? 200 : 400 });
     }
 

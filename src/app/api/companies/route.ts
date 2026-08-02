@@ -41,14 +41,16 @@ export async function POST(request: Request) {
     if (isAuthFailure(auth)) return auth;
 
     const body = await request.json();
-    const { name, country, currency, timezone, language, is_default } = body as {
-      name?: string;
-      country?: string | null;
-      currency?: string;
-      timezone?: string;
-      language?: string;
-      is_default?: boolean;
-    };
+    const { name, country, currency, timezone, language, is_default, default_tax_percent } =
+      body as {
+        name?: string;
+        country?: string | null;
+        currency?: string;
+        timezone?: string;
+        language?: string;
+        is_default?: boolean;
+        default_tax_percent?: number;
+      };
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -61,6 +63,7 @@ export async function POST(request: Request) {
       timezone,
       language,
       is_default,
+      default_tax_percent,
     });
 
     if (auth.id !== "service:internal") {
