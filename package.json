@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "orionshop-profit-dashboard",
   "version": "0.3.0",
   "private": true,
@@ -43,6 +43,7 @@
     "verify:dashboard-v3-refinement": "npx tsx scripts/verify-dashboard-v3-refinement.mjs",
     "verify:finance-schema": "node scripts/verify-finance-schema.mjs",
     "verify:finance-sync-v2": "npx tsx scripts/verify-finance-sync-v2.mjs",
+    "verify:finance-incremental": "npx tsx scripts/verify-finance-incremental-offline.mjs",
     "verify:account-lifecycle": "npx tsx scripts/verify-account-lifecycle.mjs",
     "verify:marketplace-fees": "npx tsx scripts/verify-marketplace-fees-sprint-6-18.mjs",
     "perf:report": "npx tsx scripts/generate-perf-report.mjs",
