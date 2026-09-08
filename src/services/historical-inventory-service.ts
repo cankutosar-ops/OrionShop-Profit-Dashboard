@@ -8,6 +8,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isInternalSizeId } from "@/lib/inventory-history-table";
+import { mergeWarehouseNameLists } from "@/lib/warehouse-locations";
 import type {
   HistoricalInventoryPage,
   HistoricalInventoryQuery,
@@ -16,6 +17,7 @@ import type {
 } from "@/lib/historical-inventory-types";
 import { WbApiClient } from "@/lib/wildberries/api-client";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
+import { listWarehouseLocationNames } from "@/services/warehouse-location-service";
 
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_PAGE_SIZE = 5_000;
@@ -139,6 +141,7 @@ export async function listAvailableSnapshotDates(
   marketplaceAccountId: string
 ): Promise<string[]> {
   const supabase = historyClient();
+  const accountId = Number(marketplaceAccountId);
   const dates = new Set<string>();
   const pageSize = 1000;
   let from = 0;
@@ -147,7 +150,7 @@ export async function listAvailableSnapshotDates(
     const { data, error } = await supabase
       .from("historical_inventory_snapshots")
       .select("snapshot_date")
-      .eq("marketplace_account_id", marketplaceAccountId)
+      .eq("marketplace_account_id", accountId)
       .order("snapshot_date", { ascending: false })
       .range(from, from + pageSize - 1);
 
@@ -173,17 +176,31 @@ export async function listWarehousesForSnapshot(
   snapshotDate: string
 ): Promise<string[]> {
   const supabase = historyClient();
+  const accountId = Number(marketplaceAccountId);
   const { data, error } = await supabase
     .from("historical_inventory_snapshots")
     .select("warehouse_name")
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .eq("snapshot_date", snapshotDate)
     .limit(10000);
 
   if (error) throw new Error(`Failed to list warehouses: ${error.message}`);
-  return [...new Set((data ?? []).map((r) => String(r.warehouse_name || "")))]
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b, "ru"));
+  const snapshotNames = [...new Set((data ?? []).map((r) => String(r.warehouse_name || "")))]
+    .filter(Boolean);
+
+  // Union with account Warehouse Locations (stock + sales + orders) so FBS
+  // shipping locations appear as peers even when absent from this snapshot day.
+  let catalogNames: string[] = [];
+  try {
+    catalogNames = await listWarehouseLocationNames(marketplaceAccountId, {
+      activeOnly: true,
+      client: supabase,
+    });
+  } catch {
+    catalogNames = [];
+  }
+
+  return mergeWarehouseNameLists(snapshotNames, catalogNames);
 }
 
 /**
@@ -202,11 +219,12 @@ export async function queryHistoricalInventorySnapshot(
     ? (query.sortBy as HistoricalInventorySortField)
     : "warehouse_name";
   const ascending = (query.sortDir ?? "asc") !== "desc";
+  const accountId = Number(query.marketplaceAccountId);
 
   let q = supabase
     .from("historical_inventory_snapshots")
     .select("*", { count: "exact" })
-    .eq("marketplace_account_id", query.marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .eq("snapshot_date", query.snapshotDate);
 
   if (query.warehouse?.trim()) {
@@ -277,6 +295,7 @@ export async function loadFullHistoricalInventorySnapshot(params: {
   snapshotDate: string;
 }): Promise<HistoricalInventoryPage> {
   const supabase = historyClient();
+  const accountId = Number(params.marketplaceAccountId);
   const pageSize = 1000;
   const rows: HistoricalInventorySnapshot[] = [];
   let from = 0;
@@ -290,7 +309,7 @@ export async function loadFullHistoricalInventorySnapshot(params: {
     const { data, error } = await supabase
       .from("historical_inventory_snapshots")
       .select("*")
-      .eq("marketplace_account_id", params.marketplaceAccountId)
+      .eq("marketplace_account_id", accountId)
       .eq("snapshot_date", params.snapshotDate)
       .order("warehouse_name", { ascending: true })
       .order("nm_id", { ascending: true })

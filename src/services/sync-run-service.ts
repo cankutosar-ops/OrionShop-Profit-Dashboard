@@ -96,6 +96,95 @@ export async function heartbeatSyncRun(syncRunId: string | null): Promise<void> 
   await sb.from("sync_runs").update({ heartbeat_at: now }).eq("id", syncRunId);
 }
 
+/**
+ * Finalize a sync run that did not complete normally (timeout, abort, stale recovery).
+ * Idempotent: only updates rows still in `running` status.
+ */
+export async function finalizeInterruptedSyncRun(input: {
+  syncRunId: string | null;
+  marketplaceAccountId: string;
+  reason: string;
+  startedAt?: string | null;
+}): Promise<boolean> {
+  if (!input.syncRunId || !(await syncRunsTableAvailable())) return false;
+  const sb = createAdminClient();
+  const finishedAt = new Date().toISOString();
+  const startedAt = input.startedAt ?? finishedAt;
+  const durationMs = Math.max(0, Date.parse(finishedAt) - Date.parse(startedAt));
+
+  const { data, error } = await sb
+    .from("sync_runs")
+    .update({
+      status: "failed",
+      finished_at: finishedAt,
+      heartbeat_at: finishedAt,
+      duration_ms: durationMs,
+      errors: [{ code: "interrupted", message: input.reason.slice(0, 500) }],
+    })
+    .eq("id", input.syncRunId)
+    .eq("status", "running")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.warn("[sync-runs] finalize interrupted failed:", error.message);
+    return false;
+  }
+  return !!data?.id;
+}
+
+/**
+ * Release stale `sync_runs` stuck in `running` (heartbeat or start older than TTL).
+ * Idempotent; never marks success.
+ */
+export async function releaseStaleSyncRunsIfNeeded(
+  marketplaceAccountId?: string,
+  staleTtlMs?: number
+): Promise<number> {
+  if (!(await syncRunsTableAvailable())) return 0;
+  const { SYNC_RUN_STALE_TTL_MS } = await import(
+    "@/lib/commercial-continuity/execution-bounds"
+  );
+  const ttlMs = staleTtlMs ?? SYNC_RUN_STALE_TTL_MS;
+  const cutoff = Date.now() - ttlMs;
+  const sb = createAdminClient();
+
+  let query = sb.from("sync_runs").select("id, marketplace_account_id, started_at, heartbeat_at").eq(
+    "status",
+    "running"
+  );
+  if (marketplaceAccountId) {
+    query = query.eq("marketplace_account_id", marketplaceAccountId);
+  }
+
+  const { data, error } = await query;
+  if (error || !data?.length) return 0;
+
+  let released = 0;
+  for (const row of data) {
+    const heartbeatMs = Date.parse(String(row.heartbeat_at ?? row.started_at ?? 0));
+    if (!Number.isFinite(heartbeatMs) || heartbeatMs >= cutoff) continue;
+
+    const ok = await finalizeInterruptedSyncRun({
+      syncRunId: String(row.id),
+      marketplaceAccountId: String(row.marketplace_account_id),
+      reason: "Sync run interrupted (stale running recovered)",
+      startedAt: row.started_at ? String(row.started_at) : null,
+    });
+    if (ok) {
+      released += 1;
+      const { finalizeStaleCommercialEntitiesRunning } = await import(
+        "@/lib/commercial-continuity/persist-outcome"
+      );
+      await finalizeStaleCommercialEntitiesRunning(
+        String(row.marketplace_account_id),
+        "Sync run interrupted (stale running recovered)"
+      ).catch(() => undefined);
+    }
+  }
+  return released;
+}
+
 export async function finishSyncRun(input: FinishSyncRunInput): Promise<void> {
   if (!input.syncRunId || !(await syncRunsTableAvailable())) return;
   const sb = createAdminClient();

@@ -5,114 +5,19 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { ThemePreference } from "@/lib/theme";
 import { isThemePreference } from "@/lib/theme";
+import {
+  DEFAULT_FEATURE_FLAGS,
+  DEFAULT_PLATFORM_SETTINGS,
+  type FeatureFlagRow,
+  type PlatformSettingsDocument,
+} from "@/lib/administration/platform-settings-document";
 
-export type FeatureFlagRow = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  description: string;
-};
-
-export type PlatformSettingsDocument = {
-  general: {
-    platformName: string;
-    defaultLanguage: string;
-    defaultTimeZone: string;
-    dateFormat: string;
-    numberFormat: string;
-  };
-  localization: {
-    language: string;
-    region: string;
-    timeZone: string;
-  };
-  notifications: {
-    emailNotifications: boolean;
-    systemAlerts: boolean;
-    warehouseAlerts: boolean;
-    securityAlerts: boolean;
-  };
-  featureFlags: FeatureFlagRow[];
-  dataRetention: {
-    auditLogsDays: number;
-    warehouseHistoryDays: number;
-    syncHistoryDays: number;
-  };
-  systemPreferences: {
-    defaultPageSize: number;
-    defaultDashboardLandingPage: string;
-    defaultTheme: ThemePreference;
-    defaultReportExportFormat: "xlsx" | "csv" | "pdf";
-  };
-};
-
-const DEFAULT_FEATURE_FLAGS: FeatureFlagRow[] = [
-  {
-    id: "admin_security_audit",
-    name: "Administration Security & Audit",
-    enabled: true,
-    description: "Security overview and audit log surfaces in Administration.",
-  },
-  {
-    id: "warehouse_control_center",
-    name: "Warehouse Control Center",
-    enabled: true,
-    description: "Operational warehouse visibility in Administration.",
-  },
-  {
-    id: "user_management",
-    name: "User Management",
-    enabled: true,
-    description: "Invite and manage users, roles, and memberships.",
-  },
-  {
-    id: "smart_pricing",
-    name: "Smart Pricing",
-    enabled: true,
-    description: "Profit simulator module (no formula changes from this flag).",
-  },
-  {
-    id: "reporting_exports",
-    name: "Reporting Exports",
-    enabled: true,
-    description: "Allow report export actions from the reporting UI.",
-  },
-];
-
-export const DEFAULT_PLATFORM_SETTINGS: PlatformSettingsDocument = {
-  general: {
-    platformName: "OrionShop Profit Dashboard",
-    defaultLanguage: "en",
-    defaultTimeZone: "Europe/Moscow",
-    dateFormat: "dd.MM.yyyy",
-    numberFormat: "ru-RU",
-  },
-  localization: {
-    language: "en",
-    region: "RU",
-    timeZone: "Europe/Moscow",
-  },
-  notifications: {
-    emailNotifications: true,
-    systemAlerts: true,
-    warehouseAlerts: true,
-    securityAlerts: true,
-  },
-  featureFlags: DEFAULT_FEATURE_FLAGS,
-  dataRetention: {
-    auditLogsDays: 365,
-    warehouseHistoryDays: 730,
-    syncHistoryDays: 180,
-  },
-  systemPreferences: {
-    defaultPageSize: 25,
-    defaultDashboardLandingPage: "/",
-    defaultTheme: "system",
-    defaultReportExportFormat: "xlsx",
-  },
-};
+export type { FeatureFlagRow, PlatformSettingsDocument } from "@/lib/administration/platform-settings-document";
+export {
+  DEFAULT_FEATURE_FLAGS,
+  DEFAULT_PLATFORM_SETTINGS,
+} from "@/lib/administration/platform-settings-document";
 
 function isMissingRelation(error: { message?: string } | null): boolean {
   if (!error?.message) return false;
@@ -208,6 +113,14 @@ export function normalizePlatformSettings(raw: unknown): PlatformSettingsDocumen
       ),
       defaultTheme,
       defaultReportExportFormat,
+      commercialSyncIntervalMinutes: asPositiveInt(
+        system.commercialSyncIntervalMinutes,
+        d.systemPreferences.commercialSyncIntervalMinutes
+      ),
+      commercialSyncMaxLookbackDays: asPositiveInt(
+        system.commercialSyncMaxLookbackDays,
+        d.systemPreferences.commercialSyncMaxLookbackDays
+      ),
     },
   };
 }

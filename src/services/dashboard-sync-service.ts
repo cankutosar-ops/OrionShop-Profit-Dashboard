@@ -68,8 +68,10 @@ export async function executeDashboardSync(
     trigger,
   });
 
+  let accountLifecycleStarted = false;
   if (!skipLifecycle) {
     await markAccountSyncStarted(marketplaceAccountId);
+    accountLifecycleStarted = true;
   }
 
   try {
@@ -142,6 +144,7 @@ export async function executeDashboardSync(
 
     const status = resolveSyncStatus(results, financeAccountStatus);
     await markAccountSyncFinished(marketplaceAccountId, status);
+    accountLifecycleStarted = false;
 
     const timing = timer?.toReport() ?? null;
 
@@ -160,7 +163,9 @@ export async function executeDashboardSync(
       timing,
     };
   } catch (error) {
-    await markAccountSyncFinished(marketplaceAccountId, "failed").catch(() => undefined);
+    if (accountLifecycleStarted) {
+      await markAccountSyncFinished(marketplaceAccountId, "failed").catch(() => undefined);
+    }
     throw error;
   }
 }

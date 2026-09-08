@@ -17,6 +17,7 @@ import type {
 } from "@/lib/warehouse/adapters/marketplace-adapter";
 import { HISTORICAL_BACKFILL_ENTITY_ORDER } from "@/lib/warehouse/backfill/constants";
 import type { WarehouseScope } from "@/lib/warehouse/types";
+import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
 import { WbApiClient } from "@/lib/wildberries/api-client";
 import type { WbApiProductCard } from "@/lib/wildberries/types";
 
@@ -136,12 +137,20 @@ export class WildberriesMarketplaceAdapter implements MarketplaceAdapter {
   }
 
   async fetchFinance(
-    _scope: WarehouseScope,
+    scope: WarehouseScope,
     window: MarketplaceFetchWindow,
     cursor?: MarketplaceAdapterCursor
   ): Promise<MarketplaceAdapterPage<MarketplaceFinanceLineDto>> {
     if (cursor) {
       return { items: [], nextCursor: null, done: true };
+    }
+    if (isFinanceHistoricalRecoveryActive(scope.marketplaceAccountId)) {
+      throw new Error("skipped_finance_recovery_active");
+    }
+    if (String(scope.marketplaceAccountId) === "2") {
+      throw new Error(
+        "Account 2 Finance must use Reports/V1 incremental — Statistics v5 reportDetailByPeriod is blocked"
+      );
     }
     const rows = await this.client.fetchFinanceReport(window.from, window.to);
     const items = rows.map((row) => ({

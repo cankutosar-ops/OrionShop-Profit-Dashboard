@@ -83,6 +83,12 @@ function todayIsoDate(): string {
   return `${y}-${m}-${day}`;
 }
 
+function addDaysIso(iso: string, deltaDays: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
+}
+
 function eachIsoDay(startIso: string, endIso: string): string[] {
   const out: string[] = [];
   const cur = new Date(`${startIso}T12:00:00Z`);
@@ -112,11 +118,20 @@ async function loadProductEnrichment(
     if (error) throw new Error(`Product enrichment failed: ${error.message}`);
     if (!data?.length) break;
 
-    for (const row of data) {
+    type ProductEnrichRow = {
+      nm_id: number | null;
+      supplier_article: string | null;
+      barcode: string | null;
+      brand: { name?: string } | { name?: string }[] | null;
+      category: { name?: string } | { name?: string }[] | null;
+    };
+    const rows = data as unknown as ProductEnrichRow[];
+
+    for (const row of rows) {
       const nmId = Number(row.nm_id);
       if (!Number.isFinite(nmId) || nmId <= 0) continue;
-      const brandRel = row.brand as { name?: string } | { name?: string }[] | null;
-      const catRel = row.category as { name?: string } | { name?: string }[] | null;
+      const brandRel = row.brand;
+      const catRel = row.category;
       const brandName = Array.isArray(brandRel)
         ? brandRel[0]?.name ?? ""
         : brandRel?.name ?? "";
@@ -130,7 +145,7 @@ async function loadProductEnrichment(
         barcode: String(row.barcode ?? ""),
       });
     }
-    if (data.length < page) break;
+    if (rows.length < page) break;
     from += page;
   }
 
@@ -248,11 +263,12 @@ async function replaceSnapshotDay(
   rows: HistoricalInventorySnapshotInsert[]
 ): Promise<number> {
   const supabase = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   // Full day replace so size label corrections do not leave orphan chrt-id grains.
   const { error: delError } = await supabase
     .from("historical_inventory_snapshots")
     .delete()
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .eq("snapshot_date", snapshotDate);
   if (delError) throw new Error(`Snapshot day delete failed: ${delError.message}`);
   return upsertSnapshotRows(rows);
@@ -291,6 +307,7 @@ async function upsertSnapshotRows(
 /** Admin read — scripts/sync have no user session (createServerClient would see 0 dates). */
 async function listSnapshotDatesAdmin(marketplaceAccountId: string): Promise<string[]> {
   const supabase = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   const dates = new Set<string>();
   const pageSize = 1000;
   let from = 0;
@@ -298,7 +315,7 @@ async function listSnapshotDatesAdmin(marketplaceAccountId: string): Promise<str
     const { data, error } = await supabase
       .from("historical_inventory_snapshots")
       .select("snapshot_date")
-      .eq("marketplace_account_id", marketplaceAccountId)
+      .eq("marketplace_account_id", accountId)
       .order("snapshot_date", { ascending: false })
       .range(from, from + pageSize - 1);
     if (error) {
@@ -322,10 +339,15 @@ export async function captureDailyInventorySnapshot(params: {
   snapshotDate?: string;
   trigger?: "manual" | "lifecycle" | "recover" | "scheduled";
   fillGaps?: boolean;
+  /** Warehouse activation floor — gaps before this date are out of scope. */
+  activationDate?: string;
 }): Promise<DailyInventorySnapshotResult> {
   const snapshotDate = params.snapshotDate ?? todayIsoDate();
   const trigger = params.trigger ?? "scheduled";
   const accountId = params.marketplaceAccountId;
+  const activationDate =
+    params.activationDate ??
+    (await resolveInventorySnapshotActivationDate(accountId));
 
   const auditId = await startWarehouseImportAudit({
     marketplaceAccountId: accountId,
@@ -399,18 +421,29 @@ export async function captureDailyInventorySnapshot(params: {
     const gapsFilled: string[] = [];
 
     if (params.fillGaps !== false) {
-      missingDatesDetected = await detectMissingSnapshotDates(accountId);
+      missingDatesDetected = await detectMissingSnapshotDates(accountId, {
+        fromDate: activationDate,
+      });
       // Live API fills current snapshotDate only. Past gaps: local archive when present.
       if (upserted > 0) gapsFilled.push(snapshotDate);
-      const pastMissing = missingDatesDetected.filter((d) => d !== snapshotDate);
+      const pastMissing = missingDatesDetected.filter((d) => d !== snapshotDate && d >= activationDate);
       if (pastMissing.length) {
         const fromArchive = await fillMissingDatesFromArchives(accountId, pastMissing);
         gapsFilled.push(...fromArchive);
-        missingDatesDetected = await detectMissingSnapshotDates(accountId);
+        missingDatesDetected = await detectMissingSnapshotDates(accountId, {
+          fromDate: activationDate,
+        });
       }
     }
 
     const existingDates = await listSnapshotDatesAdmin(accountId);
+    const lockedActivation =
+      (await readStoredActivationDate(accountId)) ??
+      (existingDates.length
+        ? [...existingDates].sort()[0]
+        : upserted > 0
+          ? snapshotDate
+          : activationDate);
 
     await updateWarehouseEntityState({
       marketplaceAccountId: accountId,
@@ -421,6 +454,7 @@ export async function captureDailyInventorySnapshot(params: {
         lastWindow: snapshotDate,
         source: "wb-warehouses-stock",
         missingDates: missingDatesDetected,
+        activationDate: lockedActivation,
       },
       currentDataset: `daily:${snapshotDate}`,
       markSuccessfulSync: upserted > 0,
@@ -510,20 +544,28 @@ export async function captureDailyInventorySnapshot(params: {
   }
 }
 
-/** Dates between first known snapshot and today that have no rows. */
+/** Dates between activation (or first known snapshot) and today that have no rows. */
 export async function detectMissingSnapshotDates(
-  marketplaceAccountId: string
+  marketplaceAccountId: string,
+  options?: { fromDate?: string }
 ): Promise<string[]> {
   const dates = await listSnapshotDatesAdmin(marketplaceAccountId);
-  if (!dates.length) return [todayIsoDate()];
+  const today = todayIsoDate();
+
+  if (!dates.length) {
+    const from = options?.fromDate?.trim() || today;
+    return eachIsoDay(from, today);
+  }
 
   const newest = dates[0];
   const oldest = dates[dates.length - 1];
-  const today = todayIsoDate();
+  const floor = options?.fromDate?.trim() || oldest;
+  const start = floor > oldest ? floor : oldest;
   const end = today > newest ? today : newest;
-  const expected = eachIsoDay(oldest, end);
+  if (start > end) return [];
+  const expected = eachIsoDay(start, end);
   const have = new Set(dates);
-  return expected.filter((d) => !have.has(d));
+  return expected.filter((d) => !have.has(d) && d >= floor);
 }
 
 /**
@@ -568,6 +610,75 @@ async function fillMissingDatesFromArchives(
   return filled;
 }
 
+async function readStoredActivationDate(
+  marketplaceAccountId: string
+): Promise<string | null> {
+  try {
+    const { getWarehouseEntityState } = await import(
+      "@/services/warehouse-entity-sync-state-service"
+    );
+    const state = await getWarehouseEntityState(marketplaceAccountId, "inventory");
+    const raw = state?.progress?.activationDate;
+    if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  } catch {
+    /* table may be absent */
+  }
+  return null;
+}
+
+/**
+ * Warehouse Platform activation date for inventory history.
+ * Prefer stored progress.activationDate, else earliest snapshot, else today.
+ * Pre-activation history is out of scope.
+ */
+export async function resolveInventorySnapshotActivationDate(
+  marketplaceAccountId: string
+): Promise<string> {
+  const stored = await readStoredActivationDate(marketplaceAccountId);
+  if (stored) return stored;
+  const dates = await listSnapshotDatesAdmin(marketplaceAccountId);
+  if (dates.length) {
+    return [...dates].sort()[0];
+  }
+  return todayIsoDate();
+}
+
+/**
+ * Purge inventory snapshots older than retention window.
+ * Only touches historical_inventory_snapshots — never Orders/Sales/Finance.
+ */
+export async function purgeExpiredInventorySnapshots(
+  marketplaceAccountId: string,
+  retentionDays: number
+): Promise<number> {
+  const days = Math.max(1, Math.floor(retentionDays));
+  const cutoff = addDaysIso(todayIsoDate(), -days);
+  const supabase = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
+  const { data, error, count } = await supabase
+    .from("historical_inventory_snapshots")
+    .delete({ count: "exact" })
+    .eq("marketplace_account_id", accountId)
+    .lt("snapshot_date", cutoff)
+    .select("id");
+
+  if (error) {
+    if (/does not exist|schema cache|Could not find/i.test(error.message)) return 0;
+    throw new Error(`Inventory snapshot purge failed: ${error.message}`);
+  }
+
+  const purged = count ?? data?.length ?? 0;
+  if (purged > 0) {
+    syncLog("inventory-daily-snapshot", "retention purge", {
+      marketplaceAccountId,
+      retentionDays: days,
+      cutoff,
+      purged,
+    });
+  }
+  return purged;
+}
+
 /**
  * Run daily snapshot for all operational WB accounts (one at a time).
  */
@@ -600,16 +711,21 @@ export async function captureDailyInventorySnapshotForAllAccounts(params?: {
   return results;
 }
 
-/** Fire-and-forget after dashboard sync (does not block sync success). */
+/**
+ * Opportunistic backup after dashboard sync — continuity scheduler is primary.
+ * Still independent: continuity runs without Sync.
+ */
 export function scheduleDailyInventorySnapshot(marketplaceAccountId: string): void {
-  void captureDailyInventorySnapshot({
-    marketplaceAccountId,
-    trigger: "scheduled",
-    fillGaps: true,
-  }).catch((err) => {
-    syncLog("inventory-daily-snapshot", "scheduled capture failed", {
-      marketplaceAccountId,
-      error: err instanceof Error ? err.message : String(err),
+  void import("@/services/inventory-snapshot-continuity-service")
+    .then(({ runInventorySnapshotContinuityForAccount }) =>
+      runInventorySnapshotContinuityForAccount(marketplaceAccountId, {
+        trigger: "scheduled",
+      })
+    )
+    .catch((err) => {
+      syncLog("inventory-daily-snapshot", "scheduled continuity failed", {
+        marketplaceAccountId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     });
-  });
 }

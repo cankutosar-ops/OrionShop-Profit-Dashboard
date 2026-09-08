@@ -64,6 +64,51 @@ export type SyncRunTrigger = "manual" | "auto" | "recover" | "backfill";
 
 export type SyncRunStatus = "running" | "success" | "partial" | "failed" | "warning";
 
+export type CommercialEntitySyncStatus =
+  | "idle"
+  | "running"
+  | "success"
+  | "partial"
+  | "failed"
+  | "blocked"
+  | "rate_limited"
+  | "permission_denied"
+  | "external_unavailable"
+  | "external_delay"
+  | "warning";
+
+export type CommercialEntitySyncStateRow = {
+  marketplace_account_id: string;
+  entity: "orders" | "sales" | "finance";
+  last_execution_at: string | null;
+  last_successful_execution_at: string | null;
+  latest_data_date: string | null;
+  status: CommercialEntitySyncStatus;
+  failure_class: string | null;
+  last_error: string | null;
+  retry_count: number;
+  next_retry_at: string | null;
+  last_requested_from: string | null;
+  last_requested_to: string | null;
+  last_sync_run_id: string | null;
+  rows_upserted_last: number;
+  updated_at: string;
+};
+
+export type CommercialSyncTickRow = {
+  id: string;
+  trigger: string;
+  started_at: string;
+  finished_at: string | null;
+  accounts_considered: number;
+  accounts_synced: number;
+  accounts_skipped: number;
+  accounts_failed: number;
+  summary: Record<string, unknown>;
+  error: string | null;
+  created_at: string;
+};
+
 export type FinanceSyncReportStatus = "discovered" | "imported" | "missing" | "late";
 
 export type SyncRun = {
@@ -96,6 +141,34 @@ export type SyncRun = {
   latest_operation_date: string | null;
   latest_report_id: number | null;
   created_at: string;
+};
+
+export type FinanceIncrementalSyncStateRow = {
+  marketplace_account_id: string;
+  mode: "idle" | "current_week" | "overlap_revalidation";
+  week_status: "idle" | "in_progress" | "complete";
+  active_week_from: string | null;
+  active_week_to: string | null;
+  last_persisted_rrd_id: number;
+  overlap_revalidate_queue: unknown;
+  completed_weeks: unknown;
+  reports_last_request_at: string | null;
+  reports_next_request_not_before: string | null;
+  reports_server_retry_until: string | null;
+  reports_last_rate_limit_snapshot: unknown;
+  lock_owner: string | null;
+  lock_heartbeat_at: string | null;
+  lock_started_at: string | null;
+  latest_successful_data_date: string | null;
+  last_http_status: number | null;
+  last_wake_at: string | null;
+  last_error: string | null;
+  last_cursor_before: number | null;
+  last_cursor_after: number | null;
+  last_rows_received: number | null;
+  last_rows_persisted: number | null;
+  last_has_more: boolean | null;
+  updated_at: string;
 };
 
 export type FinanceSyncReportRow = {
@@ -956,6 +1029,33 @@ type PublicTables = {
     Update: Partial<SyncRun>;
     Relationships: NoRelationships;
   };
+  commercial_entity_sync_state: {
+    Row: CommercialEntitySyncStateRow;
+    Insert: Partial<CommercialEntitySyncStateRow> & {
+      marketplace_account_id: string;
+      entity: "orders" | "sales" | "finance";
+    };
+    Update: Partial<CommercialEntitySyncStateRow>;
+    Relationships: NoRelationships;
+  };
+  commercial_sync_ticks: {
+    Row: CommercialSyncTickRow;
+    Insert: Partial<Omit<CommercialSyncTickRow, "id" | "created_at">> & {
+      id?: string;
+      trigger?: string;
+      created_at?: string;
+    };
+    Update: Partial<CommercialSyncTickRow>;
+    Relationships: NoRelationships;
+  };
+  finance_incremental_sync_state: {
+    Row: FinanceIncrementalSyncStateRow;
+    Insert: Partial<FinanceIncrementalSyncStateRow> & {
+      marketplace_account_id: string;
+    };
+    Update: Partial<FinanceIncrementalSyncStateRow>;
+    Relationships: NoRelationships;
+  };
   finance_sync_reports: {
     Row: FinanceSyncReportRow;
     Insert: Omit<FinanceSyncReportRow, "id" | "created_at"> & {
@@ -1014,11 +1114,142 @@ type PublicTables = {
   };
   historical_inventory_snapshots: {
     Row: HistoricalInventorySnapshotRow;
-    Insert: Omit<HistoricalInventorySnapshotRow, "id" | "created_at"> & {
+    Insert: Omit<
+      HistoricalInventorySnapshotRow,
+      "id" | "created_at" | "in_way_to_client" | "in_way_from_client"
+    > & {
       id?: number;
       created_at?: string;
+      in_way_to_client?: number;
+      in_way_from_client?: number;
     };
     Update: Partial<HistoricalInventorySnapshotRow>;
+    Relationships: NoRelationships;
+  };
+  administration_audit_events: {
+    Row: {
+      id: string;
+      created_at: string;
+      user_id: string | null;
+      user_email: string | null;
+      company_id: string | null;
+      module: string;
+      action: string;
+      entity_type: string | null;
+      entity_id: string | null;
+      result: string;
+      event_kind: string;
+      reason: string | null;
+      correlation_id: string | null;
+      device: string | null;
+      ip_masked: string | null;
+      metadata: Record<string, unknown>;
+    };
+    Insert: {
+      user_id?: string | null;
+      user_email?: string | null;
+      company_id?: string | null;
+      module: string;
+      action: string;
+      entity_type?: string | null;
+      entity_id?: string | null;
+      result: string;
+      event_kind: string;
+      reason?: string | null;
+      correlation_id?: string | null;
+      device?: string | null;
+      ip_masked?: string | null;
+      metadata?: Record<string, unknown>;
+      id?: string;
+      created_at?: string;
+    };
+    Update: Partial<Omit<PublicTables["administration_audit_events"]["Row"], "id" | "created_at">>;
+    Relationships: NoRelationships;
+  };
+  platform_settings: {
+    Row: {
+      id: string;
+      settings: unknown;
+      updated_at: string;
+      updated_by: string | null;
+    };
+    Insert: {
+      id?: string;
+      settings?: unknown;
+      updated_at?: string;
+      updated_by?: string | null;
+    };
+    Update: Partial<Omit<PublicTables["platform_settings"]["Row"], "id">>;
+    Relationships: NoRelationships;
+  };
+  warehouse_account_balance: {
+    Row: {
+      id: number;
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      currency: string | null;
+      current_amount: number | null;
+      for_withdraw_amount: number | null;
+      observed_at: string;
+      meta: Record<string, unknown>;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      currency?: string | null;
+      current_amount?: number | null;
+      for_withdraw_amount?: number | null;
+      observed_at?: string;
+      meta?: Record<string, unknown>;
+      id?: number;
+    };
+    Update: Partial<Omit<PublicTables["warehouse_account_balance"]["Row"], "id" | "created_at">>;
+    Relationships: NoRelationships;
+  };
+  warehouse_sales_report_snapshot: {
+    Row: {
+      id: number;
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      report_id: number;
+      date_from: string;
+      date_to: string;
+      create_date: string;
+      currency: string | null;
+      report_type: number | null;
+      retail_amount_sum: number | null;
+      for_pay_sum: number | null;
+      bank_payment_sum: number | null;
+      seller_finance_name: string | null;
+      observed_at: string;
+      meta: Record<string, unknown>;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      marketplace_type: string;
+      company_id: number;
+      marketplace_account_id: number;
+      report_id: number;
+      date_from: string;
+      date_to: string;
+      create_date: string;
+      currency?: string | null;
+      report_type?: number | null;
+      retail_amount_sum?: number | null;
+      for_pay_sum?: number | null;
+      bank_payment_sum?: number | null;
+      seller_finance_name?: string | null;
+      observed_at?: string;
+      meta?: Record<string, unknown>;
+      id?: number;
+    };
+    Update: Partial<Omit<PublicTables["warehouse_sales_report_snapshot"]["Row"], "id" | "created_at">>;
     Relationships: NoRelationships;
   };
   warehouse_entity_sync_state: {
@@ -1044,6 +1275,15 @@ type PublicTables = {
       entity: string;
       stage?: string;
       progress?: Record<string, unknown>;
+      started_at?: string | null;
+      completed_at?: string | null;
+      last_successful_sync_at?: string | null;
+      last_failed_sync_at?: string | null;
+      current_dataset?: string | null;
+      current_page?: number | null;
+      error_message?: string | null;
+      retry_count?: number;
+      updated_at?: string;
       id?: number;
     };
     Update: Partial<{
@@ -1087,6 +1327,9 @@ type PublicTables = {
       entity: string;
       trigger?: string;
       status?: string;
+      current_dataset?: string | null;
+      current_page?: number | null;
+      meta?: Record<string, unknown>;
       id?: string;
     };
     Update: Partial<{

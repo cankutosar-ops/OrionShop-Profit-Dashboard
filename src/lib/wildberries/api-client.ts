@@ -1,7 +1,14 @@
+import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
+import {
+  computeFinancePageWaitMs,
+  parseRateLimitRetryHeader,
+  parseWbRateLimitHeaders,
+  resolve429WaitMs,
+  type WbRateLimitSnapshot,
+} from "@/lib/wildberries/rate-limit-retry";
 import {
   WB_CONTENT_API,
   WB_FINANCE_API,
-  WB_FINANCE_PAGE_DELAY_MS,
   WB_RATE_LIMIT_MAX_RETRIES,
   WB_RATE_LIMIT_MS,
   WB_SELLER_ANALYTICS_API,
@@ -10,6 +17,17 @@ import {
 } from "./constants";
 import { recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { redactSecrets } from "@/lib/security/secrets";
+import {
+  assertFinanceV1LiveAllowed,
+  assertFinanceV1TokenReady,
+  buildFinanceV1DetailedRequest,
+  isFinanceV1DetailedEmpty,
+  nextFinanceV1Cursor,
+  normalizeFinanceV1DetailedRow,
+  type WbFinanceV1DetailedRow,
+  type WbFinanceV1Period,
+  WB_FINANCE_V1_DETAILED_PATH,
+} from "./finance-v1";
 import { syncLog } from "./sync-log";
 import type {
   WbApiCardsResponse,
@@ -55,16 +73,56 @@ export type WbSyncOptions = {
 
 export type WbSyncEntity = "orders" | "sales" | "finance" | "products" | "stock";
 
+export type WbFinanceReportPage = {
+  rows: WbApiFinanceRow[];
+  currentRrdId: number;
+  firstRrdId: number | null;
+  lastRrdId: number | null;
+  isEmpty: boolean;
+  hasMore: boolean;
+  rateLimit: WbRateLimitSnapshot | null;
+};
+
 export class WbApiError extends Error {
   constructor(
     message: string,
     public statusCode?: number,
-    public endpoint?: string
+    public endpoint?: string,
+    /** Structured machine-readable code (e.g. FINANCE_HTTP_429). */
+    public code?: string
   ) {
     super(message);
     this.name = "WbApiError";
   }
 }
+
+/** True only for a real HTTP 429 — never matches bare "rate-limit" wording. */
+export function isFinanceHttp429Error(error: unknown): boolean {
+  if (error instanceof WbApiError) {
+    return error.statusCode === 429 || error.code === "FINANCE_HTTP_429";
+  }
+  if (error && typeof error === "object") {
+    const maybe = error as { statusCode?: unknown; code?: unknown; message?: unknown };
+    if (maybe.statusCode === 429 || maybe.code === "FINANCE_HTTP_429") return true;
+    if (typeof maybe.message === "string" && isFinanceHttp429Error(maybe.message)) return true;
+  }
+  const msg = String(error ?? "");
+  if (!msg) return false;
+  // Explicit HTTP 429 markers only — do not match "rate-limit headers missing".
+  if (/\bFINANCE_HTTP_429\b/.test(msg)) return true;
+  if (/\[http\s*429\]/i.test(msg)) return true;
+  if (/\bWB API error 429\b/i.test(msg)) return true;
+  if (/\bhttp(?:Status|_?status| status)[=:\s]+429\b/i.test(msg)) return true;
+  if (/\btoo many requests\b/i.test(msg)) return true;
+  // Bare "429" token only when not part of a missing-headers validation message.
+  if (/\b429\b/.test(msg) && !/headers missing|ambiguous|Remaining\/Reset required|missing_rate_limit_headers/i.test(msg)) {
+    return true;
+  }
+  return false;
+}
+
+export const FINANCE_V1_MISSING_RATE_LIMIT_HEADERS = "FINANCE_V1_MISSING_RATE_LIMIT_HEADERS";
+export const FINANCE_HTTP_429 = "FINANCE_HTTP_429";
 
 export function getWbApiToken(): string {
   const token = process.env.WB_API_TOKEN;
@@ -74,8 +132,29 @@ export function getWbApiToken(): string {
   return token.trim();
 }
 
-function sleep(ms: number) {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) return sleep(ms);
+  if (signal.aborted) {
+    return Promise.reject(new DOMException("Sync aborted", "AbortError"));
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DOMException("Sync aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+function assertNotAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException("Sync aborted", "AbortError");
+  }
 }
 
 export class WbApiClient {
@@ -89,14 +168,36 @@ export class WbApiClient {
   private async request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
     let attempt = 0;
     let count429 = 0;
+    let total429WaitMs = 0;
     const overallStarted = Date.now();
     const endpoint = `${baseUrl}${path.split("?")[0]}`;
+    const execCtx = getSyncExecutionContext();
+    const abortSignal = execCtx?.abortSignal;
+    const isLegacyFinanceReport =
+      baseUrl === WB_STATISTICS_API &&
+      path.startsWith("/api/v5/supplier/reportDetailByPeriod");
+    const isFinanceV1SalesReports =
+      baseUrl === WB_FINANCE_API &&
+      path.startsWith("/api/finance/v1/sales-reports");
+    const isFinanceDetailRequest = isLegacyFinanceReport || isFinanceV1SalesReports;
+    const configuredMax429Retries =
+      execCtx?.wb429MaxRetries ?? WB_RATE_LIMIT_MAX_RETRIES;
+    // A Finance 429 is always terminal. This prevents legacy/manual callers
+    // from recreating the historical 20-attempt retry storms.
+    const max429Retries = isFinanceDetailRequest
+      ? 1
+      : configuredMax429Retries;
+    const max429TotalWaitMs = isFinanceDetailRequest
+      ? 0
+      : (execCtx?.wb429MaxTotalWaitMs ?? Number.POSITIVE_INFINITY);
 
     while (true) {
       attempt += 1;
+      assertNotAborted(abortSignal);
+
       const elapsed = Date.now() - this.lastRequestAt;
       if (elapsed < WB_RATE_LIMIT_MS) {
-        await sleep(WB_RATE_LIMIT_MS - elapsed);
+        await sleepWithAbort(WB_RATE_LIMIT_MS - elapsed, abortSignal);
       }
 
       const url = `${baseUrl}${path}`;
@@ -109,6 +210,7 @@ export class WbApiClient {
       const startedAt = Date.now();
       const response = await fetch(url, {
         ...init,
+        signal: abortSignal ?? init?.signal,
         headers: {
           Authorization: this.token,
           "Content-Type": "application/json",
@@ -118,6 +220,13 @@ export class WbApiClient {
 
       this.lastRequestAt = Date.now();
       const durationMs = Date.now() - startedAt;
+      const rateLimitSnapshot = parseWbRateLimitHeaders(response.headers);
+      if (execCtx) {
+        execCtx.lastRateLimitSnapshot = rateLimitSnapshot;
+        if (rateLimitSnapshot.retryAfterMs != null) {
+          execCtx.lastRateLimitRetryAfterMs = rateLimitSnapshot.retryAfterMs;
+        }
+      }
 
       syncLog("wb-api", "Request END", {
         method: init?.method ?? "GET",
@@ -125,17 +234,59 @@ export class WbApiClient {
         status: response.status,
         durationMs,
         attempt,
+        rateLimitRemaining: rateLimitSnapshot.remaining,
+        rateLimitLimit: rateLimitSnapshot.limit,
+        rateLimitReset: rateLimitSnapshot.resetSeconds,
+        rateLimitRetry: rateLimitSnapshot.retrySeconds,
       });
 
-      if (response.status === 429 && attempt < WB_RATE_LIMIT_MAX_RETRIES) {
+      if (response.status === 429 && attempt < max429Retries) {
         count429 += 1;
-        const waitMs = Math.min(180_000, 20_000 * attempt);
-        syncLog("wb-api", "Rate limited — retrying", { attempt, waitMs });
-        await sleep(waitMs);
+        const honorServer =
+          execCtx != null && execCtx.wb429HonorServerRetry !== false;
+        const serverRetryMs = honorServer
+          ? rateLimitSnapshot.retryAfterMs ??
+            parseRateLimitRetryHeader(response.headers.get("X-RateLimit-Retry"))
+          : null;
+        if (execCtx && serverRetryMs != null) {
+          execCtx.lastRateLimitRetryAfterMs = serverRetryMs;
+        }
+        const fallbackWaitMs = Math.min(180_000, 20_000 * attempt);
+        const waitMs = resolve429WaitMs({
+          honorServerRetry: honorServer,
+          serverRetryMs,
+          fallbackWaitMs,
+        });
+        if (total429WaitMs + waitMs > max429TotalWaitMs) {
+          throw new WbApiError(
+            "WB API error 429: rate limit retry budget exhausted (commercial continuity)",
+            429,
+            path,
+            FINANCE_HTTP_429
+          );
+        }
+        total429WaitMs += waitMs;
+        syncLog("wb-api", "Rate limited — retrying", {
+          attempt,
+          waitMs,
+          total429WaitMs,
+          max429Retries,
+          serverRetryMs,
+          honorServerRetry: honorServer,
+        });
+        await sleepWithAbort(waitMs, abortSignal);
         continue;
       }
 
       if (!response.ok) {
+        // Always surface Retry on terminal 429 (including recovery fail-closed).
+        if (
+          response.status === 429 &&
+          execCtx &&
+          rateLimitSnapshot.retryAfterMs != null
+        ) {
+          execCtx.lastRateLimitRetryAfterMs = rateLimitSnapshot.retryAfterMs;
+        }
         recordPerfEvent({
           category: "wb_api",
           name: `wb_api.${path.split("?")[0]}`,
@@ -155,7 +306,8 @@ export class WbApiClient {
         throw new WbApiError(
           `WB API error ${response.status}: ${redactSecrets(body.slice(0, 300))}`,
           response.status,
-          path
+          path,
+          response.status === 429 ? FINANCE_HTTP_429 : undefined
         );
       }
 
@@ -310,6 +462,161 @@ export class WbApiClient {
     return data;
   }
 
+  /**
+   * Legacy Statistics v5 page fetch (reportDetailByPeriod).
+   * Account 2 Finance recovery must use fetchFinanceV1ReportPage instead.
+   * Do not call this for reserved Account 2 recovery wakes.
+   */
+  async fetchFinanceReportPage(
+    dateFrom: string,
+    dateTo: string,
+    currentRrdId: number
+  ): Promise<WbFinanceReportPage> {
+    if (!Number.isSafeInteger(currentRrdId) || currentRrdId < 0) {
+      throw new WbApiError(`Invalid Finance rrdid cursor: ${currentRrdId}`);
+    }
+
+    const params = new URLSearchParams({
+      dateFrom,
+      dateTo,
+      limit: "100000",
+      rrdid: String(currentRrdId),
+    });
+
+    syncLog("wb-api", "Finance report page START (statistics v5)", { currentRrdId });
+    const rows = await this.request<WbApiFinanceRow[]>(
+      WB_STATISTICS_API,
+      `/api/v5/supplier/reportDetailByPeriod?${params.toString()}`
+    );
+    const rateLimit =
+      getSyncExecutionContext()?.lastRateLimitSnapshot ?? null;
+
+    const firstRrdId = rows.length > 0 ? Number(rows[0].rrd_id) : null;
+    const lastRrdId = rows.length > 0 ? Number(rows[rows.length - 1].rrd_id) : null;
+    if (
+      rows.length > 0 &&
+      (!Number.isSafeInteger(firstRrdId) || !Number.isSafeInteger(lastRrdId))
+    ) {
+      throw new WbApiError("Finance report page contains an invalid rrd_id cursor");
+    }
+
+    const isEmpty = rows.length === 0;
+    const hasMore = !isEmpty && lastRrdId !== currentRrdId;
+    syncLog("wb-api", "Finance report page END (statistics v5)", {
+      currentRrdId,
+      firstRrdId,
+      lastRrdId,
+      batchSize: rows.length,
+      hasMore,
+      rateLimitRemaining: rateLimit?.remaining ?? null,
+      rateLimitReset: rateLimit?.resetSeconds ?? null,
+      rateLimitRetry: rateLimit?.retrySeconds ?? null,
+    });
+
+    return {
+      rows,
+      currentRrdId,
+      firstRrdId,
+      lastRrdId,
+      isEmpty,
+      hasMore,
+      rateLimit,
+    };
+  }
+
+  /**
+   * Finance V1 detailed page (sales-reports/detailed).
+   * Fail-closed before HTTP unless live env opt-in + Personal/Service+Finance token.
+   * 204 / empty body → isEmpty; cursor advances only via caller after UPSERT.
+   *
+   * Rate-limit headers on HTTP 200:
+   * - Remaining/Limit/Reset/Retry are captured when present and are authoritative for pacing.
+   * - Missing Reset/Retry on a successful 200 does NOT discard the business body
+   *   (repo does not prove Reset is mandatory on every 200; V5 page path already processes
+   *   without requiring Reset). Next-request wait then uses FINANCE_RECOVERY_MIN_PAGE_GAP_MS
+   *   via computeFinancePageWaitMs — never invent reportsServerRetryUntil.
+   * - HTTP 429 remains fail-closed (statusCode 429 / FINANCE_HTTP_429).
+   */
+  async fetchFinanceV1ReportPage(
+    dateFrom: string,
+    dateTo: string,
+    currentRrdId: number,
+    period: WbFinanceV1Period = "weekly"
+  ): Promise<WbFinanceReportPage> {
+    assertFinanceV1LiveAllowed();
+    assertFinanceV1TokenReady(this.token);
+
+    const body = buildFinanceV1DetailedRequest({
+      dateFrom,
+      dateTo,
+      rrdId: currentRrdId,
+      period,
+    });
+
+    syncLog("wb-api", "Finance V1 detailed page START", {
+      currentRrdId,
+      period: body.period,
+      path: WB_FINANCE_V1_DETAILED_PATH,
+    });
+
+    const raw = await this.request<WbFinanceV1DetailedRow[] | null>(
+      WB_FINANCE_API,
+      WB_FINANCE_V1_DETAILED_PATH,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      }
+    );
+
+    const rateLimit =
+      getSyncExecutionContext()?.lastRateLimitSnapshot ?? null;
+
+    if (rateLimit?.resetSeconds == null || rateLimit?.retrySeconds == null) {
+      syncLog("wb-api", "Finance V1 detailed headers incomplete — processing body with local min gap", {
+        remaining: rateLimit?.remaining ?? null,
+        limit: rateLimit?.limit ?? null,
+        resetSeconds: rateLimit?.resetSeconds ?? null,
+        retrySeconds: rateLimit?.retrySeconds ?? null,
+        pacing: "FINANCE_RECOVERY_MIN_PAGE_GAP_MS when Reset absent",
+      });
+    }
+
+    const v1Rows = Array.isArray(raw) ? raw : [];
+    const isEmpty = isFinanceV1DetailedEmpty(v1Rows);
+    const cursor = nextFinanceV1Cursor({
+      rows: v1Rows,
+      currentRrdId,
+    });
+    const rows = isEmpty
+      ? []
+      : v1Rows.map((row) => normalizeFinanceV1DetailedRow(row));
+
+    const firstRrdId = rows.length > 0 ? Number(rows[0].rrd_id) : null;
+    const lastRrdId = rows.length > 0 ? Number(rows[rows.length - 1].rrd_id) : null;
+
+    syncLog("wb-api", "Finance V1 detailed page END", {
+      currentRrdId,
+      firstRrdId,
+      lastRrdId,
+      batchSize: rows.length,
+      hasMore: cursor.hasMore,
+      isEmpty,
+      rateLimitRemaining: rateLimit?.remaining ?? null,
+      rateLimitReset: rateLimit?.resetSeconds ?? null,
+      rateLimitRetry: rateLimit?.retrySeconds ?? null,
+    });
+
+    return {
+      rows,
+      currentRrdId,
+      firstRrdId,
+      lastRrdId,
+      isEmpty,
+      hasMore: cursor.hasMore,
+      rateLimit,
+    };
+  }
+
   async fetchFinanceReport(dateFrom: string, dateTo: string): Promise<WbApiFinanceRow[]> {
     const all: WbApiFinanceRow[] = [];
     let rrdid = 0;
@@ -319,29 +626,21 @@ export class WbApiClient {
 
     while (true) {
       page += 1;
-      const params = new URLSearchParams({
-        dateFrom,
-        dateTo,
-        limit: "100000",
-        rrdid: String(rrdid),
+      const result = await this.fetchFinanceReportPage(dateFrom, dateTo, rrdid);
+      if (result.isEmpty) break;
+
+      all.push(...result.rows);
+      if (!result.hasMore || result.lastRrdId == null) break;
+      rrdid = result.lastRrdId;
+      const waitMs = computeFinancePageWaitMs({
+        remaining: result.rateLimit?.remaining ?? null,
+        resetSeconds: result.rateLimit?.resetSeconds ?? null,
+        lastFinanceRequestAtMs: this.lastRequestAt,
       });
-
-      syncLog("wb-api", "Finance report page START", { page, rrdid });
-
-      const batch = await this.request<WbApiFinanceRow[]>(
-        WB_STATISTICS_API,
-        `/api/v5/supplier/reportDetailByPeriod?${params.toString()}`
+      await sleepWithAbort(
+        waitMs,
+        getSyncExecutionContext()?.abortSignal
       );
-
-      syncLog("wb-api", "Finance report page END", { page, batchSize: batch.length });
-
-      if (!batch.length) break;
-
-      all.push(...batch);
-      const lastRrd = batch[batch.length - 1].rrd_id;
-      if (lastRrd === rrdid) break;
-      rrdid = lastRrd;
-      await sleep(WB_FINANCE_PAGE_DELAY_MS);
     }
 
     syncLog("wb-api", "Finance report END", { totalRows: all.length, pages: page });

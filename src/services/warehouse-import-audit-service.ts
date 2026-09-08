@@ -100,10 +100,11 @@ export async function listWarehouseImportAudits(
   limit = 20
 ): Promise<WarehouseImportAudit[]> {
   const supabase = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   const { data, error } = await supabase
     .from("warehouse_import_audit")
     .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .order("started_at", { ascending: false })
     .limit(limit);
 

@@ -5,6 +5,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { expandSalesReportFetchWindow } from "@/lib/cash-received";
+import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
 import { WbApiClient } from "@/lib/wildberries/api-client";
 import type { WarehouseScope } from "@/lib/warehouse/types";
 
@@ -31,6 +32,13 @@ export async function syncWildberriesKpiSnapshots(input: {
   historyTo?: string;
 }): Promise<SyncWarehouseKpiSnapshotsResult> {
   const errors: string[] = [];
+  if (isFinanceHistoricalRecoveryActive(input.scope.marketplaceAccountId)) {
+    return {
+      balanceUpserted: false,
+      reportsUpserted: 0,
+      errors: ["skipped_finance_recovery_active"],
+    };
+  }
   const client = new WbApiClient(input.apiKey);
   const sb = createAdminClient();
   const observedAt = new Date().toISOString();

@@ -88,4 +88,9 @@ export type PostSyncVerificationInput = {
   syncResults?: WbSyncResult[] | null;
   syncTiming?: SyncTimingReport | null;
   syncError?: string | null;
+  /**
+   * Commercial Continuity bounded path — skip live WB API probes after sync finalizes.
+   * Uses DB freshness only so verification cannot extend the commercial retry budget.
+   */
+  commercialBounded?: boolean;
 };

@@ -1,9 +1,10 @@
 /**
  * Finance Sync Architecture V2
  *
- * Always re-downloads a configurable lookback window (default 14 days).
- * Discovers realization reports via sales-reports/list, upserts detail rows,
- * computes gap/late-report health, and writes durable audit records.
+ * Production detail path is Reports/V1 incremental (one detailed page per wake).
+ * Account 2 is V1-only. Account 1 may still use Statistics V5 + list as
+ * controlled legacy until its V1 token is proven.
+ * List is not called inside a Reports/V1 detailed wake.
  */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncLog } from "@/lib/wildberries/sync-log";
@@ -13,10 +14,22 @@ import type { SyncRunStatus, SyncRunTrigger, SyncStatus } from "@/types/database
 import {
   createSyncRun,
   finishSyncRun,
+  finalizeInterruptedSyncRun,
   heartbeatSyncRun,
   recordFinanceSyncReports,
 } from "@/services/sync-run-service";
-import { touchAccountSyncHeartbeat } from "@/services/marketplace-account-service";
+import { setActiveSyncRunId } from "@/lib/commercial-continuity/sync-execution-context";
+import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
+import {
+  getMarketplaceAccountForSync,
+  touchAccountSyncHeartbeat,
+} from "@/services/marketplace-account-service";
+import { isAccount2FinanceV1Only, runFinanceIncrementalSync } from "@/lib/finance-incremental";
+import {
+  assertFinanceV1TokenReady,
+  isFinanceV1LiveRequestsEnabled,
+} from "@/lib/wildberries/finance-v1";
+import type { FinanceIncrementalWakeOutcome } from "@/lib/finance-incremental/types";
 
 export const DEFAULT_FINANCE_LOOKBACK_DAYS = 14;
 export const DEFAULT_FINANCE_GAP_WARN_DAYS = 3;
@@ -226,6 +239,63 @@ async function countSourceKeys(
 /** @internal retained for future insert/update differentiation */
 void countSourceKeys;
 
+function shouldUseReportsV1Detail(accountId: string, apiKey?: string | null): boolean {
+  if (isAccount2FinanceV1Only(accountId)) return true;
+  if (!isFinanceV1LiveRequestsEnabled()) return false;
+  if (!apiKey) return false;
+  try {
+    assertFinanceV1TokenReady(apiKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function incrementalToV2Result(
+  outcome: FinanceIncrementalWakeOutcome,
+  input: {
+    startedAt: string;
+    lookbackDays: number;
+    requestedFrom: string;
+    requestedTo: string;
+    syncRunId: string | null;
+  }
+): FinanceSyncV2Result {
+  const errors = outcome.error ? [outcome.error] : [];
+  let status: SyncRunStatus = "success";
+  if (outcome.status === "rate_limited") status = "warning";
+  else if (outcome.status === "failed") status = "failed";
+  else if (outcome.status === "blocked") status = "partial";
+  else if (outcome.status === "idle") status = "success";
+  else if (outcome.status === "week_complete" || outcome.status === "wake_ok") {
+    status = "success";
+  }
+
+  return {
+    entity: "finance",
+    recordsProcessed: outcome.responseRows,
+    recordsInserted: 0,
+    recordsUpdated: outcome.persistedRows,
+    errors,
+    warnings: [],
+    syncedAt: new Date().toISOString(),
+    status,
+    syncRunId: input.syncRunId,
+    lookbackDays: input.lookbackDays,
+    requestedFrom: input.requestedFrom,
+    requestedTo: input.requestedTo,
+    returnedFrom: outcome.week?.from ?? null,
+    returnedTo: outcome.week?.to ?? null,
+    reportIds: [],
+    lateReportIds: [],
+    missingDays: [],
+    gapDays: 0,
+    latestOperationDate: null,
+    latestReportId: null,
+    recoveryNeeded: outcome.status === "rate_limited" || outcome.status === "failed",
+  };
+}
+
 /**
  * Run Finance Sync V2 for one account.
  */
@@ -250,6 +320,35 @@ export async function runFinanceSyncV2(
     lookbackDays,
   });
 
+  if (isFinanceHistoricalRecoveryActive(options.marketplaceAccountId)) {
+    syncLog("finance-v2", "SKIP historical recovery campaign active", {
+      marketplaceAccountId: options.marketplaceAccountId,
+    });
+    return {
+      entity: "finance",
+      recordsProcessed: 0,
+      recordsInserted: 0,
+      recordsUpdated: 0,
+      errors: ["skipped_finance_recovery_active"],
+      warnings: [],
+      syncedAt: startedAt,
+      status: "failed",
+      syncRunId: null,
+      lookbackDays,
+      requestedFrom,
+      requestedTo,
+      returnedFrom: null,
+      returnedTo: null,
+      reportIds: [],
+      lateReportIds: [],
+      missingDays: [],
+      gapDays: 0,
+      latestOperationDate: null,
+      latestReportId: null,
+      recoveryNeeded: false,
+    };
+  }
+
   const syncRunId = await createSyncRun({
     marketplaceAccountId: options.marketplaceAccountId,
     requestId: options.requestId ?? null,
@@ -259,6 +358,62 @@ export async function runFinanceSyncV2(
     requestedTo,
     financeLookbackDays: lookbackDays,
   });
+  setActiveSyncRunId(syncRunId);
+
+  try {
+  let v1ApiKey: string | null = null;
+  try {
+    const acc = await getMarketplaceAccountForSync(options.marketplaceAccountId);
+    v1ApiKey = acc.apiKey;
+  } catch {
+    v1ApiKey = null;
+  }
+
+  if (shouldUseReportsV1Detail(options.marketplaceAccountId, v1ApiKey)) {
+    await touchAccountSyncHeartbeat(options.marketplaceAccountId);
+    await heartbeatSyncRun(syncRunId);
+    const outcome = await runFinanceIncrementalSync({
+      accountId: options.marketplaceAccountId,
+    });
+    const mapped = incrementalToV2Result(outcome, {
+      startedAt,
+      lookbackDays,
+      requestedFrom,
+      requestedTo,
+      syncRunId,
+    });
+    mapped.latestOperationDate = await fetchLatestOperationDate(
+      options.marketplaceAccountId
+    );
+    await finishSyncRun({
+      syncRunId: syncRunId ?? "",
+      marketplaceAccountId: options.marketplaceAccountId,
+      status: mapped.status,
+      returnedFrom: mapped.returnedFrom,
+      returnedTo: mapped.returnedTo,
+      reportIds: [],
+      rowsFetched: mapped.recordsProcessed,
+      rowsUpserted: mapped.recordsUpdated,
+      rowsInserted: 0,
+      rowsUpdated: mapped.recordsUpdated,
+      missingDays: [],
+      lateReportIds: [],
+      recoveredReportIds: [],
+      errors: mapped.errors,
+      warnings: mapped.warnings,
+      gapDays: mapped.gapDays,
+      latestOperationDate: mapped.latestOperationDate,
+      latestReportId: null,
+      startedAt,
+    });
+    syncLog("finance-v2", "END reports-v1-incremental", {
+      status: mapped.status,
+      week: outcome.week?.key ?? null,
+      http: outcome.httpStatus,
+      rows: outcome.persistedRows,
+    });
+    return mapped;
+  }
 
   let discovered: WbSalesReportListItem[] = [];
   try {
@@ -326,7 +481,10 @@ export async function runFinanceSyncV2(
     const createDt = reportCreateDate(item);
     if (!dateFrom || !dateTo || !createDt) continue;
     if (createDt <= dateTo) continue;
-    const periodDays = enumerateDaysInclusive(dateFrom, Math.min(dateTo, requestedTo));
+    const periodDays = enumerateDaysInclusive(
+      dateFrom,
+      dateTo <= requestedTo ? dateTo : requestedTo
+    );
     const covered = periodDays.some((d) => presentDates.has(d));
     if (!covered && createDt <= requestedTo) {
       const id = reportIdOf(item);
@@ -448,6 +606,16 @@ export async function runFinanceSyncV2(
     latestReportId,
     recoveryNeeded,
   };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await finalizeInterruptedSyncRun({
+      syncRunId,
+      marketplaceAccountId: options.marketplaceAccountId,
+      reason: msg,
+      startedAt,
+    });
+    throw err;
+  }
 }
 
 export function financeStatusToAccountSyncStatus(status: SyncRunStatus): SyncStatus {

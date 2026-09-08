@@ -262,6 +262,50 @@ console.log("\n--- 1/2/12. Worker loads and resolves its kernels ---");
             .slice(0, 4)
             .join(", ")}${uncommitted.length > 4 ? `, +${uncommitted.length - 4} more` : ""}`
     );
+
+    // Importing a module only proves it loads. It does not prove the functions
+    // it calls exist: a stale committed consumer paired with a newer dependency
+    // imports cleanly and then throws TypeError on the first real tick. Type
+    // errors inside the worker's own graph are exactly that signal, so gate on
+    // them — scoped to the graph, because unrelated features carry their own.
+    const workerGraph = new Set([...seen].map(rel));
+    const tsc = runScript_tsc();
+    if (tsc === null) {
+      skip("12 worker graph typechecks", "tsc not resolvable");
+    } else {
+      const offenders = new Map();
+      for (const line of tsc.split("\n")) {
+        const m = line.match(/^(.+?)\((\d+),\d+\):\s*error\s/);
+        if (!m) continue;
+        const file = m[1].replace(/\\/g, "/").replace(`${root.replace(/\\/g, "/")}/`, "");
+        if (workerGraph.has(file)) offenders.set(file, (offenders.get(file) ?? 0) + 1);
+      }
+      const total = [...offenders.values()].reduce((a, b) => a + b, 0);
+      check(
+        "12 worker graph typechecks (call sites match their dependencies)",
+        total === 0,
+        total === 0
+          ? `${workerGraph.size} modules, 0 type errors`
+          : `${total} error(s) in ${offenders.size} file(s): ${[...offenders.keys()].slice(0, 3).join(", ")}`
+      );
+    }
+  }
+}
+
+/** Run the repo typechecker and return its combined output, or null if absent. */
+function runScript_tsc() {
+  const tscBin = path.join(root, "node_modules/typescript/bin/tsc");
+  if (!existsSync(tscBin)) return null;
+  try {
+    execFileSync(process.execPath, [tscBin, "--noEmit"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 300_000,
+    });
+    return "";
+  } catch (err) {
+    return `${err.stdout ?? ""}\n${err.stderr ?? ""}`;
   }
 }
 

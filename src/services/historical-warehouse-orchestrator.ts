@@ -17,10 +17,7 @@ import { WAREHOUSE_DOMAINS, WAREHOUSE_ENTITIES } from "@/lib/historical-warehous
 import type { WarehouseEntity, WarehouseImportTrigger } from "@/lib/historical-warehouse/types";
 import { importHistoricalInventoryFromArchives } from "@/services/historical-inventory-import-service";
 import { listAvailableSnapshotDates } from "@/services/historical-inventory-service";
-import {
-  captureDailyInventorySnapshot,
-  type DailyInventorySnapshotResult,
-} from "@/services/inventory-daily-snapshot-service";
+import type { DailyInventorySnapshotResult } from "@/services/inventory-daily-snapshot-service";
 import {
   ensureWarehouseEntityRows,
   entityAllowsIncremental,
@@ -376,26 +373,14 @@ export async function runWarehouseEntityIncrementalSync(params: {
   }
 
   await ensureWarehouseEntityRows(marketplaceAccountId);
-  const state = await getWarehouseEntityState(marketplaceAccountId, "inventory");
-  if (state && !entityAllowsIncremental(state.stage) && state.stage !== "failed") {
-    return {
-      marketplaceAccountId,
-      snapshotDate: params.snapshotDate ?? "",
-      status: "skipped",
-      recordsRead: 0,
-      rowsUpserted: 0,
-      rowsSkipped: 0,
-      missingDatesDetected: [],
-      gapsFilled: [],
-      message: `Inventory entity stage "${state.stage}" is not ready for daily snapshots (complete historical backfill first).`,
-      auditId: null,
-    };
-  }
-
-  return captureDailyInventorySnapshot({
-    marketplaceAccountId,
+  // Sprint 10.7 — inventory continuity is always allowed (activation→today snapshots).
+  // Stage gates apply to other entities; inventory uses dedicated continuity path.
+  const { runInventorySnapshotContinuityForAccount } = await import(
+    "@/services/inventory-snapshot-continuity-service"
+  );
+  const continuity = await runInventorySnapshotContinuityForAccount(marketplaceAccountId, {
     snapshotDate: params.snapshotDate,
     trigger: params.trigger ?? "scheduled",
-    fillGaps: true,
   });
+  return continuity.capture;
 }

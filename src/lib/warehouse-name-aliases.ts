@@ -108,6 +108,15 @@ export const WAREHOUSE_NAME_ALIASES: Readonly<Record<string, string>> = {
   "Гомель 2": "Gomel 2",
   "Склад продавца": "Seller warehouse",
   "Склад WB": "WB Warehouse",
+
+  // --- FBS / seller shipping locations (Warehouse Location peers) ---
+  Коломна: "Kolomna",
+  "FBS Moscow": "FBS Moscow",
+  "FBS Москва": "FBS Moscow",
+  "FBS Kazan": "FBS Kazan",
+  "FBS Казань": "FBS Kazan",
+  "МП Коломна": "FBS Kolomna",
+  "МП Электросталь": "FBS Elektrostal",
 };
 
 const CYRILLIC_RE = /[А-Яа-яЁё]/;

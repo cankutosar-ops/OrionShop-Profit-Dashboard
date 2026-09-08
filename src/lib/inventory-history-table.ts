@@ -69,6 +69,18 @@ export type HistorySortKey =
   | "fromCustomer"
   | `wh:${string}`;
 
+type HistoryTextSortKey = "brand" | "category" | "model" | "barcode" | "size";
+
+function isHistoryTextSortKey(sortKey: HistorySortKey): sortKey is HistoryTextSortKey {
+  return (
+    sortKey === "brand" ||
+    sortKey === "category" ||
+    sortKey === "model" ||
+    sortKey === "barcode" ||
+    sortKey === "size"
+  );
+}
+
 export function loadHistoryTableSettings(): HistoryTableSettings {
   if (typeof window === "undefined") return { ...DEFAULT_HISTORY_TABLE_SETTINGS };
   try {
@@ -222,7 +234,7 @@ export function sortPivotRows(
       cmp = (a.byWarehouse[wh] ?? 0) - (b.byWarehouse[wh] ?? 0);
     } else if (sortBy === "total" || sortBy === "toCustomer" || sortBy === "fromCustomer") {
       cmp = (a[sortBy] ?? 0) - (b[sortBy] ?? 0);
-    } else {
+    } else if (isHistoryTextSortKey(sortBy)) {
       const av = String(a[sortBy] ?? "").toLowerCase();
       const bv = String(b[sortBy] ?? "").toLowerCase();
       cmp = av.localeCompare(bv, "ru");

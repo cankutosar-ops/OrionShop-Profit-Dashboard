@@ -1,7 +1,19 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminClient } from "@/lib/supabase/admin";
+import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
+import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
+import { FINANCE_RESERVED_ACCOUNT_IDS } from "@/lib/finance-recovery/reservation";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
-import { WbApiClient, type WbSyncEntity, type WbSyncOptions, type WbSyncResult } from "./api-client";
+import {
+  WbApiClient,
+  WbApiError,
+  type WbFinanceReportPage,
+  type WbSyncEntity,
+  type WbSyncOptions,
+  type WbSyncResult,
+} from "./api-client";
+import type { WbFinanceV1Period } from "./finance-v1";
+import { assertAccount2ReportsRecoveryAccount } from "@/lib/finance-recovery/reports-ingestion";
 import { syncLog } from "./sync-log";
 import { yieldEventLoop } from "./sync-runtime";
 import { getActiveSyncTimer } from "./sync-timer";
@@ -117,52 +129,6 @@ function toFinanceUpsertRow(
   return next;
 }
 
-type FinancePersistStrategy =
-  | { mode: "upsert"; onConflict: "marketplace_account_id,source_key" | "source_key" }
-  | { mode: "replace_insert" };
-
-let cachedFinancePersistStrategy: FinancePersistStrategy | null = null;
-
-async function probeFinanceUpsert(
-  supabase: AdminClient,
-  onConflict: "marketplace_account_id,source_key" | "source_key"
-): Promise<boolean> {
-  const probeKey = `__finance_probe_${Date.now()}`;
-  const row: Omit<WbFinance, "id"> = {
-    marketplace_account_id: "00000000-0000-0000-0000-000000000099",
-    product_id: null,
-    nm_id: null,
-    operation_date: "2099-01-01",
-    operation_type: "other",
-    amount: 0.01,
-    source_key: probeKey,
-    description: probeKey,
-    srid: null,
-  };
-  const { error } = await supabase.from("wb_finance").upsert(row, { onConflict });
-  if (error) return false;
-  await supabase.from("wb_finance").delete().eq("source_key", probeKey);
-  return true;
-}
-
-async function resolveFinancePersistStrategy(
-  supabase: AdminClient
-): Promise<FinancePersistStrategy> {
-  if (cachedFinancePersistStrategy) return cachedFinancePersistStrategy;
-
-  if (await probeFinanceUpsert(supabase, "marketplace_account_id,source_key")) {
-    cachedFinancePersistStrategy = {
-      mode: "upsert",
-      onConflict: "marketplace_account_id,source_key",
-    };
-  } else if (await probeFinanceUpsert(supabase, "source_key")) {
-    cachedFinancePersistStrategy = { mode: "upsert", onConflict: "source_key" };
-  } else {
-    cachedFinancePersistStrategy = { mode: "replace_insert" };
-  }
-  return cachedFinancePersistStrategy;
-}
-
 async function batchUpsertFinance(
   supabase: AdminClient,
   rows: Array<Omit<WbFinance, "id">>,
@@ -173,7 +139,6 @@ async function batchUpsertFinance(
 ): Promise<{ dbRequests: number; errors: string[] }> {
   let dbRequests = 0;
   const errors: string[] = [];
-  const strategy = await resolveFinancePersistStrategy(supabase);
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows
@@ -181,40 +146,24 @@ async function batchUpsertFinance(
       .map((row) => toFinanceUpsertRow(row, includeExtendedColumns, includeReportIdentity));
     const batchNum = Math.floor(i / batchSize) + 1;
 
-    if (strategy.mode === "replace_insert") {
-      const accountId = batch[0]?.marketplace_account_id;
-      const sourceKeys = batch
-        .map((row) => row.source_key)
-        .filter((key): key is string => Boolean(key));
-      if (accountId && sourceKeys.length > 0) {
-        dbRequests += 1;
-        const { error: deleteError } = await supabase
-          .from("wb_finance")
-          .delete()
-          .eq("marketplace_account_id", accountId)
-          .in("source_key", sourceKeys);
-        if (deleteError) {
-          errors.push(`wb_finance batch ${batchNum} delete: ${deleteError.message}`);
-          continue;
-        }
-      }
-      dbRequests += 1;
-      const { error: insertError } = await supabase.from("wb_finance").insert(batch);
-      if (insertError) {
-        errors.push(`wb_finance batch ${batchNum}: ${insertError.message}`);
-      } else {
-        onBatch(batch.length);
-      }
+    const accountIds = new Set(batch.map((row) => String(row.marketplace_account_id)));
+    if (accountIds.size !== 1 || accountIds.has("")) {
+      errors.push(`wb_finance batch ${batchNum}: mixed or missing marketplace account id`);
+      continue;
+    }
+    if (batch.some((row) => !row.source_key)) {
+      errors.push(`wb_finance batch ${batchNum}: source_key is required for atomic persistence`);
+      continue;
+    }
+
+    dbRequests += 1;
+    const { error } = await supabase.from("wb_finance").upsert(batch, {
+      onConflict: "marketplace_account_id,source_key",
+    });
+    if (error) {
+      errors.push(`wb_finance batch ${batchNum}: atomic upsert failed: ${error.message}`);
     } else {
-      dbRequests += 1;
-      const { error } = await supabase.from("wb_finance").upsert(batch, {
-        onConflict: strategy.onConflict,
-      });
-      if (error) {
-        errors.push(`wb_finance batch ${batchNum}: ${error.message}`);
-      } else {
-        onBatch(batch.length);
-      }
+      onBatch(batch.length);
     }
 
     if (i > 0 && i % (batchSize * 4) === 0) {
@@ -223,6 +172,28 @@ async function batchUpsertFinance(
   }
 
   return { dbRequests, errors };
+}
+
+export type WbFinancePageSyncResult = WbSyncResult & {
+  page: Omit<WbFinanceReportPage, "rows"> | null;
+};
+
+export async function assertFinanceRecoverySchemaReady(
+  supabase: AdminClient = createAdminClient()
+): Promise<void> {
+  const { data, error } = await supabase.rpc(
+    "orion_finance_recovery_schema_ready" as never
+  );
+  if (error) {
+    throw new Error(
+      `Finance recovery schema readiness check unavailable: ${error.message}`
+    );
+  }
+  if (data !== true) {
+    throw new Error(
+      "Finance recovery schema is not ready: composite account/source key uniqueness and lock columns are required"
+    );
+  }
 }
 
 /** One row per (marketplace_account_id, srid); last-wins on equal sale_date (newest in API order). */
@@ -744,8 +715,270 @@ export class WbSyncService {
     return result;
   }
 
+  async syncFinancePage(
+    dateFrom: string,
+    dateTo: string,
+    currentRrdId: number
+  ): Promise<WbFinancePageSyncResult> {
+    const result: WbFinancePageSyncResult = {
+      ...this.emptyResult("finance"),
+      page: null,
+    };
+
+    // Account 2 must never use Statistics v5 reportDetailByPeriod.
+    if (
+      FINANCE_RESERVED_ACCOUNT_IDS.includes(
+        this.marketplaceAccountId as (typeof FINANCE_RESERVED_ACCOUNT_IDS)[number]
+      ) ||
+      isFinanceHistoricalRecoveryActive(this.marketplaceAccountId)
+    ) {
+      result.errors.push(
+        "Account 2 Finance must use syncFinanceV1Page — Statistics v5 reportDetailByPeriod is blocked"
+      );
+      syncLog("finance", "REFUSE statistics v5 page sync for reserved Account 2", {
+        marketplaceAccountId: this.marketplaceAccountId,
+      });
+      return result;
+    }
+
+    const supabase = createAdminClient();
+
+    try {
+      if (!/^[1-9]\d*$/.test(this.marketplaceAccountId)) {
+        throw new Error(
+          `Finance recovery requires a numeric marketplace account id, received: ${this.marketplaceAccountId}`
+        );
+      }
+
+      const fetched = await this.client.fetchFinanceReportPage(
+        dateFrom,
+        dateTo,
+        currentRrdId
+      );
+      const { rows, ...page } = fetched;
+      result.page = page;
+      result.recordsProcessed = rows.length;
+
+      if (rows.length === 0) return result;
+      if (
+        rows.some((row) => !Number.isSafeInteger(Number(row.rrd_id))) ||
+        (page.hasMore &&
+          (page.lastRrdId == null || page.lastRrdId <= page.currentRrdId))
+      ) {
+        throw new Error("Finance page cursor validation failed");
+      }
+      if (getSyncExecutionContext()?.abortSignal?.aborted) {
+        throw new DOMException("Sync aborted", "AbortError");
+      }
+
+      const lookup = await this.buildProductLookup(supabase);
+      const includeExtendedColumns = await financeSchemaHasExtendedColumns(supabase);
+      const includeReportIdentity = await financeSchemaHasReportIdentity(supabase);
+      if (!includeExtendedColumns || !includeReportIdentity) {
+        throw new Error(
+          "Finance page persistence requires the complete Finance Sync V2 schema"
+        );
+      }
+
+      const financeLines: Array<Omit<WbFinance, "id">> = [];
+      const reportIds = new Set<number>();
+      let minOp: string | null = null;
+      let maxOp: string | null = null;
+
+      for (const row of rows) {
+        if (row.realizationreport_id != null && Number.isFinite(row.realizationreport_id)) {
+          reportIds.add(Number(row.realizationreport_id));
+        }
+        const productId = row.nm_id ? lookup.get(row.nm_id) ?? null : null;
+        const mapped = mapFinanceRowsFromReport(row, productId).map((line) => ({
+          ...line,
+          marketplace_account_id: this.marketplaceAccountId,
+        }));
+        for (const line of mapped) {
+          const op = line.operation_date?.slice(0, 10);
+          if (op) {
+            if (!minOp || op < minOp) minOp = op;
+            if (!maxOp || op > maxOp) maxOp = op;
+          }
+        }
+        financeLines.push(...mapped);
+      }
+
+      const { errors } = await batchUpsertFinance(
+        supabase,
+        financeLines,
+        FINANCE_BATCH_SIZE,
+        (count) => {
+          result.recordsUpdated += count;
+        },
+        includeExtendedColumns,
+        includeReportIdentity
+      );
+      result.errors.push(...errors);
+      result.reportIds = [...reportIds].sort((a, b) => a - b);
+      result.returnedFrom = minOp;
+      result.returnedTo = maxOp;
+    } catch (err) {
+      result.errors.push(err instanceof Error ? err.message : "Finance page sync failed");
+    }
+
+    return result;
+  }
+
+  /**
+   * Account 2 Finance recovery page path — Finance V1 sales-reports/detailed.
+   * UPSERT only; caller must advance cursor only after successful persistence.
+   * Never falls back to Statistics v5.
+   */
+  async syncFinanceV1Page(
+    dateFrom: string,
+    dateTo: string,
+    currentRrdId: number,
+    period: WbFinanceV1Period = "weekly"
+  ): Promise<WbFinancePageSyncResult> {
+    const result: WbFinancePageSyncResult = {
+      ...this.emptyResult("finance"),
+      page: null,
+    };
+    const supabase = createAdminClient();
+
+    try {
+      if (!/^[1-9]\d*$/.test(this.marketplaceAccountId)) {
+        throw new Error(
+          `Finance recovery requires a numeric marketplace account id, received: ${this.marketplaceAccountId}`
+        );
+      }
+
+      if (
+        FINANCE_RESERVED_ACCOUNT_IDS.includes(
+          this.marketplaceAccountId as (typeof FINANCE_RESERVED_ACCOUNT_IDS)[number]
+        )
+      ) {
+        assertAccount2ReportsRecoveryAccount(this.marketplaceAccountId);
+      }
+
+      const fetched = await this.client.fetchFinanceV1ReportPage(
+        dateFrom,
+        dateTo,
+        currentRrdId,
+        period
+      );
+      const { rows, ...page } = fetched;
+      result.page = page;
+      result.recordsProcessed = rows.length;
+
+      if (rows.length === 0) return result;
+      if (
+        rows.some((row) => !Number.isSafeInteger(Number(row.rrd_id))) ||
+        (page.hasMore &&
+          (page.lastRrdId == null || page.lastRrdId <= page.currentRrdId))
+      ) {
+        throw new Error("Finance V1 page cursor validation failed");
+      }
+      if (getSyncExecutionContext()?.abortSignal?.aborted) {
+        throw new DOMException("Sync aborted", "AbortError");
+      }
+
+      const lookup = await this.buildProductLookup(supabase);
+      const includeExtendedColumns = await financeSchemaHasExtendedColumns(supabase);
+      const includeReportIdentity = await financeSchemaHasReportIdentity(supabase);
+      if (!includeExtendedColumns || !includeReportIdentity) {
+        throw new Error(
+          "Finance page persistence requires the complete Finance Sync V2 schema"
+        );
+      }
+
+      const financeLines: Array<Omit<WbFinance, "id">> = [];
+      const reportIds = new Set<number>();
+      let minOp: string | null = null;
+      let maxOp: string | null = null;
+
+      for (const row of rows) {
+        if (row.realizationreport_id != null && Number.isFinite(row.realizationreport_id)) {
+          reportIds.add(Number(row.realizationreport_id));
+        }
+        const productId = row.nm_id ? lookup.get(row.nm_id) ?? null : null;
+        const mapped = mapFinanceRowsFromReport(row, productId).map((line) => ({
+          ...line,
+          marketplace_account_id: this.marketplaceAccountId,
+        }));
+        for (const line of mapped) {
+          if (String(line.marketplace_account_id) !== String(this.marketplaceAccountId)) {
+            throw new Error(
+              "Finance V1 persistence refused: marketplace_account_id mismatch in mapped lines"
+            );
+          }
+          const op = line.operation_date?.slice(0, 10);
+          if (op) {
+            if (!minOp || op < minOp) minOp = op;
+            if (!maxOp || op > maxOp) maxOp = op;
+          }
+        }
+        financeLines.push(...mapped);
+      }
+
+      const { errors } = await batchUpsertFinance(
+        supabase,
+        financeLines,
+        FINANCE_BATCH_SIZE,
+        (count) => {
+          result.recordsUpdated += count;
+        },
+        includeExtendedColumns,
+        includeReportIdentity
+      );
+      result.errors.push(...errors);
+      result.reportIds = [...reportIds].sort((a, b) => a - b);
+      result.returnedFrom = minOp;
+      result.returnedTo = maxOp;
+    } catch (err) {
+      if (err instanceof WbApiError) {
+        const tag =
+          err.statusCode === 429 || err.code === "FINANCE_HTTP_429"
+            ? "[http 429]"
+            : err.code === "FINANCE_V1_MISSING_RATE_LIMIT_HEADERS"
+              ? `[http ${err.statusCode ?? 200}][missing_rate_limit_headers]`
+              : err.statusCode != null
+                ? `[http ${err.statusCode}]`
+                : "[wb_api_error]";
+        result.errors.push(`${tag} ${err.message}`);
+      } else {
+        result.errors.push(
+          err instanceof Error ? err.message : "Finance V1 page sync failed"
+        );
+      }
+    }
+
+    return result;
+  }
+
   async syncFinance(dateFrom: string, dateTo: string): Promise<WbSyncResult> {
     const result = this.emptyResult("finance");
+
+    if (
+      FINANCE_RESERVED_ACCOUNT_IDS.includes(
+        this.marketplaceAccountId as (typeof FINANCE_RESERVED_ACCOUNT_IDS)[number]
+      )
+    ) {
+      result.errors.push(
+        "Account 2 Finance must use Reports/V1 incremental — Statistics v5 reportDetailByPeriod is blocked"
+      );
+      syncLog("finance", "REFUSE statistics v5 full sync for Account 2", {
+        marketplaceAccountId: this.marketplaceAccountId,
+      });
+      return result;
+    }
+
+    // The dedicated page-level recovery is the only Finance path allowed for
+    // Account 2 while its durable campaign reservation is active.
+    if (isFinanceHistoricalRecoveryActive(this.marketplaceAccountId)) {
+      result.errors.push("skipped_finance_recovery_active");
+      syncLog("finance", "SKIP historical recovery campaign active", {
+        marketplaceAccountId: this.marketplaceAccountId,
+      });
+      return result;
+    }
+
     const supabase = createAdminClient();
     const timer = getActiveSyncTimer();
 
@@ -760,6 +993,10 @@ export class WbSyncService {
       console.log("[SYNC] finance fetched");
       syncLog("finance", "Wildberries API END: fetchFinanceReport", { rowCount: rows.length });
       result.recordsProcessed = rows.length;
+
+      if (getSyncExecutionContext()?.abortSignal?.aborted) {
+        throw new DOMException("Sync aborted", "AbortError");
+      }
 
       syncLog("finance", "Supabase select START: buildProductLookup");
       const lookup = await this.buildProductLookup(supabase);

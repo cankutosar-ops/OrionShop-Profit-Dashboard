@@ -2,6 +2,11 @@ import { syncLog } from "@/lib/wildberries/sync-log";
 import { toDateString } from "@/lib/wildberries/mappers";
 import { WbApiClient } from "@/lib/wildberries/api-client";
 import {
+  VERIFICATION_WB_429_MAX_RETRIES,
+  VERIFICATION_WB_429_MAX_TOTAL_WAIT_MS,
+} from "@/lib/commercial-continuity/execution-bounds";
+import { runWithSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
+import {
   classifyVerificationFailures,
   resolveOverallResult,
 } from "@/lib/sync-verification-audit/classify";
@@ -14,7 +19,7 @@ import type {
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import { getProductionHealthReport } from "@/services/production-health-service";
 import { insertVerificationReport } from "@/services/sync-verification-report-repository";
-import type { HealthLevel } from "@/lib/production-health/types";
+import type { HealthLevel, ProductionHealthReport } from "@/lib/production-health/types";
 
 function daysBetween(latest: string | null, expected: string | null): number | null {
   if (!latest || !expected) return null;
@@ -30,6 +35,17 @@ function addDays(isoDate: string, delta: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** DB-only freshness targets — no WB API (commercial bounded post-sync path). */
+function dbOnlyLatestDates(health: ProductionHealthReport, expectedAsOf: string) {
+  const byEntity = Object.fromEntries(health.freshness.map((f) => [f.entity, f]));
+  return {
+    orders: byEntity.orders?.latestDbDate ?? expectedAsOf,
+    sales: byEntity.sales?.latestDbDate ?? expectedAsOf,
+    finance: byEntity.finance?.latestDbDate ?? expectedAsOf,
+    inventory: byEntity.inventory?.latestDbDate ?? null,
+  };
+}
+
 async function probeLatestApiDates(marketplaceAccountId: string, expectedAsOf: string) {
   const fallback = {
     orders: expectedAsOf,
@@ -40,14 +56,34 @@ async function probeLatestApiDates(marketplaceAccountId: string, expectedAsOf: s
 
   try {
     const account = await getMarketplaceAccountForSync(marketplaceAccountId);
-    const api = new WbApiClient(account.apiKey);
     const from = addDays(expectedAsOf, -7);
 
-    // Lightweight lookback only — avoid full-history pulls during verification.
-    const [orders, sales] = await Promise.all([
-      api.fetchOrders(`${from}T00:00:00`).catch(() => []),
-      api.fetchSales(`${from}T00:00:00`).catch(() => []),
-    ]);
+    // Bounded statistics API budget — sequential probes, honor X-RateLimit-Retry.
+    const orders = await runWithSyncExecutionContext(
+      {
+        marketplaceAccountId,
+        wb429MaxRetries: VERIFICATION_WB_429_MAX_RETRIES,
+        wb429MaxTotalWaitMs: VERIFICATION_WB_429_MAX_TOTAL_WAIT_MS,
+        wb429HonorServerRetry: true,
+      },
+      async () => {
+        const api = new WbApiClient(account.apiKey);
+        return api.fetchOrders(`${from}T00:00:00`).catch(() => [] as Awaited<ReturnType<WbApiClient["fetchOrders"]>>);
+      }
+    );
+
+    const sales = await runWithSyncExecutionContext(
+      {
+        marketplaceAccountId,
+        wb429MaxRetries: VERIFICATION_WB_429_MAX_RETRIES,
+        wb429MaxTotalWaitMs: VERIFICATION_WB_429_MAX_TOTAL_WAIT_MS,
+        wb429HonorServerRetry: true,
+      },
+      async () => {
+        const api = new WbApiClient(account.apiKey);
+        return api.fetchSales(`${from}T00:00:00`).catch(() => [] as Awaited<ReturnType<WbApiClient["fetchSales"]>>);
+      }
+    );
 
     const orderDates = orders.map((o) => toDateString(o.date)).sort();
     const saleDates = sales.map((s) => toDateString(s.date)).sort();
@@ -100,7 +136,15 @@ export async function runPostSyncVerification(
   input: PostSyncVerificationInput
 ): Promise<SyncVerificationReportRow | null> {
   const health = await getProductionHealthReport(input.marketplaceAccountId);
-  const apiLatest = await probeLatestApiDates(input.marketplaceAccountId, health.expectedAsOf);
+  let apiLatest: ReturnType<typeof dbOnlyLatestDates>;
+  if (input.commercialBounded) {
+    syncLog("verification-audit", "API probe skipped (commercial bounded)", {
+      marketplaceAccountId: input.marketplaceAccountId,
+    });
+    apiLatest = dbOnlyLatestDates(health, health.expectedAsOf);
+  } else {
+    apiLatest = await probeLatestApiDates(input.marketplaceAccountId, health.expectedAsOf);
+  }
 
   const byEntity = Object.fromEntries(health.freshness.map((f) => [f.entity, f]));
 

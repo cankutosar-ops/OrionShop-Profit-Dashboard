@@ -10,6 +10,7 @@ import {
   type WarehouseEntityStage,
   type WarehouseEntitySyncState,
 } from "@/lib/historical-warehouse/types";
+import type { Database } from "@/types/database";
 
 function isMissingTable(message: string): boolean {
   return /does not exist|schema cache|Could not find/i.test(message);
@@ -41,10 +42,11 @@ export async function listWarehouseEntityStates(
   marketplaceAccountId: string | number
 ): Promise<WarehouseEntitySyncState[]> {
   const supabase = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   const { data, error } = await supabase
     .from("warehouse_entity_sync_state")
     .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .order("entity");
 
   if (error) {
@@ -59,10 +61,11 @@ export async function getWarehouseEntityState(
   entity: WarehouseEntity
 ): Promise<WarehouseEntitySyncState | null> {
   const supabase = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   const { data, error } = await supabase
     .from("warehouse_entity_sync_state")
     .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .eq("entity", entity)
     .maybeSingle();
 
@@ -95,11 +98,15 @@ export async function updateWarehouseEntityState(
 
   const existing = await getWarehouseEntityState(input.marketplaceAccountId, input.entity);
   const now = new Date().toISOString();
-  const patch: Record<string, unknown> = {
+  const patch = {
     marketplace_account_id: Number(input.marketplaceAccountId),
     entity: input.entity,
     updated_at: now,
-  };
+  } as Database["public"]["Tables"]["warehouse_entity_sync_state"]["Update"] &
+    Pick<
+      Database["public"]["Tables"]["warehouse_entity_sync_state"]["Insert"],
+      "marketplace_account_id" | "entity"
+    >;
 
   if (input.stage) patch.stage = input.stage;
   if (input.progress) patch.progress = input.progress;
