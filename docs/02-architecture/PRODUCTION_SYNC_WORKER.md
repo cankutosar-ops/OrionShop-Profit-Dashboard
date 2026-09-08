@@ -40,7 +40,7 @@ existed and is already covered by its own verification script:
 | Task | Delegates to | Covers |
 |---|---|---|
 | `commercial` | `runCommercialContinuityTick` | Orders, Sales, Finance (one Reports/V1 page per account) |
-| `inventory` | `runInventorySnapshotContinuityForAccount` | Daily snapshot, gap recovery, retention purge |
+| `inventory` | `runInventorySnapshotContinuityForAccount` | Daily snapshot, gap recovery (no retention purge — see below) |
 | `finance-catchup` | `runFinanceIncrementalSync` | Opt-in extra Reports/V1 page wakes |
 | `ads` | — | Registered extension point, not implemented |
 
@@ -241,21 +241,43 @@ monitoring was added.
 
 Production inventory continuity belongs to the worker, via the `inventory` task.
 
-**What deploys today runs no inventory timer.** `HEAD` contains neither
-`src/services/inventory-snapshot-continuity-scheduler.ts` nor any call to it from
-`src/instrumentation.ts`. Both exist only as uncommitted Sprint 10.7 work, so a
-Netlify build from this branch cannot start a `setInterval` scheduler — there is
-nothing to start.
-
-That makes this a *prospective* risk rather than a live one. When Sprint 10.7
-lands, the guard that must land with it is already written in the working tree:
-the scheduler is **off by default in production** and requires an explicit
-`INVENTORY_SNAPSHOT_SCHEDULER=1`. Local development is unchanged, so `npm run dev`
-still captures snapshots. `verify-production-data-plane.mjs` asserts that guard
-and skips only while the file is absent.
+`src/services/inventory-snapshot-continuity-scheduler.ts` now exists in `HEAD`
+(committed with the Sprint 10.7 worker dependencies), so the guard is what keeps
+the web process timer-free: the scheduler is **off by default in production** and
+requires an explicit `INVENTORY_SNAPSHOT_SCHEDULER=1`. Local development is
+unchanged, so `npm run dev` still captures snapshots.
+`verify-production-data-plane.mjs` asserts that guard.
 
 On Netlify, leave `INVENTORY_SNAPSHOT_SCHEDULER` unset. The workflow sets it to
 `0` so a worker run can never start a timer either.
+
+### Historical inventory retention
+
+**Automatic historical inventory retention purge is disabled by default and is
+not part of the initial production worker execution.**
+
+`purgeExpiredInventorySnapshots` issues a hard `DELETE` on
+`historical_inventory_snapshots`. It is retained as a domain capability but is
+fail-closed in two independent places:
+
+1. `runInventorySnapshotContinuityForAccount` only calls it when the caller
+   passes `retentionPurge`. No automatic path does — not the worker task, the
+   continuity scheduler, the dashboard-sync backup, the warehouse orchestrator,
+   nor the API route.
+2. The function itself deletes nothing unless it receives an explicit
+   `{ authorized: true, approvedBy }`. Omitted or malformed authorization
+   returns `0` without issuing any statement, so a missing configuration can
+   never fail open.
+
+Snapshot capture and persistence are unaffected; only deletion is gated.
+
+`warehouseHistoryDays` (default `90`) is deliberately left as-is. While the purge
+is disabled the value is inert — it is reported in continuity state and logs but
+drives no deletion. **Choosing the real retention window is a separate decision
+that needs explicit approval**, and enabling the purge is a code-level change,
+not a configuration toggle, so it cannot be switched on by an environment
+variable in production. `verify:inventory-retention-safety` executes these paths
+for real and fails if any of them starts deleting.
 
 ## Platform cron
 
@@ -278,6 +300,7 @@ npm run verify:sync-worker             # worker behaviour: isolation, cursor, 42
 npm run verify:warehouse-db-only-10-6  # pre-existing warehouse-only regression
 npm run verify:finance-incremental     # pre-existing cursor / 429 spec
 npm run verify:commercial-continuity   # pre-existing continuity kernel
+npm run verify:inventory-retention-safety  # no automatic DELETE of inventory history
 ```
 
 `verify:production-data-plane` resolves each entrypoint's transitive static

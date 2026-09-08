@@ -644,13 +644,34 @@ export async function resolveInventorySnapshotActivationDate(
 }
 
 /**
+ * Explicit authorization for the destructive retention purge.
+ *
+ * No retention policy has been approved yet, so every automatic caller (worker,
+ * continuity scheduler, dashboard-sync backup, warehouse orchestrator, API route)
+ * must leave this unset. Omitting it — or passing anything without a recorded
+ * approver — deletes nothing.
+ */
+export type InventoryRetentionPurgeAuthorization = {
+  authorized: true;
+  /** Recorded in the sync log so a destructive run is always attributable. */
+  approvedBy: string;
+};
+
+/**
  * Purge inventory snapshots older than retention window.
  * Only touches historical_inventory_snapshots — never Orders/Sales/Finance.
+ *
+ * Fail-closed: without an explicit `authorization` no DELETE is issued at all.
  */
 export async function purgeExpiredInventorySnapshots(
   marketplaceAccountId: string,
-  retentionDays: number
+  retentionDays: number,
+  authorization?: InventoryRetentionPurgeAuthorization
 ): Promise<number> {
+  if (authorization?.authorized !== true || !authorization.approvedBy) {
+    return 0;
+  }
+
   const days = Math.max(1, Math.floor(retentionDays));
   const cutoff = addDaysIso(todayIsoDate(), -days);
   const supabase = createAdminClient();
@@ -674,6 +695,7 @@ export async function purgeExpiredInventorySnapshots(
       retentionDays: days,
       cutoff,
       purged,
+      approvedBy: authorization.approvedBy,
     });
   }
   return purged;

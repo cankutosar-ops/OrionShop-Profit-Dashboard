@@ -97,6 +97,7 @@
     "verify:sync-worker": "tsx scripts/verify-sync-worker.mjs",
     "verify:warehouse-locations-fbs-ready": "npx tsx scripts/verify-warehouse-locations-fbs-ready.mjs",
     "verify:inventory-continuity-10-7": "npx tsx scripts/verify-inventory-continuity-10-7.mjs",
+    "verify:inventory-retention-safety": "tsx scripts/verify-inventory-retention-safety.mjs",
     "verify:potential-profit-no-returns": "npx tsx scripts/verify-potential-profit-no-returns.mjs",
     "verify:administration-build-boundary": "npx tsx scripts/verify-administration-build-boundary.mjs",
     "verify:architecture-boundary-11-9": "npx tsx scripts/verify-architecture-boundary-11-9.mjs",

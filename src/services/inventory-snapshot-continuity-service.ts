@@ -15,6 +15,7 @@ import {
   purgeExpiredInventorySnapshots,
   resolveInventorySnapshotActivationDate,
   type DailyInventorySnapshotResult,
+  type InventoryRetentionPurgeAuthorization,
 } from "@/services/inventory-daily-snapshot-service";
 import { updateWarehouseEntityState } from "@/services/warehouse-entity-sync-state-service";
 
@@ -32,11 +33,22 @@ export type InventoryContinuityResult = {
 
 const DEFAULT_RETENTION_DAYS = 90;
 
+/** Injection seam, mirroring `InventoryTaskDeps`. Tests supply fakes. */
+export type InventoryContinuityDeps = {
+  resolveActivationDate: typeof resolveInventorySnapshotActivationDate;
+  detectMissing: typeof detectMissingSnapshotDates;
+  capture: typeof captureDailyInventorySnapshot;
+  purge: typeof purgeExpiredInventorySnapshots;
+  resolveRetentionDays: typeof getInventorySnapshotRetentionDays;
+};
+
 /**
  * One continuity pass for an account:
  * 1) Capture today (live Analytics — all warehouse locations including FBS peers)
  * 2) Recover past gaps from activation → today when archives allow
- * 3) Purge snapshots older than retention
+ *
+ * Retention purge is NOT part of this pass. It only runs when the caller passes
+ * `retentionPurge`, which no automatic path does — see the authorization type.
  */
 export async function runInventorySnapshotContinuityForAccount(
   marketplaceAccountId: string,
@@ -44,15 +56,25 @@ export async function runInventorySnapshotContinuityForAccount(
     trigger?: "manual" | "lifecycle" | "scheduled" | "recover";
     snapshotDate?: string;
     retentionDays?: number;
+    /** Explicit opt-in for the destructive purge; omitted ⇒ nothing is deleted. */
+    retentionPurge?: InventoryRetentionPurgeAuthorization;
+    deps?: Partial<InventoryContinuityDeps>;
   }
 ): Promise<InventoryContinuityResult> {
+  const resolveActivationDate =
+    options?.deps?.resolveActivationDate ?? resolveInventorySnapshotActivationDate;
+  const detectMissing = options?.deps?.detectMissing ?? detectMissingSnapshotDates;
+  const captureSnapshot = options?.deps?.capture ?? captureDailyInventorySnapshot;
+  const purge = options?.deps?.purge ?? purgeExpiredInventorySnapshots;
+  const resolveRetentionDays =
+    options?.deps?.resolveRetentionDays ?? getInventorySnapshotRetentionDays;
   const trigger = options?.trigger ?? "scheduled";
-  const activationDate = await resolveInventorySnapshotActivationDate(marketplaceAccountId);
-  const missingBefore = await detectMissingSnapshotDates(marketplaceAccountId, {
+  const activationDate = await resolveActivationDate(marketplaceAccountId);
+  const missingBefore = await detectMissing(marketplaceAccountId, {
     fromDate: activationDate,
   });
 
-  const capture = await captureDailyInventorySnapshot({
+  const capture = await captureSnapshot({
     marketplaceAccountId,
     snapshotDate: options?.snapshotDate,
     trigger,
@@ -60,16 +82,14 @@ export async function runInventorySnapshotContinuityForAccount(
     activationDate,
   });
 
-  const retentionDays =
-    options?.retentionDays ??
-    (await getInventorySnapshotRetentionDays());
+  const retentionDays = options?.retentionDays ?? (await resolveRetentionDays());
 
-  const purgedRows = await purgeExpiredInventorySnapshots(
-    marketplaceAccountId,
-    retentionDays
-  );
+  // Reporting-only unless the caller explicitly authorized a destructive run.
+  const purgedRows = options?.retentionPurge
+    ? await purge(marketplaceAccountId, retentionDays, options.retentionPurge)
+    : 0;
 
-  const missingAfter = await detectMissingSnapshotDates(marketplaceAccountId, {
+  const missingAfter = await detectMissing(marketplaceAccountId, {
     fromDate: activationDate,
   });
 
