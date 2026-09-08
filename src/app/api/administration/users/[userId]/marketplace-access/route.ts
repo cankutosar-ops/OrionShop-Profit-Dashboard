@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAuth, isAuthFailure } from "@/lib/security/require-auth";
+import { requireAdminApi, isAdminAuthFailure } from "@/lib/security/admin-authorization";
 import {
   assertNoCredentialsInPayload,
   setUserMarketplaceAccess,
@@ -15,8 +15,8 @@ type RouteContext = { params: Promise<{ userId: string }> };
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
-    const auth = await requireAuth(request);
-    if (isAuthFailure(auth)) return auth;
+    const auth = await requireAdminApi(request);
+    if (isAdminAuthFailure(auth)) return auth;
 
     const { userId } = await context.params;
     const body = (await request.json()) as {

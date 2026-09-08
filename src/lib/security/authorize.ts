@@ -16,8 +16,12 @@ import {
 import {
   lookupMarketplaceAccount,
   resolveTenantMembership,
-  type ResolvedTenantMembership,
 } from "@/lib/security/tenant-membership";
+import {
+  decideTenantScope,
+  normalizeClaim,
+  type TenantScopeDenialCode,
+} from "@/lib/security/tenant-scope";
 import { FILTER_PARAMS } from "@/lib/filter-params";
 
 export type AuthzContext = {
@@ -71,41 +75,22 @@ export function isAuthzFailure(
 }
 
 function claimedAccountId(input: AuthorizeScopeInput): string | null {
-  const raw =
-    input.marketplaceAccountId?.trim() ||
-    input.account?.trim() ||
-    "";
-  return raw || null;
+  return normalizeClaim(input.marketplaceAccountId) ?? normalizeClaim(input.account);
 }
 
 function claimedCompanyId(input: AuthorizeScopeInput): string | null {
-  const raw = input.companyId?.trim() || input.company?.trim() || "";
-  return raw || null;
+  return normalizeClaim(input.companyId) ?? normalizeClaim(input.company);
 }
 
-function membershipAllowsCompany(
-  membership: ResolvedTenantMembership,
-  companyId: string
-): boolean {
-  return membership.companyIds.includes(companyId);
-}
-
-function membershipAllowsAccount(
-  membership: ResolvedTenantMembership,
-  marketplaceAccountId: string
-): boolean {
-  return membership.marketplaceAccountIds.includes(marketplaceAccountId);
-}
-
-async function resolveDefaultAccount(
-  membership: ResolvedTenantMembership
-): Promise<{ marketplaceAccountId: string; companyId: string } | null> {
-  if (membership.marketplaceAccountIds.length === 0) return null;
-  const first = membership.marketplaceAccountIds[0];
-  const looked = await lookupMarketplaceAccount(first);
-  if (!looked) return null;
-  if (!membershipAllowsCompany(membership, looked.companyId)) return null;
-  return looked;
+/** Map a shared tenant-scope denial to the HTTP contract used by Route Handlers. */
+function denialResponse(code: TenantScopeDenialCode, message: string): NextResponse {
+  if (code === "AUTHZ_ACCOUNT_REQUIRED") {
+    return NextResponse.json(
+      { error: "Bad Request", code, message },
+      { status: 400 }
+    );
+  }
+  return authForbiddenResponse(message, code);
 }
 
 /**
@@ -175,99 +160,17 @@ export async function authorize(
   }
 
   const membership = await resolveTenantMembership(auth);
-  if (membership.companyIds.length === 0) {
-    return authForbiddenResponse(
-      "No tenant membership for this user.",
-      "AUTHZ_NO_MEMBERSHIP"
-    );
-  }
+  const decision = await decideTenantScope(
+    membership,
+    { account: accountClaim, company: companyClaim },
+    {
+      allowDefaultAccount: input.allowDefaultAccount,
+      requireMarketplaceAccount: input.requireMarketplaceAccount,
+    }
+  );
 
-  let companyId: string | null = null;
-  let marketplaceAccountId: string | null = null;
-
-  if (accountClaim) {
-    if (!membershipAllowsAccount(membership, accountClaim)) {
-      return authForbiddenResponse(
-        "Marketplace account is not permitted for this user.",
-        "AUTHZ_ACCOUNT_FORBIDDEN"
-      );
-    }
-    const looked = await lookupMarketplaceAccount(accountClaim);
-    if (!looked) {
-      return authForbiddenResponse(
-        "Marketplace account is not permitted for this user.",
-        "AUTHZ_ACCOUNT_FORBIDDEN"
-      );
-    }
-    if (!membershipAllowsCompany(membership, looked.companyId)) {
-      return authForbiddenResponse(
-        "Company is not permitted for this user.",
-        "AUTHZ_COMPANY_FORBIDDEN"
-      );
-    }
-    if (companyClaim && companyClaim !== looked.companyId) {
-      return authForbiddenResponse(
-        "Marketplace account does not belong to the specified company.",
-        "AUTHZ_TENANT_MISMATCH"
-      );
-    }
-    if (companyClaim && !membershipAllowsCompany(membership, companyClaim)) {
-      return authForbiddenResponse(
-        "Company is not permitted for this user.",
-        "AUTHZ_COMPANY_FORBIDDEN"
-      );
-    }
-    marketplaceAccountId = looked.marketplaceAccountId;
-    companyId = looked.companyId;
-  } else if (companyClaim) {
-    if (!membershipAllowsCompany(membership, companyClaim)) {
-      return authForbiddenResponse(
-        "Company is not permitted for this user.",
-        "AUTHZ_COMPANY_FORBIDDEN"
-      );
-    }
-    companyId = companyClaim;
-    if (input.allowDefaultAccount || input.requireMarketplaceAccount) {
-      const accountsForCompany = membership.marketplaceAccountIds;
-      // Prefer an account under the claimed company
-      for (const id of accountsForCompany) {
-        const looked = await lookupMarketplaceAccount(id);
-        if (looked && looked.companyId === companyClaim) {
-          marketplaceAccountId = looked.marketplaceAccountId;
-          break;
-        }
-      }
-      if (!marketplaceAccountId && input.requireMarketplaceAccount) {
-        return authForbiddenResponse(
-          "No marketplace account permitted for this company.",
-          "AUTHZ_ACCOUNT_FORBIDDEN"
-        );
-      }
-    }
-  } else if (input.allowDefaultAccount || input.requireMarketplaceAccount) {
-    const fallback = await resolveDefaultAccount(membership);
-    if (!fallback) {
-      if (input.requireMarketplaceAccount) {
-        return authForbiddenResponse(
-          "No marketplace account permitted for this user.",
-          "AUTHZ_ACCOUNT_FORBIDDEN"
-        );
-      }
-    } else {
-      marketplaceAccountId = fallback.marketplaceAccountId;
-      companyId = fallback.companyId;
-    }
-  }
-
-  if (input.requireMarketplaceAccount && !marketplaceAccountId) {
-    return NextResponse.json(
-      {
-        error: "Bad Request",
-        code: "AUTHZ_ACCOUNT_REQUIRED",
-        message: "marketplaceAccountId is required",
-      },
-      { status: 400 }
-    );
+  if (!decision.ok) {
+    return denialResponse(decision.code, decision.message);
   }
 
   return {
@@ -275,8 +178,8 @@ export async function authorize(
     isInternalService: false,
     companyIds: membership.companyIds,
     marketplaceAccountIds: membership.marketplaceAccountIds,
-    companyId,
-    marketplaceAccountId,
+    companyId: decision.companyId,
+    marketplaceAccountId: decision.marketplaceAccountId,
   };
 }
 

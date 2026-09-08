@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAuth, isAuthFailure } from "@/lib/security/require-auth";
+import { requireAdminApi, isAdminAuthFailure } from "@/lib/security/admin-authorization";
 import { normalizePlatformRole } from "@/lib/security/roles";
 import {
   assertNoCredentialsInPayload,
@@ -16,8 +16,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const auth = await requireAuth(request);
-    if (isAuthFailure(auth)) return auth;
+    const auth = await requireAdminApi(request);
+    if (isAdminAuthFailure(auth)) return auth;
 
     const users = await listManagedUsers();
     const payload = { users };
@@ -31,8 +31,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireAuth(request);
-    if (isAuthFailure(auth)) return auth;
+    const auth = await requireAdminApi(request);
+    if (isAdminAuthFailure(auth)) return auth;
 
     const body = (await request.json()) as {
       email?: string;
