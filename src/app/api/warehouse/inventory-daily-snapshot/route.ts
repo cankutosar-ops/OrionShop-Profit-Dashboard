@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import {
-  captureDailyInventorySnapshot,
-  captureDailyInventorySnapshotForAllAccounts,
-} from "@/services/inventory-daily-snapshot-service";
-import { runWarehouseEntityIncrementalSync } from "@/services/historical-warehouse-orchestrator";
+  runInventorySnapshotContinuityForAccount,
+  runInventorySnapshotContinuityForAllAccounts,
+} from "@/services/inventory-snapshot-continuity-service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * Sprint 11.1 — Daily inventory snapshot sync.
+ * Sprint 10.7 — Historical Inventory Continuity.
  *
  * POST { marketplaceAccountId?: string, snapshotDate?: string, allAccounts?: boolean }
- * Captures today's (or given) inventory into historical_inventory_snapshots.
+ * Runs capture + gap recovery + retention purge (idempotent).
  */
 export async function POST(request: Request) {
   try {
@@ -31,26 +30,26 @@ export async function POST(request: Request) {
     if (isAuthzFailure(authz)) return authz;
 
     if (body.allAccounts) {
-      const results = await captureDailyInventorySnapshotForAllAccounts({
+      const results = await runInventorySnapshotContinuityForAllAccounts({
         snapshotDate: body.snapshotDate,
         trigger: "manual",
       });
       return NextResponse.json({
-        ok: results.every((r) => r.status === "success" || r.status === "skipped"),
+        ok: results.every(
+          (r) => r.capture.status === "success" || r.capture.status === "skipped"
+        ),
         results,
       });
     }
 
     const marketplaceAccountId = authz.marketplaceAccountId!;
-    const result = await runWarehouseEntityIncrementalSync({
-      marketplaceAccountId,
-      entity: "inventory",
+    const result = await runInventorySnapshotContinuityForAccount(marketplaceAccountId, {
       snapshotDate: body.snapshotDate,
       trigger: "manual",
     });
 
     return NextResponse.json({
-      ok: result.status === "success" || result.status === "skipped",
+      ok: result.capture.status === "success" || result.capture.status === "skipped",
       result,
     });
   } catch (error) {
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
   }
 }
 
-/** GET ?marketplaceAccountId= — capture today for one account (cron-friendly). */
+/** GET ?marketplaceAccountId= | all=1 — cron-friendly continuity tick. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const snapshotDate = url.searchParams.get("snapshotDate")?.trim() || undefined;
@@ -78,7 +77,7 @@ export async function GET(request: Request) {
 
   try {
     if (all) {
-      const results = await captureDailyInventorySnapshotForAllAccounts({
+      const results = await runInventorySnapshotContinuityForAllAccounts({
         snapshotDate,
         trigger: "scheduled",
       });
@@ -86,13 +85,14 @@ export async function GET(request: Request) {
     }
 
     const marketplaceAccountId = authz.marketplaceAccountId!;
-    const result = await captureDailyInventorySnapshot({
-      marketplaceAccountId,
+    const result = await runInventorySnapshotContinuityForAccount(marketplaceAccountId, {
       snapshotDate,
       trigger: "scheduled",
-      fillGaps: true,
     });
-    return NextResponse.json({ ok: result.status === "success", result });
+    return NextResponse.json({
+      ok: result.capture.status === "success",
+      result,
+    });
   } catch (error) {
     return NextResponse.json(
       {
