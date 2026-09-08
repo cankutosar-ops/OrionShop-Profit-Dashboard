@@ -119,6 +119,43 @@ export async function fetchFinanceInRange(
   return mergeFinanceRowsById([...productLinked, ...accountLevel]);
 }
 
+/**
+ * Account-wide latest wb_finance.operation_date (read-only data-quality helper).
+ * Does not sync or recover Finance from Wildberries.
+ */
+export async function fetchLatestFinanceOperationDate(
+  marketplaceAccountId: string,
+  client?: SupabaseClient
+): Promise<string | null> {
+  const supabase = await getClient(client);
+  const { data, error } = await supabase
+    .from("wb_finance")
+    .select("operation_date")
+    .eq("marketplace_account_id", marketplaceAccountId)
+    .order("operation_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to fetch latest finance operation_date: ${error.message}`);
+  }
+  if (!data?.operation_date) return null;
+  return String(data.operation_date).slice(0, 10);
+}
+
+/**
+ * Advertising spend for the scoped marketplace account.
+ *
+ * `wb_ads` has no `marketplace_account_id`. Matching by `supplier_article`
+ * across the global table can attribute Account 1 spend to Account 2 (and
+ * vice versa) when both catalogs share an article string.
+ *
+ * Isolation rule: only rows whose `product_id` belongs to this account
+ * (and optional brand filter via the product id list). Orphan ads with
+ * null `product_id` are excluded rather than guessed by article.
+ *
+ * `supplierArticles` is accepted for call-site compatibility and ignored.
+ */
 export async function fetchAdsInRange(
   scope: ScopedDateRange,
   client?: SupabaseClient,
@@ -126,56 +163,26 @@ export async function fetchAdsInRange(
 ): Promise<WbAd[]> {
   const supabase = await getClient(client);
   const selectColumns = options?.columns;
+  void options?.supplierArticles;
 
-  if (options?.productIds || options?.supplierArticles) {
-    const [adsByProduct, adsByArticle] = await Promise.all([
-      options?.productIds
-        ? fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
-            column: "campaign_date",
-            from: scope.from,
-            to: scope.to,
-            selectColumns,
-            inFilters: [{ column: "product_id", values: options.productIds }],
-          })
-        : Promise.resolve([] as WbAd[]),
-      options?.supplierArticles
-        ? fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
-            column: "campaign_date",
-            from: scope.from,
-            to: scope.to,
-            selectColumns,
-            inFilters: [{ column: "supplier_article", values: options.supplierArticles }],
-          })
-        : Promise.resolve([] as WbAd[]),
-    ]);
-
-    const byId = new Map<string, WbAd>();
-    for (const row of adsByProduct) byId.set(String(row.id), row);
-    for (const row of adsByArticle) byId.set(String(row.id), row);
-    return [...byId.values()];
-  }
-
-  const [products, ads] = await Promise.all([
-    fetchProductsWithRelations(scope.marketplaceAccountId, client, {
+  let productIds = options?.productIds;
+  if (!productIds) {
+    const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
       brandId: scope.brandId,
       columns: "id, supplier_article, brand_id",
-    }),
-    fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
-      column: "campaign_date",
-      from: scope.from,
-      to: scope.to,
-      selectColumns,
-    }),
-  ]);
+    });
+    productIds = products.map((p) => String(p.id));
+  }
 
-  const productIds = new Set(products.map((p) => String(p.id)));
-  const articles = new Set(products.map((p) => p.supplier_article));
+  if (productIds.length === 0) return [];
 
-  return ads.filter(
-    (ad) =>
-      (ad.product_id && productIds.has(String(ad.product_id))) ||
-      (ad.supplier_article && articles.has(ad.supplier_article))
-  );
+  return fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
+    column: "campaign_date",
+    from: scope.from,
+    to: scope.to,
+    selectColumns,
+    inFilters: [{ column: "product_id", values: productIds }],
+  });
 }
 
 export async function fetchCostHistory(

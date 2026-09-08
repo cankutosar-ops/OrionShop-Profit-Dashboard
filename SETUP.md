@@ -162,7 +162,10 @@ Without COGS, product cost will be 0 and net profit will be overstated.
 | Products | Content API `POST /content/v2/get/cards/list` | `products`, `brands`, `categories` |
 | Orders | Statistics API `GET /api/v1/supplier/orders` | `wb_orders` |
 | Sales | Statistics API `GET /api/v1/supplier/sales` | `wb_sales` |
-| Finance | Statistics API `GET /api/v5/supplier/reportDetailByPeriod` | `wb_finance` |
+| Finance (Account 2 / production incremental) | Reports/V1 `POST /api/finance/v1/sales-reports/detailed` | `wb_finance` |
+| Finance (Account 1 legacy, controlled) | Statistics API `GET /api/v5/supplier/reportDetailByPeriod` | `wb_finance` |
+
+Dashboard and Reporting **never** call these APIs on page load — they read `wb_finance` via the Financial Engine.
 
 Sync order: **products → orders → sales → finance**
 
@@ -184,6 +187,6 @@ Sync order: **products → orders → sales → finance**
 ## Re-syncing
 
 - **Products / orders / sales:** Upserted by `srid` or `supplier_article` — safe to re-run
-- **Finance:** Deleted and re-inserted for the selected date range on each sync
+- **Finance:** Upserted on `(marketplace_account_id, source_key)` — never deleted as a date-range wipe
 
 To sync a different period, use the API with custom `dateFrom` / `dateTo`.

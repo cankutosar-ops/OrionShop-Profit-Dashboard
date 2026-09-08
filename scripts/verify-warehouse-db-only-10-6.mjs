@@ -53,6 +53,9 @@ function isAllowedMarketplaceHttpPath(rel) {
   return (
     n.startsWith("src/lib/marketplace-adapters/") ||
     n.startsWith("src/lib/wildberries/") ||
+    n.startsWith("src/lib/finance-incremental/") ||
+    n.startsWith("src/lib/finance-recovery/") ||
+    n.startsWith("src/lib/commercial-continuity/") ||
     n.startsWith("src/lib/warehouse/backfill/mock-adapter") ||
     n.includes("/warehouse/adapters/") ||
     /dashboard-sync-service|dashboard-sync-client|account-lifecycle-service|inventory-daily-snapshot-service|historical-inventory-service|sync-verification-audit|sync-job-service/.test(
