@@ -193,7 +193,10 @@ console.log("=== Sprint 7.1.E — Secrets audit ===\n");
   );
   ok(
     "getMarketplaceAccountForSync omits ciphertext from cached object",
-    svc.includes("delete safeRow.api_key_encrypted") || svc.includes("api_key_encrypted: _omitCiphertext")
+    svc.includes("delete safeRow.api_key_encrypted") ||
+      svc.includes("api_key_encrypted: _omitCiphertext") ||
+      // Rest-destructuring omission: the field never lands on the returned object.
+      /const\s*\{\s*api_key_encrypted:\s*\w+\s*,\s*\.\.\.\w+\s*\}\s*=\s*data/.test(svc)
   );
 }
 
