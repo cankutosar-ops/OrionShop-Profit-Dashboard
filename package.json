@@ -27,7 +27,7 @@
     "import:historical-inventory": "npx tsx scripts/import-historical-inventory.mjs",
     "warehouse:backfill-inventory": "npx tsx scripts/run-warehouse-inventory-backfill.mjs",
     "warehouse:inventory-daily-snapshot": "npx tsx scripts/run-inventory-daily-snapshot.mjs",
-    "worker:sync": "npx tsx scripts/run-sync-worker.mjs",
+    "worker:sync": "tsx scripts/run-sync-worker.mjs",
     "backfill:sales-revenue": "npx tsx scripts/backfill-sales-revenue-fields.mjs",
     "backfill:sales-history": "npx tsx scripts/backfill-sales-history.mjs",
     "backfill:sales-resume": "npx tsx scripts/resume-sales-backfill.mjs",
@@ -93,8 +93,8 @@
     "verify:warehouse-ops-10-4": "npx tsx scripts/verify-warehouse-ops-10-4.mjs",
     "verify:warehouse-production-10-5": "npx tsx scripts/verify-warehouse-production-10-5.mjs",
     "verify:warehouse-db-only-10-6": "npx tsx scripts/verify-warehouse-db-only-10-6.mjs",
-    "verify:production-data-plane": "npx tsx scripts/verify-production-data-plane.mjs",
-    "verify:sync-worker": "npx tsx scripts/verify-sync-worker.mjs",
+    "verify:production-data-plane": "tsx scripts/verify-production-data-plane.mjs",
+    "verify:sync-worker": "tsx scripts/verify-sync-worker.mjs",
     "verify:warehouse-locations-fbs-ready": "npx tsx scripts/verify-warehouse-locations-fbs-ready.mjs",
     "verify:inventory-continuity-10-7": "npx tsx scripts/verify-inventory-continuity-10-7.mjs",
     "verify:potential-profit-no-returns": "npx tsx scripts/verify-potential-profit-no-returns.mjs",
@@ -132,7 +132,8 @@
     "apply:warehouse-platform-foundation-10-1": "npx tsx scripts/apply-warehouse-platform-foundation-10-1.mjs",
     "grant:tenant-access": "node scripts/grant-tenant-access.mjs",
     "grant:platform-role": "node scripts/grant-platform-role.mjs",
-    "verify:tenant-authorization-p0": "npx tsx scripts/verify-tenant-authorization-p0.mjs"
+    "verify:tenant-authorization-p0": "npx tsx scripts/verify-tenant-authorization-p0.mjs",
+    "verify:worker-readiness": "tsx scripts/verify-worker-production-readiness.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -164,6 +165,7 @@
     "eslint": "^9.21.0",
     "eslint-config-next": "^15.2.0",
     "pg": "^8.22.0",
+    "tsx": "4.23.13",
     "typescript": "^5.7.3"
   }
 }

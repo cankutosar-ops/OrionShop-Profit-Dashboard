@@ -17,6 +17,8 @@
  *   --finance-wakes <n>     Max extra Reports/V1 page wakes per account for finance-catchup
  *   --trigger <name>        Label recorded in logs (default: scheduled)
  *   --force                 Ignore per-entity "not due" throttling
+ *   --no-dotenv             Ignore .env files; take configuration from the
+ *                           process environment only (recommended in CI)
  *   --print-summary         Emit a final human-readable summary block
  *   --help
  *
@@ -28,7 +30,40 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/** The repository root, derived from this file rather than from the caller. */
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const LAUNCH_CWD = process.cwd();
+
+/**
+ * tsx resolves the `@/*` path alias from the `tsconfig.json` it discovers via
+ * the working directory, and it does so when the loader registers — before this
+ * file runs. Launched from another directory without `TSX_TSCONFIG_PATH`, every
+ * `@/` import fails with a bare MODULE_NOT_FOUND deep inside the worker.
+ *
+ * We cannot repair that from here, so fail immediately with something callers
+ * can act on. Any launcher with a different working directory (container,
+ * systemd unit, cron entry) needs `TSX_TSCONFIG_PATH` set.
+ */
+if (
+  resolve(LAUNCH_CWD) !== REPO_ROOT &&
+  !process.env.TSX_TSCONFIG_PATH &&
+  !existsSync(resolve(LAUNCH_CWD, "tsconfig.json"))
+) {
+  console.error(
+    "Worker launched from outside the repository root without TSX_TSCONFIG_PATH.\n" +
+      `  working directory: ${LAUNCH_CWD}\n` +
+      `  repository root:   ${REPO_ROOT}\n` +
+      "TypeScript path aliases (@/*) cannot resolve. Either run from the\n" +
+      `repository root, or set TSX_TSCONFIG_PATH=${resolve(REPO_ROOT, "tsconfig.json")}`
+  );
+  process.exit(20);
+}
+
+// Anchor everything else (.env discovery, relative paths) to the repo root.
+process.chdir(REPO_ROOT);
 
 /**
  * Load .env files when present. In CI there are none and every value arrives
@@ -37,7 +72,7 @@ import { resolve } from "node:path";
  */
 function loadEnv() {
   for (const file of [".env.local", ".env"]) {
-    const path = resolve(process.cwd(), file);
+    const path = resolve(REPO_ROOT, file);
     if (!existsSync(path)) continue;
     for (const line of readFileSync(path, "utf8").split("\n")) {
       const trimmed = line.trim();
@@ -59,6 +94,7 @@ function parseArgs(argv) {
     financeWakes: null,
     trigger: "scheduled",
     force: false,
+    dotenv: true,
     printSummary: false,
     help: false,
   };
@@ -92,6 +128,9 @@ function parseArgs(argv) {
       case "--force":
         args.force = true;
         break;
+      case "--no-dotenv":
+        args.dotenv = false;
+        break;
       case "--print-summary":
         args.printSummary = true;
         break;
@@ -116,7 +155,9 @@ if (args.help) {
   process.exit(0);
 }
 
-loadEnv();
+// CI injects configuration through the environment. Skipping .env files there
+// keeps a stray checked-in file from shadowing the real secrets.
+if (args.dotenv) loadEnv();
 
 // Imported after loadEnv so module-level env reads see the resolved values.
 const { runSyncWorkerTick } = await import("../src/worker/run-worker-tick.ts");

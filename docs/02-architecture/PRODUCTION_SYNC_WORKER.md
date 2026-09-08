@@ -48,6 +48,45 @@ Because the worker is a plain Node process calling domain modules directly, it
 is not coupled to GitHub Actions. Moving to a VPS, a container or a managed cron
 means running the same command from somewhere else; no business logic moves.
 
+## Before the first production run
+
+> **Blocker as of this writing.** 18 of the 96 modules the worker imports —
+> including `src/services/commercial-continuity-service.ts` and
+> `src/services/inventory-snapshot-continuity-service.ts`, which back *both*
+> default tasks — exist only in the working tree. On a clean checkout the worker
+> fails with `MODULE_NOT_FOUND` before doing any work. The scheduled trigger only
+> fires from the repository's default branch, so nothing runs while this sits on
+> a feature branch, but the worker cannot go to production until that Sprint 10.7
+> work is committed. `npm run verify:worker-readiness` fails until it is.
+
+```bash
+npm run verify:worker-readiness
+```
+
+This is the gate the workflow runs before every tick. It makes no WB request and
+writes nothing to Supabase: it executes the CLI as a real child process, imports
+the task registry and every sync kernel, exercises configuration validation and
+log redaction, parses the workflow, and resolves the page-load import graphs.
+
+### Runtime pin
+
+The worker runs under `tsx`, pinned to an exact version in `devDependencies` and
+in `package-lock.json`. CI installs with `npm ci` and invokes
+`npx --no-install tsx`, which fails loudly rather than silently downloading a
+different version from the registry.
+
+### Working directory
+
+`tsx` finds the `tsconfig.json` that defines the `@/*` path alias through the
+process working directory, and it does so before the entrypoint runs. Launched
+from anywhere other than the repository root, every `@/` import fails.
+
+Running from the repository root — what `npm run worker:sync` and the workflow
+both do — needs nothing extra. Any other launcher (container, systemd unit, cron
+entry) must set `TSX_TSCONFIG_PATH=/path/to/repo/tsconfig.json`. The CLI detects
+this case and exits `20` with that instruction instead of a bare
+`MODULE_NOT_FOUND`.
+
 ## Running it
 
 ```bash
@@ -59,6 +98,10 @@ npm run worker:sync -- --accounts 1
 
 # Catch up finance history faster (extra Reports/V1 quota)
 npm run worker:sync -- --tasks finance-catchup --finance-wakes 8
+
+# Ignore .env files and take configuration from the environment only.
+# The workflow always passes this so a stray .env cannot shadow real secrets.
+npm run worker:sync -- --no-dotenv
 
 # Full option list
 npm run worker:sync -- --help
@@ -198,17 +241,18 @@ monitoring was added.
 
 Production inventory continuity belongs to the worker, via the `inventory` task.
 
-If your checkout contains the in-process `setInterval` scheduler at
-`src/services/inventory-snapshot-continuity-scheduler.ts`, it is **off by default
-in production** and must be explicitly enabled with
-`INVENTORY_SNAPSHOT_SCHEDULER=1`. Local development is unchanged, so
-`npm run dev` still captures snapshots.
+**What deploys today runs no inventory timer.** `HEAD` contains neither
+`src/services/inventory-snapshot-continuity-scheduler.ts` nor any call to it from
+`src/instrumentation.ts`. Both exist only as uncommitted Sprint 10.7 work, so a
+Netlify build from this branch cannot start a `setInterval` scheduler — there is
+nothing to start.
 
-> That scheduler is still uncommitted Sprint 10.7 work at the time of writing, so
-> the production guard lives in the working tree rather than in `HEAD`. It must
-> land with the rest of that sprint's changes — see the note in
-> `verify-production-data-plane.mjs`, which skips the check when the file is
-> absent.
+That makes this a *prospective* risk rather than a live one. When Sprint 10.7
+lands, the guard that must land with it is already written in the working tree:
+the scheduler is **off by default in production** and requires an explicit
+`INVENTORY_SNAPSHOT_SCHEDULER=1`. Local development is unchanged, so `npm run dev`
+still captures snapshots. `verify-production-data-plane.mjs` asserts that guard
+and skips only while the file is absent.
 
 On Netlify, leave `INVENTORY_SNAPSHOT_SCHEDULER` unset. The workflow sets it to
 `0` so a worker run can never start a timer either.
@@ -228,6 +272,7 @@ On Netlify, leave `INVENTORY_SNAPSHOT_SCHEDULER` unset. The workflow sets it to
 ## Verification
 
 ```bash
+npm run verify:worker-readiness        # preflight gate: can the worker run at all?
 npm run verify:production-data-plane   # WB boundary: 0 on read plane, allowed in worker
 npm run verify:sync-worker             # worker behaviour: isolation, cursor, 429, config
 npm run verify:warehouse-db-only-10-6  # pre-existing warehouse-only regression
@@ -239,4 +284,24 @@ npm run verify:commercial-continuity   # pre-existing continuity kernel
 import graph rather than grepping, and additionally executes the page-load data
 modules under a fetch interceptor. `verify:sync-worker` drives the real
 orchestrator with injected fake kernels, so isolation and cursor rules are
-executed, not pattern-matched.
+executed, not pattern-matched. Both share the resolver in
+`scripts/lib/import-graph.mjs`, so they cannot disagree about what "reaches WB
+HTTP" means.
+
+## Cost
+
+Hourly runs are 24/day, about 730/month. Billable minutes are rounded up per job.
+
+| Case | Minutes per run | Per month |
+|---|---|---|
+| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~4 | ~2,900 |
+| Worker uses its full 25-minute budget | ~28 | ~20,400 |
+| Job hits the 35-minute timeout every run | 35 | ~25,600 |
+
+Assumptions: `ubuntu-latest` standard runner, ~3 minutes of setup overhead per
+run, no matrix. Whether these fit at no cost depends on repository visibility and
+the account's plan, which are not derivable from this repository — check
+**Settings → Billing** before enabling the schedule. If the typical figure is too
+high, the lever is the cron frequency: every three hours cuts it to a third
+without changing worker behaviour, because each tick resumes from the durable
+cursor.

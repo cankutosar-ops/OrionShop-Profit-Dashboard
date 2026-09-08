@@ -68,6 +68,10 @@ jobs:
       ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE: ${{ vars.ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE }}
       # Never start the in-process inventory timer inside a worker run.
       INVENTORY_SNAPSHOT_SCHEDULER: "0"
+      # tsx discovers the tsconfig that defines the `@/*` path alias through the
+      # working directory. Pinning it explicitly keeps the worker independent of
+      # where the runner happens to place the checkout.
+      TSX_TSCONFIG_PATH: ${{ github.workspace }}/tsconfig.json
 
     steps:
       - name: Check out repository
@@ -82,16 +86,20 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Verify worker configuration
-        run: npx --yes tsx@4.23.13 scripts/verify-sync-worker.mjs --config-only
+      # `--no-install` guarantees the pinned devDependency (tsx 4.23.13, exact,
+      # in package-lock.json) is used. Without it npx would silently fall back
+      # to fetching an unpinned tsx from the registry if the install regressed.
+      - name: Worker preflight
+        run: npx --no-install tsx scripts/verify-worker-production-readiness.mjs
 
       - name: Run sync worker
         id: worker
         run: |
-          npx --yes tsx@4.23.13 scripts/run-sync-worker.mjs \
+          npx --no-install tsx scripts/run-sync-worker.mjs \
             --tasks "${{ github.event.inputs.tasks || 'commercial,inventory' }}" \
             --trigger "${{ github.event_name }}" \
             --budget-ms 1500000 \
+            --no-dotenv \
             --finance-wakes "${{ github.event.inputs.finance_wakes || '4' }}" \
             ${{ github.event.inputs.accounts && format('--accounts "{0}"', github.event.inputs.accounts) || '' }} \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }} \

@@ -39,12 +39,17 @@
  * zero marketplace requests.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createImportGraph, walkFiles } from "./lib/import-graph.mjs";
+
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(root, "src");
+
+const graph = createImportGraph({ root, srcDir: SRC });
+const { rel, reachable, wbSinksFor } = graph;
 
 let failures = 0;
 let skipped = 0;
@@ -61,168 +66,6 @@ function skip(label, why) {
   skipped += 1;
   console.log(`SKIP  ${label} — ${why}`);
 }
-
-const rel = (p) => path.relative(root, p).replace(/\\/g, "/");
-
-function walkFiles(dir, out = []) {
-  if (!existsSync(dir)) return out;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
-      walkFiles(full, out);
-    } else if (/\.(tsx?|mts|cts)$/.test(entry.name)) {
-      out.push(full);
-    }
-  }
-  return out;
-}
-
-// ---------------------------------------------------------------------------
-// Module resolution
-// ---------------------------------------------------------------------------
-
-const RESOLVE_SUFFIXES = [
-  "",
-  ".ts",
-  ".tsx",
-  ".mts",
-  "/index.ts",
-  "/index.tsx",
-];
-
-/** Resolve a `@/` or relative specifier to a real file, or null if external. */
-function resolveSpecifier(specifier, fromFile) {
-  let base;
-  if (specifier.startsWith("@/")) {
-    base = path.join(SRC, specifier.slice(2));
-  } else if (specifier.startsWith(".")) {
-    base = path.resolve(path.dirname(fromFile), specifier);
-  } else {
-    return null; // node_modules / builtin — not our boundary
-  }
-
-  for (const suffix of RESOLVE_SUFFIXES) {
-    const candidate = base + suffix;
-    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-  }
-  return null;
-}
-
-const STATIC_IMPORT = /(?:^|\n)\s*import\s+([\s\S]*?)\s*from\s*["']([^"']+)["']/g;
-const BARE_IMPORT = /(?:^|\n)\s*import\s+["']([^"']+)["']/g;
-const REEXPORT = /(?:^|\n)\s*export\s+([\s\S]*?)\s*from\s*["']([^"']+)["']/g;
-const DYNAMIC_IMPORT = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
-
-/**
- * Static (eagerly evaluated) and deferred (`await import`) specifiers.
- * Type-only imports are excluded: they vanish at compile time and cannot
- * cause a runtime HTTP call.
- */
-function readEdges(file) {
-  const src = readFileSync(file, "utf8");
-  const staticSpecs = new Set();
-  const deferredSpecs = new Set();
-
-  for (const re of [STATIC_IMPORT, REEXPORT]) {
-    re.lastIndex = 0;
-    let m;
-    while ((m = re.exec(src))) {
-      const clause = m[1] ?? "";
-      if (/^type\b/.test(clause.trim())) continue; // `import type { X } from`
-      staticSpecs.add(m[2]);
-    }
-  }
-
-  BARE_IMPORT.lastIndex = 0;
-  let bare;
-  while ((bare = BARE_IMPORT.exec(src))) staticSpecs.add(bare[1]);
-
-  DYNAMIC_IMPORT.lastIndex = 0;
-  let dyn;
-  while ((dyn = DYNAMIC_IMPORT.exec(src))) deferredSpecs.add(dyn[1]);
-
-  return { staticSpecs, deferredSpecs };
-}
-
-const edgeCache = new Map();
-function edgesOf(file) {
-  if (!edgeCache.has(file)) edgeCache.set(file, readEdges(file));
-  return edgeCache.get(file);
-}
-
-/**
- * Transitive closure over static edges. Returns the reachable file set and the
- * first path found to each WB sink, so a failure names the actual chain rather
- * than just the offending file.
- */
-function reachable(entry, { includeDeferred = false } = {}) {
-  const seen = new Set();
-  const parents = new Map();
-  const queue = [entry];
-  seen.add(entry);
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    const { staticSpecs, deferredSpecs } = edgesOf(current);
-    const specs = includeDeferred
-      ? [...staticSpecs, ...deferredSpecs]
-      : [...staticSpecs];
-
-    for (const spec of specs) {
-      const target = resolveSpecifier(spec, current);
-      if (!target || seen.has(target)) continue;
-      seen.add(target);
-      parents.set(target, current);
-      queue.push(target);
-    }
-  }
-  return { seen, parents };
-}
-
-function chainTo(file, parents, entry) {
-  const chain = [file];
-  let cursor = file;
-  while (parents.has(cursor) && cursor !== entry) {
-    cursor = parents.get(cursor);
-    chain.push(cursor);
-  }
-  return chain.reverse().map(rel).join(" -> ");
-}
-
-// ---------------------------------------------------------------------------
-// What counts as "WB HTTP"
-// ---------------------------------------------------------------------------
-
-const WB_HOST = /https?:\/\/[a-z0-9.-]*wildberries\.ru/i;
-
-/**
- * A module is a WB HTTP sink when it can actually originate a marketplace
- * request: it builds the client, or it hardcodes a WB host.
- */
-function isWbHttpSink(file) {
-  const src = readFileSync(file, "utf8");
-  if (WB_HOST.test(src)) return true;
-  return /\bnew\s+WbApiClient\s*\(/.test(src) || /\bcreateWbSyncService\s*\(/.test(src);
-}
-
-const sinkCache = new Map();
-function wbSink(file) {
-  if (!sinkCache.has(file)) sinkCache.set(file, isWbHttpSink(file));
-  return sinkCache.get(file);
-}
-
-function wbSinksFor(entry, options) {
-  const { seen, parents } = reachable(entry, options);
-  const sinks = [...seen].filter(wbSink);
-  return {
-    count: seen.size,
-    sinks,
-    chains: sinks.map((s) => chainTo(s, parents, entry)),
-  };
-}
-
-// ---------------------------------------------------------------------------
 
 console.log("=== Production Data Plane — WB API boundary ===\n");
 
