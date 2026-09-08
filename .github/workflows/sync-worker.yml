@@ -1,0 +1,107 @@
+name: Sync Worker
+
+# Production background sync: WB APIs -> normalize -> Supabase warehouse.
+#
+# The web application never calls WB APIs. This workflow is the only scheduled
+# path that does. It is a scheduler, not a place for business logic: everything
+# it runs lives in `src/worker/` and can be moved to a VPS or container by
+# invoking the same command elsewhere.
+
+on:
+  schedule:
+    # Hourly, offset off the hour so it does not collide with WB's own
+    # top-of-hour load or with any remaining platform cron.
+    - cron: "20 * * * *"
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: "Comma-separated tasks (commercial,inventory,finance-catchup,ads)"
+        required: false
+        default: "commercial,inventory"
+      accounts:
+        description: "Comma-separated marketplace account ids (blank = all eligible)"
+        required: false
+        default: ""
+      force:
+        description: "Ignore per-entity 'not due' throttling"
+        type: boolean
+        required: false
+        default: false
+      finance_wakes:
+        description: "Max extra Reports/V1 page wakes per account (finance-catchup only)"
+        required: false
+        default: "4"
+
+# One worker at a time. cancel-in-progress is deliberately false: killing a run
+# mid-page would abandon a held DB lock rather than release it cleanly, and the
+# durable cursor is only advanced after a successful persist, so waiting is
+# always safer than cancelling.
+concurrency:
+  group: sync-worker
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Bounded sync tick
+    runs-on: ubuntu-latest
+    # Worker budget is 25 min; this is the hard backstop if a kernel wedges.
+    timeout-minutes: 35
+
+    env:
+      # Server-only. None of these are ever echoed: the worker redacts known
+      # secret values and token-shaped strings before writing any log line.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MARKETPLACE_CREDENTIALS_KEY: ${{ secrets.MARKETPLACE_CREDENTIALS_KEY }}
+      # Per-account WB API keys are NOT stored here. They live encrypted in
+      # `marketplace_accounts.api_key_encrypted` and are decrypted at runtime
+      # with MARKETPLACE_CREDENTIALS_KEY.
+      #
+      # Account 2 finance is fail-closed unless this resolves to an explicit
+      # boolean, so a CI runner cannot accidentally compete with an operator's
+      # local historical recovery campaign. Set the repository variable to
+      # "false" to let the worker sync Account 2 finance.
+      ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE: ${{ vars.ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE }}
+      # Never start the in-process inventory timer inside a worker run.
+      INVENTORY_SNAPSHOT_SCHEDULER: "0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify worker configuration
+        run: npx --yes tsx@4.23.13 scripts/verify-sync-worker.mjs --config-only
+
+      - name: Run sync worker
+        id: worker
+        run: |
+          npx --yes tsx@4.23.13 scripts/run-sync-worker.mjs \
+            --tasks "${{ github.event.inputs.tasks || 'commercial,inventory' }}" \
+            --trigger "${{ github.event_name }}" \
+            --budget-ms 1500000 \
+            --finance-wakes "${{ github.event.inputs.finance_wakes || '4' }}" \
+            ${{ github.event.inputs.accounts && format('--accounts "{0}"', github.event.inputs.accounts) || '' }} \
+            ${{ github.event.inputs.force == 'true' && '--force' || '' }} \
+            --print-summary
+
+      - name: Classify outcome
+        # Exit 10 means a retryable failure with durable state intact. Surface it
+        # as a failed run so the built-in Actions notification fires, but keep it
+        # distinguishable from a permanent misconfiguration (exit 20).
+        if: failure()
+        run: |
+          echo "::warning::Sync worker reported a failure. Durable state is preserved;"
+          echo "::warning::the next scheduled tick resumes from the last persisted cursor."

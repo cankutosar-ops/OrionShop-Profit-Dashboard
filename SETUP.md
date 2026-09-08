@@ -190,3 +190,29 @@ Sync order: **products → orders → sales → finance**
 - **Finance:** Upserted on `(marketplace_account_id, source_key)` — never deleted as a date-range wipe
 
 To sync a different period, use the API with custom `dateFrom` / `dateTo`.
+
+---
+
+## Production sync
+
+The steps above cover local development, where you trigger syncs by hand. In
+production nobody presses a button: a standalone **Sync Worker** runs hourly on
+GitHub Actions and is the only thing allowed to call Wildberries.
+
+```
+Read plane   USER -> Netlify / Next.js -> Supabase warehouse -> UI    (WB API = 0)
+Write plane  GitHub Actions -> worker -> WB APIs -> Supabase warehouse
+```
+
+Run it locally against your `.env.local` exactly as CI does:
+
+```bash
+npm run worker:sync -- --print-summary
+```
+
+Historical recovery and finance catch-up are worker tasks, never page loads or
+user requests.
+
+See **[docs/02-architecture/PRODUCTION_SYNC_WORKER.md](docs/02-architecture/PRODUCTION_SYNC_WORKER.md)**
+for the task list, GitHub Actions secrets, exit codes, account isolation and
+failure semantics.
