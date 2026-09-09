@@ -228,3 +228,73 @@ export type WbSupplyListRequest = {
   }>;
   statusIDs?: number[];
 };
+
+// --- Advertising (Promotion) --------------------------------------------------
+// Shapes mirror dev.wildberries.ru/api/swagger/yaml/ru/08-promotion.yaml.
+// Every field is optional because WB omits empty branches rather than sending
+// zeros, and a missing branch must not throw during ingestion.
+
+/** One campaign id in GET /adv/v1/promotion/count. */
+export type WbApiAdvertListItem = {
+  advertId?: number;
+  changeTime?: string;
+};
+
+/**
+ * GET /adv/v1/promotion/count — campaigns grouped by type and status.
+ * `status` 7 finished / 9 active / 11 paused are the only ones /adv/v3/fullstats
+ * will return statistics for.
+ */
+export type WbApiAdvertCountResponse = {
+  adverts?: Array<{
+    type?: number;
+    status?: number;
+    count?: number;
+    advert_list?: WbApiAdvertListItem[];
+  }> | null;
+  all?: number;
+};
+
+/** Per-SKU leaf of the fullstats tree. `sum` is spend in rubles. */
+export type WbApiAdvertStatsNm = {
+  nmId?: number;
+  name?: string;
+  views?: number;
+  clicks?: number;
+  orders?: number;
+  sum?: number;
+};
+
+/** Platform split: appType 1 = site, 32 = Android, 64 = iOS. */
+export type WbApiAdvertStatsApp = {
+  appType?: number;
+  views?: number;
+  clicks?: number;
+  orders?: number;
+  sum?: number;
+  nms?: WbApiAdvertStatsNm[];
+};
+
+/** One calendar day of a campaign. `date` is ISO, e.g. "2026-01-14T00:00:00Z". */
+export type WbApiAdvertStatsDay = {
+  date?: string;
+  views?: number;
+  clicks?: number;
+  ctr?: number;
+  cpc?: number;
+  sum?: number;
+  orders?: number;
+  apps?: WbApiAdvertStatsApp[];
+};
+
+/** GET /adv/v3/fullstats — one element per campaign. */
+export type WbApiAdvertFullStatsItem = {
+  advertId?: number;
+  views?: number;
+  clicks?: number;
+  ctr?: number;
+  cpc?: number;
+  sum?: number;
+  orders?: number;
+  days?: WbApiAdvertStatsDay[];
+};

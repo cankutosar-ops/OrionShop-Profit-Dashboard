@@ -489,9 +489,21 @@ export type WbAd = {
   supplier_article: string | null;
   nm_id: number | null;
   campaign_date: string;
+  /** Rubles. Summed straight into the Financial Engine — never kopecks. */
   spend: number;
   clicks: number;
   impressions: number;
+  /**
+   * Added by 20260909090000. Primary tenancy guard for advertising: before it
+   * existed, isolation depended entirely on product_id resolving to one of the
+   * account's products.
+   */
+  marketplace_account_id?: string | null;
+  /** WB advert campaign id (advertId). */
+  campaign_id?: number | null;
+  /** Idempotency key, `adv:{advertId}:{nmId}:{YYYY-MM-DD}`. */
+  source_key?: string | null;
+  updated_at?: string | null;
 };
 
 export type ProductCostHistory = {

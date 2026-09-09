@@ -373,8 +373,12 @@ if (configOnly) {
 // ---------------------------------------------------------------------------
 
 const { runSyncWorkerTick } = await import("../src/worker/run-worker-tick.ts");
-const { WORKER_EXIT_OK, WORKER_EXIT_RETRYABLE, WORKER_EXIT_CONFIG_ERROR } =
-  await import("../src/worker/types.ts");
+const {
+  WORKER_EXIT_OK,
+  WORKER_EXIT_RETRYABLE,
+  WORKER_EXIT_CONFIG_ERROR,
+  DEFAULT_SYNC_WORKER_TASKS,
+} = await import("../src/worker/types.ts");
 
 console.log("\n--- A. Single-account success ---");
 {
@@ -733,16 +737,70 @@ console.log("\n--- Budget / extension point ---");
     `exit=${result.exitCode}`
   );
 
+  // Advertising task: per-account isolation and failure attribution, same
+  // contract as the inventory task above.
+  const adsSeen = [];
   const adsRun = await runSyncWorkerTick({
     tasks: ["ads"],
     skipEnvironmentCheck: true,
     logger: collectingLogger().logger,
+    deps: {
+      ads: {
+        listAccounts: async () => [
+          { id: "1", accountName: "Account 1" },
+          { id: "2", accountName: "Account 2" },
+        ],
+        runForAccount: async (accountId, options) => {
+          adsSeen.push(`${accountId}:${options.from}..${options.to}`);
+          return {
+            marketplaceAccountId: accountId,
+            from: options.from,
+            to: options.to,
+            campaignsRetrievable: 3,
+            campaignsUnretrievable: 0,
+            fullstatsRequests: 1,
+            rowsMapped: 10,
+            rowsPersisted: accountId === "2" ? 0 : 10,
+            rowsUnmatched: 0,
+            spendPersisted: accountId === "2" ? 0 : 1234.56,
+            spendUnmatched: 0,
+            unmatchedNmIds: [],
+            errors: accountId === "2" ? ["fullstats 2026-01-01..2026-01-31: HTTP 429"] : [],
+            durationMs: 5,
+          };
+        },
+        today: () => new Date("2026-09-09T00:00:00Z"),
+      },
+    },
   });
+
   check(
-    "ads extension point reports instead of crashing",
-    adsRun.results[0]?.outcome === "not_implemented" &&
-      adsRun.exitCode === WORKER_EXIT_OK,
-    "registered, unimplemented"
+    "ads task runs once per account, account-scoped",
+    adsSeen.length === 2 &&
+      adsSeen[0].startsWith("1:") &&
+      adsSeen[1].startsWith("2:"),
+    adsSeen.join(" | ")
+  );
+  check(
+    "ads task uses a bounded incremental lookback window",
+    adsSeen[0] === "1:2026-08-26..2026-09-09",
+    adsSeen[0] ?? "no window"
+  );
+  check(
+    "ads Account 1 succeeds despite Account 2 erroring",
+    adsRun.results.find((r) => r.marketplaceAccountId === "1")?.outcome === "success",
+    "isolated"
+  );
+  check(
+    "ads Account 2 error is retryable and attributed correctly",
+    adsRun.results.find((r) => r.marketplaceAccountId === "2")?.outcome ===
+      "retryable_failure",
+    "attributed to account 2"
+  );
+  check(
+    "ads is not part of the default scheduled tick",
+    !DEFAULT_SYNC_WORKER_TASKS.includes("ads"),
+    DEFAULT_SYNC_WORKER_TASKS.join(",")
   );
 }
 

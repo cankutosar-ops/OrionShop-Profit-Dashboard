@@ -114,10 +114,27 @@ export const financeService = {
 };
 
 export const adsService = {
-  async getByDateRange(from: string, to: string): Promise<WbAd[]> {
+  /**
+   * Advertising rows for one marketplace account.
+   *
+   * The account id is required, not optional: this accessor previously read the
+   * whole wb_ads table with no tenant predicate. It had no callers while the
+   * table was empty, but it would have returned every account's ad spend the
+   * moment ingestion started. Reporting should still prefer `fetchAdsInRange`,
+   * which additionally honours the brand/product scope.
+   */
+  async getByDateRange(
+    marketplaceAccountId: string,
+    from: string,
+    to: string
+  ): Promise<WbAd[]> {
+    if (!marketplaceAccountId) {
+      throw new Error("adsService.getByDateRange requires a marketplaceAccountId");
+    }
     const { data, error } = await (await getClient())
       .from("wb_ads")
       .select("*")
+      .eq("marketplace_account_id", marketplaceAccountId)
       .gte("campaign_date", from)
       .lte("campaign_date", to)
       .order("campaign_date", { ascending: false });

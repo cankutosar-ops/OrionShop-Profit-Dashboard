@@ -7,6 +7,10 @@ import {
   type WbRateLimitSnapshot,
 } from "@/lib/wildberries/rate-limit-retry";
 import {
+  WB_ADVERT_API,
+  WB_ADVERT_FULLSTATS_MAX_DAYS,
+  WB_ADVERT_FULLSTATS_MAX_IDS,
+  WB_ADVERT_FULLSTATS_STATUSES,
   WB_CONTENT_API,
   WB_FINANCE_API,
   WB_RATE_LIMIT_MAX_RETRIES,
@@ -30,6 +34,8 @@ import {
 } from "./finance-v1";
 import { syncLog } from "./sync-log";
 import type {
+  WbApiAdvertCountResponse,
+  WbApiAdvertFullStatsItem,
   WbApiCardsResponse,
   WbApiFinanceRow,
   WbApiOrder,
@@ -776,5 +782,107 @@ export class WbApiClient {
     }
 
     return all;
+  }
+
+  // --- Advertising (Promotion) ------------------------------------------------
+
+  /**
+   * Campaign ids the account owns, filtered to statuses /adv/v3/fullstats will
+   * actually serve (7 finished, 9 active, 11 paused).
+   *
+   * Deleted campaigns (status -1) return no statistics at all, so their spend is
+   * unrecoverable. They are reported separately rather than silently dropped so
+   * an ingestion run can state honestly how much history it could not reach.
+   */
+  async fetchAdvertCampaignIds(): Promise<{
+    retrievable: number[];
+    unretrievableCount: number;
+  }> {
+    const res = await this.request<WbApiAdvertCountResponse>(
+      WB_ADVERT_API,
+      "/adv/v1/promotion/count"
+    );
+
+    const allowed = new Set<number>(WB_ADVERT_FULLSTATS_STATUSES);
+    const retrievable: number[] = [];
+    let unretrievableCount = 0;
+
+    for (const group of res.adverts ?? []) {
+      const ids = (group.advert_list ?? [])
+        .map((a) => a.advertId)
+        .filter((id): id is number => typeof id === "number");
+
+      if (typeof group.status === "number" && allowed.has(group.status)) {
+        retrievable.push(...ids);
+      } else {
+        unretrievableCount += ids.length || (group.count ?? 0);
+      }
+    }
+
+    syncLog("wb-api", "Advert campaigns listed", {
+      retrievable: retrievable.length,
+      unretrievableCount,
+      total: res.all ?? null,
+    });
+
+    // WB can repeat an id across type groups; the caller batches by id.
+    return { retrievable: [...new Set(retrievable)], unretrievableCount };
+  }
+
+  /**
+   * Campaign statistics for a batch of campaigns over a date window.
+   *
+   * Caller must respect the documented limits: at most
+   * WB_ADVERT_FULLSTATS_MAX_IDS ids and WB_ADVERT_FULLSTATS_MAX_DAYS days per
+   * call, and at most 3 calls per minute. This method asserts the first two and
+   * leaves pacing to the ingestion kernel, which owns the whole run's budget.
+   *
+   * WB answers 204 (mapped to []) when no campaign in the batch has data.
+   */
+  async fetchAdvertFullStats(
+    advertIds: number[],
+    beginDate: string,
+    endDate: string
+  ): Promise<WbApiAdvertFullStatsItem[]> {
+    if (advertIds.length === 0) return [];
+    if (advertIds.length > WB_ADVERT_FULLSTATS_MAX_IDS) {
+      throw new WbApiError(
+        `fullstats accepts at most ${WB_ADVERT_FULLSTATS_MAX_IDS} campaign ids, got ${advertIds.length}`,
+        undefined,
+        "/adv/v3/fullstats"
+      );
+    }
+
+    const spanDays =
+      Math.round(
+        (Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${beginDate}T00:00:00Z`)) / 86_400_000
+      ) + 1;
+    if (!Number.isFinite(spanDays) || spanDays < 1) {
+      throw new WbApiError(
+        `fullstats received an invalid window ${beginDate}..${endDate}`,
+        undefined,
+        "/adv/v3/fullstats"
+      );
+    }
+    if (spanDays > WB_ADVERT_FULLSTATS_MAX_DAYS) {
+      throw new WbApiError(
+        `fullstats window ${beginDate}..${endDate} spans ${spanDays} days, max ${WB_ADVERT_FULLSTATS_MAX_DAYS}`,
+        undefined,
+        "/adv/v3/fullstats"
+      );
+    }
+
+    const params = new URLSearchParams({
+      ids: advertIds.join(","),
+      beginDate,
+      endDate,
+    });
+
+    const rows = await this.request<WbApiAdvertFullStatsItem[] | null>(
+      WB_ADVERT_API,
+      `/adv/v3/fullstats?${params.toString()}`
+    );
+
+    return Array.isArray(rows) ? rows : [];
   }
 }

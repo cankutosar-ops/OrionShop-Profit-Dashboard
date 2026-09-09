@@ -117,7 +117,12 @@ async function isDatabaseEmpty(
       .from("wb_finance")
       .select("id", { count: "exact", head: true })
       .eq("marketplace_account_id", marketplaceAccountId),
-    client.from("wb_ads").select("id", { count: "exact", head: true }),
+    // Account-scoped like its siblings: an unfiltered count would report this
+    // account's warehouse as non-empty because a *different* account has ads.
+    client
+      .from("wb_ads")
+      .select("id", { count: "exact", head: true })
+      .eq("marketplace_account_id", marketplaceAccountId),
     client
       .from("products")
       .select("id", { count: "exact", head: true })

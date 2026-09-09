@@ -2,9 +2,7 @@
  * Worker task registry.
  *
  * Adding a sync domain to the worker means registering a runner here — the
- * orchestrator, CLI and workflow need no changes. `ads` is registered but
- * unimplemented on purpose: it reserves the extension point without pretending
- * the ingestion exists.
+ * orchestrator, CLI and workflow need no changes.
  */
 
 import type { SyncWorkerTask, WorkerAccountTaskResult } from "../types";
@@ -15,12 +13,14 @@ import {
   runFinanceCatchupWorkerTask,
   type FinanceCatchupTaskDeps,
 } from "./finance-catchup-task";
+import { runAdsWorkerTask, type AdsTaskDeps } from "./ads-task";
 
 /** Fakes injected by offline verification. Production leaves this undefined. */
 export type WorkerTaskDeps = {
   commercial?: Partial<CommercialTaskDeps>;
   inventory?: Partial<InventoryTaskDeps>;
   financeCatchup?: Partial<FinanceCatchupTaskDeps>;
+  ads?: Partial<AdsTaskDeps>;
 };
 
 export type WorkerTaskContext = {
@@ -29,6 +29,9 @@ export type WorkerTaskContext = {
   /** Absolute wall-clock deadline shared by every task in this invocation. */
   deadlineMs: number;
   financeCatchupMaxWakes?: number;
+  /** Explicit advertising backfill window; omitted for the incremental lookback. */
+  adsFrom?: string;
+  adsTo?: string;
   logger: WorkerLogger;
   deps?: WorkerTaskDeps;
 };
@@ -64,23 +67,20 @@ export const WORKER_TASK_RUNNERS: Record<SyncWorkerTask, WorkerTaskRunner> = {
       deps: ctx.deps?.financeCatchup,
     }),
 
-  // Extension point. Advertising ingestion is out of scope; registering it here
-  // keeps the surface honest and makes `--tasks ads` report rather than crash.
-  ads: async (ctx) => {
-    ctx.logger.warn("task.not_implemented", {
-      task: "ads",
-      detail: "advertising ingestion is not implemented yet",
-    });
-    return [
-      {
-        task: "ads",
-        marketplaceAccountId: null,
-        outcome: "not_implemented",
-        durationMs: 0,
-        detail: "advertising ingestion is not implemented yet",
-      },
-    ];
-  },
+  ads: (ctx) =>
+    runAdsWorkerTask({
+      accountIds: ctx.accountIds,
+      deadlineMs: ctx.deadlineMs,
+      logger: ctx.logger,
+      from: ctx.adsFrom,
+      to: ctx.adsTo,
+      deps: ctx.deps?.ads,
+    }),
 };
 
-export { runCommercialWorkerTask, runInventoryWorkerTask, runFinanceCatchupWorkerTask };
+export {
+  runCommercialWorkerTask,
+  runInventoryWorkerTask,
+  runFinanceCatchupWorkerTask,
+  runAdsWorkerTask,
+};

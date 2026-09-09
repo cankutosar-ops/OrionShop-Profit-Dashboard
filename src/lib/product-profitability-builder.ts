@@ -38,19 +38,23 @@ function appendMapArray<T>(map: Map<string, T[]>, key: string | null | undefined
   map.set(String(key), [value]);
 }
 
-function indexAdsByProductAndArticle(ads: WbAd[]): {
-  byProductId: Map<string, WbAd[]>;
-  byArticle: Map<string, WbAd[]>;
-} {
+/**
+ * Advertising is indexed by product_id only.
+ *
+ * Indexing by supplier_article as well used to be the fallback for ad rows that
+ * had no product_id. It is a cross-account hazard: article strings are only
+ * unique per account (`idx_products_account_supplier_article`), so an article
+ * match can attribute another account's spend to this product. Ingestion now
+ * always resolves product_id against the owning account, and both
+ * `fetchAdsInRange` and the wb_ads RLS policy drop unattributed rows, so the
+ * fallback can only ever do harm.
+ */
+function indexAdsByProductId(ads: WbAd[]): Map<string, WbAd[]> {
   const byProductId = new Map<string, WbAd[]>();
-  const byArticle = new Map<string, WbAd[]>();
-
   for (const ad of ads) {
     appendMapArray(byProductId, ad.product_id ? String(ad.product_id) : null, ad);
-    appendMapArray(byArticle, ad.supplier_article, ad);
   }
-
-  return { byProductId, byArticle };
+  return byProductId;
 }
 
 type BuildProductProfitabilityRowsInput = {
@@ -68,7 +72,6 @@ export function buildProductProfitabilityRows(
 ): ProductProfitability[] {
   const { products, orders, sales, finance, ads, costHistory } = input;
   const productIds = new Set(products.map((product) => String(product.id)));
-  const articles = new Set(products.map((product) => product.supplier_article));
 
   const scopedOrders = orders.filter((row) => productIds.has(String(row.product_id)));
   const scopedSales = sales.filter((row) => productIds.has(String(row.product_id)));
@@ -76,9 +79,7 @@ export function buildProductProfitabilityRows(
     (row) => row.product_id && productIds.has(String(row.product_id))
   );
   const scopedAds = ads.filter(
-    (row) =>
-      (row.product_id && productIds.has(String(row.product_id))) ||
-      (row.supplier_article && articles.has(row.supplier_article))
+    (row) => row.product_id && productIds.has(String(row.product_id))
   );
 
   const ordersByProductId = new Map<string, WbOrder[]>();
@@ -89,7 +90,7 @@ export function buildProductProfitabilityRows(
   for (const row of scopedFinance)
     appendMapArray(financeByProductId, row.product_id ? String(row.product_id) : null, row);
 
-  const adsIndex = indexAdsByProductAndArticle(scopedAds);
+  const adsByProductId = indexAdsByProductId(scopedAds);
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
 
   return products
@@ -99,14 +100,7 @@ export function buildProductProfitabilityRows(
       const productSales = salesByProductId.get(productId) ?? [];
       const productFinance = financeByProductId.get(productId) ?? [];
 
-      const productAdsById = new Map<string, WbAd>();
-      for (const ad of adsIndex.byProductId.get(productId) ?? []) {
-        productAdsById.set(String(ad.id), ad);
-      }
-      for (const ad of adsIndex.byArticle.get(product.supplier_article) ?? []) {
-        productAdsById.set(String(ad.id), ad);
-      }
-      const productAds = [...productAdsById.values()];
+      const productAds = adsByProductId.get(productId) ?? [];
 
       const funnel = buildProductFunnelMetrics(productOrders, productSales);
       const purchaseSrids = buildPurchaseSridSet(productSales);

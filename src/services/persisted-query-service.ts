@@ -144,15 +144,32 @@ export async function fetchLatestFinanceOperationDate(
 }
 
 /**
+ * True once 20260909090000 has added `marketplace_account_id` to wb_ads.
+ *
+ * Probed rather than assumed so the read path keeps working on a database where
+ * the migration has not been applied yet — the same fallback discipline the
+ * finance sync uses for its extended columns.
+ */
+let wbAdsHasAccountColumn: boolean | null = null;
+
+async function adsSchemaHasAccountColumn(supabase: SupabaseClient): Promise<boolean> {
+  if (wbAdsHasAccountColumn !== null) return wbAdsHasAccountColumn;
+  const { error } = await supabase.from("wb_ads").select("marketplace_account_id").limit(1);
+  wbAdsHasAccountColumn = !error;
+  return wbAdsHasAccountColumn;
+}
+
+/**
  * Advertising spend for the scoped marketplace account.
  *
- * `wb_ads` has no `marketplace_account_id`. Matching by `supplier_article`
- * across the global table can attribute Account 1 spend to Account 2 (and
- * vice versa) when both catalogs share an article string.
+ * Two independent isolation layers, because attributing one account's ad spend
+ * to another silently corrupts Net Profit:
  *
- * Isolation rule: only rows whose `product_id` belongs to this account
- * (and optional brand filter via the product id list). Orphan ads with
- * null `product_id` are excluded rather than guessed by article.
+ *   1. `marketplace_account_id`, once the column exists. This is the real guard.
+ *   2. `product_id` restricted to this account's products, which also applies
+ *      the brand filter. Orphan ads with a null `product_id` are excluded rather
+ *      than guessed by article — article strings are only unique per account, so
+ *      matching on them can pull in another account's rows.
  *
  * `supplierArticles` is accepted for call-site compatibility and ignored.
  */
@@ -176,11 +193,14 @@ export async function fetchAdsInRange(
 
   if (productIds.length === 0) return [];
 
+  const accountScoped = await adsSchemaHasAccountColumn(supabase);
+
   return fetchAllInDateRange<WbAd>(supabase, "wb_ads", {
     column: "campaign_date",
     from: scope.from,
     to: scope.to,
     selectColumns,
+    marketplaceAccountId: accountScoped ? scope.marketplaceAccountId : undefined,
     inFilters: [{ column: "product_id", values: productIds }],
   });
 }

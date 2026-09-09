@@ -7,7 +7,7 @@
  * the worker filesystem, so any invocation can resume what the previous one left.
  */
 
-/** Tasks the worker knows how to run. `ads` is a declared extension point only. */
+/** Tasks the worker knows how to run. */
 export const SYNC_WORKER_TASKS = [
   "commercial",
   "inventory",
@@ -20,7 +20,8 @@ export type SyncWorkerTask = (typeof SYNC_WORKER_TASKS)[number];
 /**
  * Default scheduled tick. Deliberately small: `commercial` already advances
  * orders, sales and one finance page per account. `finance-catchup` is opt-in
- * because it consumes additional Reports/V1 quota.
+ * because it consumes additional Reports/V1 quota, and `ads` is opt-in because
+ * /adv/v3/fullstats allows only 3 requests per minute.
  */
 export const DEFAULT_SYNC_WORKER_TASKS: readonly SyncWorkerTask[] = [
   "commercial",
