@@ -179,6 +179,42 @@ export function isFinanceV1LiveRequestsEnabled(
 }
 
 /**
+ * Comma-separated marketplace account ids migrated onto the Reports/V1 finance
+ * kernel, e.g. `FINANCE_V1_ACCOUNT_IDS=1`.
+ *
+ * Why an allowlist rather than the global live flag alone: the platform has more
+ * than two accounts. `FINANCE_V1_LIVE_REQUESTS_ENABLED` is a single switch, so
+ * turning it on to migrate Account 1 would simultaneously move every other
+ * account onto Reports/V1. Any account without a seeded
+ * `finance_incremental_sync_state` row would then go idle and quietly stop
+ * ingesting finance — a silent data-loss failure mode, not a loud one.
+ *
+ * Migration is therefore opt-in per account, and requires the live flag too.
+ */
+export const FINANCE_V1_ACCOUNT_IDS_ENV = "FINANCE_V1_ACCOUNT_IDS";
+
+export function financeV1AllowlistedAccountIds(
+  env: NodeJS.ProcessEnv = process.env
+): Set<string> {
+  const raw = env[FINANCE_V1_ACCOUNT_IDS_ENV]?.trim();
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => /^[1-9]\d*$/.test(id))
+  );
+}
+
+/** True when this account has been explicitly migrated onto Reports/V1. */
+export function isFinanceV1AllowlistedAccount(
+  accountId: string,
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  return financeV1AllowlistedAccountIds(env).has(String(accountId));
+}
+
+/**
  * Fail closed before any Finance V1 HTTP. Live calls require an explicit env
  * opt-in so offline verification and accidental resume cannot hit Wildberries.
  */

@@ -99,6 +99,7 @@
     "verify:inventory-continuity-10-7": "npx tsx scripts/verify-inventory-continuity-10-7.mjs",
     "verify:inventory-retention-safety": "tsx scripts/verify-inventory-retention-safety.mjs",
     "verify:advertising-ingestion": "tsx scripts/verify-advertising-ingestion.mjs",
+    "verify:finance-weekly-completeness": "npx tsx scripts/verify-finance-weekly-completeness.mjs",
     "verify:ads-account-isolation": "npx tsx scripts/verify-ads-account-isolation.mjs",
     "apply:wb-ads-account-scope-migration": "npx tsx scripts/apply-wb-ads-account-scope-migration.mjs",
     "verify:potential-profit-no-returns": "npx tsx scripts/verify-potential-profit-no-returns.mjs",

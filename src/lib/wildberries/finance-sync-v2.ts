@@ -27,6 +27,7 @@ import {
 import { isAccount2FinanceV1Only, runFinanceIncrementalSync } from "@/lib/finance-incremental";
 import {
   assertFinanceV1TokenReady,
+  isFinanceV1AllowlistedAccount,
   isFinanceV1LiveRequestsEnabled,
 } from "@/lib/wildberries/finance-v1";
 import type { FinanceIncrementalWakeOutcome } from "@/lib/finance-incremental/types";
@@ -239,8 +240,28 @@ async function countSourceKeys(
 /** @internal retained for future insert/update differentiation */
 void countSourceKeys;
 
+/**
+ * Which finance ingestion path an account uses.
+ *
+ * Reports/V1 (`POST /api/finance/v1/sales-reports/detailed`) is the canonical
+ * source. Statistics V5 remains only for accounts not yet migrated.
+ *
+ * Migration is per account, never global. Before, any account other than
+ * Account 2 was switched purely by `FINANCE_V1_LIVE_REQUESTS_ENABLED`, so
+ * enabling it for one account would have moved all of them at once — and an
+ * account with no seeded `finance_incremental_sync_state` would have gone idle
+ * and silently stopped ingesting finance. `FINANCE_V1_ACCOUNT_IDS` makes each
+ * migration deliberate.
+ *
+ * Switching an account here cannot double-count: both paths map through
+ * `mapFinanceRowsFromReport` and key on `buildFinanceSourceKey(rrdId, suffix)`,
+ * and persistence upserts on (marketplace_account_id, source_key). A row V5
+ * already wrote is updated in place by V1, never inserted twice.
+ */
 function shouldUseReportsV1Detail(accountId: string, apiKey?: string | null): boolean {
+  // Account 2 is unconditionally on Reports/V1 and predates the allowlist.
   if (isAccount2FinanceV1Only(accountId)) return true;
+  if (!isFinanceV1AllowlistedAccount(accountId)) return false;
   if (!isFinanceV1LiveRequestsEnabled()) return false;
   if (!apiKey) return false;
   try {
