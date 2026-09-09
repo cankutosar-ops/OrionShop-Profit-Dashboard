@@ -312,7 +312,7 @@ export function buildReportsWeekReconciliation(input: {
     listValue: list?.deliveryServiceSum ?? null,
     dbValue: input.db.bySuffix.logistics ?? 0,
     status: "not_applicable",
-    note: "UNCERTAIN mapping: deliveryService/deliveryAmount must not invent delivery_rub",
+    note: "deliveryService → delivery_rub proven (2026-09 YTD audit); deliveryAmount is a count. Reported for audit only — gating on it is a separate change",
   });
   comparisons.push({
     metric: "return for_pay signed total",
