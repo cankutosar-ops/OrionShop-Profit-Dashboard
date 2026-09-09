@@ -23,66 +23,38 @@ import {
   setUserTenantClaims,
 } from "@/lib/security/tenant-membership";
 import { listCompanies } from "@/services/marketplace-account-service";
+import type {
+  DisplayMarketplace,
+  InviteUserInput,
+  ManagedUserDetails,
+  ManagedUserSummary,
+  MarketplaceAccessRow,
+  MembershipRow,
+  RecentActivityItem,
+  UpdateManagedUserInput,
+  UserStatus,
+} from "@/lib/administration/user-types";
+import { DISPLAY_MARKETPLACE_LABEL } from "@/lib/administration/user-types";
 
-export type UserStatus = "active" | "invited" | "disabled";
+// Re-exported so existing server-side importers (API routes) keep their paths.
+// Client components must import from "@/lib/administration/user-types" directly:
+// pulling a value through this module drags the server bundle into the client.
+export type {
+  DisplayMarketplace,
+  InviteUserInput,
+  ManagedUserDetails,
+  ManagedUserSummary,
+  MarketplaceAccessRow,
+  MembershipRow,
+  RecentActivityItem,
+  UpdateManagedUserInput,
+  UserStatus,
+} from "@/lib/administration/user-types";
 
-export const DISPLAY_MARKETPLACES = [
-  "wildberries",
-  "ozon",
-  "lamoda",
-  "shopify",
-] as const;
-
-export type DisplayMarketplace = (typeof DISPLAY_MARKETPLACES)[number];
-
-export const DISPLAY_MARKETPLACE_LABEL: Record<DisplayMarketplace, string> = {
-  wildberries: "Wildberries",
-  ozon: "Ozon",
-  lamoda: "Lamoda",
-  shopify: "Shopify",
-};
-
-export type ManagedUserSummary = {
-  id: string;
-  name: string;
-  email: string;
-  role: PlatformRole | null;
-  roleLabel: string;
-  companyIds: string[];
-  companyNames: string[];
-  status: UserStatus;
-  lastLoginAt: string | null;
-  createdAt: string | null;
-};
-
-export type MembershipRow = {
-  companyId: string;
-  companyName: string;
-  status: string;
-};
-
-export type MarketplaceAccessRow = {
-  companyId: string;
-  companyName: string;
-  marketplaceAccountId: string;
-  accountName: string;
-  marketplace: DisplayMarketplace;
-  marketplaceLabel: string;
-  granted: boolean;
-  /** When true, user has unrestricted access under company membership (no explicit list). */
-  unrestrictedUnderCompany: boolean;
-};
-
-export type RecentActivityItem = {
-  label: string;
-  at: string | null;
-};
-
-export type ManagedUserDetails = ManagedUserSummary & {
-  memberships: MembershipRow[];
-  marketplaceAccess: MarketplaceAccessRow[];
-  recentActivity: RecentActivityItem[];
-};
+export {
+  DISPLAY_MARKETPLACE_LABEL,
+  DISPLAY_MARKETPLACES,
+} from "@/lib/administration/user-types";
 
 function displayName(user: User): string {
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
@@ -237,14 +209,6 @@ function normalizeDisplayMarketplace(value: string): DisplayMarketplace {
   return "wildberries";
 }
 
-export type InviteUserInput = {
-  email: string;
-  name?: string;
-  companyId: string;
-  role: PlatformRole;
-  redirectTo?: string;
-};
-
 export async function inviteManagedUser(input: InviteUserInput): Promise<ManagedUserSummary> {
   const email = input.email.trim().toLowerCase();
   if (!email || !email.includes("@")) {
@@ -273,11 +237,6 @@ export async function inviteManagedUser(input: InviteUserInput): Promise<Managed
   const { data: refreshed } = await supabase.auth.admin.getUserById(data.user.id);
   return toSummary(sanitizeUser(refreshed?.user ?? data.user), names);
 }
-
-export type UpdateManagedUserInput = {
-  name?: string;
-  role?: PlatformRole;
-};
 
 export async function updateManagedUser(
   userId: string,

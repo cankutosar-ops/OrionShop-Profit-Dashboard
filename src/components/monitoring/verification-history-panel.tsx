@@ -91,13 +91,14 @@ export function VerificationHistoryPanel({
       setRows([]);
       return;
     }
+    const marketplaceAccountId = accountId;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch(
-          `/api/monitoring/verification-history?marketplaceAccountId=${encodeURIComponent(accountId)}&limit=50`,
+          `/api/monitoring/verification-history?marketplaceAccountId=${encodeURIComponent(marketplaceAccountId)}&limit=50`,
           { cache: "no-store" }
         );
         const data = await res.json();

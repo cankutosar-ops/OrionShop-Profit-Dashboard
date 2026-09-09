@@ -18,11 +18,15 @@ export type InventoryShipmentEntry = {
 
 export type InventoryShipmentHistoryResult = {
   productId: string;
-  nmId: number;
+  /** Null when the scoped product has no WB nm_id. */
+  nmId: number | null;
   shipments: InventoryShipmentEntry[];
-  suppliesScanned: number;
-  cached: boolean;
-  source: "wb_supplies_api";
+  /** Present only when a warehouse shipment snapshot source is available. */
+  suppliesScanned?: number;
+  cached?: boolean;
+  source?: "wb_supplies_api";
+  /** Explains why the warehouse-only read model has no shipment rows yet. */
+  unavailableReason?: string;
 };
 
 /** WB supply status IDs relevant to inbound warehouse receipt. */

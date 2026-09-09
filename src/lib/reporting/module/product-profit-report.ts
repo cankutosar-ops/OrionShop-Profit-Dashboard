@@ -137,12 +137,18 @@ export type BuildProductProfitReportParams = {
   sortDirection?: "asc" | "desc";
 };
 
+function isRecommendedPriceMap(
+  value: NonNullable<BuildProductProfitReportParams["recommendedPricesByProductId"]>
+): value is ReadonlyMap<string, number | null> {
+  return value instanceof Map;
+}
+
 function lookupRecommendedPrice(
   productId: string,
   map?: BuildProductProfitReportParams["recommendedPricesByProductId"]
 ): number | null {
   if (!map) return null;
-  if (map instanceof Map) {
+  if (isRecommendedPriceMap(map)) {
     const v = map.get(productId);
     return v == null || !Number.isFinite(v) ? null : v;
   }

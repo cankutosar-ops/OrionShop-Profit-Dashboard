@@ -3,7 +3,7 @@ import { navigateScope } from "@/lib/scope-navigation";
 
 type RouterLike = {
   replace: (href: string, options?: { scroll?: boolean }) => void;
-  push?: (href: string, options?: { scroll?: boolean }) => void;
+  push: (href: string, options?: { scroll?: boolean }) => void;
   refresh: () => void;
 };
 

@@ -15,7 +15,7 @@ export const SMART_PRICING_COST_WINDOW_MIN_DAYS = 60;
 export const SMART_PRICING_COST_WINDOW_MAX_DAYS = 90;
 
 /** Default cost window inside the preferred band. */
-export const SMART_PRICING_COST_WINDOW_DEFAULT: "90" = "90";
+export const SMART_PRICING_COST_WINDOW_DEFAULT = "90" as const;
 
 /**
  * ASP / live market comparison window (locked: 14–30 days).

@@ -4,7 +4,7 @@ import {
   DISPLAY_MARKETPLACES,
   DISPLAY_MARKETPLACE_LABEL,
   type MarketplaceAccessRow,
-} from "@/services/administration-user-service";
+} from "@/lib/administration/user-types";
 
 type MarketplaceAccessTableProps = {
   rows: MarketplaceAccessRow[];

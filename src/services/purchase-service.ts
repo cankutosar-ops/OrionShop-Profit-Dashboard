@@ -74,7 +74,8 @@ export async function fetchPurchases(
 
   if (error) throw new Error(`Failed to fetch purchases: ${error.message}`);
 
-  const purchaseIds = (purchases ?? []).map((row) => String(row.id));
+  const purchaseRows = (purchases ?? []) as Purchase[];
+  const purchaseIds = purchaseRows.map((row) => String(row.id));
   if (purchaseIds.length === 0) return [];
 
   const { data: lines, error: linesError } = await supabase
@@ -84,11 +85,16 @@ export async function fetchPurchases(
 
   if (linesError) throw new Error(`Failed to fetch purchase lines: ${linesError.message}`);
 
+  const lineRows = (lines ?? []) as Array<
+    Pick<PurchaseLine, "id" | "purchase_id" | "supplier_article" | "quantity" | "unit_cost"> & {
+      product: { name?: string } | null;
+    }
+  >;
   const linesByPurchase = new Map<string, PurchaseListLinePreview[]>();
   const articlesByPurchase = new Map<string, string[]>();
   const totalByPurchase = new Map<string, number>();
 
-  for (const line of lines ?? []) {
+  for (const line of lineRows) {
     const purchaseId = String(line.purchase_id);
     const quantity = Number(line.quantity);
     const unitCost = Number(line.unit_cost);
@@ -117,7 +123,7 @@ export async function fetchPurchases(
     }
   }
 
-  return (purchases ?? []).map((row) => {
+  return purchaseRows.map((row) => {
     const id = String(row.id);
     const mappedLines = linesByPurchase.get(id) ?? [];
     return {
@@ -233,15 +239,19 @@ export async function importPurchaseFromExcel(
     /invoice_number/i.test(purchaseError.message) &&
     "invoice_number" in purchasePayload
   ) {
+    // The column must be absent from the payload, not null: this retry exists
+    // for a schema where invoice_number does not exist yet, so sending the key
+    // at all would fail identically. The cast covers the deliberate omission.
     const { invoice_number: _ignored, ...withoutInvoice } = purchasePayload;
     ({ data: purchaseRow, error: purchaseError } = await supabase
       .from("purchases")
-      .insert(withoutInvoice)
+      .insert(withoutInvoice as typeof purchasePayload)
       .select("*")
       .single());
   }
 
   if (purchaseError) throw new Error(`Failed to create purchase: ${purchaseError.message}`);
+  if (!purchaseRow) throw new Error("Failed to create purchase: no row returned");
 
   const purchaseId = String(purchaseRow.id);
   const result: PurchaseImportResult = {

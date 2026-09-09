@@ -253,15 +253,19 @@ async function resolveProductIdFromHistoryId(
   if (error) throw new Error(`Failed to resolve cost record: ${error.message}`);
   if (!data) throw new Error("Cost record not found");
 
+  const costRow = data as {
+    product_id: string | number;
+    product: { marketplace_account_id?: string | number } | null;
+  };
+
   if (marketplaceAccountId) {
-    const product = data.product as { marketplace_account_id?: string | number } | null;
-    const accountId = product?.marketplace_account_id;
+    const accountId = costRow.product?.marketplace_account_id;
     if (String(accountId) !== String(marketplaceAccountId)) {
       throw new Error("Cost record does not belong to the selected marketplace account");
     }
   }
 
-  return String(data.product_id);
+  return String(costRow.product_id);
 }
 
 /** Close open history rows superseded by a newer effective_from. */

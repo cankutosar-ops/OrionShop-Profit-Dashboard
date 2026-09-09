@@ -19,10 +19,11 @@ export async function getWarehouseAccountBalance(
   marketplaceAccountId: string
 ): Promise<WarehouseAccountBalanceRecord | null> {
   const sb = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   const { data, error } = await sb
     .from("warehouse_account_balance")
     .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .maybeSingle();
 
   if (error) {
@@ -47,10 +48,11 @@ export async function listWarehouseSalesReportSnapshots(
   options?: { from?: string; to?: string }
 ): Promise<WarehouseSalesReportSnapshotRecord[]> {
   const sb = createAdminClient();
+  const accountId = Number(marketplaceAccountId);
   let query = sb
     .from("warehouse_sales_report_snapshot")
     .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId)
+    .eq("marketplace_account_id", accountId)
     .order("date_from", { ascending: true });
 
   // Broad fetch; filter overlaps in application (cash uses create_date, payout uses period).

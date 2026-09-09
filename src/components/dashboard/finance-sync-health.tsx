@@ -53,11 +53,12 @@ export function FinanceSyncHealth() {
       setHealth(null);
       return;
     }
+    const marketplaceAccountId = accountId;
     let cancelled = false;
     async function load() {
       try {
         const res = await fetch(
-          `/api/sync/status?marketplaceAccountId=${encodeURIComponent(accountId)}`,
+          `/api/sync/status?marketplaceAccountId=${encodeURIComponent(marketplaceAccountId)}`,
           { cache: "no-store" }
         );
         const data = await res.json();
