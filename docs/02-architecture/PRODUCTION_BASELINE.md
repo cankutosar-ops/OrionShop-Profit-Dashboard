@@ -168,9 +168,35 @@ path needs.
 each entrypoint's transitive static import graph through the `@/` alias and asks
 whether any reachable module constructs a WB client. A file that merely mentions
 a WB symbol cannot fool it, and a new import that reaches one cannot hide from
-it. 12 assertions, currently passing.
+it. It also asserts the converse — that the worker *does* reach a WB client — so
+the rule cannot be satisfied by accidentally disconnecting ingestion. 12
+assertions, currently passing.
 
-**Status.** ACTIVE.
+**Status.** ACTIVE for every accounting surface — dashboard, all five reports,
+and every Excel/CSV/PDF export path. One live exception exists; see L2a.
+
+### L2a — The one live exception: inventory history export
+
+`src/services/historical-inventory-service.ts:102-103` constructs a
+`WbApiClient` and calls `fetchAllProductCards()` at request time. It is
+reachable from `/api/inventory/history` (page read) and
+`/api/inventory/history/export` (Excel export).
+
+Both routes sit on the data-plane verifier's documented allow-list
+(`scripts/verify-production-data-plane.mjs:231-236`), excused with the reason
+"reads snapshots from historical-inventory-service, which also owns snapshot
+capture" — which explains why the *module* holds a WB client, but not why a
+*user request* may use it. The suite therefore passes without contradiction,
+which is why this needed finding by hand.
+
+The call is conditional: it fires only when internal size IDs cannot be resolved
+from `product_variants`, and it is wrapped in try/catch with fallbacks. It
+touches no accounting figure, so this is a latency and quota risk on a warehouse
+screen rather than a correctness risk. But it is a genuine read-time WB call and
+the allow-list currently records it as acceptable. That classification should be
+re-decided rather than inherited — see D5.
+
+**Status.** ACTIVE EXCEPTION, deliberate but under-justified.
 
 ### L3 — Advancing a cursor requires a successful persist
 
@@ -326,6 +352,57 @@ is never used as roubles.
 rather than followed: a test assertion expecting `delivery_rub` to be null, and
 a self-contradictory note in `src/lib/finance-recovery/reports-ingestion.ts`
 (fixed in `7e65909`). A third remains — see D4.
+
+### A5 — Model C is a dormant second profit model
+
+`src/lib/profit-engine-model-c.ts` computes a structurally different net profit:
+revenue is `netForPay` (weekly settlement realisation) rather than
+Σ `ppvz_for_pay`, and **there is no Estimated Tax term at all**
+(`profit-engine-model-c.ts:22-31`).
+
+It is not dead code. It is computed on **every** dashboard and reports load
+(`dashboard-service.ts:366`, `reports-query-service.ts:89`) and published on the
+`OverviewMetrics.modelCProfit` and `FinanceCategoryReport.modelCProfit` public
+contracts. A switcher UI exists and offers both models
+(`profit-model-switcher.tsx:19`, `MODEL_OPTIONS = ["b", "c"]`), wrapped by
+`profit-dashboard-header-extras.tsx`.
+
+What keeps it dark is one missing line: `profit-dashboard-header-extras.tsx` has
+no importer, so the switcher is never mounted and no surface renders a Model C
+figure today. Every user-facing profit number is Model B.
+
+**Why this matters.** This is a complete, wired, tax-free second accounting model
+that is one JSX insertion away from rendering a number labelled "Net Profit"
+that differs from the canonical one. It is the largest latent divergence in the
+codebase. It should be either deliberately retained with an explicit decision
+record, or removed — not left in this state by default.
+
+**Status.** DORMANT. Not a violation today; not safe to ignore. See D6.
+
+### A6 — The tax base can be weakened at ingestion, not at calculation
+
+The calculation layer guards the tax base well: `buildNetFinishedPriceFromDb`
+carries the instruction "never priceWithDisc / forPay / ppvz_for_pay"
+(`sales-revenue-resolution.ts:50`). But the persisted column it reads is written
+by a mapper that substitutes:
+
+```
+revenue: Math.abs(sale.finishedPrice ?? sale.forPay ?? 0),
+```
+
+— `src/lib/wildberries/mappers.ts:105`. `finishedPrice` is optional on the WB
+API type (`wildberries/types.ts:12`), so the fallback is reachable. Because
+`forPay` is net of commission it is materially smaller than `finishedPrice`, so
+any affected row **understates Estimated Tax**, and it does so invisibly — the
+fallback leaves no marker distinguishing a real `finishedPrice` from a
+substituted one. Contrast the sibling field on the next line, which degrades to
+`0` rather than borrowing a different economic quantity.
+
+No calculation-layer guard can catch this, because by the time the engine reads
+`wb_sales.revenue` the substitution has already happened.
+
+**Status.** UNRESOLVED — needs a decision on whether this is intentional
+tolerance for sparse historical rows. See D7.
 
 ---
 
@@ -556,12 +633,34 @@ is secondary protection, and the workflow says so: the schedule is offset "so it
 does not collide with WB's own top-of-hour load or with any remaining platform
 cron".
 
-**Consequence worth knowing.** Because Vercel fires first, it wins the hour for
-`commercial` in steady state. The GitHub worker's practical contribution is
-`inventory`, which the Vercel cron does not run, plus `commercial` failover when
-Vercel's tick fails. Both are load-bearing; neither is dead code.
+**Consequence worth knowing.** Because Vercel fires first, it would win the hour
+for `commercial` in steady state. The GitHub worker's distinctive contribution
+is `inventory`, which the Vercel cron does not run, plus `commercial` failover.
+Neither path is dead code.
 
-**Status.** ACTIVE, with one configuration hazard — see R3.
+**But neither scheduler is currently live.** This is the finding that reframes
+the whole section:
+
+| Fact | Evidence |
+|---|---|
+| Default branch is `main` | `git remote show origin` |
+| `origin/main` is at `07a9b5e Initial dashboard setup` | `git log origin/main` |
+| This branch is **42 commits ahead** of it | `git rev-list --count origin/main..HEAD` |
+| `origin/main` contains **no** `.github/workflows/` | `git ls-tree -r origin/main -- .github/` returns empty |
+| `origin/main` contains **no** `vercel.json` | `git ls-tree -r origin/main -- vercel.json` returns empty |
+
+GitHub Actions fires `schedule:` triggers **only from the default branch**, so
+the hourly worker tick has never run. `vercel.json` was untracked until
+`49f2431` (2026-09-09) and is still absent from `main`, so the platform cron has
+no configuration to load either.
+
+So the quota double-spend described above is **latent, not active**. It
+materialises on the merge that puts both files on the default branch — which is
+precisely the merge this audit precedes. Treat Y6 as a pre-merge design review,
+not as a description of today's runtime.
+
+**Status.** CORRECT BY DESIGN, NOT YET LIVE. One configuration hazard on
+activation — see R3.
 
 ### Y7 — Expensive tasks are opt-in
 
@@ -621,6 +720,18 @@ because uncommitted WIP contained the fixes mixed with unrelated feature work.
 `49f2431` committed the minimum production-required subset. Building in the
 working tree is not evidence; building a detached checkout is.
 
+**Two caveats on what this proves.** `tsconfig.json` excludes `scripts`, so the
+120+ `scripts/*.mjs` files — including the worker CLI and every verification
+script — are outside `npm run typecheck`. And `ORION_SECRETS_BUILD=1` disables
+TypeScript *and* ESLint build errors wholesale (`next.config.ts:69-73`); the
+comment scopes it to secret validation, but nothing enforces that scope. A green
+build is evidence only when that variable is unset.
+
+**There is no CI.** `.github/workflows/` contains exactly one workflow, the sync
+worker. No build, typecheck, lint or test runs on push or pull request, so the
+clean-checkout guarantee above holds only as long as someone reproduces it by
+hand before each release.
+
 ### P2 — Worker execution contract
 
 | Property | Value | Rationale |
@@ -678,6 +789,23 @@ its live half as "structurally sound but currently vacuous — `wb_ads` is empty
 A passing ads suite today does not demonstrate isolation against real data. It
 will once the migration is applied and a backfill has run.
 
+**One hazard to check before applying.** The already-applied 2026-06-23 migration
+backfills `wb_ads.product_id` by matching `supplier_article` with **no account
+constraint** (`20260623170000_align_schema_to_sync_service.sql:612-614`). The new
+migration then derives `marketplace_account_id` *from* `product_id`
+(`20260909090000:81-86`), so any mis-attributed row would have its wrong owner
+laundered into a confident-looking account column. `wb_ads` is currently empty,
+so today there is nothing to mis-attribute — which makes this the cheapest
+possible moment to apply the migration, and the reason not to defer it past the
+first backfill.
+
+Also note the conflict target is a **partial** unique index
+(`WHERE source_key IS NOT NULL`). PostgREST's
+`on_conflict=marketplace_account_id,source_key` does not supply the predicate.
+`wb_finance` uses the same pattern successfully, so this is likely fine — but it
+is the first thing to smoke-test after applying, because a failure surfaces as
+an upsert error rather than as data loss.
+
 **Blocked on.** Database credentials to apply the migration. Per
 `.cursor/rules/database-migration-protocol.mdc`, no backfill may run before the
 schema is confirmed.
@@ -698,12 +826,45 @@ One finding must be resolved first. `verify:rls-7-1-d` reports a single failure:
 FAIL  Authenticated denied on sync_runs (service_role-only) — readable (bad)
 ```
 
-`sync_runs` is readable by the `authenticated` role. Because Supabase's PostgREST
-endpoint is reachable directly with a logged-in user's JWT, this is a live
-cross-tenant read of sync metadata today, independent of the flag — not merely a
-latent issue. It is metadata (run timings, account ids, error strings) rather
-than financial data, so the severity is low, but it is a real leak and the fix is
-one migration.
+The root cause is precise. Migration `20260812130000_commercial_data_continuity.sql`
+was written **two weeks after** the 7.1.D tenant-isolation sprint and did not
+follow its pattern. It creates two tables, enables RLS on neither, writes no
+policies at all, and grants read access to `authenticated`:
+
+```
+128 -- Grants (service_role used by sync; authenticated read for monitoring)
+129 GRANT SELECT, INSERT, UPDATE ON public.commercial_entity_sync_state TO service_role;
+130 GRANT SELECT                 ON public.commercial_entity_sync_state TO authenticated;
+131 GRANT SELECT, INSERT, UPDATE ON public.commercial_sync_ticks        TO service_role;
+132 GRANT SELECT                 ON public.commercial_sync_ticks        TO authenticated;
+133 GRANT SELECT, INSERT, UPDATE ON public.sync_runs                    TO service_role;
+134 GRANT SELECT                 ON public.sync_runs                    TO authenticated;
+```
+
+Verified: that file contains **0** occurrences of `ENABLE ROW LEVEL SECURITY`
+and **0** of `CREATE POLICY`. Line 134 also re-grants `sync_runs`, undoing the
+`REVOKE` that 7.1.D had applied — which is exactly the failure the verifier
+reports.
+
+Contrast `20260906150000_finance_incremental_sync_state.sql`, written three
+weeks later, which does it correctly: enables RLS (`:41`), adds both a
+service policy and a tenant SELECT policy (`:44`, `:52`), and only then grants.
+
+**Consequence.** `commercial_entity_sync_state` carries `marketplace_account_id`
+alongside per-account sync status, failure class and `last_error` text. With no
+RLS and a standing grant, any authenticated user can read every tenant's rows
+directly through PostgREST using their own JWT. That is a live cross-tenant read
+today, independent of `ORION_RLS_DATA_PLANE`, because PostgREST is publicly
+reachable. Same for `commercial_sync_ticks`.
+
+It is operational metadata — run timings, account ids, error strings — not
+financial data, so severity is low. But it is real, it is three tables wide, and
+the fix is one migration following the pattern the finance table already
+demonstrates.
+
+**This also reveals a process gap.** No verification script enumerates tables
+that grant to `authenticated` without RLS enabled. That check is what would have
+caught this in August, and it is why the regression survived two sprints.
 
 ### D3 — Account 1 Reports/V1 activation
 
@@ -727,6 +888,32 @@ nobody "restores correctness" by reverting the A4 mapping to match the ADR.
 Two of the three artefacts that contradicted A4 have been corrected. This is the
 third, and it should be closed by an ADR amendment.
 
+### D5 — Re-decide the inventory-history WB exception
+
+L2a. The allow-list entry excuses the module for owning snapshot capture, which
+is true but is not the same as sanctioning a WB call on a user request. Either
+resolve display sizes purely from `product_variants` (populating it during sync
+if it is incomplete), or record an explicit decision that this one warehouse
+screen may reach WB at read time. Leaving the current reason in place means the
+next reader will assume it was considered when it was not.
+
+### D6 — Decide Model C's fate
+
+A5. A complete, tax-free second profit model, computed on every load, published
+on the service contract, with its switcher built but unmounted. Retain it with a
+decision record explaining when a user should prefer it, or remove the engine
+and its contract fields. The status quo — dormant but fully assembled — is the
+one option that carries risk without delivering value.
+
+### D7 — Confirm or remove the `finishedPrice ?? forPay` fallback
+
+A6. Determine whether the substitution at `mappers.ts:105` is deliberate
+tolerance for sparse historical rows or a leftover. If deliberate, it needs a
+marker column so affected rows can be identified and excluded from the tax base;
+if not, it should degrade to `0` like the sibling field. Either way this needs a
+data question answered first — how many `wb_sales` rows were written through the
+fallback — which is a read-only query, not a code change.
+
 ---
 
 ## 9. Regression risks
@@ -745,6 +932,10 @@ Ranked by how plausible the mistake is, not by blast radius alone.
 | R8 | Setting `FINANCE_V1_ACCOUNT_IDS` on one deployment surface only | Split-brain ingestion (P3) |
 | R9 | Inferring test tenants from row counts instead of identity | A real account that loses data is silently reclassified and reports PASS (L5) |
 | R10 | Deleting `scripts/verify-*` scripts that "only test fakes" | These are the only executable record of most rules here; `ARCHITECTURE_RULES.md` is an empty skeleton |
+| R11 | Mounting the Model B/C switcher, or reading `overview.modelCProfit` because it is right there on the contract | Renders a tax-free profit as "Net Profit" (A5) |
+| R12 | Creating a new table with `GRANT SELECT … TO authenticated` and no RLS, copying `20260812130000` as the template | Reproduces the D2 leak. Copy `20260906150000` instead |
+| R13 | Setting `ORION_SECRETS_BUILD=1` in a hosting dashboard | Disables **both** TypeScript and ESLint build errors for every subsequent production build (`next.config.ts:69-73`); the comment scopes it to secret validation but nothing enforces that |
+| R14 | Trusting a green verification suite as proof a rule holds in production | Three suites currently pass while being vacuous or scoped around the finding: ads isolation (empty table), the data-plane check (inventory routes allow-listed), and RLS (no check for grant-without-RLS) |
 
 ---
 
