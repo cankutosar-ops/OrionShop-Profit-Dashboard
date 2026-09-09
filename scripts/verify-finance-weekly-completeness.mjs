@@ -59,24 +59,42 @@ const TO = argVal("to", new Date().toISOString().slice(0, 10));
 const PUBLICATION_LAG_DAYS = 5;
 
 /**
- * Production accounts, audited for data completeness.
+ * Which accounts are audited for completeness.
  *
- * Explicit rather than inferred. Inferring "onboarded" from "has rows" looks
- * equivalent but fails in the one case that matters: if a real account lost all
- * its finance data, an emptiness heuristic would silently reclassify it as
- * not-onboarded and report PASS. With an explicit list, an empty production
- * account is a loud failure.
+ * Uses the application's own `isOperationalMarketplaceAccount`, the same
+ * predicate that decides whether an account appears in production scope
+ * selectors, so this audit and the UI can never disagree about what is real.
+ * It excludes "Verify Flow Test"-style tenants by name pattern.
  *
- * Accounts 3 and 4 ("Verify Flow Test") are intentional empty test tenants. They
- * are excluded from completeness only — isolation and tenant-authorization tests
- * still exercise them, which is what they exist for.
+ * Deliberately NOT inferred from "has rows". An emptiness heuristic fails in the
+ * one case that matters: a real account that lost its finance data would be
+ * silently reclassified as not-onboarded and reported PASS. Classifying by
+ * identity instead means an empty production account fails loudly.
+ *
+ * Accounts 3 and 4 are intentional empty test tenants, excluded from
+ * completeness only — isolation and tenant-authorization tests still use them.
+ *
+ * ORION_PRODUCTION_ACCOUNT_IDS overrides the predicate when needed.
  */
-const PRODUCTION_ACCOUNT_IDS = new Set(
-  (process.env.ORION_PRODUCTION_ACCOUNT_IDS ?? "1,2")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
+const { isOperationalMarketplaceAccount } = await import(
+  "../src/lib/marketplace-account-visibility.ts"
 );
+
+const ACCOUNT_ID_OVERRIDE = process.env.ORION_PRODUCTION_ACCOUNT_IDS
+  ? new Set(
+      process.env.ORION_PRODUCTION_ACCOUNT_IDS.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )
+  : null;
+
+function isProductionAccount(account) {
+  if (ACCOUNT_ID_OVERRIDE) return ACCOUNT_ID_OVERRIDE.has(String(account.id));
+  return isOperationalMarketplaceAccount({
+    account_name: account.account_name ?? "",
+    is_active: account.is_active ?? false,
+  });
+}
 
 /** Reports/V1 components the user asked to account for, by source_key suffix. */
 const EXPECTED_SUFFIXES = [
@@ -184,7 +202,7 @@ for (const account of accounts) {
     `\n=================== Account ${accountId} (${account.account_name}) ===================`
   );
 
-  if (!PRODUCTION_ACCOUNT_IDS.has(accountId)) {
+  if (!isProductionAccount(account)) {
     const { count: strayRows } = await sb
       .from("wb_finance")
       .select("id", { count: "exact", head: true })
@@ -355,16 +373,22 @@ for (const account of accounts) {
   }
 }
 
-// Guard the classification itself: if the production list ever stops matching
-// reality, the exclusions above would quietly hide a real account.
+// Guard the classification itself: if it ever stops matching reality, the
+// exclusions above would quietly hide a real account behind a green run.
 const auditedIds = Object.entries(report.accounts)
   .filter(([, v]) => v.classification === "production")
   .map(([k]) => k)
   .sort();
+const expectedIds = accounts.filter(isProductionAccount).map((a) => String(a.id)).sort();
 check(
-  "every configured production account was audited",
-  auditedIds.join(",") === [...PRODUCTION_ACCOUNT_IDS].sort().join(","),
-  `audited=[${auditedIds.join(",")}] configured=[${[...PRODUCTION_ACCOUNT_IDS].sort().join(",")}]`
+  "every operational account was audited",
+  auditedIds.join(",") === expectedIds.join(","),
+  `audited=[${auditedIds.join(",")}] operational=[${expectedIds.join(",")}]`
+);
+check(
+  "at least one production account is being audited (audit is not vacuous)",
+  auditedIds.length > 0,
+  `${auditedIds.length} account(s)`
 );
 
 // An excluded account holding real data would mean the classification is wrong.

@@ -58,7 +58,10 @@ function isAllowedMarketplaceHttpPath(rel) {
     n.startsWith("src/lib/commercial-continuity/") ||
     n.startsWith("src/lib/warehouse/backfill/mock-adapter") ||
     n.includes("/warehouse/adapters/") ||
-    /dashboard-sync-service|dashboard-sync-client|account-lifecycle-service|inventory-daily-snapshot-service|historical-inventory-service|sync-verification-audit|sync-job-service/.test(
+    // Ingestion services. These are the sync layer, not business/reporting
+    // modules — the rule they must satisfy is "not reachable from a page load",
+    // which verify:production-data-plane enforces separately.
+    /dashboard-sync-service|dashboard-sync-client|account-lifecycle-service|inventory-daily-snapshot-service|historical-inventory-service|sync-verification-audit|sync-job-service|advertising-sync-service/.test(
       n
     ) ||
     n.includes("/api/sync/") ||
