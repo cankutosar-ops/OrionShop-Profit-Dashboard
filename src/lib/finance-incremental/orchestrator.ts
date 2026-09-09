@@ -131,10 +131,21 @@ export async function runFinanceIncrementalSync(
   const plan = planFinanceIncrementalWork({ state, today });
 
   if (plan.kind === "idle" || !plan.week) {
-    syncLog("finance-incremental", "IDLE", { accountId, reason: plan.reason });
+    // An account routed to the Reports/V1 kernel with no completed-week anchor
+    // cannot choose a period, so it ingests nothing — permanently, and silently,
+    // because "idle" maps to a *successful* sync run. That is a migration
+    // mistake (state never seeded), not a steady state, so it must fail closed
+    // loudly. "Caught up, next period still in the future" is the only
+    // legitimate idle.
+    const missingAnchor = plan.reason === "awaiting_completed_weeks_anchor";
+    syncLog(
+      "finance-incremental",
+      missingAnchor ? "MISSING ANCHOR" : "IDLE",
+      { accountId, reason: plan.reason }
+    );
     return {
       accountId,
-      status: "idle",
+      status: missingAnchor ? "failed" : "idle",
       mode: "idle",
       week: plan.week,
       cursorBefore: 0,
@@ -155,7 +166,9 @@ export async function runFinanceIncrementalSync(
       limit: null,
       resetSeconds: null,
       retrySeconds: null,
-      error: null,
+      error: missingAnchor
+        ? `finance_v1_missing_anchor: account ${accountId} has no completed-week anchor in finance_incremental_sync_state — seed it before routing this account to Reports/V1`
+        : null,
       liveHttpAttempted: false,
     };
   }
