@@ -104,6 +104,7 @@
     "verify:advertising-ingestion": "tsx scripts/verify-advertising-ingestion.mjs",
     "verify:finance-weekly-completeness": "npx tsx scripts/verify-finance-weekly-completeness.mjs",
     "verify:ads-account-isolation": "npx tsx scripts/verify-ads-account-isolation.mjs",
+    "verify:product-cost-product-scope": "npx tsx scripts/verify-product-cost-product-scope.mjs",
     "apply:wb-ads-account-scope-migration": "npx tsx scripts/apply-wb-ads-account-scope-migration.mjs",
     "verify:potential-profit-no-returns": "npx tsx scripts/verify-potential-profit-no-returns.mjs",
     "verify:administration-build-boundary": "npx tsx scripts/verify-administration-build-boundary.mjs",

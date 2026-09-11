@@ -2,10 +2,18 @@ import type { ProductCostHistory, WbSale } from "@/types/database";
 
 export function getProductCostAtDate(
   costHistory: ProductCostHistory[],
-  date: string
+  date: string,
+  productId: string | number | null | undefined
 ): number {
+  if (productId == null || String(productId).trim() === "") return 0;
+  const wanted = String(productId);
   const applicable = costHistory
-    .filter((c) => c.effective_from <= date && (!c.effective_to || c.effective_to >= date))
+    .filter(
+      (c) =>
+        String(c.product_id) === wanted &&
+        c.effective_from <= date &&
+        (!c.effective_to || c.effective_to >= date)
+    )
     .sort((a, b) => b.effective_from.localeCompare(a.effective_from));
 
   return applicable[0]?.cost ?? 0;
@@ -18,7 +26,7 @@ function resolveUnitCost(
 ): number {
   const latest = latestCostByProductId?.get(String(sale.product_id));
   if (latest !== undefined) return latest;
-  return getProductCostAtDate(costHistory, sale.sale_date);
+  return getProductCostAtDate(costHistory, sale.sale_date, sale.product_id);
 }
 
 export function computeProductCost(
