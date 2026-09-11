@@ -8,7 +8,7 @@ import { rollupCategoriesToProfitBuckets } from "@/lib/finance-rollup";
 import { computeProductCost } from "@/lib/product-cost";
 import { aggregateSalesMetrics } from "@/lib/sales-metrics";
 import { buildOrdersPurchasesKpis } from "@/lib/orders-purchases-metrics";
-import { buildProductProfitabilityRows } from "@/lib/product-profitability-builder";
+import { buildProductProfitabilityRows, buildProductProfitabilityResult } from "@/lib/product-profitability-builder";
 import {
   alignGroupedProfitabilityToModelB,
   buildDimensionProfitability,
@@ -580,10 +580,18 @@ export async function getProductProfitability(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<ProductProfitability[]> {
+  const build = await getProductProfitabilityBuild(scope, client);
+  return build.rows;
+}
+
+export async function getProductProfitabilityBuild(
+  scope: ScopedDateRange,
+  client?: SupabaseClient
+) {
   // SQL only — product profitability does not need live WB API enrichment.
   const sql = await loadSqlForScope(scope, client);
 
-  return buildProductProfitabilityRows({
+  return buildProductProfitabilityResult({
     products: sql.products,
     orders: sql.orders,
     sales: sql.sales,

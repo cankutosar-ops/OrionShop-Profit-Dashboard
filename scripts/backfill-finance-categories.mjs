@@ -51,6 +51,18 @@ async function main() {
   const to = process.argv[4] ?? "2026-06-23";
   const fetchOperNames = process.argv.includes("--fetch-oper-names");
 
+  if (fetchOperNames) {
+    const { isFinanceHistoricalRecoveryActive } = await import(
+      "../src/lib/finance-recovery/coordination.ts"
+    );
+    if (isFinanceHistoricalRecoveryActive(String(accountId))) {
+      console.error(
+        `BLOCKED: skipped_finance_recovery_active — Account ${accountId} Finance is reserved for Reports recovery. Refusing backfill-finance-categories --fetch-oper-names.`
+      );
+      process.exit(2);
+    }
+  }
+
   const client = createAdminClient();
   const rows = await fetchFinanceRows(client, accountId, from, to);
 

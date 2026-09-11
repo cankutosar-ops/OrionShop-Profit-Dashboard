@@ -1,6 +1,6 @@
 "use client";
 
-import type { SecretHealthItem } from "@/services/administration-security-service";
+import type { SecretHealthItem } from "@/lib/administration/security-types";
 import { SecurityStatusCard } from "@/components/administration/security-status-card";
 
 type SecretHealthCardProps = {

@@ -10,9 +10,19 @@
 import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redactSecrets } from "@/lib/security/secrets";
+import type {
+  AuditEventKind,
+  AuditEventRow,
+  AuditResult,
+  LoginHistoryRow,
+} from "@/lib/administration/audit-types";
 
-export type AuditResult = "success" | "failure" | "denied";
-export type AuditEventKind = "audit" | "login" | "security";
+export type {
+  AuditEventKind,
+  AuditEventRow,
+  AuditResult,
+  LoginHistoryRow,
+} from "@/lib/administration/audit-types";
 
 export type AuditEventInput = {
   userId?: string | null;
@@ -31,26 +41,6 @@ export type AuditEventInput = {
   device?: string | null;
   ipMasked?: string | null;
   metadata?: Record<string, unknown>;
-};
-
-export type AuditEventRow = {
-  id: string;
-  createdAt: string;
-  userId: string | null;
-  userEmail: string | null;
-  companyId: string | null;
-  companyName: string | null;
-  module: string;
-  action: string;
-  entityType: string | null;
-  entityId: string | null;
-  entity: string;
-  result: AuditResult;
-  eventKind: AuditEventKind;
-  reason: string | null;
-  correlationId: string | null;
-  device: string | null;
-  ipMasked: string | null;
 };
 
 export type AuditQuery = {
@@ -260,16 +250,6 @@ export async function queryAuditEvents(query: AuditQuery = {}): Promise<{
 
   return { events, available: true };
 }
-
-export type LoginHistoryRow = {
-  id: string;
-  user: string;
-  loginTime: string | null;
-  logoutTime: string | null;
-  device: string | null;
-  ipMasked: string | null;
-  result: AuditResult;
-};
 
 export async function queryLoginHistory(limit = 100): Promise<{
   rows: LoginHistoryRow[];

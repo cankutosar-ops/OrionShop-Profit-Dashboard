@@ -118,6 +118,14 @@ export function GroupPerformanceReportTable({
       cell: (row) => money(row.storage, currency),
     },
     {
+      key: "adjustments",
+      header: "Adjustments",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.adjustments,
+      cell: (row) => money(row.adjustments, currency),
+    },
+    {
       key: "advertising",
       header: "Advertising",
       align: "right",

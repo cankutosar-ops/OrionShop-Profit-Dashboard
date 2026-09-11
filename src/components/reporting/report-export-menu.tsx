@@ -61,15 +61,12 @@ export function ReportExportMenu({
         return;
       }
       downloadBytes(result.bytes, result.fileName, exportMimeType(result.format));
-      setMessage(`Downloaded ${result.fileName}`);
+      setMessage(format === "xlsx" ? "Excel generated" : `Downloaded ${result.fileName}`);
     });
   };
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Export
-      </span>
       {FORMATS.map(({ format, label }) => (
         <button
           key={format}
@@ -78,11 +75,22 @@ export function ReportExportMenu({
           onClick={() => onExport(format)}
           className="rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-card-hover disabled:opacity-60"
         >
-          {label}
+          {pending && format === "xlsx"
+            ? "Generating report..."
+            : format === "xlsx"
+              ? "Export Excel"
+              : label}
         </button>
       ))}
       {message && (
-        <span className="text-xs text-muted-foreground" role="status">
+        <span
+          className={
+            message.startsWith("Excel") || message.startsWith("Downloaded")
+              ? "text-xs text-muted-foreground"
+              : "text-xs text-destructive"
+          }
+          role="status"
+        >
           {message}
         </span>
       )}

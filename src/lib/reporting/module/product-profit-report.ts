@@ -28,6 +28,8 @@ export type ProductProfitReportRow = {
   brand: string;
   category: string;
   unitsSold: number;
+  unitsReturned: number;
+  netUnits: number;
   netSales: number;
   revenue: number;
   productCost: number;
@@ -35,7 +37,13 @@ export type ProductProfitReportRow = {
   /** Outbound + return logistics (engine fields summed for display). */
   logistics: number;
   storage: number;
+  penalties: number;
+  adjustments: number;
   advertising: number;
+  /** Operating profit before tax (engine `netProfit`). */
+  operatingProfit: number;
+  /** estimatedTax presentation = operating − final (engine outputs only). */
+  estimatedTax: number;
   /** Model B Final Net Profit. */
   netProfit: number;
   /** Model B margin % of Revenue. */
@@ -78,21 +86,30 @@ function mapRow(
   recommendedPrice: number | null
 ): ProductProfitReportRow {
   const netProfit = product.finalNetProfit;
+  const operatingProfit = product.netProfit;
   const revenue = product.revenue;
+  const unitsSold = product.unitsSold;
+  const unitsReturned = product.unitsReturned;
   return {
     productId: product.productId,
     sku: product.modelCode || "—",
     productName: product.productName || "—",
     brand: product.brandName || "—",
     category: product.categoryName || "—",
-    unitsSold: product.unitsSold,
+    unitsSold,
+    unitsReturned,
+    netUnits: unitsSold - unitsReturned,
     netSales: product.netSales,
     revenue,
     productCost: product.productCost,
     marketplaceFees: product.marketplaceFees,
     logistics: product.logistics + product.returnLogistics,
     storage: product.storage,
+    penalties: product.penalties,
+    adjustments: product.accountAdjustments,
     advertising: product.advertising,
+    operatingProfit,
+    estimatedTax: operatingProfit - netProfit,
     netProfit,
     netMarginPercent: calculateModelBMarginPercent(revenue, netProfit),
     roiPercent: calculateProductRoiPercent(netProfit, product.productCost),

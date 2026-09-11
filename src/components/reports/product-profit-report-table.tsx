@@ -6,7 +6,7 @@ import { SortableTh } from "@/components/ui/sortable-th";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
-import type { ProductProfitReportRow } from "@/services/reports-product-profit-service";
+import type { ProductProfitReportRow } from "@/lib/reporting/product-profit-report-types";
 
 type ProductProfitReportTableProps = {
   rows: ProductProfitReportRow[];

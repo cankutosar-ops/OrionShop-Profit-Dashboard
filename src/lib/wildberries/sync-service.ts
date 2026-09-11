@@ -27,6 +27,11 @@ import {
   mapFinanceRowsFromReport,
   toDateString,
 } from "./mappers";
+import {
+  persistSalesEvents,
+  salesSchemaHasSaleIdColumn,
+} from "./sales-event-persistence";
+import { dedupeSalesEvents, type SalesEventRow } from "./sales-event-identity";
 import type { TableRowPick, WbFinance, WbOrder, WbSale, WbStock } from "@/types/database";
 
 type ProductLookup = Map<number, string>;
@@ -196,17 +201,9 @@ export async function assertFinanceRecoverySchemaReady(
   }
 }
 
-/** One row per (marketplace_account_id, srid); last-wins on equal sale_date (newest in API order). */
-function dedupeSalesPayloads(rows: Array<Omit<WbSale, "id">>): Array<Omit<WbSale, "id">> {
-  const byKey = new Map<string, Omit<WbSale, "id">>();
-  for (const row of rows) {
-    const key = `${row.marketplace_account_id}\0${row.srid}`;
-    const existing = byKey.get(key);
-    if (!existing || row.sale_date >= existing.sale_date) {
-      byKey.set(key, row);
-    }
-  }
-  return Array.from(byKey.values());
+/** One row per WB saleID. A later return saleID must not replace the sale. */
+function dedupeSalesPayloads(rows: SalesEventRow[]): SalesEventRow[] {
+  return dedupeSalesEvents(rows).rows;
 }
 
 const SALES_REVENUE_FIELDS = ["price_with_disc", "for_pay"] as const;
@@ -223,10 +220,10 @@ async function salesSchemaHasWarehouseColumn(supabase: AdminClient): Promise<boo
 }
 
 function toSalesUpsertRow(
-  row: Omit<WbSale, "id">,
+  row: SalesEventRow,
   includeRevenueColumns: boolean,
   includeWarehouseColumn: boolean
-): Omit<WbSale, "id"> {
+): SalesEventRow {
   const next = { ...row };
   if (!includeRevenueColumns) {
     for (const field of SALES_REVENUE_FIELDS) {
@@ -241,34 +238,18 @@ function toSalesUpsertRow(
 
 async function batchUpsertSales(
   supabase: AdminClient,
-  rows: Array<Omit<WbSale, "id">>,
+  rows: SalesEventRow[],
   batchSize: number,
   onBatch: (batchRowCount: number) => void,
   includeRevenueColumns: boolean,
   includeWarehouseColumn: boolean
 ): Promise<{ dbRequests: number; errors: string[] }> {
-  let dbRequests = 0;
-  const errors: string[] = [];
-
-  for (let i = 0; i < rows.length; i += batchSize) {
-    const batch = rows
-      .slice(i, i + batchSize)
-      .map((row) => toSalesUpsertRow(row, includeRevenueColumns, includeWarehouseColumn));
-    dbRequests += 1;
-    const { error } = await supabase.from("wb_sales").upsert(batch, {
-      onConflict: "marketplace_account_id,srid",
-    });
-    if (error) {
-      errors.push(`wb_sales batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
-    } else {
-      onBatch(batch.length);
-    }
-
-    if (i > 0 && i % (batchSize * 4) === 0) {
-      await yieldEventLoop();
-    }
-  }
-
+  const shaped = rows.map((row) =>
+    toSalesUpsertRow(row, includeRevenueColumns, includeWarehouseColumn)
+  );
+  const { upserted, errors } = await persistSalesEvents(supabase, shaped, { batchSize });
+  if (upserted > 0) onBatch(upserted);
+  const dbRequests = Math.max(1, Math.ceil(rows.length / Math.max(batchSize, 1)));
   return { dbRequests, errors };
 }
 
@@ -628,11 +609,20 @@ export class WbSyncService {
         );
       }
 
+      const includeSaleId = await salesSchemaHasSaleIdColumn(supabase);
+      if (!includeSaleId) {
+        const message =
+          "sale_id column missing on wb_sales — refusing to upsert on (account, srid). Apply supabase/migrations/20260911100000_wb_sales_event_identity.sql";
+        syncLog("sales", message, {});
+        result.errors.push(message);
+        return result;
+      }
+
       console.log("[SYNC] sales upsert start");
       syncLog("sales", "Supabase batch upsert START", { saleCount: filtered.length });
 
       const persistenceStarted = Date.now();
-      const payloads: Array<Omit<WbSale, "id">> = [];
+      const payloads: SalesEventRow[] = [];
 
       for (let i = 0; i < filtered.length; i++) {
         const sale = filtered[i];
@@ -647,6 +637,8 @@ export class WbSyncService {
           payloads.push({
             ...mapApiSaleToDb(sale, productId),
             marketplace_account_id: this.marketplaceAccountId,
+            sale_id: String(sale.saleID),
+            event_type: String(sale.saleID).startsWith("R") ? "RETURN" : "SALE",
           });
         } catch (err) {
           result.errors.push(
@@ -661,7 +653,7 @@ export class WbSyncService {
 
       const dedupedPayloads = dedupeSalesPayloads(payloads);
       if (dedupedPayloads.length < payloads.length) {
-        syncLog("sales", "Sales deduplicated by srid", {
+        syncLog("sales", "Sales deduplicated by saleID", {
           before: payloads.length,
           after: dedupedPayloads.length,
           dropped: payloads.length - dedupedPayloads.length,

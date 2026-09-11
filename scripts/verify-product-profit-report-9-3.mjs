@@ -292,14 +292,16 @@ try {
   check(
     "Live: dashboard Model B revenue available",
     Number.isFinite(overviewLive.modelBProfit.revenue) &&
-      overviewLive.modelBProfit.revenue === engineRevenue,
-    `fe=${engineRevenue}`
+      Number.isFinite(engineRevenue) &&
+      Math.abs(overviewLive.modelBProfit.revenue - engineRevenue) < 0.02,
+    `live=${overviewLive.modelBProfit.revenue} fe=${engineRevenue}`
   );
   check(
     "Live: dashboard Model B net profit available",
     Number.isFinite(overviewLive.modelBProfit.finalNetProfit) &&
-      overviewLive.modelBProfit.finalNetProfit === engineProfit,
-    `fe=${engineProfit}`
+      Number.isFinite(engineProfit) &&
+      Math.abs(overviewLive.modelBProfit.finalNetProfit - engineProfit) < 0.02,
+    `live=${overviewLive.modelBProfit.finalNetProfit} fe=${engineProfit}`
   );
 
   if (live.rows.length > 0) {

@@ -2,7 +2,7 @@
 
 import { RoleBadge } from "@/components/administration/role-badge";
 import { UserStatusBadge } from "@/components/administration/user-status-badge";
-import type { ManagedUserSummary } from "@/services/administration-user-service";
+import type { ManagedUserSummary } from "@/lib/administration/user-types";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";

@@ -23,7 +23,11 @@ import { cn, formatNumber } from "@/lib/utils";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
+import { WarehouseLocationSelect } from "@/components/inventory/warehouse-location-select";
 import type { HistoricalInventorySnapshot } from "@/lib/historical-inventory-types";
+import {
+  mergeWarehouseNameLists,
+} from "@/lib/warehouse-locations";
 import {
   buildVisibleExportColumns,
   DEFAULT_HISTORY_TABLE_SETTINGS,
@@ -109,6 +113,7 @@ export function InventoryHistoryWorkspace({
   const { sort, onSort, directionFor, isActive } =
     useCycleSort<HistorySortKey>(HISTORY_DEFAULT_SORT);
   const [rows, setRows] = useState<HistoricalInventorySnapshot[]>([]);
+  const [warehouseNames, setWarehouseNames] = useState<string[]>([]);
   const [datesLoaded, setDatesLoaded] = useState(false);
   const [snapshotLoaded, setSnapshotLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +182,7 @@ export function InventoryHistoryWorkspace({
   const loadSnapshot = useCallback(async () => {
     if (!accountId || !snapshotDate) {
       setRows([]);
+      setWarehouseNames([]);
       setSnapshotLoaded(true);
       return;
     }
@@ -191,6 +197,9 @@ export function InventoryHistoryWorkspace({
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || "Failed to load inventory");
     setRows((json.rows ?? []) as HistoricalInventorySnapshot[]);
+    setWarehouseNames(
+      Array.isArray(json.warehouses) ? (json.warehouses as string[]) : []
+    );
     if (json.availableDates?.length) setAvailableDates(json.availableDates);
     setSnapshotLoaded(true);
   }, [accountId, snapshotDate]);
@@ -207,6 +216,7 @@ export function InventoryHistoryWorkspace({
   useEffect(() => {
     if (!accountId || !snapshotDate) {
       setRows([]);
+      setWarehouseNames([]);
       return;
     }
     startTransition(() => {
@@ -215,12 +225,12 @@ export function InventoryHistoryWorkspace({
   }, [accountId, snapshotDate, loadSnapshot]);
 
   const warehouseOptions = useMemo(() => {
-    const set = new Set<string>();
+    const fromRows: string[] = [];
     for (const r of rows) {
-      if (r.warehouse_name) set.add(r.warehouse_name);
+      if (r.warehouse_name) fromRows.push(r.warehouse_name);
     }
-    return [...set].sort((a, b) => a.localeCompare(b, "ru"));
-  }, [rows]);
+    return mergeWarehouseNameLists(warehouseNames, fromRows);
+  }, [rows, warehouseNames]);
 
   const { pivotRows, warehouses: pivotWarehouses } = useMemo(() => {
     const flat = rows.map(toFlatRow);
@@ -436,19 +446,13 @@ export function InventoryHistoryWorkspace({
 
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-medium text-muted-foreground">
           Warehouse
-          <select
-            className="h-9 rounded-xl border border-border bg-background px-2 text-sm font-medium text-foreground"
+          <WarehouseLocationSelect
             value={warehouse}
-            onChange={(e) => setWarehouse(e.target.value)}
-            disabled={!rows.length}
-          >
-            <option value="">All warehouses</option>
-            {warehouseOptions.map((w) => (
-              <option key={w} value={w}>
-                {formatWarehouseName(w)}
-              </option>
-            ))}
-          </select>
+            onChange={setWarehouse}
+            names={warehouseOptions}
+            disabled={!rows.length && warehouseOptions.length === 0}
+            className="min-w-[10rem]"
+          />
         </label>
 
         <label className="flex min-w-[14rem] flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">

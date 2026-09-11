@@ -14,7 +14,7 @@ import { isThemePreference } from "@/lib/theme";
 import {
   DEFAULT_PLATFORM_SETTINGS,
   type PlatformSettingsDocument,
-} from "@/services/administration-platform-settings-service";
+} from "@/lib/administration/platform-settings-document";
 
 const LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
@@ -412,7 +412,7 @@ export function SettingsPanel() {
 
       <SettingsSection
         title="Data Retention"
-        description="Configuration only — no cleanup engine runs from these values."
+        description="Inventory snapshot history is purged automatically using Warehouse History Retention. Audit/sync knobs are configuration only."
       >
         <SettingsCard>
           <SettingsGroup>
@@ -426,7 +426,7 @@ export function SettingsPanel() {
             />
             <SettingsInput
               id="warehouseHistoryDays"
-              label="Warehouse History Retention (days)"
+              label="Inventory Snapshot Retention (days)"
               type="number"
               min={1}
               value={settings.dataRetention.warehouseHistoryDays}

@@ -66,12 +66,12 @@ function ProductAnalyticsFunnelSection({ totals }: { totals: ProductAnalyticsTot
 }
 
 function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyticsTotals }) {
-  const operationalVariant = totals.operationalProfit >= 0 ? "success" : "danger";
+  const netVariant = totals.operationalProfit >= 0 ? "success" : "danger";
 
   return (
     <SectionShell
-      title="Operational P&L"
-      description="Unit economics for SKU decisions — total logistics and marketing included"
+      title="Product P&L (attributed)"
+      description="V4 Net Profit per SKU — Marketplace Fees informational only; unmatched logistics stay Unallocated"
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
         <MetricCard
@@ -88,15 +88,16 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
         />
         <MetricCard
           size="compact"
-          title="Commission"
-          value={formatKpiCurrency(totals.commission)}
+          title="Marketplace Fees"
+          value={formatKpiCurrency(totals.marketplaceFees)}
+          subtitle="Informational · not deducted again"
           icon={KPI_ICONS.commission}
         />
         <MetricCard
           size="compact"
-          title="Total Logistics"
+          title="Attributed Logistics"
           value={formatKpiCurrency(totals.totalLogistics)}
-          subtitle={`Purchase ${formatKpiCurrency(totals.purchaseLogistics)} · Excluded ${formatKpiCurrency(totals.excludedLogistics)}`}
+          subtitle={`Unallocated ${formatKpiCurrency(totals.unallocatedLogistics)}`}
           icon={KPI_ICONS.logistics}
         />
         <MetricCard
@@ -119,14 +120,14 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
         />
         <MetricCard
           size="compact"
-          title="Operational Profit"
+          title="Net Profit"
           value={formatKpiCurrency(totals.operationalProfit)}
           icon={KPI_ICONS.profit}
-          variant={operationalVariant}
+          variant={netVariant}
         />
         <MetricCard
           size="compact"
-          title="Operational Margin %"
+          title="Net Margin %"
           value={formatKpiPercent(totals.operationalMarginPercent)}
           icon={KPI_ICONS.conversion}
         />
@@ -139,33 +140,41 @@ function ProductAnalyticsFinancialSection({ totals }: { totals: ProductAnalytics
   const financialVariant = totals.netProfit >= 0 ? "success" : "danger";
   const purchaseRows = totals.purchaseLogisticsRows ?? 0;
   const excludedRows = totals.excludedLogisticsRows ?? 0;
-  const financialVsOperational = totals.netProfit - totals.operationalProfit;
+  const logisticsCheck =
+    Math.abs(
+      totals.totalLogistics + totals.unallocatedLogistics - totals.accountLogisticsTotal
+    ) < 0.02;
 
   return (
     <SectionShell
-      title="Financial Reconciliation"
-      description="Dashboard engine net profit (unchanged) vs operational view"
+      title="Attribution reconciliation"
+      description="Attributed + Unallocated logistics must equal account logistics · Dashboard V4 account P&L is unchanged"
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           size="compact"
-          title="Financial Net Profit"
+          title="Σ Product Net Profit"
           value={formatKpiCurrency(totals.netProfit)}
-          subtitle="Dashboard engine · purchase logistics only"
+          subtitle="Attributed SKUs only · not full account P&L"
           icon={KPI_ICONS.profit}
           variant={financialVariant}
         />
         <MetricCard
           size="compact"
-          title="Financial Margin %"
-          value={formatKpiPercent(totals.marginPercent)}
-          icon={KPI_ICONS.conversion}
+          title="Account Logistics"
+          value={formatKpiCurrency(totals.accountLogisticsTotal)}
+          subtitle={
+            logisticsCheck
+              ? "Attributed + Unallocated reconcile"
+              : "Check attribution math"
+          }
+          icon={KPI_ICONS.logistics}
         />
         <MetricCard
           size="compact"
-          title="Financial − Operational"
-          value={formatKpiCurrency(financialVsOperational)}
-          subtitle="≈ excluded logistics (per SKU sum)"
+          title="Unallocated Logistics"
+          value={formatKpiCurrency(totals.unallocatedLogistics)}
+          subtitle="Not in product Net Profit"
           icon={KPI_ICONS.cost}
           variant="muted"
         />

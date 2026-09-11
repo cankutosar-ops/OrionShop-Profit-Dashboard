@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { UserStatus } from "@/services/administration-user-service";
+import type { UserStatus } from "@/lib/administration/user-types";
 
 const LABEL: Record<UserStatus, string> = {
   active: "Active",

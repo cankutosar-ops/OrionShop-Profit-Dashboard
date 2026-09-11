@@ -1,6 +1,6 @@
 "use client";
 
-import type { LoginHistoryRow } from "@/services/administration-audit-service";
+import type { LoginHistoryRow } from "@/lib/administration/audit-types";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";

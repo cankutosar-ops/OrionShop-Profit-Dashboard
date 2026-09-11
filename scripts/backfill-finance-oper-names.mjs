@@ -25,6 +25,16 @@ async function main() {
   const from = process.argv[3] ?? "2026-05-24";
   const to = process.argv[4] ?? "2026-06-23";
 
+  const { isFinanceHistoricalRecoveryActive } = await import(
+    "../src/lib/finance-recovery/coordination.ts"
+  );
+  if (isFinanceHistoricalRecoveryActive(String(accountId))) {
+    console.error(
+      `BLOCKED: skipped_finance_recovery_active — Account ${accountId} Finance is reserved for Reports recovery. Refusing backfill-finance-oper-names.`
+    );
+    process.exit(2);
+  }
+
   const client = createAdminClient();
   const account = await getMarketplaceAccountForSync(accountId);
   const wb = new WbApiClient(account.apiKey);

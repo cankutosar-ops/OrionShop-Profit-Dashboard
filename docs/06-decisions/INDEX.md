@@ -159,7 +159,11 @@ Rules:
 
 | ADR | Title | Category | Status |
 |-----|-------|----------|--------|
-| — | — | — | No ADRs yet |
+| [ADR-012](./ADR-012-orion-knowledge-foundation.md) | Orion Knowledge Foundation | architecture | Accepted |
+| [ADR-013](./ADR-013-orion-knowledge-materialization.md) | Orion Knowledge Materialization Framework | architecture | Accepted |
+| [ADR-014](./ADR-014-orion-knowledge-object-model.md) | Orion Knowledge Object Model | architecture | Accepted |
+| [ADR-015](./ADR-015-orion-knowledge-materialization-pipeline.md) | Orion Knowledge Materialization Pipeline | architecture | Accepted |
+| [ADR-016](./ADR-016-finance-reports-v1-incremental-sync.md) | Finance Reports/V1 Incremental Sync | sync | Accepted |
 
 ## Templates
 

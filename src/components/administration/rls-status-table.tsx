@@ -1,6 +1,6 @@
 "use client";
 
-import type { RlsTableStatus } from "@/services/administration-security-service";
+import type { RlsTableStatus } from "@/lib/administration/security-types";
 
 type RlsStatusTableProps = {
   tables: RlsTableStatus[];

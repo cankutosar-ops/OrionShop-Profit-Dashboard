@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminSection } from "@/components/administration/admin-section";
 import { AuditLogTable } from "@/components/administration/audit-log-table";
-import type { AuditEventRow } from "@/services/administration-audit-service";
+import type { AuditEventRow } from "@/lib/administration/audit-types";
 
 type Filters = {
   search: string;

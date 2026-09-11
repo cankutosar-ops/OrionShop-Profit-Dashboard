@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ReportsHeader } from "@/components/reports/reports-header";
+import { ExportWeeklyBusinessExcelButton } from "@/components/reports/export-business-report-button";
 import { ReportNav } from "@/components/reporting/report-nav";
 import {
   type PageScopeSearchParamsInput,
@@ -32,10 +33,25 @@ export default async function ReportsPage({ searchParams }: PageProps) {
         description="Financial and operational reports — powered by the Financial Engine, not a second dashboard"
       />
 
-      <div className="mb-6">
+      <div className="mb-6 space-y-4">
         <Suspense fallback={<div className="h-9 animate-pulse rounded-xl bg-card" />}>
           <ReportNav />
         </Suspense>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-card px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Unified Business Excel</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Any selected period (week, month, multi-month, custom): P&amp;L, Settlement,
+              Product / Brand / Category, Finance &amp; Sales detail — same Financial Engine
+              as Dashboard, with chronological period breakdowns when the range spans
+              multiple weeks or months.
+            </p>
+          </div>
+          <Suspense fallback={<div className="h-10 w-44 animate-pulse rounded-xl bg-muted" />}>
+            <ExportWeeklyBusinessExcelButton variant="primary" />
+          </Suspense>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

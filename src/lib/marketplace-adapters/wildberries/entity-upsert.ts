@@ -25,13 +25,15 @@ import {
   mapApiSaleToDb,
   mapFinanceRowsFromReport,
 } from "@/lib/wildberries/mappers";
+import { persistSalesEvents } from "@/lib/wildberries/sales-event-persistence";
+import type { SalesEventRow } from "@/lib/wildberries/sales-event-identity";
 import type {
   WbApiFinanceRow,
   WbApiOrder,
   WbApiProductCard,
   WbApiSale,
 } from "@/lib/wildberries/types";
-import type { WbFinance, WbOrder, WbSale, WbStock } from "@/types/database";
+import type { WbFinance, WbOrder, WbStock } from "@/types/database";
 
 function empty(): WarehouseEntityUpsertResult {
   return { upserted: 0, inserted: 0, updated: 0, skipped: 0 };
@@ -227,7 +229,7 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
   ): Promise<WarehouseEntityUpsertResult> {
     const result = empty();
     const supabase = createAdminClient();
-    const batch: Array<Omit<WbSale, "id">> = [];
+    const batch: SalesEventRow[] = [];
 
     for (const item of items) {
       const sale = item.raw as WbApiSale | undefined;
@@ -238,19 +240,22 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
       const productId =
         (await this.resolveProductId(sale.nmId, sale.supplierArticle)) ??
         (await this.ensureStubProduct(sale.nmId, sale.supplierArticle));
+      const mapped = mapApiSaleToDb(sale, productId);
       batch.push({
-        ...mapApiSaleToDb(sale, productId),
+        ...mapped,
         marketplace_account_id: this.marketplaceAccountId,
+        sale_id: String(mapped.sale_id),
+        event_type: mapped.event_type === "RETURN" ? "RETURN" : "SALE",
       });
     }
 
     if (batch.length) {
-      const { error } = await supabase.from("wb_sales").upsert(batch as never, {
-        onConflict: "marketplace_account_id,srid",
-      });
-      if (error) throw error;
-      result.upserted = batch.length;
-      result.updated = batch.length;
+      const persisted = await persistSalesEvents(supabase, batch);
+      if (persisted.errors.length) {
+        throw new Error(persisted.errors.join("; "));
+      }
+      result.upserted = persisted.upserted;
+      result.updated = persisted.upserted;
     }
     return result;
   }

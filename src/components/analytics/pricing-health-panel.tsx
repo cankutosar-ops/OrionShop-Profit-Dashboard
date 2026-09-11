@@ -16,7 +16,7 @@ import {
   DEFAULT_MARKETING_PERCENT,
   DEFAULT_TARGET_MARGIN_PERCENT,
 } from "@/lib/smart-pricing-constants";
-import type { ProductPricingHealthRow } from "@/services/smart-pricing-service";
+import type { ProductPricingHealthRow } from "@/lib/pricing-health";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { useCycleSort } from "@/hooks/use-cycle-sort";

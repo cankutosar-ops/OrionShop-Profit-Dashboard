@@ -12,22 +12,9 @@ import {
 } from "@/services/persisted-query-service";
 import type { ProductWithRelations, ScopedDateRange } from "@/types/database";
 import { logScopeAudit } from "@/lib/scope-audit-log";
+import type { ProductProfitReportRow } from "@/lib/reporting/product-profit-report-types";
 
-export type ProductProfitReportRow = {
-  productId: string;
-  sku: string;
-  model: string;
-  brand: string;
-  revenue: number;
-  orders: number;
-  purchases: number;
-  marketplaceFee: number;
-  logistics: number;
-  advertising: number;
-  productCost: number;
-  netProfit: number;
-  marginPercent: number;
-};
+export type { ProductProfitReportRow } from "@/lib/reporting/product-profit-report-types";
 
 export type ProductProfitReport = {
   scope: ScopedDateRange;

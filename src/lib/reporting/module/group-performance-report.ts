@@ -35,6 +35,7 @@ export type GroupPerformanceRow = {
   marketplaceFees: number;
   logistics: number;
   storage: number;
+  adjustments: number;
   advertising: number;
   netProfit: number;
   netMarginPercent: number;
@@ -68,6 +69,7 @@ type Acc = {
   marketplaceFees: number;
   logistics: number;
   storage: number;
+  adjustments: number;
   advertising: number;
   netProfit: number;
 };
@@ -83,6 +85,7 @@ function emptyAcc(name: string): Acc {
     marketplaceFees: 0,
     logistics: 0,
     storage: 0,
+    adjustments: 0,
     advertising: 0,
     netProfit: 0,
   };
@@ -122,6 +125,7 @@ export function aggregateProductProfitRows(
     acc.marketplaceFees += row.marketplaceFees;
     acc.logistics += row.logistics;
     acc.storage += row.storage;
+    acc.adjustments += row.adjustments;
     acc.advertising += row.advertising;
     acc.netProfit += row.netProfit;
   }
@@ -139,6 +143,7 @@ export function aggregateProductProfitRows(
       marketplaceFees: acc.marketplaceFees,
       logistics: acc.logistics,
       storage: acc.storage,
+      adjustments: acc.adjustments,
       advertising: acc.advertising,
       netProfit: acc.netProfit,
       netMarginPercent,

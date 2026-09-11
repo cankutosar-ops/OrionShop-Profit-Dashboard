@@ -25,6 +25,8 @@ type MetricCardProps = {
   /** Optional value color override (presentation only). */
   valueClassName?: string;
   hint?: string;
+  /** Optional scenario / status chip (e.g. Simulation). */
+  badge?: string;
   /** Card wrapper classes (e.g. Net Profit emphasis). */
   className?: string;
   /**
@@ -86,6 +88,7 @@ export function MetricCard({
   className,
   size = "default",
   hint,
+  badge,
 }: MetricCardProps) {
   const compact = size === "compact";
   const trendDisplay = trend ? buildMetricTrend(trend) : null;
@@ -102,7 +105,14 @@ export function MetricCard({
     >
       <div className="flex flex-1 items-start justify-between gap-3">
         <div className={cn("min-w-0 flex-1", compact ? "space-y-1" : "space-y-2")}>
-          <p className={cn("text-kpi-label", compact && "text-xs")}>{title}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className={cn("text-kpi-label", compact && "text-xs")}>{title}</p>
+            {badge ? (
+              <span className="border border-border/80 bg-muted/40 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {badge}
+              </span>
+            ) : null}
+          </div>
           <div
             className={cn(
               "text-kpi-value",

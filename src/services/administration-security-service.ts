@@ -20,77 +20,31 @@ import { listCompanies } from "@/services/marketplace-account-service";
 import {
   countFailedLoginsSince,
   queryAuditEvents,
-  type AuditEventRow,
 } from "@/services/administration-audit-service";
+import type {
+  AuthStatusPayload,
+  AuthzStatusPayload,
+  RlsStatusPayload,
+  RlsTableStatus,
+  SecretHealthItem,
+  SecurityBundlePayload,
+  SecurityHealthTone,
+  SecurityOverviewPayload,
+  SecurityStatusItem,
+} from "@/lib/administration/security-types";
+import type { AuditEventRow } from "@/lib/administration/audit-types";
 
-export type SecurityHealthTone = "healthy" | "warning" | "expired" | "missing";
-
-export type SecurityStatusItem = {
-  key: string;
-  label: string;
-  status: SecurityHealthTone;
-  detail: string;
-};
-
-export type SecretHealthItem = {
-  key: string;
-  label: string;
-  status: SecurityHealthTone;
-  detail: string;
-};
-
-export type RlsTableStatus = {
-  tableName: string;
-  rlsEnabled: boolean;
-  policyCount: number;
-  policyStatus: "enabled" | "disabled" | "unknown" | "absent";
-};
-
-export type AuthStatusPayload = {
-  provider: string;
-  activeUsers: number;
-  invitedUsers: number;
-  disabledUsers: number;
-  activeSessionsEstimate: number;
-  sessionDuration: string;
-  lastLoginAt: string | null;
-  failedLoginAttempts24h: number;
-};
-
-export type AuthzStatusPayload = {
-  roles: { id: PlatformRole; label: string; userCount: number }[];
-  companyMemberships: number;
-  marketplaceAccessGrants: number;
-  usersWithMembership: number;
-  usersWithoutMembership: number;
-};
-
-export type RlsStatusPayload = {
-  dataPlaneEnabled: boolean;
-  tables: RlsTableStatus[];
-  lastValidationAt: string | null;
-  validationResult: "pass" | "warn" | "fail" | "unknown";
-  validationDetail: string;
-};
-
-export type SecurityOverviewPayload = {
-  authentication: SecurityStatusItem;
-  authorization: SecurityStatusItem;
-  rls: SecurityStatusItem;
-  secretHealth: SecurityStatusItem;
-  activeSessions: number;
-  failedLoginAttempts24h: number;
-  lastSecurityEvent: AuditEventRow | null;
-  generatedAt: string;
-};
-
-export type SecurityBundlePayload = {
-  overview: SecurityOverviewPayload;
-  authentication: AuthStatusPayload;
-  authorization: AuthzStatusPayload;
-  rls: RlsStatusPayload;
-  secrets: SecretHealthItem[];
-};
+export type {
+  AuthStatusPayload,
+  AuthzStatusPayload,
+  RlsStatusPayload,
+  RlsTableStatus,
+  SecretHealthItem,
+  SecurityBundlePayload,
+  SecurityHealthTone,
+  SecurityOverviewPayload,
+  SecurityStatusItem,
+} from "@/lib/administration/security-types";
 
 function secretTone(
   present: boolean,
@@ -98,6 +52,7 @@ function secretTone(
   opts?: { warning?: boolean }
 ): SecurityHealthTone {
   if (!present || placeholder) return "missing";
+
   if (opts?.warning) return "warning";
   return "healthy";
 }

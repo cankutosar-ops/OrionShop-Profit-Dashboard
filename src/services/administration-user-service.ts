@@ -36,9 +36,6 @@ import type {
 } from "@/lib/administration/user-types";
 import { DISPLAY_MARKETPLACE_LABEL } from "@/lib/administration/user-types";
 
-// Re-exported so existing server-side importers (API routes) keep their paths.
-// Client components must import from "@/lib/administration/user-types" directly:
-// pulling a value through this module drags the server bundle into the client.
 export type {
   DisplayMarketplace,
   InviteUserInput,
@@ -55,6 +52,8 @@ export {
   DISPLAY_MARKETPLACE_LABEL,
   DISPLAY_MARKETPLACES,
 } from "@/lib/administration/user-types";
+
+export type { PlatformRole };
 
 function displayName(user: User): string {
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
@@ -342,5 +341,3 @@ export function assertNoCredentialsInPayload(payload: unknown): void {
     throw new Error("Refusing to return credential-bearing payload");
   }
 }
-
-export type { PlatformRole };

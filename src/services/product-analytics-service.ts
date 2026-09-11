@@ -9,9 +9,10 @@ import {
   pickTopByNetProfit,
   pickTopV3ByOperationalProfit,
 } from "@/lib/product-analytics";
-import { getProductProfitability } from "@/services/dashboard-service";
+import { getProductProfitabilityBuild } from "@/services/dashboard-service";
 import { getCurrentStockByProductId } from "@/services/inventory-report-service";
 import { logScopeAudit } from "@/lib/scope-audit-log";
+import type { ProductLogisticsReconciliation } from "@/lib/product-logistics-attribution";
 import type {
   ProductAnalyticsRow,
   ProductAnalyticsTotals,
@@ -30,6 +31,7 @@ export type ProductAnalyticsReport = {
   v3All: ProductAnalyticsV3Row[];
   v3Top10: ProductAnalyticsV3Row[];
   v3Bottom10: ProductAnalyticsV3Row[];
+  logisticsReconciliation: ProductLogisticsReconciliation;
 };
 
 export async function getProductAnalytics(
@@ -39,16 +41,22 @@ export async function getProductAnalytics(
   if (!env.isConfigured) return null;
 
   const client = await createServerClient();
-  const [products, stockByProductId] = await Promise.all([
-    getProductProfitability(scope, client),
+  const [build, stockByProductId] = await Promise.all([
+    getProductProfitabilityBuild(scope, client),
     getCurrentStockByProductId(scope.marketplaceAccountId),
   ]);
+  const products = build.rows;
   const all = buildProductAnalyticsRows(products);
   const v3All = buildProductAnalyticsV3Rows(products).map((row) => ({
     ...row,
     currentStock: stockByProductId.get(String(row.productId)) ?? 0,
   }));
-  const totals = buildProductAnalyticsTotals(products);
+  const totals = buildProductAnalyticsTotals(products, {
+    unallocatedLogistics: build.logisticsReconciliation.unallocatedLogistics,
+    accountLogisticsTotal: build.logisticsReconciliation.accountLogisticsTotal,
+    unallocatedRevenue: build.unallocatedRevenue,
+    accountRevenue: build.accountRevenue,
+  });
 
   logScopeAudit("Product Analytics", scope, scope, {
     orders: products.reduce((sum, p) => sum + p.orders, 0),
@@ -65,5 +73,6 @@ export async function getProductAnalytics(
     v3All,
     v3Top10: pickTopV3ByOperationalProfit(v3All, 10),
     v3Bottom10: pickBottomV3ByOperationalProfit(v3All, 10),
+    logisticsReconciliation: build.logisticsReconciliation,
   };
 }

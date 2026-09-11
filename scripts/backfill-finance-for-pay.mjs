@@ -47,6 +47,16 @@ async function main() {
   const from = process.argv[3] ?? "2026-05-24";
   const to = process.argv[4] ?? "2026-07-05";
 
+  const { isFinanceHistoricalRecoveryActive } = await import(
+    "../src/lib/finance-recovery/coordination.ts"
+  );
+  if (isFinanceHistoricalRecoveryActive(String(accountId))) {
+    console.error(
+      `BLOCKED: skipped_finance_recovery_active — Account ${accountId} Finance is reserved for Reports recovery. Refusing backfill-finance-for-pay.`
+    );
+    process.exit(2);
+  }
+
   console.log("=== Backfill wb_finance for_pay lines ===");
   console.log(`Account: ${accountId}`);
   console.log(`Period:  ${from} → ${to}\n`);

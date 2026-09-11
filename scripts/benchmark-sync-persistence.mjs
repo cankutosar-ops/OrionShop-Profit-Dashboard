@@ -39,7 +39,16 @@ async function main() {
 
   const { createWbSyncService } = await import("../src/lib/wildberries/sync-service.ts");
   const { resolveMarketplaceAccountId } = await import("../src/services/marketplace-account-service.ts");
+  const { isFinanceHistoricalRecoveryActive } = await import(
+    "../src/lib/finance-recovery/coordination.ts"
+  );
   const { marketplaceAccountId } = await resolveMarketplaceAccountId(null, null);
+  if (isFinanceHistoricalRecoveryActive(String(marketplaceAccountId))) {
+    console.error(
+      `BLOCKED: skipped_finance_recovery_active — Account ${marketplaceAccountId} Finance is reserved for Reports recovery. Refusing benchmark-sync-persistence finance path.`
+    );
+    process.exit(2);
+  }
   const svc = await createWbSyncService(marketplaceAccountId);
 
   console.log("=== Sync persistence benchmark ===");

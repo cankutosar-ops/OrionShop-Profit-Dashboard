@@ -85,3 +85,11 @@ export { buildInventoryReportDocument } from "@/lib/reporting/inventory-report";
 export { buildExecutiveReport } from "@/lib/reporting/executive-report";
 
 export * from "@/lib/reporting/sections";
+
+export {
+  buildWeeklyBusinessWorkbookModel,
+  renderWeeklyBusinessWorkbook,
+  buildWeeklyWorkbookFilename,
+  WEEKLY_WORKBOOK_SHEET_NAMES,
+  WEEKLY_FE_GLOSSARY,
+} from "@/lib/reporting/weekly-business";

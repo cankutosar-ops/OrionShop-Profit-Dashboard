@@ -316,6 +316,10 @@ export type WbOrder = {
 export type WbSale = {
   id: string;
   marketplace_account_id: string;
+  /** WB Statistics saleID. Unique economic event (S… sale, R… return). */
+  sale_id?: string | null;
+  /** Derived from the event, not from SRID. SALE and RETURN can share an SRID. */
+  event_type?: "SALE" | "RETURN" | null;
   srid: string;
   nm_id: number;
   product_id: string;
@@ -692,6 +696,13 @@ export type ProductProfitability = ProfitBreakdown & {
   purchaseLogisticsRows: number;
   /** Logistics rows excluded (cancelled / unknown / missing SRID). */
   excludedLogisticsRows: number;
+  /** Sold units − returned units for the period. */
+  netUnits: number;
+  /**
+   * Eligible product logistics ÷ net units. Null when net units ≤ 0
+   * (do not display as 0 ₽).
+   */
+  unitLogisticsCost: number | null;
 };
 
 /** Top-N product audit row for /audit/product-profitability. */
@@ -744,11 +755,20 @@ export type ProductAnalyticsV3Row = {
   returnLogistics: number;
   otherMarketplaceCosts: number;
   productCost: number;
+  /** Alias kept for callers; equals financialNetProfit (V4 after tax). */
   operationalProfit: number;
-  /** Operational profit ÷ revenue × 100. */
+  /** Net Profit ÷ revenue × 100 (V4 finalNetProfit). */
   operationalMarginPercent: number;
-  /** Financial net profit (Model B engine). */
+  /** Financial Engine V4 Net Profit (after tax). */
   financialNetProfit: number;
+  /** Sold − returned units. */
+  netUnits: number;
+  /** Eligible logistics ÷ net units; null when net units ≤ 0. */
+  unitLogisticsCost: number | null;
+  /** Informational: Marketplace Fees ÷ Net Sales × 100. */
+  marketplaceFeesPctOfNetSales: number | null;
+  /** Informational: Marketplace Fees ÷ Revenue × 100. */
+  marketplaceFeesPctOfRevenue: number | null;
   /** Total current stock from inventory cache — links to Inventory page. */
   currentStock: number;
 };
@@ -823,6 +843,14 @@ export type ProductAnalyticsTotals = {
   commission: number;
   marketing: number;
   marginPercent: number;
+  /** Account logistics not in any product's eligible Net Profit logistics. */
+  unallocatedLogistics: number;
+  /** Account Σ LOGISTICS |amount| for the period finance set. */
+  accountLogisticsTotal: number;
+  /** Finance for_pay with null product_id. */
+  unallocatedRevenue: number;
+  /** Full-account finance for_pay total. */
+  accountRevenue: number;
 };
 
 export type ProductVariant = {

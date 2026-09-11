@@ -6,7 +6,7 @@ import { RoleBadge } from "@/components/administration/role-badge";
 import { UserStatusBadge } from "@/components/administration/user-status-badge";
 import { PLATFORM_ROLES, type PlatformRole } from "@/lib/security/roles";
 import { platformRoleLabel } from "@/lib/security/roles";
-import type { ManagedUserDetails } from "@/services/administration-user-service";
+import type { ManagedUserDetails } from "@/lib/administration/user-types";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";

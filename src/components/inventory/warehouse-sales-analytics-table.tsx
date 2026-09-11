@@ -2,10 +2,11 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Search } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { SortableTh } from "@/components/ui/sortable-th";
+import { WarehouseLocationSelect } from "@/components/inventory/warehouse-location-select";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { FILTER_PARAMS } from "@/lib/filter-params";
 import {
@@ -15,6 +16,8 @@ import {
   type WarehouseSalesRow,
   type WarehouseSalesTotals,
 } from "@/lib/warehouse-sales-analytics";
+import type { WarehouseLocation } from "@/lib/warehouse-locations";
+import { buildWarehouseLocations } from "@/lib/warehouse-locations";
 import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
 import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
@@ -26,6 +29,8 @@ type WarehouseSalesAnalyticsTableProps = {
   totals: WarehouseSalesTotals;
   drillDownWarehouse: string | null;
   products: WarehouseProductSalesRow[] | null;
+  /** Warehouse Locations (WB + FBS) — filter by name only. */
+  locations?: WarehouseLocation[];
   rangeFrom: string;
   rangeTo: string;
 };
@@ -103,13 +108,31 @@ export function WarehouseSalesAnalyticsTable({
   totals,
   drillDownWarehouse,
   products,
+  locations = [],
   rangeFrom,
   rangeTo,
 }: WarehouseSalesAnalyticsTableProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [hideEmpty, setHideEmpty] = useState(true);
+
+  const locationOptions = useMemo(() => {
+    if (locations.length > 0) return locations;
+    return buildWarehouseLocations(rows.map((r) => ({ name: r.warehouse, active: true })));
+  }, [locations, rows]);
+
+  const onLocationChange = useCallback(
+    (name: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (!name) params.delete("warehouse");
+      else params.set("warehouse", name);
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [pathname, router, searchParams]
+  );
 
   const {
     sort: warehouseSort,
@@ -276,15 +299,26 @@ export function WarehouseSalesAnalyticsTable({
             aria-label="Search warehouse"
           />
         </div>
-        <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={hideEmpty}
-            onChange={(event) => setHideEmpty(event.target.checked)}
-            className="h-4 w-4 rounded border-border"
-          />
-          Hide empty warehouses
-        </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-medium text-muted-foreground">
+            Warehouse location
+            <WarehouseLocationSelect
+              value={drillDownWarehouse ?? ""}
+              onChange={onLocationChange}
+              locations={locationOptions}
+              className="min-w-[12rem]"
+            />
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-2 pb-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={hideEmpty}
+              onChange={(event) => setHideEmpty(event.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Hide empty warehouses
+          </label>
+        </div>
       </div>
 
       <div

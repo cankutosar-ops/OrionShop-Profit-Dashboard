@@ -36,6 +36,10 @@ export function toProductAnalyticsRow(product: ProductProfitability): ProductAna
 
 export function toProductAnalyticsV3Row(product: ProductProfitability): ProductAnalyticsV3Row {
   const ops = buildProductOperationalMetrics(product);
+  const feesPctOfNetSales =
+    product.netSales > 0 ? (product.marketplaceFees / product.netSales) * 100 : null;
+  const feesPctOfRevenue =
+    product.revenue > 0 ? (product.marketplaceFees / product.revenue) * 100 : null;
 
   return {
     productId: product.productId,
@@ -58,6 +62,10 @@ export function toProductAnalyticsV3Row(product: ProductProfitability): ProductA
     operationalProfit: ops.operationalProfit,
     operationalMarginPercent: ops.operationalMarginPercent,
     financialNetProfit: ops.financialNetProfit,
+    netUnits: product.netUnits,
+    unitLogisticsCost: product.unitLogisticsCost,
+    marketplaceFeesPctOfNetSales: feesPctOfNetSales,
+    marketplaceFeesPctOfRevenue: feesPctOfRevenue,
     currentStock: 0,
   };
 }
@@ -143,7 +151,13 @@ function sumFinancialTotals(products: ProductProfitability[]) {
 
 /** Sum metrics across V3 table rows (orders > 0 OR purchases > 0 OR revenue > 0). */
 export function buildProductAnalyticsTotals(
-  products: ProductProfitability[]
+  products: ProductProfitability[],
+  reconciliation?: {
+    unallocatedLogistics?: number;
+    accountLogisticsTotal?: number;
+    unallocatedRevenue?: number;
+    accountRevenue?: number;
+  }
 ): ProductAnalyticsTotals {
   const financial = sumFinancialTotals(products);
   financial.productCount = products.filter((product) => product.revenue > 0).length;
@@ -196,6 +210,10 @@ export function buildProductAnalyticsTotals(
     operationalProfit: v3Rollup.operationalProfit,
     operationalMarginPercent: calculateNetMarginPercent(v3Revenue, v3Rollup.operationalProfit),
     marginPercent: calculateNetMarginPercent(v3Revenue, financial.netProfit),
+    unallocatedLogistics: reconciliation?.unallocatedLogistics ?? 0,
+    accountLogisticsTotal: reconciliation?.accountLogisticsTotal ?? 0,
+    unallocatedRevenue: reconciliation?.unallocatedRevenue ?? 0,
+    accountRevenue: reconciliation?.accountRevenue ?? 0,
   };
 }
 

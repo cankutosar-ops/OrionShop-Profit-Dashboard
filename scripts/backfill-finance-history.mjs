@@ -146,6 +146,16 @@ async function main() {
   const from = process.argv[3] ?? `${year}-01-01`;
   const strategy = process.argv[5] ?? "monthly";
 
+  const { isFinanceHistoricalRecoveryActive } = await import(
+    "../src/lib/finance-recovery/coordination.ts"
+  );
+  if (isFinanceHistoricalRecoveryActive(String(accountId))) {
+    console.error(
+      `BLOCKED: skipped_finance_recovery_active — Account ${accountId} Finance is reserved for Reports recovery. Refusing backfill-finance-history.`
+    );
+    process.exit(2);
+  }
+
   console.log("=== Finance Historical Backfill ===");
   console.log(`Account:  ${accountId}`);
   console.log(`Period:   ${from} → ${to}`);

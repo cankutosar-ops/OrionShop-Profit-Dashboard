@@ -8,11 +8,11 @@ import { RlsStatusTable } from "@/components/administration/rls-status-table";
 import { LoginHistoryTable } from "@/components/administration/login-history-table";
 import { SecurityEventTable } from "@/components/administration/security-event-table";
 import { RoleBadge } from "@/components/administration/role-badge";
-import type { SecurityBundlePayload } from "@/services/administration-security-service";
+import type { SecurityBundlePayload } from "@/lib/administration/security-types";
 import type {
   AuditEventRow,
   LoginHistoryRow,
-} from "@/services/administration-audit-service";
+} from "@/lib/administration/audit-types";
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—";

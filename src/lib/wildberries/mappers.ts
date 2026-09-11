@@ -94,20 +94,30 @@ export function mapApiOrderToDb(
 }
 
 export function mapApiSaleToDb(sale: WbApiSale, productId: string): Omit<WbSale, "id" | "marketplace_account_id"> {
-  const isReturn = sale.saleID.startsWith("R");
-  const srid = sale.srid ?? sale.saleID;
+  const saleId = String(sale.saleID ?? "").trim();
+  if (!saleId) {
+    throw new Error("WB saleID is required to persist a sales event");
+  }
+  // Positive magnitudes. V4 subtracts returns via is_return — do not negate quantity.
+  const isReturn = saleId.startsWith("R");
+  const srid = sale.srid ?? saleId;
+  const eventDate = toDateString(sale.date);
 
   return {
+    sale_id: saleId,
+    event_type: isReturn ? "RETURN" : "SALE",
     srid,
     nm_id: sale.nmId,
     product_id: productId,
-    sale_date: toDateString(sale.date),
+    // SALE date stays the sale event date. RETURN date is the return event date.
+    // Never write a return date onto a different (SALE) row.
+    sale_date: eventDate,
     revenue: Math.abs(sale.finishedPrice ?? sale.forPay ?? 0),
     price_with_disc: Math.abs(sale.priceWithDisc ?? 0),
     for_pay: Math.abs(sale.forPay ?? 0),
     quantity: 1,
     is_return: isReturn,
-    return_date: isReturn ? toDateString(sale.date) : null,
+    return_date: isReturn ? eventDate : null,
     warehouse: sale.warehouseName ?? null,
     tech_size: sale.techSize ?? null,
     barcode: sale.barcode ?? null,

@@ -44,9 +44,11 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
               {report.v3All.length} SKUs with activity
             </p>
             <p className="mt-1.5 text-xs leading-relaxed">
-              Operational profit = revenue − product cost − commission − total logistics − return
-              logistics − marketing − other marketplace costs · Funnel and P&L are shown separately
-              · Financial net profit unchanged on Dashboard
+              Net Profit (V4) = Revenue − Product Cost − Logistics − Storage − Acceptance −
+              Penalties − Adjustments − Advertising − Estimated Tax. Marketplace Fees are
+              informational (Sales − Sales forPay) and are not deducted again. Logistics uses
+              SRID→sale / unambiguous nm_id attribution; unmatched account logistics stay
+              Unallocated.
             </p>
           </div>
 
@@ -54,7 +56,7 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
 
           <ProductAnalyticsV8Table
             title="All Products"
-            description={`${report.v3All.length} models sorted by operational profit · expand for SKU funnel · stock opens Inventory`}
+            description={`${report.v3All.length} models sorted by net profit · expand for SKU funnel · stock opens Inventory`}
             rows={report.v3All}
             rangeFrom={scope.from}
             rangeTo={scope.to}
@@ -63,14 +65,14 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
           <ProductAnalyticsV3Table
             layout="compact"
             title="Top 10 Winners"
-            description="Highest operational profit in period"
+            description="Highest Net Profit in period"
             rows={report.v3Top10}
           />
 
           <ProductAnalyticsV3Table
             layout="compact"
             title="Bottom 10 Losers"
-            description="Lowest operational profit — review pricing and costs"
+            description="Lowest Net Profit — review pricing and costs"
             rows={report.v3Bottom10}
           />
         </div>

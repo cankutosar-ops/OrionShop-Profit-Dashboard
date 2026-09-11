@@ -49,7 +49,10 @@ CREATE TABLE IF NOT EXISTS wb_orders (
 -- Wildberries Sales
 CREATE TABLE IF NOT EXISTS wb_sales (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sale_id TEXT NOT NULL,
+  event_type TEXT NOT NULL CHECK (event_type IN ('SALE', 'RETURN')),
   srid TEXT NOT NULL,
+  nm_id BIGINT NOT NULL,
   nm_id BIGINT NOT NULL,
   product_id UUID REFERENCES products(id),
   sale_date DATE NOT NULL,
@@ -110,6 +113,10 @@ CREATE TABLE IF NOT EXISTS product_cost_history (
 );
 
 -- Indexes for dashboard query performance
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wb_sales_account_sale_id
+  ON wb_sales (marketplace_account_id, sale_id);
+CREATE INDEX IF NOT EXISTS idx_wb_sales_account_srid_lookup
+  ON wb_sales (marketplace_account_id, srid);
 CREATE INDEX IF NOT EXISTS idx_wb_sales_date ON wb_sales(sale_date);
 CREATE INDEX IF NOT EXISTS idx_wb_sales_product ON wb_sales(product_id);
 CREATE INDEX IF NOT EXISTS idx_wb_finance_date ON wb_finance(operation_date);

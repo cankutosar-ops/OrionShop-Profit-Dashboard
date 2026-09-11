@@ -82,6 +82,26 @@ export function ProductProfitReportTable({
       ),
     },
     {
+      key: "unitsReturned",
+      header: "Returned",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.unitsReturned,
+      cell: (row) => (
+        <span className="tabular-nums">{formatKpiCount(row.unitsReturned)}</span>
+      ),
+    },
+    {
+      key: "netUnits",
+      header: "Net Units",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.netUnits,
+      cell: (row) => (
+        <span className="tabular-nums">{formatKpiCount(row.netUnits)}</span>
+      ),
+    },
+    {
       key: "netSales",
       header: "Net Sales",
       align: "right",
@@ -91,11 +111,19 @@ export function ProductProfitReportTable({
     },
     {
       key: "revenue",
-      header: "Revenue (Settlement)",
+      header: "Revenue",
       align: "right",
       sortable: true,
       sortValue: (row) => row.revenue,
       cell: (row) => money(row.revenue, currency),
+    },
+    {
+      key: "marketplaceFees",
+      header: "Marketplace Fee",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.marketplaceFees,
+      cell: (row) => money(row.marketplaceFees, currency),
     },
     {
       key: "productCost",
@@ -104,14 +132,6 @@ export function ProductProfitReportTable({
       sortable: true,
       sortValue: (row) => row.productCost,
       cell: (row) => money(row.productCost, currency),
-    },
-    {
-      key: "marketplaceFees",
-      header: "Marketplace Fees",
-      align: "right",
-      sortable: true,
-      sortValue: (row) => row.marketplaceFees,
-      cell: (row) => money(row.marketplaceFees, currency),
     },
     {
       key: "logistics",
@@ -128,6 +148,30 @@ export function ProductProfitReportTable({
       sortable: true,
       sortValue: (row) => row.storage,
       cell: (row) => money(row.storage, currency),
+    },
+    {
+      key: "penalties",
+      header: "Penalties",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.penalties,
+      cell: (row) => money(row.penalties, currency),
+    },
+    {
+      key: "adjustments",
+      header: "Adjustments",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.adjustments,
+      cell: (row) => money(row.adjustments, currency),
+    },
+    {
+      key: "estimatedTax",
+      header: "Est. Tax",
+      align: "right",
+      sortable: true,
+      sortValue: (row) => row.estimatedTax,
+      cell: (row) => money(row.estimatedTax, currency),
     },
     {
       key: "advertising",
@@ -147,7 +191,7 @@ export function ProductProfitReportTable({
     },
     {
       key: "netMarginPercent",
-      header: "Net Margin %",
+      header: "Margin %",
       align: "right",
       sortable: true,
       sortValue: (row) => row.netMarginPercent,
@@ -167,20 +211,6 @@ export function ProductProfitReportTable({
         </span>
       ),
     },
-    {
-      key: "recommendedPrice",
-      header: "Recommended Price",
-      align: "right",
-      sortable: true,
-      sortValue: (row) => row.recommendedPrice,
-      cell: (row) => (
-        <span className="tabular-nums text-muted-foreground">
-          {row.recommendedPrice == null
-            ? "—"
-            : formatKpiCurrency(row.recommendedPrice, currency)}
-        </span>
-      ),
-    },
   ];
 
   return (
@@ -192,7 +222,7 @@ export function ProductProfitReportTable({
       defaultSortKey="netProfit"
       defaultSortDir="desc"
       compact
-      minWidthClassName="min-w-[1200px]"
+      minWidthClassName="min-w-[1600px]"
     />
   );
 }

@@ -47,13 +47,16 @@ const {
 
 check("Catalog has 5 reports", REPORTING_CATALOG.length === 5);
 check(
-  "Profit & Loss and Settlement are ready",
-  REPORTING_CATALOG.filter((r) => r.status === "ready").map((r) => r.id).sort().join(",") ===
-    "profit-loss,settlement"
+  "All five READY reports are ready",
+  REPORTING_CATALOG.every((r) => r.status === "ready") &&
+    REPORTING_CATALOG.map((r) => r.id)
+      .sort()
+      .join(",") ===
+      "brand-performance,category-performance,product-profit,profit-loss,settlement"
 );
 check(
-  "Placeholders present",
-  REPORTING_CATALOG.filter((r) => r.status === "placeholder").length === 3
+  "No placeholder reports in catalog",
+  REPORTING_CATALOG.filter((r) => r.status === "placeholder").length === 0
 );
 
 const exporter = new StubReportExporter();

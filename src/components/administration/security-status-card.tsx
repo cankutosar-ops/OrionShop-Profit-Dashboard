@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { SecurityHealthTone } from "@/services/administration-security-service";
+import type { SecurityHealthTone } from "@/lib/administration/security-types";
 
 const TONE: Record<SecurityHealthTone, string> = {
   healthy: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",

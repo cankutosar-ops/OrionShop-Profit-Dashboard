@@ -11,7 +11,10 @@ import {
   type WarehouseSalesRow,
   type WarehouseSalesTotals,
 } from "@/lib/warehouse-sales-analytics";
+import type { WarehouseLocation } from "@/lib/warehouse-locations";
+import { buildWarehouseLocations, mergeWarehouseNameLists } from "@/lib/warehouse-locations";
 import { fetchProductsWithRelations } from "@/services/persisted-query-service";
+import { listWarehouseLocations } from "@/services/warehouse-location-service";
 import type { ScopedDateRange } from "@/types/database";
 
 const PAGE_SIZE = 1000;
@@ -28,6 +31,8 @@ export type WarehouseSalesAnalyticsReport = {
   /** Product breakdown when a warehouse was requested; otherwise null. */
   drillDownWarehouse: string | null;
   products: WarehouseProductSalesRow[] | null;
+  /** Account Warehouse Locations (WB + FBS peers) — name is the filter key. */
+  locations: WarehouseLocation[];
   loadTimeMs: number;
   /** Completed wb_sales rows in scope (units/revenue source). */
   sourceSaleCount: number;
@@ -178,9 +183,13 @@ export async function getWarehouseSalesAnalytics(
   });
 
   const productIds = scope.brandId ? products.map((p) => String(p.id)) : undefined;
-  const [orders, sales] = await Promise.all([
+  const [orders, sales, catalogLocations] = await Promise.all([
     fetchOrdersForWarehouseAnalytics(scope, client, productIds),
     fetchCompletedSalesForWarehouseAnalytics(scope, client, productIds),
+    listWarehouseLocations(scope.marketplaceAccountId, {
+      activeOnly: true,
+      client,
+    }).catch(() => [] as WarehouseLocation[]),
   ]);
 
   const { rows, totals } = aggregateWarehouseSales({ orders, sales });
@@ -198,6 +207,14 @@ export async function getWarehouseSalesAnalytics(
     productRows = aggregateWarehouseProductSales(sales, drillDownWarehouse, productLookup);
   }
 
+  const periodNames = mergeWarehouseNameLists(
+    rows.map((r) => r.warehouse),
+    catalogLocations.map((l) => l.name)
+  );
+  const locations = buildWarehouseLocations(
+    periodNames.map((name) => ({ name, active: true }))
+  );
+
   logScopeAudit("Warehouse Sales Analytics", scope, scope, {
     orders: orders.length,
     sales: sales.length,
@@ -210,6 +227,7 @@ export async function getWarehouseSalesAnalytics(
     totals,
     drillDownWarehouse,
     products: productRows,
+    locations,
     loadTimeMs: Date.now() - started,
     sourceSaleCount: sales.length,
     sourceOrderCount: orders.length,

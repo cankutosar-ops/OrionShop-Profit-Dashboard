@@ -19,6 +19,7 @@ import {
   Tag,
   TrendingUp,
   Warehouse,
+  Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -54,6 +55,7 @@ export const SIDEBAR_PRIMARY_NAVIGATION: SidebarNavItem[] = [
   { name: "Purchases", href: "/purchases", icon: ShoppingBag },
   { name: "Cost Management", href: "/costs", icon: Coins },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Orion", href: "/orion", icon: Sparkles },
   { name: "Production Health", href: "/monitoring", icon: Activity },
 ];
 
@@ -74,6 +76,7 @@ function isNavItemActive(pathname: string, href: string): boolean {
   if (href === "/administration") return pathname.startsWith("/administration");
   if (href === "/settings/companies") return pathname.startsWith("/settings");
   if (href === "/inventory") return pathname.startsWith("/inventory");
+  if (href === "/orion") return pathname.startsWith("/orion");
   return pathname.startsWith(href);
 }
 

@@ -2,6 +2,8 @@
  * Sprint 10 — Historical inventory snapshot types (DB read model).
  */
 
+import type { Database } from "@/types/database";
+
 export type HistoricalInventorySnapshot = {
   id: number;
   snapshot_date: string;
@@ -19,20 +21,9 @@ export type HistoricalInventorySnapshot = {
   created_at: string;
 };
 
-export type HistoricalInventorySnapshotInsert = {
-  snapshot_date: string;
-  marketplace_account_id: number;
-  warehouse_name: string;
-  brand: string;
-  subject: string;
-  seller_article: string;
-  nm_id: number;
-  barcode: string;
-  size: string;
-  quantity: number;
-  in_way_to_client?: number;
-  in_way_from_client?: number;
-};
+/** Kept identical to the typed Supabase insert contract. */
+export type HistoricalInventorySnapshotInsert =
+  Database["public"]["Tables"]["historical_inventory_snapshots"]["Insert"];
 
 export type HistoricalInventoryQuery = {
   marketplaceAccountId: string;

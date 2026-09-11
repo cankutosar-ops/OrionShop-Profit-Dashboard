@@ -5,6 +5,7 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
 import { shareOfNetSalesPercent } from "@/lib/financial-engine";
+import { calculatePotentialProfitNoReturns } from "@/lib/potential-profit-no-returns";
 import { isNetSalesReady } from "@/lib/sales-revenue-resolution";
 import { sanitizeUnavailableReason, TEMPORARILY_UNAVAILABLE } from "@/lib/user-facing-errors";
 import type {
@@ -16,6 +17,10 @@ import type {
 /** Shared expense icon language — never resembles income. */
 const EXPENSE_ICON = "from-rose-500/20 to-rose-500/5 text-rose-400";
 const EXPENSE_VALUE = "text-rose-300";
+
+/** Distinct treatment for analytical scenario cards (not accounting KPIs). */
+const SIMULATION_CARD =
+  "border-dashed border-amber-500/35 bg-amber-500/[0.04] ring-1 ring-amber-500/20";
 
 type DashboardProfitSectionProps = {
   modelB: ModelBProfitMetrics;
@@ -86,6 +91,21 @@ export function DashboardProfitSection({
     iconClassName: EXPENSE_ICON,
     valueClassName: EXPENSE_VALUE,
   } as const;
+
+  const noReturnsScenario = calculatePotentialProfitNoReturns({
+    grossSales: modelB.grossSales,
+    marketplaceFee: modelB.marketplaceFee ?? modelB.commission,
+    productCost: modelB.productCost,
+    logistics: modelB.logistics,
+    storage: modelB.storage,
+    acceptance: modelB.acceptance,
+    penalties: modelB.penalties,
+    adjustments: modelB.adjustments,
+    advertising: modelB.advertising,
+    estimatedTax: modelB.estimatedTax,
+    currentNetProfit: modelB.finalNetProfit,
+  });
+
 
   return (
     <KpiSection
@@ -237,6 +257,53 @@ export function DashboardProfitSection({
             icon={KPI_ICONS.profit}
             className="ring-1 ring-primary/30"
             variant={profitVariant(modelB.finalNetProfit, revenueReady, isEmptyPeriod)}
+          />
+
+          <MetricCard
+            title="Return Profit Impact"
+            value={formatMoneyOrPending(noReturnsScenario.returnProfitImpact)}
+            subtitle={
+              revenueReady
+                ? "Potential Profit − Net Profit"
+                : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
+            }
+            hint="Simulation only. Positive value = profit lost because of returns. Not an accounting KPI."
+            badge="Simulation"
+            icon={KPI_ICONS.returns}
+            className={SIMULATION_CARD}
+            variant={profitVariant(
+              noReturnsScenario.returnProfitImpact,
+              revenueReady,
+              isEmptyPeriod
+            )}
+          />
+          <MetricCard
+            title="Potential Profit (No Returns)"
+            value={formatMoneyOrPending(noReturnsScenario.potentialProfit)}
+            subtitle={
+              revenueReady ? (
+                <div className="space-y-0.5">
+                  <div>Estimated profit assuming all returned orders were completed.</div>
+                  <div className="tabular-nums text-foreground/80">
+                    {isEmptyPeriod
+                      ? emptyValue
+                      : formatKpiPercent(noReturnsScenario.marginPercentOfGrossSales)}{" "}
+                    of Gross Sales
+                  </div>
+                </div>
+              ) : (
+                sanitizeUnavailableReason(undefined, "Awaiting revenue data")
+              )
+            }
+            hint="Simulation only. Returns are ignored. This is not an accounting KPI. Gross Sales − Marketplace Fee − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Advertising − Estimated Tax."
+            badge="No Returns Scenario"
+            icon={KPI_ICONS.profit}
+            className={SIMULATION_CARD}
+            variant={profitVariant(
+              noReturnsScenario.potentialProfit,
+              revenueReady,
+              isEmptyPeriod
+            )}
           />
         </div>
 

@@ -3,6 +3,7 @@ import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
 import type { ParsedPurchaseImportRow } from "@/lib/purchase-excel";
 import { fetchProductOptions, recordProductCostHistory } from "@/services/cost-service";
 import type {
+  Database,
   Purchase,
   PurchaseCurrency,
   PurchaseImportResult,
@@ -239,13 +240,14 @@ export async function importPurchaseFromExcel(
     /invoice_number/i.test(purchaseError.message) &&
     "invoice_number" in purchasePayload
   ) {
-    // The column must be absent from the payload, not null: this retry exists
-    // for a schema where invoice_number does not exist yet, so sending the key
-    // at all would fail identically. The cast covers the deliberate omission.
-    const { invoice_number: _ignored, ...withoutInvoice } = purchasePayload;
+    const { invoice_number: _ignored, ...rest } = purchasePayload;
+    const withoutInvoice: Database["public"]["Tables"]["purchases"]["Insert"] = {
+      ...rest,
+      invoice_number: null,
+    };
     ({ data: purchaseRow, error: purchaseError } = await supabase
       .from("purchases")
-      .insert(withoutInvoice as typeof purchasePayload)
+      .insert(withoutInvoice)
       .select("*")
       .single());
   }

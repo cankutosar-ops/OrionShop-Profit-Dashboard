@@ -1,11 +1,15 @@
 import { calculateNetMarginPercent } from "@/lib/profit-margin";
 import type { ProductProfitability } from "@/types/database";
 
-/** All outbound logistics rows for the SKU (purchase + excluded). */
+/**
+ * Product Total Logistics for Net Profit / Unit Logistics Cost.
+ * Eligible purchase-SRID logistics only (excluded is visibility, not NP).
+ */
 export function calculateTotalLogistics(
   product: Pick<ProductProfitability, "purchaseLogistics" | "excludedLogistics">
 ): number {
-  return product.purchaseLogistics + product.excludedLogistics;
+  void product.excludedLogistics;
+  return product.purchaseLogistics;
 }
 
 /**
@@ -19,8 +23,9 @@ export function calculateOtherMarketplaceCosts(
 }
 
 /**
- * Commercial Performance Net Profit (V4) for Product Analytics.
- * Uses Financial Engine finalNetProfit — does NOT deduct Marketplace Fee or Acquiring again.
+ * Product Analytics Net Profit (V4 finalNetProfit).
+ * Does NOT deduct Marketplace Fee or Acquiring again.
+ * Named calculateOperationalProfit for historical call-site compatibility.
  */
 export function calculateOperationalProfit(product: ProductProfitability): number {
   return product.finalNetProfit;

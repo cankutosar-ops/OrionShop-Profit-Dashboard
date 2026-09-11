@@ -77,6 +77,7 @@ export default async function WarehouseSalesAnalyticsPage({ searchParams }: Page
               totals={report.totals}
               drillDownWarehouse={report.drillDownWarehouse}
               products={report.products}
+              locations={report.locations}
               rangeFrom={scope.from}
               rangeTo={scope.to}
             />

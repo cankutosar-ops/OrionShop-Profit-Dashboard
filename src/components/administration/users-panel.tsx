@@ -10,7 +10,7 @@ import { platformRoleLabel } from "@/lib/security/roles";
 import type {
   ManagedUserDetails,
   ManagedUserSummary,
-} from "@/services/administration-user-service";
+} from "@/lib/administration/user-types";
 
 type CompanyOption = { id: string; name: string };
 

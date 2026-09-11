@@ -15,11 +15,20 @@ loadEnv();
 
 const { createWbSyncService } = await import("../src/lib/wildberries/sync-service.ts");
 const { resolveMarketplaceAccountId } = await import("../src/services/marketplace-account-service.ts");
+const { isFinanceHistoricalRecoveryActive } = await import(
+  "../src/lib/finance-recovery/coordination.ts"
+);
 
 const from = process.env.AUDIT_FROM || "2026-05-24";
 const to = process.env.AUDIT_TO || "2026-06-23";
 
 const { marketplaceAccountId } = await resolveMarketplaceAccountId(null, null);
+if (isFinanceHistoricalRecoveryActive(String(marketplaceAccountId))) {
+  console.error(
+    `BLOCKED: skipped_finance_recovery_active — Account ${marketplaceAccountId} Finance is reserved for Reports recovery. Refusing run-finance-sync.`
+  );
+  process.exit(2);
+}
 console.log(`Syncing finance ${from} → ${to} for account ${marketplaceAccountId}...`);
 const service = await createWbSyncService(marketplaceAccountId);
 const result = await service.syncFinance(from, to);

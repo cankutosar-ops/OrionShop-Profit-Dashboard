@@ -8,7 +8,7 @@ import { inferPeriodPreset } from "@/lib/reports/report-period";
 import { cn } from "@/lib/utils";
 
 type ExportReportButtonProps = {
-  templateId: "business-report" | "product-report";
+  templateId: "business-report" | "product-report" | "weekly-business-excel";
   className?: string;
   label?: string;
   variant?: "primary" | "secondary";
@@ -28,10 +28,12 @@ export function ExportReportButton({
   const searchParams = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleExport() {
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       const query = new URLSearchParams();
       query.set("templateId", templateId);
@@ -72,6 +74,7 @@ export function ExportReportButton({
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(objectUrl);
+      setSuccess("Excel generated");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export failed");
     } finally {
@@ -95,11 +98,16 @@ export function ExportReportButton({
         aria-label={ariaLabel ?? `Export ${templateId} Excel`}
       >
         <Download className="h-4 w-4" />
-        {busy ? "Generating…" : label}
+        {busy ? "Generating report..." : label}
       </button>
       {error ? (
         <p className="mt-2 text-sm text-destructive" role="alert">
           {error}
+        </p>
+      ) : null}
+      {success && !error ? (
+        <p className="mt-2 text-sm text-muted-foreground" role="status">
+          {success}
         </p>
       ) : null}
     </div>
@@ -127,6 +135,20 @@ export function ExportProductReportButton(
       {...props}
       templateId="product-report"
       ariaLabel="Export Product Report Excel"
+    />
+  );
+}
+
+/** Unified Business Excel — primary management export for any selected date range. */
+export function ExportWeeklyBusinessExcelButton(
+  props: Omit<ExportReportButtonProps, "templateId">
+) {
+  return (
+    <ExportReportButton
+      {...props}
+      templateId="weekly-business-excel"
+      label={props.label ?? "Download Unified Business Excel"}
+      ariaLabel="Download Unified Business Excel"
     />
   );
 }

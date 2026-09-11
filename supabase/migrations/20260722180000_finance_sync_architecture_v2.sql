@@ -43,6 +43,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_wb_finance_account_source_key
   ON public.wb_finance (marketplace_account_id, source_key)
   WHERE source_key IS NOT NULL;
 
+-- PostgREST emits ON CONFLICT (marketplace_account_id, source_key) without an
+-- index predicate. Keep a non-partial unique index so PostgreSQL can infer the
+-- arbiter atomically. PostgreSQL still permits multiple NULL source_key rows.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wb_finance_account_source_key_atomic
+  ON public.wb_finance (marketplace_account_id, source_key);
+
 -- ---------------------------------------------------------------------------
 -- 2) sync_runs — durable audit for every sync
 -- ---------------------------------------------------------------------------
@@ -145,3 +151,63 @@ COMMENT ON COLUMN public.marketplace_accounts.sync_heartbeat_at IS
   'Last activity timestamp while status=running — used for stale-lock release.';
 COMMENT ON COLUMN public.marketplace_accounts.sync_lock_expires_at IS
   'Absolute expiry for RUNNING lock; past this → auto-release.';
+
+-- Read-only recovery preflight. Recovery must call this before acquiring a
+-- lock or making a Wildberries request and fail closed unless it returns true.
+CREATE OR REPLACE FUNCTION public.orion_finance_recovery_schema_ready()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+  SELECT
+    EXISTS (
+      SELECT 1
+      FROM pg_index AS i
+      WHERE i.indrelid = 'public.wb_finance'::regclass
+        AND i.indisunique
+        AND i.indpred IS NULL
+        AND i.indnatts = 2
+        AND i.indnkeyatts = 2
+        AND i.indkey[0] = (
+          SELECT a.attnum
+          FROM pg_attribute AS a
+          WHERE a.attrelid = i.indrelid
+            AND a.attname = 'marketplace_account_id'
+            AND NOT a.attisdropped
+        )
+        AND i.indkey[1] = (
+          SELECT a.attnum
+          FROM pg_attribute AS a
+          WHERE a.attrelid = i.indrelid
+            AND a.attname = 'source_key'
+            AND NOT a.attisdropped
+        )
+    )
+    AND (
+      SELECT count(*) = 7
+      FROM pg_attribute
+      WHERE attrelid = 'public.wb_finance'::regclass
+        AND NOT attisdropped
+        AND attname IN (
+          'finance_category',
+          'wb_source_suffix',
+          'supplier_oper_name',
+          'finance_nature',
+          'realizationreport_id',
+          'rrd_id',
+          'rr_dt'
+        )
+    )
+    AND (
+      SELECT count(*) = 2
+      FROM pg_attribute
+      WHERE attrelid = 'public.marketplace_accounts'::regclass
+        AND NOT attisdropped
+        AND attname IN ('sync_heartbeat_at', 'sync_lock_expires_at')
+    );
+$$;
+
+REVOKE ALL ON FUNCTION public.orion_finance_recovery_schema_ready() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.orion_finance_recovery_schema_ready() TO service_role;

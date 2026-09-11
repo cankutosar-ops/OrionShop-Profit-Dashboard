@@ -1,6 +1,6 @@
 "use client";
 
-import type { AuditEventRow } from "@/services/administration-audit-service";
+import type { AuditEventRow } from "@/lib/administration/audit-types";
 
 function formatDate(value: string): string {
   try {

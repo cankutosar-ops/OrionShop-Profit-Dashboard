@@ -9,12 +9,18 @@ import {
   isBusinessDocumentEmpty,
   renderBusinessReportWorkbook,
 } from "@/lib/reporting/excel";
+import {
+  buildWeeklyBusinessWorkbookModel,
+  buildWeeklyWorkbookFilename,
+  renderWeeklyBusinessWorkbook,
+} from "@/lib/reporting/weekly-business";
 import type { ScopedDateRange } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Generate + download Excel.
+ * weekly-business-excel → Unified Business Excel (any selected period; FE projections).
  * Business report → ReportDocument Excel Renderer (Sprint 8.0).
  * Product report → legacy ReportPayload workbook (until product Document sprint).
  */
@@ -51,6 +57,26 @@ export async function GET(request: Request) {
     const periodPreset = parsePeriodPreset(url.searchParams.get("periodPreset"));
     const locale =
       (url.searchParams.get("locale") as "en" | "ru" | "tr" | null) ?? "en";
+
+    if (templateId === "weekly-business-excel") {
+      const model = await buildWeeklyBusinessWorkbookModel(scope, {
+        periodPresetLabel: periodPresetLabel(periodPreset),
+        locale,
+      });
+      const body = await renderWeeklyBusinessWorkbook(model);
+      const filename = buildWeeklyWorkbookFilename(model);
+
+      return new Response(body, {
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-store",
+          "X-Report-Engine": "weekly-business-excel",
+          "X-Finance-Complete": model.dataQuality.financeComplete ? "1" : "0",
+        },
+      });
+    }
 
     if (templateId === "business-report") {
       const document = await buildBusinessReport(scope, {

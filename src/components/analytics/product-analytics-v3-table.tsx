@@ -154,7 +154,7 @@ export function ProductAnalyticsV3Table({
                 className={cn(headPad, "w-[9%]")}
               />
               <SortableTh
-                label="Commission"
+                label="Marketplace Fees"
                 active={isActive("commission")}
                 direction={directionFor("commission")}
                 onClick={() => onSort("commission")}
@@ -162,7 +162,7 @@ export function ProductAnalyticsV3Table({
                 className={cn(headPad, "w-[9%]")}
               />
               <SortableTh
-                label="Total Logistics"
+                label="Logistics"
                 active={isActive("logistics")}
                 direction={directionFor("logistics")}
                 onClick={() => onSort("logistics")}
@@ -178,7 +178,7 @@ export function ProductAnalyticsV3Table({
                 className={cn(headPad, "w-[9%]")}
               />
               <SortableTh
-                label="Oper. Profit"
+                label="Net Profit"
                 active={isActive("operProfit")}
                 direction={directionFor("operProfit")}
                 onClick={() => onSort("operProfit")}
@@ -186,7 +186,7 @@ export function ProductAnalyticsV3Table({
                 className={cn(headPad, "w-[9%]")}
               />
               <SortableTh
-                label="Oper. Margin"
+                label="Net Margin"
                 active={isActive("operMargin")}
                 direction={directionFor("operMargin")}
                 onClick={() => onSort("operMargin")}
@@ -276,7 +276,9 @@ export function ProductAnalyticsV3Table({
                         variant === "muted" && "text-muted-foreground"
                       )}
                     >
-                      {formatPercent(row.operationalMarginPercent)}
+                      {row.revenue <= 0
+                        ? "N/A"
+                        : formatPercent(row.operationalMarginPercent)}
                     </td>
                   </tr>
                 );

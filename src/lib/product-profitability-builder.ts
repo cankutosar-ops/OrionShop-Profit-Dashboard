@@ -4,7 +4,15 @@ import {
   rollupCategoriesToProfitBuckets,
   summarizeFinanceByCategory,
 } from "@/lib/finance-rollup";
-import { attributeProductFinance, buildPurchaseSridSet } from "@/lib/product-logistics-attribution";
+import {
+  attributeProductFinance,
+  buildProductLogisticsReconciliation,
+  buildPurchaseSridSet,
+  calculateNetUnits,
+  calculateUnitLogisticsCost,
+  stampLogisticsProductIds,
+  type ProductLogisticsReconciliation,
+} from "@/lib/product-logistics-attribution";
 import { buildProductFunnelMetrics } from "@/lib/product-funnel-metrics";
 import { computeProductCost } from "@/lib/product-cost";
 import { calculateModelBNetProfit } from "@/lib/financial-engine";
@@ -18,6 +26,7 @@ import {
   sumAcceptanceFromFinance,
   sumNetForPayFromFinance,
 } from "@/lib/wb-settlement";
+import { parseWbSourceSuffix } from "@/lib/finance-category";
 import type {
   ProductCostHistory,
   ProductProfitability,
@@ -66,16 +75,43 @@ type BuildProductProfitabilityRowsInput = {
   costHistory: ProductCostHistory[];
 };
 
+export type ProductProfitabilityBuildResult = {
+  rows: ProductProfitability[];
+  logisticsReconciliation: ProductLogisticsReconciliation;
+  /** Σ finance for_pay with null product_id (not on any product row). */
+  unallocatedRevenue: number;
+  /** Σ finance for_pay across the full finance set. */
+  accountRevenue: number;
+};
+
+function sumForPay(finance: readonly WbFinance[]): number {
+  return sumNetForPayFromFinance(finance as WbFinance[]);
+}
+
+function sumForPayNullProduct(finance: readonly WbFinance[]): number {
+  return finance.reduce((sum, row) => {
+    if (row.product_id) return sum;
+    const suffix = parseWbSourceSuffix(row.source_key, row.wb_source_suffix);
+    if (suffix !== "for_pay") return sum;
+    return sum + Number(row.amount);
+  }, 0);
+}
+
 /** Shared pure product profitability builder used by Dashboard and Reports. */
-export function buildProductProfitabilityRows(
+export function buildProductProfitabilityResult(
   input: BuildProductProfitabilityRowsInput
-): ProductProfitability[] {
+): ProductProfitabilityBuildResult {
   const { products, orders, sales, finance, ads, costHistory } = input;
   const productIds = new Set(products.map((product) => String(product.id)));
 
+  const stamped = stampLogisticsProductIds(finance, sales, products);
+  const accountRevenue = sumForPay(finance);
+  const unallocatedRevenue = sumForPayNullProduct(finance);
+
   const scopedOrders = orders.filter((row) => productIds.has(String(row.product_id)));
   const scopedSales = sales.filter((row) => productIds.has(String(row.product_id)));
-  const scopedFinance = finance.filter(
+  // Logistics may gain product_id via SRID/nm_id stamp; other null-product finance stays out.
+  const scopedFinance = stamped.finance.filter(
     (row) => row.product_id && productIds.has(String(row.product_id))
   );
   const scopedAds = ads.filter(
@@ -93,7 +129,7 @@ export function buildProductProfitabilityRows(
   const adsByProductId = indexAdsByProductId(scopedAds);
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
 
-  return products
+  const rows = products
     .map((product) => {
       const productId = String(product.id);
       const productOrders = ordersByProductId.get(productId) ?? [];
@@ -112,6 +148,7 @@ export function buildProductProfitabilityRows(
       } = attributeProductFinance(productFinance, purchaseSrids);
 
       const salesMetrics = aggregateSalesMetrics(productSales);
+      const netUnits = calculateNetUnits(salesMetrics.unitsSold, salesMetrics.unitsReturned);
       const netSales = buildNetSalesFromDb(productSales);
       const salesForPay = buildNetForPayFromDb(productSales);
       const financeNetForPay = sumNetForPayFromFinance(financeForBreakdown);
@@ -121,6 +158,7 @@ export function buildProductProfitabilityRows(
       const advertising = productAds.reduce((sum, ad) => sum + ad.spend, 0);
       const feeParts = buildProductMarketplaceFeeParts(financeForBreakdown);
       const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
+      const unitLogisticsCost = calculateUnitLogisticsCost(financeTotals.logistics, netUnits);
       const modelB = calculateModelBNetProfit({
         grossSales: netSales.grossSales,
         returnedSales: netSales.returnedSales,
@@ -158,6 +196,8 @@ export function buildProductProfitabilityRows(
         returnRate: salesMetrics.returnRate,
         unitsSold: salesMetrics.unitsSold,
         unitsReturned: salesMetrics.unitsReturned,
+        netUnits,
+        unitLogisticsCost,
         /** Marketplace Fee (V4) — same as commission; not finance ppvz_* bundle. */
         marketplaceFees: modelB.marketplaceFee ?? modelB.commission,
         accountAdjustments: feeParts.accountAdjustments,
@@ -184,7 +224,38 @@ export function buildProductProfitabilityRows(
         row.purchases > 0 ||
         row.netSales > 0 ||
         row.revenue > 0 ||
-        row.advertising > 0
+        row.advertising > 0 ||
+        row.purchaseLogistics > 0
     )
     .sort((a, b) => b.finalNetProfit - a.finalNetProfit);
+
+  const attributedProductLogistics = rows.reduce(
+    (sum, row) => sum + row.purchaseLogistics,
+    0
+  );
+
+  const logisticsReconciliation = buildProductLogisticsReconciliation({
+    accountLogisticsTotal: stamped.accountLogisticsTotal,
+    attributedProductLogistics,
+    resolvedViaSridAbs: stamped.resolvedViaSridAbs,
+    resolvedViaNmIdAbs: stamped.resolvedViaNmIdAbs,
+    unresolvedAbs: stamped.unresolvedAbs,
+    resolvedViaSridRows: stamped.resolvedViaSridRows,
+    resolvedViaNmIdRows: stamped.resolvedViaNmIdRows,
+    unresolvedRows: stamped.unresolvedRows,
+  });
+
+  return {
+    rows,
+    logisticsReconciliation,
+    unallocatedRevenue,
+    accountRevenue,
+  };
+}
+
+/** Shared pure product profitability builder used by Dashboard and Reports. */
+export function buildProductProfitabilityRows(
+  input: BuildProductProfitabilityRowsInput
+): ProductProfitability[] {
+  return buildProductProfitabilityResult(input).rows;
 }

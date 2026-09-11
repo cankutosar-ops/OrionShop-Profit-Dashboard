@@ -1,6 +1,6 @@
 "use client";
 
-import type { MembershipRow } from "@/services/administration-user-service";
+import type { MembershipRow } from "@/lib/administration/user-types";
 
 type MembershipTableProps = {
   memberships: MembershipRow[];

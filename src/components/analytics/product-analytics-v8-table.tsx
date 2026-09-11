@@ -48,6 +48,7 @@ type MainSortKey =
   | "revenue"
   | "marketplaceFees"
   | "totalLogistics"
+  | "unitLogisticsCost"
   | "productCost"
   | "operationalProfit"
   | "operationalMargin";
@@ -84,6 +85,8 @@ function mainSortValue(row: ProductAnalyticsV3Row, key: MainSortKey): SortValue 
       return row.marketplaceFees;
     case "totalLogistics":
       return row.totalLogistics;
+    case "unitLogisticsCost":
+      return row.unitLogisticsCost ?? Number.NEGATIVE_INFINITY;
     case "productCost":
       return row.productCost;
     case "operationalProfit":
@@ -349,7 +352,7 @@ export function ProductAnalyticsV8Table({
     () => Object.values(expanded).filter(Boolean).length,
     [expanded]
   );
-  const parentColSpan = 13;
+  const parentColSpan = 14;
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-border bg-card">
@@ -439,10 +442,18 @@ export function ProductAnalyticsV8Table({
                 className="px-3 py-2"
               />
               <SortableTh
-                label="Total Logistics"
+                label="Logistics"
                 active={isActive("totalLogistics")}
                 direction={directionFor("totalLogistics")}
                 onClick={() => onSort("totalLogistics")}
+                align="right"
+                className="px-3 py-2"
+              />
+              <SortableTh
+                label="Unit Logistics"
+                active={isActive("unitLogisticsCost")}
+                direction={directionFor("unitLogisticsCost")}
+                onClick={() => onSort("unitLogisticsCost")}
                 align="right"
                 className="px-3 py-2"
               />
@@ -455,7 +466,7 @@ export function ProductAnalyticsV8Table({
                 className="px-3 py-2"
               />
               <SortableTh
-                label="Oper. Profit"
+                label="Net Profit"
                 active={isActive("operationalProfit")}
                 direction={directionFor("operationalProfit")}
                 onClick={() => onSort("operationalProfit")}
@@ -463,7 +474,7 @@ export function ProductAnalyticsV8Table({
                 className="px-3 py-2"
               />
               <SortableTh
-                label="Oper. Margin"
+                label="Net Margin"
                 active={isActive("operationalMargin")}
                 direction={directionFor("operationalMargin")}
                 onClick={() => onSort("operationalMargin")}
@@ -537,7 +548,16 @@ export function ProductAnalyticsV8Table({
                         {formatCurrency(row.revenue)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                        {formatCurrency(row.marketplaceFees)}
+                        <div>{formatCurrency(row.marketplaceFees)}</div>
+                        <div className="text-[10px] leading-tight text-muted-foreground/80">
+                          {row.marketplaceFeesPctOfNetSales != null
+                            ? `${formatPercent(row.marketplaceFeesPctOfNetSales)} of Net Sales`
+                            : "— of Net Sales"}
+                          {" · "}
+                          {row.marketplaceFeesPctOfRevenue != null
+                            ? `${formatPercent(row.marketplaceFeesPctOfRevenue)} of Revenue`
+                            : "— of Revenue"}
+                        </div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         <LogisticsBreakdownHint
@@ -546,6 +566,11 @@ export function ProductAnalyticsV8Table({
                           excludedLogistics={row.excludedLogistics}
                           returnLogistics={row.returnLogistics}
                         />
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                        {row.unitLogisticsCost == null
+                          ? "N/A"
+                          : formatCurrency(row.unitLogisticsCost)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         {formatCurrency(row.productCost)}
@@ -569,7 +594,9 @@ export function ProductAnalyticsV8Table({
                           variant === "muted" && "text-muted-foreground"
                         )}
                       >
-                        {formatPercent(row.operationalMarginPercent)}
+                        {row.revenue <= 0
+                          ? "N/A"
+                          : formatPercent(row.operationalMarginPercent)}
                       </td>
                     </tr>
                     <SkuChildRows
