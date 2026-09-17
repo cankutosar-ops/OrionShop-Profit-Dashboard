@@ -1,7 +1,7 @@
 import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
 import { FINANCE_RESERVED_ACCOUNT_IDS } from "@/lib/finance-recovery/reservation";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
-import { createWbSyncService } from "@/lib/wildberries/sync-service";
+import { createWbSyncService, type WbFinanceV1PageSyncResult } from "@/lib/wildberries/sync-service";
 import { syncLog } from "@/lib/wildberries/sync-log";
 import type { FinanceIncrementalStateStore } from "@/lib/finance-incremental/state";
 import { createSupabaseFinanceIncrementalStateStore } from "@/lib/finance-incremental/state";
@@ -37,6 +37,37 @@ function parseHttpStatus(errors: string[]): number | null {
   return null;
 }
 
+export function adaptFinanceV1PageResult(result: WbFinanceV1PageSyncResult): FinanceIncrementalPageResult {
+  const page = result.page;
+  const errors = result.errors ?? [];
+  const common = {
+    apiRows: result.recordsProcessed ?? 0,
+    persistedLines: result.recordsUpdated ?? 0,
+    hasMore: Boolean(page?.hasMore),
+    nextRrdId: page?.lastRrdId ?? null,
+    reportIds: result.reportIds ?? [],
+    returnedFrom: result.returnedFrom ?? null,
+    returnedTo: result.returnedTo ?? null,
+    remaining: page?.rateLimit?.remaining ?? null,
+    limit: page?.rateLimit?.limit ?? null,
+    resetSeconds: page?.rateLimit?.resetSeconds ?? null,
+    retrySeconds: page?.rateLimit?.retrySeconds ?? null,
+  };
+  if (result.v1Outcome === "terminal" && errors.length === 0 && page) {
+    return { ...common, kind: "terminal", httpStatus: 204, isEmpty: true, errors };
+  }
+  if (result.v1Outcome === "data" && errors.length === 0 && page) {
+    return { ...common, kind: "data", httpStatus: 200, isEmpty: false, errors };
+  }
+  return {
+    ...common,
+    kind: "failure",
+    httpStatus: parseHttpStatus(errors),
+    isEmpty: false,
+    errors: errors.length > 0 ? errors : ["Finance V1 page outcome was not verified"],
+  };
+}
+
 export function createProductionPageWakeDeps(
   store: FinanceIncrementalStateStore
 ): FinanceReportsV1PageWakeDeps {
@@ -59,26 +90,7 @@ export function createProductionPageWakeDeps(
         input.rrdId,
         "weekly"
       );
-      const page = result.page;
-      const errors = result.errors ?? [];
-      const httpFromErr = parseHttpStatus(errors);
-      const isEmpty = (result.recordsProcessed ?? 0) === 0 && !page?.hasMore;
-      return {
-        httpStatus: httpFromErr ?? (isEmpty ? 204 : 200),
-        apiRows: result.recordsProcessed ?? 0,
-        persistedLines: result.recordsUpdated ?? 0,
-        hasMore: Boolean(page?.hasMore),
-        isEmpty,
-        nextRrdId: page?.lastRrdId ?? null,
-        reportIds: result.reportIds ?? [],
-        returnedFrom: result.returnedFrom ?? null,
-        returnedTo: result.returnedTo ?? null,
-        errors,
-        remaining: page?.rateLimit?.remaining ?? null,
-        limit: page?.rateLimit?.limit ?? null,
-        resetSeconds: page?.rateLimit?.resetSeconds ?? null,
-        retrySeconds: page?.rateLimit?.retrySeconds ?? null,
-      };
+      return adaptFinanceV1PageResult(result);
     },
   };
 }

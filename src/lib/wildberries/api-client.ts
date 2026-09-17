@@ -89,6 +89,10 @@ export type WbFinanceReportPage = {
   rateLimit: WbRateLimitSnapshot | null;
 };
 
+export type WbFinanceV1ReportPage = WbFinanceReportPage & {
+  responseKind: "data" | "terminal";
+};
+
 export class WbApiError extends Error {
   constructor(
     message: string,
@@ -171,7 +175,12 @@ export class WbApiClient {
     this.token = token ?? getWbApiToken();
   }
 
-  private async request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+  private async request<T>(
+    baseUrl: string,
+    path: string,
+    init?: RequestInit,
+    onResponseStatus?: (status: number) => void
+  ): Promise<T> {
     let attempt = 0;
     let count429 = 0;
     let total429WaitMs = 0;
@@ -224,6 +233,7 @@ export class WbApiClient {
         },
       });
 
+      onResponseStatus?.(response.status);
       this.lastRequestAt = Date.now();
       const durationMs = Date.now() - startedAt;
       const rateLimitSnapshot = parseWbRateLimitHeaders(response.headers);
@@ -548,7 +558,7 @@ export class WbApiClient {
     dateTo: string,
     currentRrdId: number,
     period: WbFinanceV1Period = "weekly"
-  ): Promise<WbFinanceReportPage> {
+  ): Promise<WbFinanceV1ReportPage> {
     assertFinanceV1LiveAllowed();
     assertFinanceV1TokenReady(this.token);
 
@@ -565,14 +575,31 @@ export class WbApiClient {
       path: WB_FINANCE_V1_DETAILED_PATH,
     });
 
-    const raw = await this.request<WbFinanceV1DetailedRow[] | null>(
+    let responseStatus: number | null = null;
+    const raw = await this.request<unknown>(
       WB_FINANCE_API,
       WB_FINANCE_V1_DETAILED_PATH,
       {
         method: "POST",
         body: JSON.stringify(body),
-      }
+      },
+      (status) => { responseStatus = status; }
     );
+    if (responseStatus !== 200 && responseStatus !== 204) {
+      throw new WbApiError(
+        "Finance V1 detailed returned unexpected HTTP " + String(responseStatus ?? "unknown"),
+        responseStatus ?? undefined,
+        WB_FINANCE_V1_DETAILED_PATH
+      );
+    }
+    if (responseStatus === 200 && (!Array.isArray(raw) || raw.length === 0)) {
+      throw new WbApiError(
+        "Finance V1 detailed HTTP 200 must contain a non-empty array; only HTTP 204 is terminal",
+        200,
+        WB_FINANCE_V1_DETAILED_PATH,
+        "FINANCE_V1_INVALID_BODY"
+      );
+    }
 
     const rateLimit =
       getSyncExecutionContext()?.lastRateLimitSnapshot ?? null;
@@ -587,8 +614,9 @@ export class WbApiClient {
       });
     }
 
-    const v1Rows = Array.isArray(raw) ? raw : [];
-    const isEmpty = isFinanceV1DetailedEmpty(v1Rows);
+    const responseKind = responseStatus === 204 ? "terminal" : "data";
+    const v1Rows = (responseKind === "terminal" ? [] : raw) as WbFinanceV1DetailedRow[];
+    const isEmpty = responseKind === "terminal";
     const cursor = nextFinanceV1Cursor({
       rows: v1Rows,
       currentRrdId,
@@ -620,6 +648,7 @@ export class WbApiClient {
       isEmpty,
       hasMore: cursor.hasMore,
       rateLimit,
+      responseKind,
     };
   }
 

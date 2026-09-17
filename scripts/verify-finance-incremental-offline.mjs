@@ -26,6 +26,8 @@ import {
 import { nextWeeklyReportsPeriod } from "../src/lib/finance-recovery/reports-ingestion.ts";
 import { isFinanceV1LiveRequestsEnabled } from "../src/lib/wildberries/finance-v1.ts";
 import { FINANCE_RECOVERY_MIN_PAGE_GAP_MS } from "../src/lib/wildberries/rate-limit-retry.ts";
+import { adaptFinanceV1PageResult } from "../src/lib/finance-incremental/orchestrator.ts";
+import { WbApiClient, WbApiError } from "../src/lib/wildberries/api-client.ts";
 
 let failed = 0;
 function check(name, ok) {
@@ -54,6 +56,8 @@ function wakeDeps(store, syncPage, extras = {}) {
 
 function page(partial) {
   return {
+    kind: partial.kind ?? (partial.httpStatus === 204 ? "terminal" :
+      partial.httpStatus === 429 || partial.errors?.length ? "failure" : "data"),
     httpStatus: 200,
     apiRows: 0,
     persistedLines: 0,
@@ -580,6 +584,191 @@ async function main() {
     !/fetchSalesReportsList|fetchFinanceReport\(|reportDetailByPeriod/.test(incrementalSrc)
   );
 
+  // Explicit Reports V1 outcomes, using only an in-memory fetch and state store.
+  // The stub accepts just the detailed endpoint; no network request can leave this process.
+  const priorFetch = globalThis.fetch;
+  const priorLiveFlag = process.env.FINANCE_V1_LIVE_REQUESTS_ENABLED;
+  const tokenPayload = Buffer.from(JSON.stringify({
+    acc: 3, for: "self", t: false, s: 1 << 12,
+  })).toString("base64url");
+  const offlineToken = "eyJhbGciOiJub25lIn0." + tokenPayload + ".x";
+  let stubRequests = 0;
+  async function fakeDetailedResponse(status, body) {
+    process.env.FINANCE_V1_LIVE_REQUESTS_ENABLED = "true";
+    globalThis.fetch = async (url, init) => {
+      if (String(url) !== "https://finance-api.wildberries.ru/api/finance/v1/sales-reports/detailed" ||
+          init?.method !== "POST") {
+        throw new Error("Verifier refused unexpected HTTP endpoint");
+      }
+      stubRequests += 1;
+      if (body instanceof Error) throw body;
+      return new Response(status === 204 ? null :
+        typeof body === "string" ? body : JSON.stringify(body), { status });
+    };
+    const client = new WbApiClient(offlineToken);
+    try {
+      return await client.fetchFinanceV1ReportPage("2026-08-31", "2026-09-06", 123, "weekly");
+    } finally {
+      globalThis.fetch = priorFetch;
+      if (priorLiveFlag === undefined) delete process.env.FINANCE_V1_LIVE_REQUESTS_ENABLED;
+      else process.env.FINANCE_V1_LIVE_REQUESTS_ENABLED = priorLiveFlag;
+    }
+  }
+  async function apiError(status, body) {
+    try {
+      await fakeDetailedResponse(status, body);
+    } catch (error) {
+      return error;
+    }
+    throw new Error("Expected API failure for HTTP " + status);
+  }
+  function v1SyncResult(kind, apiPage, errors = [], processed = 0, persisted = 0) {
+    const { rows: _rows, ...pageWithoutRows } = apiPage ?? {};
+    return {
+      v1Outcome: kind,
+      page: apiPage ? pageWithoutRows : null,
+      recordsProcessed: processed,
+      recordsUpdated: persisted,
+      errors,
+    };
+  }
+  function serviceError(error) {
+    const tag = error instanceof WbApiError && error.statusCode != null
+      ? "[http " + error.statusCode + "] " : "";
+    return v1SyncResult("failure", null, [tag + error.message]);
+  }
+  async function runExplicitCase(result) {
+    const adapted = adaptFinanceV1PageResult(result);
+    const memory = createMemoryFinanceIncrementalStateStore();
+    await memory.write({
+      ...emptyFinanceIncrementalState("2"),
+      mode: "current_week",
+      weekStatus: "in_progress",
+      activeWeekFrom: "2026-08-31",
+      activeWeekTo: "2026-09-06",
+      lastPersistedRrdId: 123,
+    });
+    const outcome = await runFinanceReportsV1PageWake({
+      accountId: "2", weekFrom: "2026-08-31", weekTo: "2026-09-06",
+      rrdId: 123, mode: "current_week",
+    }, wakeDeps(memory, async () => adapted));
+    return { adapted, outcome, state: await memory.read("2") };
+  }
+  function stayedRetryable(run, status, httpStatus) {
+    return run.adapted.kind === "failure" &&
+      run.outcome.status === status &&
+      run.outcome.httpStatus === httpStatus &&
+      run.outcome.cursorBefore === 123 &&
+      run.outcome.cursorAfter === 123 &&
+      run.state.lastPersistedRrdId === 123 &&
+      run.state.activeWeekFrom === "2026-08-31" &&
+      run.state.completedWeeks["2026-08-31:2026-09-06"] == null &&
+      Boolean(run.state.lastError);
+  }
+
+  const validApiPage = await fakeDetailedResponse(200, [{ rrdId: 456, forPay: "10" }]);
+  const a = await runExplicitCase(v1SyncResult("data", validApiPage, [], 1, 1));
+  check("A: valid 200 array is data and cursor advances after reported persistence",
+    validApiPage.responseKind === "data" && a.adapted.kind === "data" &&
+    a.outcome.status === "wake_ok" && a.outcome.cursorAfter === 456 &&
+    a.outcome.persistedRows === 1 && a.state.lastPersistedRrdId === 456 &&
+    a.state.activeWeekFrom === "2026-08-31");
+
+  const terminalApiPage = await fakeDetailedResponse(204, []);
+  const b = await runExplicitCase(v1SyncResult("terminal", terminalApiPage));
+  check("B: actual HTTP 204 alone completes and clears the week",
+    terminalApiPage.responseKind === "terminal" && b.adapted.kind === "terminal" &&
+    b.outcome.status === "week_complete" && b.outcome.cursorAfter == null &&
+    b.state.lastPersistedRrdId === 0 && b.state.activeWeekFrom == null &&
+    b.state.completedWeeks["2026-08-31:2026-09-06"] != null);
+
+  const c = await runExplicitCase(serviceError(await apiError(401)));
+  check("C: HTTP 401 fails, records error, and retains cursor", stayedRetryable(c, "failed", 401));
+  const d = await runExplicitCase(serviceError(await apiError(429)));
+  check("D: HTTP 429 stays rate-limited without an inline retry",
+    d.adapted.kind === "failure" && d.outcome.status === "rate_limited" &&
+    d.outcome.cursorAfter === 123 && d.state.activeWeekFrom === "2026-08-31" &&
+    d.state.completedWeeks["2026-08-31:2026-09-06"] == null &&
+    Boolean(d.state.lastError) && d.outcome.httpRequests === 1 && !d.outcome.retryPerformed);
+  const e = await runExplicitCase(serviceError(await apiError(500)));
+  check("E: HTTP 500 fails and retains cursor", stayedRetryable(e, "failed", 500));
+
+  const malformedError = await apiError(200, { error: "non-array" });
+  const f = await runExplicitCase(serviceError(malformedError));
+  check("F: non-array 200 fails and retains cursor",
+    malformedError instanceof WbApiError && stayedRetryable(f, "failed", 200));
+
+  const parsingError = await apiError(200, "{malformed JSON");
+  const g = await runExplicitCase(serviceError(parsingError));
+  check("G: JSON parsing failure retains cursor and error",
+    parsingError instanceof SyntaxError && stayedRetryable(g, "failed", null));
+
+  const h = await runExplicitCase(v1SyncResult(
+    "failure", validApiPage, ["wb_finance batch 1: atomic upsert failed"], 1, 0
+  ));
+  check("H: upsert failure retains cursor", stayedRetryable(h, "failed", null));
+
+  const stuckApiPage = await fakeDetailedResponse(200, [{ rrdId: 123, forPay: "10" }]);
+  const i = await runExplicitCase(v1SyncResult("data", stuckApiPage, [], 1, 1));
+  check("I: non-advancing 200 data fails instead of completing",
+    i.adapted.kind === "data" && i.outcome.status === "failed" &&
+    i.outcome.cursorAfter === 123 && i.state.lastPersistedRrdId === 123 &&
+    i.state.completedWeeks["2026-08-31:2026-09-06"] == null &&
+    Boolean(i.state.lastError));
+
+  const sequence = [];
+  const orderedMemory = createMemoryFinanceIncrementalStateStore();
+  await orderedMemory.write({
+    ...emptyFinanceIncrementalState("2"), mode: "current_week", weekStatus: "in_progress",
+    activeWeekFrom: "2026-08-31", activeWeekTo: "2026-09-06", lastPersistedRrdId: 123,
+  });
+  const orderedStore = {
+    read: (id) => orderedMemory.read(id),
+    write: async (state) => {
+      if (state.lastPersistedRrdId === 456) sequence.push("cursor_advanced");
+      await orderedMemory.write(state);
+    },
+  };
+  await runFinanceReportsV1PageWake({
+    accountId: "2", weekFrom: "2026-08-31", weekTo: "2026-09-06",
+    rrdId: 123, mode: "current_week",
+  }, wakeDeps(orderedStore, async () => {
+    sequence.push("upsert_started");
+    await Promise.resolve();
+    sequence.push("upsert_succeeded");
+    return adaptFinanceV1PageResult(v1SyncResult("data", validApiPage, [], 1, 1));
+  }));
+  const v1ServiceStart = syncService.indexOf("async syncFinanceV1Page(");
+  const serviceUpsert = syncService.indexOf("const { errors } = await batchUpsertFinance(", v1ServiceStart);
+  const serviceSuccess = syncService.indexOf('if (errors.length === 0) result.v1Outcome = "data"', v1ServiceStart);
+  check("J: upsert success precedes data outcome and persisted cursor advancement",
+    sequence.join(",") === "upsert_started,upsert_succeeded,cursor_advanced" &&
+    serviceUpsert > v1ServiceStart && serviceSuccess > serviceUpsert);
+  const forbidden = await runExplicitCase(serviceError(await apiError(403)));
+  check("HTTP 403 fails and retains cursor", stayedRetryable(forbidden, "failed", 403));
+  const transport = await runExplicitCase(serviceError(
+    await apiError(200, new Error("offline transport failed"))
+  ));
+  check("transport failure retains cursor", stayedRetryable(transport, "failed", null));
+  const empty200 = await runExplicitCase(serviceError(await apiError(200, [])));
+  check("empty HTTP 200 array is not a terminal 204",
+    stayedRetryable(empty200, "failed", 200));
+
+  const errorAndEmpty = await runFinanceReportsV1PageWake({
+    accountId: "2", weekFrom: "2026-08-31", weekTo: "2026-09-06",
+    rrdId: 123, mode: "current_week",
+  }, wakeDeps(createMemoryFinanceIncrementalStateStore({
+    "2": {
+      ...emptyFinanceIncrementalState("2"), mode: "current_week",
+      weekStatus: "in_progress", activeWeekFrom: "2026-08-31",
+      activeWeekTo: "2026-09-06", lastPersistedRrdId: 123,
+    },
+  }), async () => page({
+    kind: "failure", httpStatus: 500, isEmpty: true, errors: ["[http 500] offline"],
+  })));
+  check("failure plus isEmpty cannot complete a week",
+    errorAndEmpty.status === "failed" && errorAndEmpty.cursorAfter === 123);
+  check("offline HTTP stub made exactly one request per API case", stubRequests === 11);
   if (failed) {
     console.error(`FAILED ${failed} checks`);
     process.exit(1);

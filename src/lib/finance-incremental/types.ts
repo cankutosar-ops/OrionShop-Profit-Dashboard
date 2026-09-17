@@ -77,7 +77,7 @@ export type FinanceIncrementalWork = {
 };
 
 export type FinanceIncrementalPageResult = {
-  httpStatus: number;
+  httpStatus: number | null;
   apiRows: number;
   persistedLines: number;
   hasMore: boolean;
@@ -91,7 +91,11 @@ export type FinanceIncrementalPageResult = {
   limit: number | null;
   resetSeconds: number | null;
   retrySeconds: number | null;
-};
+} & (
+  | { kind: "data"; httpStatus: 200 }
+  | { kind: "terminal"; httpStatus: 204 }
+  | { kind: "failure"; httpStatus: number | null }
+);
 
 export type FinanceIncrementalWakeOutcome = {
   accountId: string;

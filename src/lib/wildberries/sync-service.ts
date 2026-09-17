@@ -183,6 +183,10 @@ export type WbFinancePageSyncResult = WbSyncResult & {
   page: Omit<WbFinanceReportPage, "rows"> | null;
 };
 
+export type WbFinanceV1PageSyncResult = WbFinancePageSyncResult & {
+  v1Outcome: "data" | "terminal" | "failure";
+};
+
 export async function assertFinanceRecoverySchemaReady(
   supabase: AdminClient = createAdminClient()
 ): Promise<void> {
@@ -827,10 +831,11 @@ export class WbSyncService {
     dateTo: string,
     currentRrdId: number,
     period: WbFinanceV1Period = "weekly"
-  ): Promise<WbFinancePageSyncResult> {
-    const result: WbFinancePageSyncResult = {
+  ): Promise<WbFinanceV1PageSyncResult> {
+    const result: WbFinanceV1PageSyncResult = {
       ...this.emptyResult("finance"),
       page: null,
+      v1Outcome: "failure",
     };
     const supabase = createAdminClient();
 
@@ -859,11 +864,17 @@ export class WbSyncService {
       result.page = page;
       result.recordsProcessed = rows.length;
 
-      if (rows.length === 0) return result;
+      if (fetched.responseKind === "terminal") {
+        if (rows.length !== 0) throw new Error("Finance V1 terminal response contained rows");
+        result.v1Outcome = "terminal";
+        return result;
+      }
+      if (rows.length === 0) throw new Error("Finance V1 data response contained no rows");
       if (
         rows.some((row) => !Number.isSafeInteger(Number(row.rrd_id))) ||
-        (page.hasMore &&
-          (page.lastRrdId == null || page.lastRrdId <= page.currentRrdId))
+        !page.hasMore ||
+        page.lastRrdId == null ||
+        page.lastRrdId <= page.currentRrdId
       ) {
         throw new Error("Finance V1 page cursor validation failed");
       }
@@ -920,6 +931,7 @@ export class WbSyncService {
         includeReportIdentity
       );
       result.errors.push(...errors);
+      if (errors.length === 0) result.v1Outcome = "data";
       result.reportIds = [...reportIds].sort((a, b) => a - b);
       result.returnedFrom = minOp;
       result.returnedTo = maxOp;

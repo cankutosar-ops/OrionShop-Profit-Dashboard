@@ -85,12 +85,6 @@ function weekOf(from: string, to: string): FinanceIncrementalWeek {
   return { from, to, key: `${from}:${to}` };
 }
 
-function inferHttpStatus(result: FinanceIncrementalPageResult): number {
-  if (result.httpStatus) return result.httpStatus;
-  if (result.isEmpty) return 204;
-  return 200;
-}
-
 function isLockStale(state: FinanceIncrementalSyncState, nowMs: number): boolean {
   if (!state.lockOwner) return true;
   const beat = Date.parse(state.lockHeartbeatAt ?? state.lockStartedAt ?? "");
@@ -224,7 +218,7 @@ export async function runFinanceReportsV1PageWake(
     };
   }
 
-  const httpStatus = inferHttpStatus(page);
+  const httpStatus = page.httpStatus;
   const rateLimited = httpStatus === 429 || isFinanceHttp429(page.errors);
   state = applyReportsPacingAfterRequest({
     state,
@@ -233,7 +227,7 @@ export async function runFinanceReportsV1PageWake(
     limit: page.limit,
     resetSeconds: page.resetSeconds,
     retrySeconds: page.retrySeconds,
-    httpStatus: rateLimited ? 429 : httpStatus,
+    httpStatus: rateLimited ? 429 : (httpStatus ?? 0),
   });
 
   if (rateLimited) {
@@ -277,11 +271,26 @@ export async function runFinanceReportsV1PageWake(
     };
   }
 
-  if (page.errors.length > 0 && !page.isEmpty) {
+  const invalidData = page.kind === "data" && (
+    httpStatus !== 200 ||
+    page.isEmpty ||
+    page.apiRows <= 0 ||
+    !page.hasMore ||
+    page.nextRrdId == null ||
+    !Number.isSafeInteger(page.nextRrdId) ||
+    page.nextRrdId <= cursorBefore
+  );
+  const invalidTerminal = page.kind === "terminal" && (
+    httpStatus !== 204 || page.apiRows !== 0 || page.hasMore
+  );
+  if (page.kind === "failure" || page.errors.length > 0 || invalidData || invalidTerminal) {
+    const error = page.errors[0] ?? (invalidData
+      ? "Finance V1 data page has no advancing cursor"
+      : "Finance V1 page outcome invalid");
     state = {
       ...state,
       lastHttpStatus: httpStatus,
-      lastError: page.errors[0],
+      lastError: error,
       lastRowsReceived: page.apiRows,
       lastRowsPersisted: page.persistedLines,
       lastCursorAfter: cursorBefore,
@@ -312,13 +321,12 @@ export async function runFinanceReportsV1PageWake(
       limit: page.limit,
       resetSeconds: page.resetSeconds,
       retrySeconds: page.retrySeconds,
-      error: page.errors[0],
+      error,
       liveHttpAttempted: true,
     };
   }
 
-  const terminal = page.isEmpty || httpStatus === 204 || !page.hasMore;
-  if (terminal) {
+  if (page.kind === "terminal") {
     state = markWeekComplete({
       state: {
         ...state,
@@ -365,7 +373,7 @@ export async function runFinanceReportsV1PageWake(
     };
   }
 
-  const nextCursor = page.nextRrdId ?? cursorBefore;
+  const nextCursor = page.nextRrdId as number;
   state = {
     ...state,
     weekStatus: "in_progress",
