@@ -145,14 +145,24 @@ async function main() {
 
   const checks = [];
 
+  // Independent raw-row expectations: do not reuse the production rollup
+  // helpers under test to calculate both sides of these assertions.
+  const sourceSuffix = (row) => row.wb_source_suffix || String(row.source_key ?? "").split(":").at(-1);
+  const independentlyObservedRevenue = finance
+    .filter((row) => sourceSuffix(row) === "for_pay")
+    .reduce((sum, row) => sum + Number(row.amount), 0);
+  const independentlyObservedCustomerPaid = sales.reduce((sum, row) =>
+    sum + (row.is_return ? -1 : 1) * Math.abs(Number(row.revenue ?? 0)) * Number(row.quantity), 0);
+  const independentlyExpectedTax = Math.max(0, independentlyObservedCustomerPaid) * 0.06;
+
   const add = (name, pass, detail) => {
     checks.push({ name, pass, detail });
   };
 
   add(
     "Revenue = Finance ppvz_for_pay",
-    Math.abs(account.revenue - financeNetForPay) < 0.02,
-    `account=${account.revenue} finance=${financeNetForPay}`
+    Math.abs(account.revenue - independentlyObservedRevenue) < 0.02,
+    `account=${account.revenue} rawFinance=${independentlyObservedRevenue}`
   );
   add(
     "Marketplace Fee = Sales − forPay",
@@ -203,8 +213,19 @@ async function main() {
   );
   add(
     "Estimated Tax = 6% × Σ finishedPrice",
-    Math.abs(account.estimatedTax - calculateEstimatedTax(customerPaid, 6)) < 0.02,
-    `tax=${account.estimatedTax} customerPaid=${customerPaid}`
+    Math.abs(account.estimatedTax - independentlyExpectedTax) < 0.02,
+    `tax=${account.estimatedTax} rawCustomerPaid=${independentlyObservedCustomerPaid}`
+  );
+  add(
+    "Product Sales readiness matches each raw persisted price",
+    productRows.every((row) => {
+      const productSales = sales.filter((sale) => String(sale.product_id) === String(row.productId));
+      const expected = productSales.length === 0 ? "empty" : productSales.some((sale) =>
+        !Number.isFinite(Number(sale.price_with_disc)) || Number(sale.price_with_disc) <= 0
+      ) ? "unavailable" : "ready";
+      return row.netSalesStatus === expected;
+    }),
+    `products=${productRows.length}`
   );
   add(
     "Tax not from Seller Payout",
