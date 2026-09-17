@@ -27,7 +27,7 @@ and rate-limit-fragile, so the boundary is enforced by
 | Layer | Path | Responsibility |
 |---|---|---|
 | Orchestrator | `src/worker/run-worker-tick.ts` | One bounded tick; budget, task ordering, exit code |
-| Task registry | `src/worker/tasks/index.ts` | Maps a task name to a runner; ads extension point |
+| Task registry | `src/worker/tasks/index.ts` | Maps a task name to a runner; ads is opt-in |
 | Task adapters | `src/worker/tasks/*.ts` | Thin adapters onto existing kernels |
 | Logging | `src/worker/logger.ts` | JSON lines with secret redaction |
 | Environment | `src/worker/env.ts` | Required secrets, server-shaped aliases |
@@ -42,7 +42,7 @@ existed and is already covered by its own verification script:
 | `commercial` | `runCommercialContinuityTick` | Orders, Sales, Finance (one Reports/V1 page per account) |
 | `inventory` | `runInventorySnapshotContinuityForAccount` | Daily snapshot, gap recovery (no retention purge — see below) |
 | `finance-catchup` | `runFinanceIncrementalSync` | Opt-in extra Reports/V1 page wakes |
-| `ads` | — | Registered extension point, not implemented |
+| `ads` | `runAdvertisingSyncForAccount` | Opt-in 14-day incremental advertising refresh |
 
 Because the worker is a plain Node process calling domain modules directly, it
 is not coupled to GitHub Actions. Moving to a VPS, a container or a managed cron
@@ -147,11 +147,21 @@ Actions):
 | `SUPABASE_SERVICE_ROLE_KEY` | Worker writes bypass RLS |
 | `MARKETPLACE_CREDENTIALS_KEY` | Decrypts per-account WB keys |
 
-And this as a repository **variable**:
+Set these as GitHub Actions repository **variables** and match the corresponding
+values on the active web host before relying on scheduled finance:
 
-| Variable | Value |
+| Variable | Contract |
 |---|---|
-| `ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE` | `false` to let the worker sync Account 2 finance |
+| `ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE` | Explicit boolean; keep the recovery reservation aligned with the web host. Unset/invalid fails closed for Account 2. |
+| `FINANCE_V1_LIVE_REQUESTS_ENABLED` | Explicit live-HTTP opt-in. Account 2 remains Reports/V1-only even when this is off; HTTP then fails closed. |
+| `FINANCE_V1_ACCOUNT_IDS` | Comma-separated, seeded account IDs opted into Reports/V1. Account 1 requires both this allowlist and the live switch; Account 2 is V1-only regardless of the allowlist. |
+
+These are names and routing rules, not production values. Confirm the active
+web-host variables and GitHub Actions variables agree before scheduling finance.
+The default tick runs `commercial,inventory`; `finance-catchup` consumes extra
+Reports quota and `ads` is opt-in because of WB rate limits. No scheduled ads
+refresh exists in this workflow. Its cadence requires an explicit operational
+choice and a ready `wb_ads` schema.
 
 Notes:
 

@@ -66,6 +66,11 @@ jobs:
       # local historical recovery campaign. Set the repository variable to
       # "false" to let the worker sync Account 2 finance.
       ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE: ${{ vars.ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE }}
+      # Match these repository variables to the active web-host environment.
+      # Account 1 needs both switches for Reports/V1; Account 2 is V1-only and
+      # still requires the live-requests switch before any Reports HTTP.
+      FINANCE_V1_LIVE_REQUESTS_ENABLED: ${{ vars.FINANCE_V1_LIVE_REQUESTS_ENABLED }}
+      FINANCE_V1_ACCOUNT_IDS: ${{ vars.FINANCE_V1_ACCOUNT_IDS }}
       # Never start the in-process inventory timer inside a worker run.
       INVENTORY_SNAPSHOT_SCHEDULER: "0"
       # tsx discovers the tsconfig that defines the `@/*` path alias through the

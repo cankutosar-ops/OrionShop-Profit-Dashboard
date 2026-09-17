@@ -469,6 +469,22 @@ console.log("\n--- 6/7. Workflow contract ---");
       unwired.length === 0 ? REQUIRED_WORKFLOW_SECRETS.join(", ") : `unwired: ${unwired.join(", ")}`
     );
 
+    const REQUIRED_WORKFLOW_VARIABLES = [
+      "ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE",
+      "FINANCE_V1_LIVE_REQUESTS_ENABLED",
+      "FINANCE_V1_ACCOUNT_IDS",
+    ];
+    const unwiredVars = REQUIRED_WORKFLOW_VARIABLES.filter(
+      (name) => !new RegExp(`^\\s*${name}:\\s*\\$\\{\\{\\s*vars\\.${name}\\s*\\}\\}`, "m").test(wf)
+    );
+    check(
+      "6  finance routing variables are wired from GitHub Variables",
+      unwiredVars.length === 0,
+      unwiredVars.length === 0
+        ? REQUIRED_WORKFLOW_VARIABLES.join(", ")
+        : `unwired: ${unwiredVars.join(", ")}`
+    );
+
     const docPath = "docs/02-architecture/PRODUCTION_SYNC_WORKER.md";
     if (!existsSync(path.join(root, docPath))) {
       check("6  secrets are documented", false, `${docPath} missing`);
