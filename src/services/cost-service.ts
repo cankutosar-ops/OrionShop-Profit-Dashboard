@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import { pickLatestCostHistoryByProductId } from "@/lib/cost-history-resolution";
 import type { CostTemplateRow, ParsedCostImportRow } from "@/lib/cost-excel";
 import { fetchSalesInRange } from "@/services/persisted-query-service";
@@ -199,24 +200,19 @@ export async function fetchProductOptions(
 ): Promise<ProductOption[]> {
   const supabase = await getReadClient(client);
 
-  let query = supabase
-    .from("products")
-    .select("id, supplier_article, name")
-    .order("supplier_article");
+  const rows = await fetchAllRows<ProductOption>(supabase, "products", {
+    marketplaceAccountId,
+    selectColumns: "id, supplier_article, name",
+    orderBy: { column: "id" },
+  });
 
-  if (marketplaceAccountId) {
-    query = query.eq("marketplace_account_id", marketplaceAccountId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw new Error(`Failed to fetch products: ${error.message}`);
-
-  return (data ?? []).map((row) => ({
+  return rows.map((row) => ({
     id: String(row.id),
     supplier_article: row.supplier_article,
     name: row.name,
-  }));
+  })).sort((a, b) =>
+    a.supplier_article.localeCompare(b.supplier_article) || a.id.localeCompare(b.id)
+  );
 }
 
 async function resolveProductIdBySupplierArticle(

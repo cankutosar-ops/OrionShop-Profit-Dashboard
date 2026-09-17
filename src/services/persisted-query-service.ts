@@ -22,18 +22,12 @@ export async function fetchProductsWithRelations(
 ): Promise<ProductWithRelations[]> {
   const supabase = await getClient(client);
 
-  let query = supabase
-    .from("products")
-    .select(options?.columns ?? "*, brand:brands(*), category:categories(*)")
-    .eq("marketplace_account_id", marketplaceAccountId);
-  if (options?.brandId) {
-    query = query.eq("brand_id", options.brandId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw new Error(`Failed to fetch products: ${error.message}`);
-  return (data ?? []) as unknown as ProductWithRelations[];
+  return fetchAllRows<ProductWithRelations>(supabase, "products", {
+    marketplaceAccountId,
+    selectColumns: options?.columns ?? "*, brand:brands(*), category:categories(*)",
+    eqFilters: options?.brandId ? [{ column: "brand_id", value: options.brandId }] : undefined,
+    orderBy: { column: "id" },
+  });
 }
 
 export async function fetchOrdersInRange(

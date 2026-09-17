@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import type { Brand } from "@/types/database";
 
 type ProductBrandRow = {
@@ -10,17 +11,14 @@ export async function getBrandsForMarketplaceAccount(
   marketplaceAccountId: string
 ): Promise<Brand[]> {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select("brand:brands(id, name, created_at)")
-    .eq("marketplace_account_id", marketplaceAccountId);
-
-  if (error) {
-    throw new Error(`Failed to fetch brands for account: ${error.message}`);
-  }
+  const rows = await fetchAllRows<ProductBrandRow>(supabase, "products", {
+    marketplaceAccountId,
+    selectColumns: "id, brand:brands(id, name, created_at)",
+    orderBy: { column: "id" },
+  });
 
   const byId = new Map<string, Brand>();
-  for (const row of (data ?? []) as ProductBrandRow[]) {
+  for (const row of rows) {
     if (row.brand?.id != null && row.brand.id !== "") {
       const id = String(row.brand.id);
       byId.set(id, { ...row.brand, id });

@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminClient } from "@/lib/supabase/admin";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
 import { FINANCE_RESERVED_ACCOUNT_IDS } from "@/lib/finance-recovery/reservation";
@@ -1258,13 +1259,11 @@ export class WbSyncService {
   }
 
   private async buildProductLookup(supabase: AdminClient): Promise<ProductLookup> {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, nm_id")
-      .eq("marketplace_account_id", this.marketplaceAccountId);
-    if (error) throw error;
-
-    const rows = (data ?? []) as ProductLookupRow[];
+    const rows = await fetchAllRows<ProductLookupRow>(supabase, "products", {
+      marketplaceAccountId: this.marketplaceAccountId,
+      selectColumns: "id, nm_id",
+      orderBy: { column: "id" },
+    });
     const lookup = new Map<number, string>();
     for (const product of rows) {
       lookup.set(product.nm_id, product.id);

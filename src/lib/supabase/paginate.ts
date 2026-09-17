@@ -97,6 +97,7 @@ export async function fetchAllRows<T>(
     marketplaceAccountId?: string;
     orderBy?: { column: string; ascending?: boolean };
     inFilters?: Array<{ column: string; values: Array<string | number> }>;
+    eqFilters?: Array<{ column: string; value: string | number }>;
     selectColumns?: string;
   }
 ): Promise<T[]> {
@@ -125,6 +126,9 @@ export async function fetchAllRows<T>(
     }
     for (const inFilter of options?.inFilters ?? []) {
       query = query.in(inFilter.column, inFilter.values);
+    }
+    for (const eqFilter of options?.eqFilters ?? []) {
+      query = query.eq(eqFilter.column, eqFilter.value);
     }
     if (options?.orderBy) {
       query = query.order(options.orderBy.column, {
