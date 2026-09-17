@@ -32,8 +32,14 @@ BEGIN
     IF scoped_qual IS NULL OR position('orion_allowed_marketplace_account_ids()' IN scoped_qual) = 0 THEN
       RAISE EXCEPTION 'Expected authenticated tenant SELECT policy is absent or changed on public.%', target.table_name;
     END IF;
-    IF target.table_name = 'product_cost_history' AND position('product_id' IN scoped_qual) = 0 THEN
-      RAISE EXCEPTION 'Product Cost SELECT policy no longer joins to product identity';
+    IF target.table_name IN ('wb_orders', 'wb_sales') AND
+       scoped_qual <> '(marketplace_account_id = ANY (orion_allowed_marketplace_account_ids()))' THEN
+      RAISE EXCEPTION 'Direct account SELECT policy has changed on public.%', target.table_name;
+    END IF;
+    IF target.table_name = 'product_cost_history' AND
+       regexp_replace(scoped_qual, '[[:space:]]+', ' ', 'g') <>
+       '(EXISTS ( SELECT 1 FROM products p WHERE ((p.id = product_cost_history.product_id) AND (p.marketplace_account_id = ANY (orion_allowed_marketplace_account_ids())))))' THEN
+      RAISE EXCEPTION 'Product Cost SELECT policy no longer has the reviewed product/account join';
     END IF;
     IF NOT EXISTS (
       SELECT 1 FROM pg_policy p

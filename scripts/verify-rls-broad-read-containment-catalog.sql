@@ -15,10 +15,13 @@ WITH targets(table_name, broad_policy, scoped_policy) AS (
       WHERE p.polrelid = c.oid AND p.polname = t.scoped_policy
         AND p.polcmd = 'r' AND p.polpermissive
         AND p.polroles = ARRAY['authenticated'::regrole::oid]
-        AND position('orion_allowed_marketplace_account_ids()'
-                     IN pg_get_expr(p.polqual, p.polrelid)) > 0
-        AND (t.table_name <> 'product_cost_history'
-             OR position('product_id' IN pg_get_expr(p.polqual, p.polrelid)) > 0)
+        AND CASE WHEN t.table_name = 'product_cost_history' THEN
+          regexp_replace(pg_get_expr(p.polqual, p.polrelid), '[[:space:]]+', ' ', 'g') =
+          '(EXISTS ( SELECT 1 FROM products p WHERE ((p.id = product_cost_history.product_id) AND (p.marketplace_account_id = ANY (orion_allowed_marketplace_account_ids())))))'
+        ELSE
+          pg_get_expr(p.polqual, p.polrelid) =
+          '(marketplace_account_id = ANY (orion_allowed_marketplace_account_ids()))'
+        END
     ) AS scoped_read,
     EXISTS (
       SELECT 1 FROM pg_policy p

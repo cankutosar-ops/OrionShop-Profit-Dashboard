@@ -11,6 +11,8 @@ const targets = [
   ["wb_sales", "dashboard_read_sales", "tenant_select_wb_sales"],
   ["product_cost_history", "dashboard_read_costs", "tenant_select_product_cost_history"],
 ];
+const directTenantQual = "(marketplace_account_id = ANY (orion_allowed_marketplace_account_ids()))";
+const costTenantQual = "(EXISTS ( SELECT 1 FROM products p WHERE ((p.id = product_cost_history.product_id) AND (p.marketplace_account_id = ANY (orion_allowed_marketplace_account_ids())))))";
 const catalogPath = process.argv.find((arg) => arg.startsWith("--catalog="))?.slice(10);
 if (!catalogPath) {
   console.error("Usage: node scripts/verify-rls-broad-read-containment-offline.mjs --catalog=PATH [--post]");
@@ -61,8 +63,9 @@ for (const [table, broadName, tenantName] of targets) {
     service?.roles.length === 1 && service.roles[0] === "service_role" && service.qual === "true");
   check(`${table}: tenant policy grants authenticated SELECT with account filter`,
     tenant?.cmd === "SELECT" && tenant.roles.length === 1 && tenant.roles[0] === "authenticated" &&
-    tenant.qual.includes("orion_allowed_marketplace_account_ids()") &&
-    (table !== "product_cost_history" || (tenant.qual.includes("product_id") && tenant.qual.includes("products"))));
+    (table === "product_cost_history"
+      ? tenant.qual.replace(/\s+/g, " ") === costTenantQual
+      : tenant.qual === directTenantQual));
   check(`${table}: ${post ? "post-correction" : "pre-correction"} broad-policy state`,
     post ? !broad : broad?.cmd === "SELECT" && broad.qual === "true" && effectiveFor(broad, "authenticated"));
   check(`${table}: projected authenticated read has no unconditional policy`,
