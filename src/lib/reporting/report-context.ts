@@ -124,6 +124,13 @@ export async function loadReportContext(
   if (listData.isSampleData) {
     warnings.push("sample_data");
   }
+  if (overview.modelBProfit.netSalesStatus !== "ready") {
+    warnings.push(`sales_price_with_disc_${overview.modelBProfit.netSalesStatus}: Net Sales and Marketplace Fee are observed values, not complete Sales metrics`);
+  }
+  const incompleteProducts = products.filter((product) => product.netSalesStatus === "unavailable").length;
+  if (incompleteProducts > 0) {
+    warnings.push(`product_sales_price_with_disc_unavailable: ${incompleteProducts} product(s) have partial Sales prices`);
+  }
 
   return {
     scope,
