@@ -227,14 +227,6 @@ const DUAL_PURPOSE_ENTRYPOINTS = new Map([
     "src/app/api/marketplace-accounts/[id]/route.ts",
     "account management: connection test plus lifecycle triggers",
   ],
-  [
-    "src/app/api/inventory/history/route.ts",
-    "reads snapshots from historical-inventory-service, which also owns snapshot capture",
-  ],
-  [
-    "src/app/api/inventory/history/export/route.ts",
-    "same snapshot service as the inventory history read route",
-  ],
 ]);
 
 {
