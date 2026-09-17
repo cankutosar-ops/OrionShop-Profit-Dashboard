@@ -121,6 +121,7 @@ export function emptyFinanceIncrementalState(
     lockOwner: null,
     lockHeartbeatAt: null,
     lockStartedAt: null,
+    lockExpiresAt: null,
     latestSuccessfulDataDate: null,
     lastHttpStatus: null,
     lastWakeAt: null,

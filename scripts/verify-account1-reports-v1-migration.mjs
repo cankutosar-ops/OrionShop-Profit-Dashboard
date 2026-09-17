@@ -71,7 +71,9 @@ function makeDeps(store, opts = {}) {
         apiKey: "test-token",
       }),
       readState: (accountId) => store.read(accountId),
-      writeState: (state) => store.write(state),
+      acquireLease: (accountId, owner) => store.acquireLease(accountId, owner),
+      renewLease: (accountId, owner) => store.renewLease(accountId, owner),
+      commitLease: (state, owner, release) => store.commitLease(state, owner, release),
       syncPage: async (input) => {
         calls.push({ ...input });
         const rows = opts.rowsFor?.(input) ?? [];

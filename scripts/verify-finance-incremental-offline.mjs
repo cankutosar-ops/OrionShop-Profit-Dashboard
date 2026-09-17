@@ -46,7 +46,9 @@ function wakeDeps(store, syncPage, extras = {}) {
   return {
     loadAccount: async (id) => extras.account ?? account(id, extras.seller ?? ACCOUNT2_FINANCE_SELLER_ID),
     readState: (id) => store.read(id),
-    writeState: (s) => store.write(s),
+    acquireLease: (id, owner) => store.acquireLease(id, owner),
+    renewLease: (id, owner) => store.renewLease(id, owner),
+    commitLease: (s, owner, release) => store.commitLease(s, owner, release),
     syncPage,
     assertLiveAllowed: extras.assertLiveAllowed ?? (() => {}),
     assertTokenReady: extras.assertTokenReady ?? (() => {}),
@@ -529,7 +531,7 @@ async function main() {
       throw new Error("should not HTTP while locked");
     })
   );
-  check("foreign lock blocks HTTP", locked.status === "blocked" && locked.httpRequests === 0);
+  check("foreign lock blocks HTTP", locked.status === "lease_busy" && locked.httpRequests === 0);
 
   // live gate
   const gated = await runFinanceReportsV1PageWake(
@@ -723,10 +725,10 @@ async function main() {
     activeWeekFrom: "2026-08-31", activeWeekTo: "2026-09-06", lastPersistedRrdId: 123,
   });
   const orderedStore = {
-    read: (id) => orderedMemory.read(id),
-    write: async (state) => {
+    ...orderedMemory,
+    commitLease: async (state, owner, release) => {
       if (state.lastPersistedRrdId === 456) sequence.push("cursor_advanced");
-      await orderedMemory.write(state);
+      return orderedMemory.commitLease(state, owner, release);
     },
   };
   await runFinanceReportsV1PageWake({

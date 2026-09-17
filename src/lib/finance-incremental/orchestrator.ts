@@ -81,14 +81,17 @@ export function createProductionPageWakeDeps(
       };
     },
     readState: (accountId) => store.read(accountId),
-    writeState: (state) => store.write(state),
+    acquireLease: (accountId, owner) => store.acquireLease(accountId, owner),
+    renewLease: (accountId, owner) => store.renewLease(accountId, owner),
+    commitLease: (state, owner, release) => store.commitLease(state, owner, release),
     async syncPage(input): Promise<FinanceIncrementalPageResult> {
       const svc = await createWbSyncService(input.accountId);
       const result = await svc.syncFinanceV1Page(
         input.weekFrom,
         input.weekTo,
         input.rrdId,
-        "weekly"
+        "weekly",
+        input.leaseOwner
       );
       return adaptFinanceV1PageResult(result);
     },
@@ -206,6 +209,7 @@ export async function runFinanceIncrementalSync(
       expectedSellerId: input.expectedSellerId,
       today,
       nowMs,
+      requireCurrentPlan: true,
     },
     deps
   );

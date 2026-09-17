@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emptyFinanceIncrementalState } from "@/lib/finance-incremental/week-planner";
+import { FINANCE_INCREMENTAL_STALE_LOCK_MS } from "@/lib/finance-incremental/types";
 import type {
   FinanceIncrementalMode,
   FinanceIncrementalSyncState,
@@ -11,7 +12,11 @@ import type {
 
 export type FinanceIncrementalStateStore = {
   read(accountId: string): Promise<FinanceIncrementalSyncState>;
-  write(state: FinanceIncrementalSyncState): Promise<void>;
+  /** Atomic DB lease acquisition; null means LEASE_BUSY. */
+  acquireLease(accountId: string, owner: string): Promise<FinanceIncrementalSyncState | null>;
+  renewLease(accountId: string, owner: string): Promise<boolean>;
+  /** Atomically checks owner and expiry before writing state/releasing lease. */
+  commitLease(state: FinanceIncrementalSyncState, owner: string, release: boolean): Promise<boolean>;
 };
 
 type StateRow = {
@@ -30,6 +35,7 @@ type StateRow = {
   lock_owner: string | null;
   lock_heartbeat_at: string | null;
   lock_started_at: string | null;
+  lock_expires_at: string | null;
   latest_successful_data_date: string | null;
   last_http_status: number | null;
   last_wake_at: string | null;
@@ -61,6 +67,7 @@ function rowToState(row: StateRow): FinanceIncrementalSyncState {
     lockOwner: row.lock_owner,
     lockHeartbeatAt: row.lock_heartbeat_at,
     lockStartedAt: row.lock_started_at,
+    lockExpiresAt: row.lock_expires_at,
     latestSuccessfulDataDate: row.latest_successful_data_date
       ? String(row.latest_successful_data_date).slice(0, 10)
       : null,
@@ -95,6 +102,7 @@ function stateToRow(
     lock_owner: state.lockOwner,
     lock_heartbeat_at: state.lockHeartbeatAt,
     lock_started_at: state.lockStartedAt,
+    lock_expires_at: state.lockExpiresAt,
     latest_successful_data_date: state.latestSuccessfulDataDate,
     last_http_status: state.lastHttpStatus,
     last_wake_at: state.lastWakeAt,
@@ -109,20 +117,61 @@ function stateToRow(
 }
 
 export function createMemoryFinanceIncrementalStateStore(
-  seed: Record<string, FinanceIncrementalSyncState> = {}
-): FinanceIncrementalStateStore & { dump(): Record<string, FinanceIncrementalSyncState> } {
+  seed: Record<string, FinanceIncrementalSyncState> = {},
+  nowMs: () => number = Date.now
+): FinanceIncrementalStateStore & {
+  write(state: FinanceIncrementalSyncState): Promise<void>;
+  dump(): Record<string, FinanceIncrementalSyncState>;
+} {
   const map = new Map<string, FinanceIncrementalSyncState>(
-    Object.entries(seed).map(([k, v]) => [k, { ...v }])
+    Object.entries(seed).map(([k, v]) => [k, structuredClone(v)])
   );
   return {
     async read(accountId: string) {
-      return map.get(accountId) ?? emptyFinanceIncrementalState(accountId);
+      return structuredClone(map.get(accountId) ?? emptyFinanceIncrementalState(accountId));
     },
+    async acquireLease(accountId: string, owner: string) {
+      const state = map.get(accountId) ?? emptyFinanceIncrementalState(accountId);
+      const expiry = Date.parse(state.lockExpiresAt ?? "");
+      const legacyExpiry = Date.parse(state.lockHeartbeatAt ?? state.lockStartedAt ?? "") +
+        FINANCE_INCREMENTAL_STALE_LOCK_MS;
+      if (state.lockOwner && (Number.isFinite(expiry) ? expiry : legacyExpiry) > nowMs()) {
+        return null;
+      }
+      const now = new Date(nowMs()).toISOString();
+      const acquired = {
+        ...state, lockOwner: owner, lockStartedAt: now, lockHeartbeatAt: now,
+        lockExpiresAt: new Date(nowMs() + FINANCE_INCREMENTAL_STALE_LOCK_MS).toISOString(),
+        updatedAt: now,
+      };
+      map.set(accountId, structuredClone(acquired));
+      return structuredClone(acquired);
+    },
+    async renewLease(accountId: string, owner: string) {
+      const state = map.get(accountId);
+      if (!state || state.lockOwner !== owner || Date.parse(state.lockExpiresAt ?? "") <= nowMs()) return false;
+      state.lockHeartbeatAt = new Date(nowMs()).toISOString();
+      state.lockExpiresAt = new Date(nowMs() + FINANCE_INCREMENTAL_STALE_LOCK_MS).toISOString();
+      return true;
+    },
+    async commitLease(state: FinanceIncrementalSyncState, owner: string, release: boolean) {
+      const current = map.get(state.marketplaceAccountId);
+      if (!current || current.lockOwner !== owner || Date.parse(current.lockExpiresAt ?? "") <= nowMs()) return false;
+      map.set(state.marketplaceAccountId, structuredClone({
+        ...state,
+        lockOwner: release ? null : owner,
+        lockStartedAt: release ? null : current.lockStartedAt,
+        lockHeartbeatAt: release ? null : current.lockHeartbeatAt,
+        lockExpiresAt: release ? null : current.lockExpiresAt,
+      }));
+      return true;
+    },
+    /** Offline fixture setup only. Production state writes use commitLease. */
     async write(state: FinanceIncrementalSyncState) {
-      map.set(state.marketplaceAccountId, { ...state });
+      map.set(state.marketplaceAccountId, structuredClone(state));
     },
     dump() {
-      return Object.fromEntries(map.entries());
+      return Object.fromEntries([...map.entries()].map(([id, state]) => [id, structuredClone(state)]));
     },
   };
 }
@@ -144,16 +193,32 @@ export function createSupabaseFinanceIncrementalStateStore(): FinanceIncremental
       if (!data) return emptyFinanceIncrementalState(accountId);
       return rowToState(data as unknown as StateRow);
     },
-    async write(state: FinanceIncrementalSyncState) {
-      const sb = createAdminClient();
-      const { error } = await sb
-        .from("finance_incremental_sync_state")
-        .upsert(stateToRow(state), { onConflict: "marketplace_account_id" });
-      if (error) {
-        throw new Error(
-          `finance_incremental_sync_state write failed: ${error.message}`
-        );
-      }
+    async acquireLease(accountId: string, owner: string) {
+      const { data, error } = await createAdminClient().rpc(
+        "orion_finance_incremental_acquire_lease" as never,
+        { p_account_id: accountId, p_owner: owner } as never
+      );
+      if (error) throw new Error(`finance lease acquisition failed: ${error.message}`);
+      return data ? rowToState(data as unknown as StateRow) : null;
+    },
+    async renewLease(accountId: string, owner: string) {
+      const { data, error } = await createAdminClient().rpc(
+        "orion_finance_incremental_renew_lease" as never,
+        { p_account_id: accountId, p_owner: owner } as never
+      );
+      if (error) throw new Error(`finance lease renewal failed: ${error.message}`);
+      return data === true;
+    },
+    async commitLease(state: FinanceIncrementalSyncState, owner: string, release: boolean) {
+      const { data, error } = await createAdminClient().rpc(
+        "orion_finance_incremental_commit_lease" as never,
+        {
+          p_account_id: state.marketplaceAccountId, p_owner: owner,
+          p_state: stateToRow(state), p_release: release,
+        } as never
+      );
+      if (error) throw new Error(`finance lease state commit failed: ${error.message}`);
+      return data === true;
     },
   };
 }

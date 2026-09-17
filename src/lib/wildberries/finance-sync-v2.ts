@@ -289,6 +289,7 @@ function incrementalToV2Result(
   const errors = outcome.error ? [outcome.error] : [];
   let status: SyncRunStatus = "success";
   if (outcome.status === "rate_limited") status = "warning";
+  else if (outcome.status === "lease_busy") status = "warning";
   else if (outcome.status === "failed") status = "failed";
   else if (outcome.status === "blocked") status = "partial";
   else if (outcome.status === "idle") status = "success";
@@ -302,7 +303,7 @@ function incrementalToV2Result(
     recordsInserted: 0,
     recordsUpdated: outcome.persistedRows,
     errors,
-    warnings: [],
+    warnings: outcome.status === "lease_busy" ? ["LEASE_BUSY"] : [],
     syncedAt: new Date().toISOString(),
     status,
     syncRunId: input.syncRunId,

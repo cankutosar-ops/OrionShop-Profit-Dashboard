@@ -159,6 +159,7 @@ export type FinanceIncrementalSyncStateRow = {
   lock_owner: string | null;
   lock_heartbeat_at: string | null;
   lock_started_at: string | null;
+  lock_expires_at: string | null;
   latest_successful_data_date: string | null;
   last_http_status: number | null;
   last_wake_at: string | null;

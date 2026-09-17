@@ -142,7 +142,8 @@ async function batchUpsertFinance(
   batchSize: number,
   onBatch: (batchRowCount: number) => void,
   includeExtendedColumns: boolean,
-  includeReportIdentity: boolean
+  includeReportIdentity: boolean,
+  leaseOwner?: string
 ): Promise<{ dbRequests: number; errors: string[] }> {
   let dbRequests = 0;
   const errors: string[] = [];
@@ -164,9 +165,13 @@ async function batchUpsertFinance(
     }
 
     dbRequests += 1;
-    const { error } = await supabase.from("wb_finance").upsert(batch, {
-      onConflict: "marketplace_account_id,source_key",
-    });
+    const { error } = leaseOwner
+      ? await supabase.rpc("orion_finance_incremental_upsert_batch" as never, {
+          p_account_id: [...accountIds][0], p_owner: leaseOwner, p_lines: batch,
+        } as never)
+      : await supabase.from("wb_finance").upsert(batch, {
+          onConflict: "marketplace_account_id,source_key",
+        });
     if (error) {
       errors.push(`wb_finance batch ${batchNum}: atomic upsert failed: ${error.message}`);
     } else {
@@ -832,7 +837,8 @@ export class WbSyncService {
     dateFrom: string,
     dateTo: string,
     currentRrdId: number,
-    period: WbFinanceV1Period = "weekly"
+    period: WbFinanceV1Period = "weekly",
+    leaseOwner?: string
   ): Promise<WbFinanceV1PageSyncResult> {
     const result: WbFinanceV1PageSyncResult = {
       ...this.emptyResult("finance"),
@@ -930,7 +936,8 @@ export class WbSyncService {
           result.recordsUpdated += count;
         },
         includeExtendedColumns,
-        includeReportIdentity
+        includeReportIdentity,
+        leaseOwner
       );
       result.errors.push(...errors);
       if (errors.length === 0) result.v1Outcome = "data";

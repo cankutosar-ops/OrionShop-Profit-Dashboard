@@ -1,14 +1,14 @@
+import { randomUUID } from "node:crypto";
 import {
   ACCOUNT2_FINANCE_SELLER_ID,
   ACCOUNT2_MARKETPLACE_ACCOUNT_ID,
   FINANCE_INCREMENTAL_API_SOURCE,
-  FINANCE_INCREMENTAL_STALE_LOCK_MS,
   type FinanceIncrementalPageResult,
   type FinanceIncrementalSyncState,
   type FinanceIncrementalWakeOutcome,
   type FinanceIncrementalWeek,
 } from "@/lib/finance-incremental/types";
-import { markWeekComplete } from "@/lib/finance-incremental/week-planner";
+import { markWeekComplete, planFinanceIncrementalWork } from "@/lib/finance-incremental/week-planner";
 import {
   applyReportsPacingAfterRequest,
   isFinanceHttp429,
@@ -35,17 +35,21 @@ export type FinanceReportsV1PageWakeInput = {
   today?: string;
   nowMs?: number;
   lockOwner?: string;
+  requireCurrentPlan?: boolean;
 };
 
 export type FinanceReportsV1PageWakeDeps = {
   loadAccount: (accountId: string) => Promise<FinanceIncrementalAccount>;
   readState: (accountId: string) => Promise<FinanceIncrementalSyncState>;
-  writeState: (state: FinanceIncrementalSyncState) => Promise<void>;
+  acquireLease: (accountId: string, owner: string) => Promise<FinanceIncrementalSyncState | null>;
+  renewLease: (accountId: string, owner: string) => Promise<boolean>;
+  commitLease: (state: FinanceIncrementalSyncState, owner: string, release: boolean) => Promise<boolean>;
   syncPage: (input: {
     accountId: string;
     weekFrom: string;
     weekTo: string;
     rrdId: number;
+    leaseOwner: string;
   }) => Promise<FinanceIncrementalPageResult>;
   assertLiveAllowed?: () => void;
   assertTokenReady?: (token: string) => void;
@@ -85,13 +89,6 @@ function weekOf(from: string, to: string): FinanceIncrementalWeek {
   return { from, to, key: `${from}:${to}` };
 }
 
-function isLockStale(state: FinanceIncrementalSyncState, nowMs: number): boolean {
-  if (!state.lockOwner) return true;
-  const beat = Date.parse(state.lockHeartbeatAt ?? state.lockStartedAt ?? "");
-  if (!Number.isFinite(beat)) return true;
-  return nowMs - beat > FINANCE_INCREMENTAL_STALE_LOCK_MS;
-}
-
 /**
  * One Reports/V1 detailed page. Cursor advances only after a successful persist.
  * Never calls list or Statistics V5.
@@ -104,7 +101,7 @@ export async function runFinanceReportsV1PageWake(
   const nowIso = new Date(nowMs).toISOString();
   const today = input.today ?? nowIso.slice(0, 10);
   const week = weekOf(input.weekFrom, input.weekTo);
-  const lockOwner = input.lockOwner ?? `pid:${process.pid}`;
+  const lockOwner = input.lockOwner ?? randomUUID();
   const cursorBefore = Number.isSafeInteger(input.rrdId) ? input.rrdId : 0;
   let state = await deps.readState(input.accountId);
   let httpRequests = 0;
@@ -135,6 +132,11 @@ export async function runFinanceReportsV1PageWake(
     error: null,
     liveHttpAttempted: false,
   });
+  const leaseLost = (): FinanceIncrementalWakeOutcome => ({
+    ...blockedBase(), status: "blocked", cursorAfter: cursorBefore,
+    httpRequests, liveHttpAttempted: httpRequests > 0, error: "lease_lost",
+  });
+  const commit = (release: boolean) => deps.commitLease(state, lockOwner, release);
 
   try {
     const account = await deps.loadAccount(input.accountId);
@@ -157,19 +159,27 @@ export async function runFinanceReportsV1PageWake(
     };
   }
 
+  const acquired = await deps.acquireLease(input.accountId, lockOwner);
+  if (!acquired) return { ...blockedBase(), status: "lease_busy" };
+  state = acquired;
+  // Recheck the plan under the acquired lease: another wake may have finished
+  // between the orchestrator's read and this atomic acquisition.
+  if (input.requireCurrentPlan) {
+    const fresh = planFinanceIncrementalWork({ state, today });
+    if (!fresh.week || fresh.week.from !== input.weekFrom ||
+        fresh.week.to !== input.weekTo || fresh.rrdId !== cursorBefore ||
+        fresh.mode !== input.mode) {
+      if (!await commit(true)) return leaseLost();
+      return { ...blockedBase(), error: "stale_finance_plan" };
+    }
+  }
   const gateUntil = reportsIncrementalBlockedUntil(state, nowMs);
   if (gateUntil) {
+    if (!await commit(true)) return leaseLost();
     return {
       ...blockedBase(),
       status: "blocked",
       error: `reports_timing_gate:${gateUntil}`,
-    };
-  }
-
-  if (state.lockOwner && state.lockOwner !== lockOwner && !isLockStale(state, nowMs)) {
-    return {
-      ...blockedBase(),
-      error: `lock_held:${state.lockOwner}`,
     };
   }
 
@@ -182,15 +192,27 @@ export async function runFinanceReportsV1PageWake(
     activeWeekTo: input.weekTo,
     lastPersistedRrdId: cursorBefore,
     lockOwner,
-    lockStartedAt: state.lockStartedAt ?? nowIso,
-    lockHeartbeatAt: nowIso,
     lastWakeAt: nowIso,
     lastCursorBefore: cursorBefore,
     updatedAt: nowIso,
   };
-  await deps.writeState(state);
+  if (!await commit(false)) return leaseLost();
 
   let page: FinanceIncrementalPageResult;
+  // A slow WB request keeps the lease alive. Database batch writes and cursor
+  // commits still check ownership/expiry in their own transactions.
+  let renewal: Promise<boolean> | null = null;
+  let renewalFailed = false;
+  const timer = setInterval(() => {
+    if (renewal) return;
+    renewal = deps.renewLease(input.accountId, lockOwner)
+      .then((ok) => { if (!ok) renewalFailed = true; return ok; })
+      // A transient renewal error is uncertain; guarded batch/state writes
+      // remain authoritative and will reject an actually expired lease.
+      .catch(() => false)
+      .finally(() => { renewal = null; });
+  }, 60_000);
+  timer.unref?.();
   try {
     httpRequests = 1;
     page = await deps.syncPage({
@@ -198,17 +220,19 @@ export async function runFinanceReportsV1PageWake(
       weekFrom: input.weekFrom,
       weekTo: input.weekTo,
       rrdId: cursorBefore,
+      leaseOwner: lockOwner,
     });
   } catch (err) {
+    clearInterval(timer);
+    if (renewal) await renewal;
+    if (renewalFailed) return leaseLost();
     const message = err instanceof Error ? err.message : String(err);
     state = {
       ...state,
       lastError: message,
-      lockOwner: null,
-      lockHeartbeatAt: null,
       updatedAt: new Date().toISOString(),
     };
-    await deps.writeState(state);
+    if (!await commit(true)) return leaseLost();
     return {
       ...blockedBase(),
       status: "failed",
@@ -217,6 +241,9 @@ export async function runFinanceReportsV1PageWake(
       error: message,
     };
   }
+  clearInterval(timer);
+  if (renewal) await renewal;
+  if (renewalFailed) return leaseLost();
 
   const httpStatus = page.httpStatus;
   const rateLimited = httpStatus === 429 || isFinanceHttp429(page.errors);
@@ -239,10 +266,8 @@ export async function runFinanceReportsV1PageWake(
       lastRowsPersisted: 0,
       lastHasMore: page.hasMore,
       lastCursorAfter: cursorBefore,
-      lockOwner: null,
-      lockHeartbeatAt: null,
     };
-    await deps.writeState(state);
+    if (!await commit(true)) return leaseLost();
     return {
       accountId: input.accountId,
       status: "rate_limited",
@@ -294,10 +319,8 @@ export async function runFinanceReportsV1PageWake(
       lastRowsReceived: page.apiRows,
       lastRowsPersisted: page.persistedLines,
       lastCursorAfter: cursorBefore,
-      lockOwner: null,
-      lockHeartbeatAt: null,
     };
-    await deps.writeState(state);
+    if (!await commit(true)) return leaseLost();
     return {
       accountId: input.accountId,
       status: "failed",
@@ -337,14 +360,12 @@ export async function runFinanceReportsV1PageWake(
         lastHasMore: false,
         lastCursorAfter: null,
         latestSuccessfulDataDate: page.returnedTo ?? state.latestSuccessfulDataDate,
-        lockOwner: null,
-        lockHeartbeatAt: null,
       },
       week,
       today,
       nowIso: new Date().toISOString(),
     });
-    await deps.writeState(state);
+    if (!await commit(true)) return leaseLost();
     return {
       accountId: input.accountId,
       status: "week_complete",
@@ -385,11 +406,9 @@ export async function runFinanceReportsV1PageWake(
     lastHasMore: true,
     lastCursorAfter: nextCursor,
     latestSuccessfulDataDate: page.returnedTo ?? state.latestSuccessfulDataDate,
-    lockOwner: null,
-    lockHeartbeatAt: null,
     updatedAt: new Date().toISOString(),
   };
-  await deps.writeState(state);
+  if (!await commit(true)) return leaseLost();
 
   return {
     accountId: input.accountId,
