@@ -199,10 +199,17 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
             source: pnl.source,
             lines: pnl.lines,
             summaryLines,
+            netSalesStatus: pnl.netSalesStatus,
           })}
           fileName={`pnl-${scope.from}-${scope.to}`}
         />
       </div>
+
+      {pnl.netSalesStatus !== "ready" && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
+          Sales coverage: {pnl.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+        </p>
+      )}
 
       {isEmpty ? (
         <ReportEmptyState />

@@ -113,9 +113,11 @@ const pnlDoc = buildPnLExportDocument({
   summaryLines: pnl.lines.filter((l) =>
     ["netSales", "revenue", "netProfit", "netMargin"].includes(l.id)
   ),
+  netSalesStatus: "unavailable",
 });
 
 check("P&L document has metadata", pnlDoc.meta.company === "Orion Test Co");
+check("P&L partial Sales status travels with raw amount", pnlDoc.rows.find((r) => r.label === "Net Sales")?.salesStatus === "unavailable" && pnlDoc.rows.find((r) => r.label === "Net Sales")?.amount === 1000 && pnlDoc.meta.filters.some((f) => f.label === "Warning"));
 check("P&L summary Net Profit matches report", 
   pnlDoc.summary.find((s) => s.id === "netProfit")?.value === pnl.netProfit
 );
@@ -161,6 +163,7 @@ const products = [
     unitsSold: 10,
     unitsReturned: 0,
     netSales: 1200,
+    netSalesStatus: "unavailable",
     finalNetProfit: 400,
     marketplaceFees: 150,
     accountAdjustments: 0,
@@ -185,7 +188,9 @@ const productDoc = buildProductProfitExportDocument({
   source: productView.source,
   rows: productView.rows,
   summary: productView.summary,
+  netSalesStatus: productView.netSalesStatus,
 });
+check("Product export retains partial Sales status", productDoc.rows[0]?.netSalesStatus === "unavailable" && productDoc.rows[0]?.netSales === 1200);
 check(
   "Product export row count matches report",
   productDoc.rows.length === productView.rows.length
@@ -226,7 +231,7 @@ const docs = [
   { id: "brand-performance", doc: brandDoc },
 ];
 
-const outDir = resolve(process.cwd(), "exports/reporting-9-5");
+const outDir = resolve(process.cwd(), process.env.REPORTING_VERIFY_OUTPUT_DIR ?? "exports/reporting-9-5");
 mkdirSync(outDir, { recursive: true });
 
 for (const { id, doc } of docs) {

@@ -8,6 +8,7 @@
 
 import type { ModelBProfitMetrics, OverviewMetrics, ProductProfitability } from "@/types/database";
 import { filterProductsByCategory } from "@/lib/reporting/module/pnl-report";
+import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
 
 export type SettlementLineId =
   | "grossSales"
@@ -37,6 +38,7 @@ export type SettlementReportView = {
   source: "financialEngine.modelB" | "productRows.aggregated";
   currency: string;
   lines: SettlementLine[];
+  netSalesStatus: NetSalesStatus;
   /** Primary KPI — Financial Engine sellerPayout. */
   netTransfer: number;
 };
@@ -136,6 +138,7 @@ export function buildSettlementFromEngine(
     source: "financialEngine.modelB",
     currency,
     lines: linesFromSlice(slice),
+    netSalesStatus: fe.netSalesStatus,
     netTransfer: fe.sellerPayout,
   };
 }
@@ -193,6 +196,7 @@ export function buildSettlementFromProductRows(
     source: "productRows.aggregated",
     currency,
     lines: linesFromSlice(slice),
+    netSalesStatus: combineNetSalesStatuses(products.map((row) => row.netSalesStatus)),
     netTransfer,
   };
 }

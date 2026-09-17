@@ -150,6 +150,17 @@ export function isNetSalesReady(status: NetSalesStatus): boolean {
   return status === "ready";
 }
 
+/** Aggregate readiness without treating a partial child as complete. */
+export function combineNetSalesStatuses(
+  statuses: readonly (NetSalesStatus | undefined)[]
+): NetSalesStatus {
+  if (statuses.length === 0 || statuses.every((status) => status === "empty")) return "empty";
+  if (statuses.some((status) => status === "unavailable" || status === undefined)) {
+    return "unavailable";
+  }
+  return "ready";
+}
+
 /** @deprecated Use buildNetSalesFromDb().netSales */
 export function sumSalesPriceWithDiscFromDb(sales: WbSale[]): number {
   return buildNetSalesFromDb(sales).netSales;

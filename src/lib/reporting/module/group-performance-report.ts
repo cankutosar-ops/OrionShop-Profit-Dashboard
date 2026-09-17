@@ -5,6 +5,7 @@
  */
 
 import { calculateModelBMarginPercent } from "@/lib/financial-engine";
+import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
 import type { ReportSummaryLine } from "@/components/reporting/report-summary-cards";
 import type { ProductProfitability } from "@/types/database";
 import {
@@ -30,6 +31,7 @@ export type GroupPerformanceRow = {
   productCount: number;
   unitsSold: number;
   netSales: number;
+  netSalesStatus: NetSalesStatus;
   revenue: number;
   productCost: number;
   marketplaceFees: number;
@@ -47,6 +49,7 @@ export type GroupPerformanceReportView = {
   dimension: GroupPerformanceDimension;
   currency: string;
   rows: GroupPerformanceRow[];
+  netSalesStatus: NetSalesStatus;
   summary: ReportSummaryLine[];
   totals: {
     groupCount: number;
@@ -64,6 +67,7 @@ type Acc = {
   productIds: Set<string>;
   unitsSold: number;
   netSales: number;
+  statuses: NetSalesStatus[];
   revenue: number;
   productCost: number;
   marketplaceFees: number;
@@ -80,6 +84,7 @@ function emptyAcc(name: string): Acc {
     productIds: new Set(),
     unitsSold: 0,
     netSales: 0,
+    statuses: [],
     revenue: 0,
     productCost: 0,
     marketplaceFees: 0,
@@ -120,6 +125,7 @@ export function aggregateProductProfitRows(
     acc.productIds.add(row.productId);
     acc.unitsSold += row.unitsSold;
     acc.netSales += row.netSales;
+    acc.statuses.push(row.netSalesStatus);
     acc.revenue += row.revenue;
     acc.productCost += row.productCost;
     acc.marketplaceFees += row.marketplaceFees;
@@ -138,6 +144,7 @@ export function aggregateProductProfitRows(
       productCount: acc.productIds.size,
       unitsSold: acc.unitsSold,
       netSales: acc.netSales,
+      netSalesStatus: combineNetSalesStatuses(acc.statuses),
       revenue: acc.revenue,
       productCost: acc.productCost,
       marketplaceFees: acc.marketplaceFees,
@@ -242,6 +249,7 @@ export function buildGroupPerformanceReport(
     dimension,
     currency,
     rows,
+    netSalesStatus: combineNetSalesStatuses(rows.map((row) => row.netSalesStatus)),
     summary,
     totals: {
       groupCount,

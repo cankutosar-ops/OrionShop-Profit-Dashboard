@@ -10,6 +10,7 @@
  */
 
 import { calculateModelBMarginPercent } from "@/lib/financial-engine";
+import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
 import { filterProductsByCategory } from "@/lib/reporting/module/pnl-report";
 import type { ProductProfitability } from "@/types/database";
 import type { ReportSummaryLine } from "@/components/reporting/report-summary-cards";
@@ -31,6 +32,7 @@ export type ProductProfitReportRow = {
   unitsReturned: number;
   netUnits: number;
   netSales: number;
+  netSalesStatus: NetSalesStatus;
   revenue: number;
   productCost: number;
   marketplaceFees: number;
@@ -58,6 +60,7 @@ export type ProductProfitReportView = {
   source: "financialEngine.products";
   currency: string;
   rows: ProductProfitReportRow[];
+  netSalesStatus: NetSalesStatus;
   summary: ReportSummaryLine[];
   totals: {
     revenue: number;
@@ -100,6 +103,7 @@ function mapRow(
     unitsReturned,
     netUnits: unitsSold - unitsReturned,
     netSales: product.netSales,
+    netSalesStatus: product.netSalesStatus ?? "unavailable",
     revenue,
     productCost: product.productCost,
     marketplaceFees: product.marketplaceFees,
@@ -218,6 +222,7 @@ export function buildProductProfitReport(
     source: "financialEngine.products",
     currency,
     rows,
+    netSalesStatus: combineNetSalesStatuses(rows.map((row) => row.netSalesStatus)),
     summary,
     totals: {
       revenue,

@@ -117,10 +117,17 @@ export async function GroupPerformanceReportPage({
             filters: exportFilters,
             rows: view.rows,
             summary: view.summary,
+            netSalesStatus: view.netSalesStatus,
           })}
           fileName={`${config.reportId}-${scope.from}-${scope.to}`}
         />
       </div>
+
+      {view.netSalesStatus !== "ready" && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
+          Sales coverage: {view.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+        </p>
+      )}
 
       {isEmpty ? (
         <ReportEmptyState />

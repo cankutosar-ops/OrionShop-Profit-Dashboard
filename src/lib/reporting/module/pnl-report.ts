@@ -4,6 +4,7 @@
  */
 
 import { calculateModelBMarginPercent } from "@/lib/financial-engine";
+import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
 import type { ModelBProfitMetrics, ProductProfitability } from "@/types/database";
 
 export type PnLLineId =
@@ -38,6 +39,7 @@ export type PnLReportView = {
   source: "financialEngine.modelB" | "productRows.aggregated";
   currency: string;
   lines: PnLLine[];
+  netSalesStatus: NetSalesStatus;
   /** Engine Net Profit for identity checks. */
   netProfit: number;
   netMarginPercent: number;
@@ -122,6 +124,7 @@ export function buildPnLFromModelB(
     source: "financialEngine.modelB",
     currency,
     lines,
+    netSalesStatus: fe.netSalesStatus,
     netProfit,
     netMarginPercent: calculateModelBMarginPercent(fe.revenue, netProfit),
   };
@@ -194,6 +197,7 @@ export function buildPnLFromProductRows(
     source: "productRows.aggregated",
     currency,
     lines,
+    netSalesStatus: combineNetSalesStatuses(products.map((row) => row.netSalesStatus)),
     netProfit,
     netMarginPercent: calculateModelBMarginPercent(revenue, netProfit),
   };

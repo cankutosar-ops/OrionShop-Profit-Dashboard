@@ -121,10 +121,17 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
             source: settlement.source,
             lines: settlement.lines,
             summaryLines,
+            netSalesStatus: settlement.netSalesStatus,
           })}
           fileName={`settlement-${scope.from}-${scope.to}`}
         />
       </div>
+
+      {settlement.netSalesStatus !== "ready" && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
+          Sales coverage: {settlement.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+        </p>
+      )}
 
       {isEmpty ? (
         <ReportEmptyState />

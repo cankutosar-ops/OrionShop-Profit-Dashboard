@@ -69,10 +69,17 @@ export default async function ProductProfitReportPage({ searchParams }: PageProp
             source: view.source,
             rows: view.rows,
             summary: view.summary,
+            netSalesStatus: view.netSalesStatus,
           })}
           fileName={`product-profit-${scope.from}-${scope.to}`}
         />
       </div>
+
+      {view.netSalesStatus !== "ready" && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
+          Sales coverage: {view.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+        </p>
+      )}
 
       {isEmpty ? (
         <ReportEmptyState />
