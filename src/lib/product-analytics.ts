@@ -27,6 +27,7 @@ export function toProductAnalyticsRow(product: ProductProfitability): ProductAna
     quantitySold: product.unitsSold,
     productCost: product.productCost,
     marketplaceFees: product.marketplaceFees,
+    marketplaceFeeStatus: product.marketplaceFeeStatus,
     /** V4 Net Profit (after tax). */
     netProfit: product.finalNetProfit,
     marginPercent: calculateGrossMarginPercent(product.revenue, grossProfit),
@@ -51,6 +52,7 @@ export function toProductAnalyticsV3Row(product: ProductProfitability): ProductA
     cancellationPercent: product.cancellationPercent,
     revenue: product.revenue,
     marketplaceFees: ops.marketplaceFees,
+    marketplaceFeeStatus: product.marketplaceFeeStatus,
     commission: product.commission,
     totalLogistics: ops.totalLogistics,
     purchaseLogistics: ops.purchaseLogistics,

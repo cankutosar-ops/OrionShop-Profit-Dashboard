@@ -354,6 +354,8 @@ export type ModelBProfitMetrics = {
   commission: number;
   /** Alias of commission — Marketplace Fee. */
   marketplaceFee?: number;
+  /** Informational fee validity; a negative signed difference is an anomaly only when Sales is complete. */
+  marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   /** Finance acquiring_fee (display; not deducted again in Net Profit). */
   acquiring: number;
   /** Revenue = Finance Σ ppvz_for_pay (signed for_pay lines). */
@@ -677,6 +679,7 @@ export type ProductProfitability = ProfitBreakdown & {
   finalNetProfit: number;
   /** Marketplace Fee = Sales − Sales API forPay (Financial Engine V4). */
   marketplaceFees: number;
+  marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
   accountAdjustments: number;
   /** COMPENSATION reimbursements — separate from Marketplace Fees KPI. */
@@ -734,6 +737,7 @@ export type ProductAnalyticsRow = {
   quantitySold: number;
   productCost: number;
   marketplaceFees: number;
+  marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   netProfit: number;
   marginPercent: number;
 };
@@ -750,6 +754,7 @@ export type ProductAnalyticsV3Row = {
   cancellationPercent: number;
   revenue: number;
   marketplaceFees: number;
+  marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   commission: number;
   /** All outbound logistics (purchase + excluded). */
   totalLogistics: number;

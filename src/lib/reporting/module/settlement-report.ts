@@ -9,6 +9,7 @@
 import type { ModelBProfitMetrics, OverviewMetrics, ProductProfitability } from "@/types/database";
 import { filterProductsByCategory } from "@/lib/reporting/module/pnl-report";
 import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
+import { combineMarketplaceFeeStatuses, resolveMarketplaceFeeStatus, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 export type SettlementLineId =
   | "grossSales"
@@ -39,6 +40,7 @@ export type SettlementReportView = {
   currency: string;
   lines: SettlementLine[];
   netSalesStatus: NetSalesStatus;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   /** Primary KPI — Financial Engine sellerPayout. */
   netTransfer: number;
 };
@@ -142,6 +144,7 @@ export function buildSettlementFromEngine(
     currency,
     lines: linesFromSlice(slice),
     netSalesStatus: fe.netSalesStatus,
+    marketplaceFeeStatus: fe.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(fe.netSalesStatus, fe.marketplaceFee ?? fe.commission),
     netTransfer: fe.sellerPayout,
   };
 }
@@ -200,6 +203,7 @@ export function buildSettlementFromProductRows(
     currency,
     lines: linesFromSlice(slice, "Other Expenses (finance rollup)"),
     netSalesStatus: combineNetSalesStatuses(products.map((row) => row.netSalesStatus)),
+    marketplaceFeeStatus: combineMarketplaceFeeStatuses(products.map((row) => row.marketplaceFeeStatus)),
     netTransfer,
   };
 }

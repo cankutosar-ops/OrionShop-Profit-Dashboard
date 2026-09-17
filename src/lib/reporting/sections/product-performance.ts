@@ -11,6 +11,7 @@ import {
   type RankedProduct,
 } from "@/lib/reporting/section-utils";
 import type { ProductProfitability } from "@/types/database";
+import type { MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 const TOP_N = 15;
 
@@ -30,6 +31,7 @@ export type ProductPortfolioRow = {
   unitsReturned: number;
   returnRate: number;
   marketplaceFees: number;
+  marketplaceFeeStatus?: MarketplaceFeeStatus;
   logistics: number;
   storage: number;
   productCost: number;
@@ -84,6 +86,7 @@ function toPortfolioRow(
     unitsReturned: product.unitsReturned,
     returnRate: product.returnRate,
     marketplaceFees: product.marketplaceFees,
+    marketplaceFeeStatus: product.marketplaceFeeStatus,
     logistics: product.logistics,
     storage: product.storage,
     productCost: product.productCost,

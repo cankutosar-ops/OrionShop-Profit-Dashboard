@@ -23,6 +23,7 @@ import type {
   SyncStatus,
 } from "@/types/database";
 import type { ReportLocale } from "@/lib/reporting/types";
+import { MARKETPLACE_FEE_ANOMALY_MESSAGE, resolveMarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 const MARKETPLACE_LABELS: Record<string, string> = {
   wildberries: "Wildberries",
@@ -127,6 +128,11 @@ export async function loadReportContext(
   if (overview.modelBProfit.netSalesStatus !== "ready") {
     warnings.push(`sales_price_with_disc_${overview.modelBProfit.netSalesStatus}: Net Sales and Marketplace Fee are observed values, not complete Sales metrics`);
   }
+  const feeStatus = overview.modelBProfit.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(
+    overview.modelBProfit.netSalesStatus,
+    overview.modelBProfit.marketplaceFee ?? overview.modelBProfit.commission
+  );
+  if (feeStatus === "anomaly") warnings.push(`marketplace_fee_anomaly: ${MARKETPLACE_FEE_ANOMALY_MESSAGE}`);
   const incompleteProducts = products.filter((product) => product.netSalesStatus === "unavailable").length;
   if (incompleteProducts > 0) {
     warnings.push(`product_sales_price_with_disc_unavailable: ${incompleteProducts} product(s) have partial Sales prices`);

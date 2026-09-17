@@ -6,6 +6,7 @@ import type { ReportContext } from "@/lib/reporting/report-context";
 import type { ReportSection } from "@/lib/reporting/types";
 import { FINANCIAL_ENGINE_VERSION } from "@/lib/reporting/section-utils";
 import type { ModelBProfitMetrics } from "@/types/database";
+import type { MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 export type FinancialSummaryLine = {
   id: string;
@@ -20,6 +21,7 @@ export type FinancialSummaryData = {
   lines: FinancialSummaryLine[];
   /** Full Model B passthrough for exporters that prefer the engine object. */
   modelB: ModelBProfitMetrics;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
 };
 
 function linesFromModelB(fe: ModelBProfitMetrics): FinancialSummaryLine[] {
@@ -65,6 +67,7 @@ export function buildFinancialSummarySection(
       source: "financialEngine.modelB",
       lines: linesFromModelB(fe),
       modelB: fe,
+      marketplaceFeeStatus: fe.marketplaceFeeStatus ?? "unavailable",
     },
   };
 }

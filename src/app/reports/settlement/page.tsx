@@ -18,6 +18,7 @@ import {
 } from "@/lib/reporting/module/settlement-report";
 import { inferPeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 import { buildSettlementExportDocument } from "@/lib/reporting/module/export/build-export-document";
+import { MarketplaceFeeStatusNotice } from "@/components/reporting/marketplace-fee-status-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +123,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
             lines: settlement.lines,
             summaryLines,
             netSalesStatus: settlement.netSalesStatus,
+            marketplaceFeeStatus: settlement.marketplaceFeeStatus,
           })}
           fileName={`settlement-${scope.from}-${scope.to}`}
         />
@@ -132,6 +134,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
           Sales coverage: {settlement.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
         </p>
       )}
+      <MarketplaceFeeStatusNotice status={settlement.marketplaceFeeStatus} />
       {category && (
         <p role="note" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
           Category Net Transfer uses the legacy Other Expenses finance rollup. The account-level transfer uses Adjustments; these deductions are not equivalent.

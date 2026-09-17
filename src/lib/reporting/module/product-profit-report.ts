@@ -11,6 +11,7 @@
 
 import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
+import { combineMarketplaceFeeStatuses, resolveMarketplaceFeeStatus, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 import { filterProductsByCategory } from "@/lib/reporting/module/pnl-report";
 import type { ProductProfitability } from "@/types/database";
 import type { ReportSummaryLine } from "@/components/reporting/report-summary-cards";
@@ -33,6 +34,7 @@ export type ProductProfitReportRow = {
   netUnits: number;
   netSales: number;
   netSalesStatus: NetSalesStatus;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   revenue: number;
   productCost: number;
   marketplaceFees: number;
@@ -61,6 +63,7 @@ export type ProductProfitReportView = {
   currency: string;
   rows: ProductProfitReportRow[];
   netSalesStatus: NetSalesStatus;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   summary: ReportSummaryLine[];
   totals: {
     revenue: number;
@@ -104,6 +107,7 @@ function mapRow(
     netUnits: unitsSold - unitsReturned,
     netSales: product.netSales,
     netSalesStatus: product.netSalesStatus ?? "unavailable",
+    marketplaceFeeStatus: product.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(product.netSalesStatus, product.marketplaceFees),
     revenue,
     productCost: product.productCost,
     marketplaceFees: product.marketplaceFees,
@@ -223,6 +227,7 @@ export function buildProductProfitReport(
     currency,
     rows,
     netSalesStatus: combineNetSalesStatuses(rows.map((row) => row.netSalesStatus)),
+    marketplaceFeeStatus: combineMarketplaceFeeStatuses(rows.map((row) => row.marketplaceFeeStatus)),
     summary,
     totals: {
       revenue,

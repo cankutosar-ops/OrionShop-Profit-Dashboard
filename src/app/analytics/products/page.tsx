@@ -7,6 +7,7 @@ import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { formatDate } from "@/lib/utils";
 import { getProductAnalytics } from "@/services/product-analytics-service";
+import { MARKETPLACE_FEE_ANOMALY_MESSAGE } from "@/lib/marketplace-fee-status";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,11 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
         </div>
       ) : (
         <div className="space-y-5">
+          {report.v3All.some((row) => row.marketplaceFeeStatus === "anomaly") && (
+            <p role="status" className="rounded-lg border border-amber-500/40 p-3 text-sm">
+              {MARKETPLACE_FEE_ANOMALY_MESSAGE}
+            </p>
+          )}
           <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             <p>
               Period:{" "}

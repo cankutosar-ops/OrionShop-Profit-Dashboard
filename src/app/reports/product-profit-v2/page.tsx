@@ -13,6 +13,7 @@ import { getReportDefinition } from "@/lib/reporting/module/report-catalog";
 import { parseReportCategory } from "@/lib/reporting/module/report-filters";
 import { buildProductProfitReport } from "@/lib/reporting/module/product-profit-report";
 import { buildProductProfitExportDocument } from "@/lib/reporting/module/export/build-export-document";
+import { MarketplaceFeeStatusNotice } from "@/components/reporting/marketplace-fee-status-notice";
 import { inferPeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,7 @@ export default async function ProductProfitReportPage({ searchParams }: PageProp
             rows: view.rows,
             summary: view.summary,
             netSalesStatus: view.netSalesStatus,
+            marketplaceFeeStatus: view.marketplaceFeeStatus,
           })}
           fileName={`product-profit-${scope.from}-${scope.to}`}
         />
@@ -80,6 +82,7 @@ export default async function ProductProfitReportPage({ searchParams }: PageProp
           Sales coverage: {view.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
         </p>
       )}
+      <MarketplaceFeeStatusNotice status={view.marketplaceFeeStatus} />
 
       {isEmpty ? (
         <ReportEmptyState />

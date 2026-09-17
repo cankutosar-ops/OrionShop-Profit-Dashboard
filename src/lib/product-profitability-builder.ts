@@ -208,6 +208,7 @@ export function buildProductProfitabilityResult(
         unitLogisticsCost,
         /** Marketplace Fee (V4) — same as commission; not finance ppvz_* bundle. */
         marketplaceFees: modelB.marketplaceFee ?? modelB.commission,
+        marketplaceFeeStatus: modelB.marketplaceFeeStatus,
         accountAdjustments: feeParts.accountAdjustments,
         reimbursements: feeParts.reimbursements,
         productId: String(product.id),

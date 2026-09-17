@@ -235,7 +235,7 @@ Cost of goods attributed to sold units for the period, derived from maintained U
 
 ### 5.2 Marketplace Fee
 
-The marketplace’s fee take in the commercial fee story. In Commercial Performance it is shown for understanding; it is not deducted again in Net Profit when already reflected before Revenue.
+The signed informational difference **Net Sales − Sales API forPay**. In Commercial Performance it is shown for understanding; it is not deducted again in Net Profit when already reflected before Revenue. Do not clamp a negative difference to zero. With complete Sales coverage, a negative value is marked as an anomaly because returns or an unusual Sales/forPay relationship can produce it. When Sales coverage is incomplete, the fee remains unavailable rather than being labeled an anomaly.
 
 ### 5.3 Logistics
 

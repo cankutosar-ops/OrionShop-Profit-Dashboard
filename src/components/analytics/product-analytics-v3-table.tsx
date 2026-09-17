@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import type { ProductAnalyticsV3Row } from "@/types/database";
+import { MarketplaceFeeValue } from "@/components/marketplace-fee-value";
 import { LogisticsBreakdownHint } from "@/components/analytics/logistics-breakdown-hint";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
@@ -242,7 +243,7 @@ export function ProductAnalyticsV3Table({
                       {formatCurrency(row.revenue)}
                     </td>
                     <td className={cn(cellPad, "text-right text-muted-foreground tabular-nums")}>
-                      {formatCurrency(row.commission)}
+                      <MarketplaceFeeValue value={formatCurrency(row.commission)} status={row.marketplaceFeeStatus} />
                     </td>
                     <td className={cn(cellPad, "text-right tabular-nums text-muted-foreground")}>
                       <LogisticsBreakdownHint

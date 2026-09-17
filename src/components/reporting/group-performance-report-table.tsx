@@ -99,7 +99,7 @@ export function GroupPerformanceReportTable({
       align: "right",
       sortable: true,
       sortValue: (row) => row.marketplaceFees,
-      cell: (row) => money(row.marketplaceFees, currency),
+      cell: (row) => `${money(row.marketplaceFees, currency)}${row.marketplaceFeeStatus === "anomaly" ? " · anomaly" : row.marketplaceFeeStatus === "unavailable" ? " · Sales incomplete" : ""}`,
     },
     {
       key: "logistics",

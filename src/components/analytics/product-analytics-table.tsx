@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import type { ProductAnalyticsRow } from "@/types/database";
+import { MarketplaceFeeValue } from "@/components/marketplace-fee-value";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
@@ -180,7 +181,7 @@ export function ProductAnalyticsTable({
                     {formatCurrency(row.productCost)}
                   </td>
                   <td className="px-6 py-3.5 text-right text-muted-foreground tabular-nums">
-                    {formatCurrency(row.marketplaceFees)}
+                    <MarketplaceFeeValue value={formatCurrency(row.marketplaceFees)} status={row.marketplaceFeeStatus} />
                   </td>
                   <td
                     className={cn(

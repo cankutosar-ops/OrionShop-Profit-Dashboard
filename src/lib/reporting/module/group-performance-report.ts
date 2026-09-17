@@ -6,6 +6,7 @@
 
 import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
+import { combineMarketplaceFeeStatuses, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 import type { ReportSummaryLine } from "@/components/reporting/report-summary-cards";
 import type { ProductProfitability } from "@/types/database";
 import {
@@ -32,6 +33,7 @@ export type GroupPerformanceRow = {
   unitsSold: number;
   netSales: number;
   netSalesStatus: NetSalesStatus;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   revenue: number;
   productCost: number;
   marketplaceFees: number;
@@ -50,6 +52,7 @@ export type GroupPerformanceReportView = {
   currency: string;
   rows: GroupPerformanceRow[];
   netSalesStatus: NetSalesStatus;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   summary: ReportSummaryLine[];
   totals: {
     groupCount: number;
@@ -68,6 +71,7 @@ type Acc = {
   unitsSold: number;
   netSales: number;
   statuses: NetSalesStatus[];
+  feeStatuses: MarketplaceFeeStatus[];
   revenue: number;
   productCost: number;
   marketplaceFees: number;
@@ -85,6 +89,7 @@ function emptyAcc(name: string): Acc {
     unitsSold: 0,
     netSales: 0,
     statuses: [],
+    feeStatuses: [],
     revenue: 0,
     productCost: 0,
     marketplaceFees: 0,
@@ -126,6 +131,7 @@ export function aggregateProductProfitRows(
     acc.unitsSold += row.unitsSold;
     acc.netSales += row.netSales;
     acc.statuses.push(row.netSalesStatus);
+    acc.feeStatuses.push(row.marketplaceFeeStatus);
     acc.revenue += row.revenue;
     acc.productCost += row.productCost;
     acc.marketplaceFees += row.marketplaceFees;
@@ -145,6 +151,7 @@ export function aggregateProductProfitRows(
       unitsSold: acc.unitsSold,
       netSales: acc.netSales,
       netSalesStatus: combineNetSalesStatuses(acc.statuses),
+      marketplaceFeeStatus: combineMarketplaceFeeStatuses(acc.feeStatuses),
       revenue: acc.revenue,
       productCost: acc.productCost,
       marketplaceFees: acc.marketplaceFees,
@@ -250,6 +257,7 @@ export function buildGroupPerformanceReport(
     currency,
     rows,
     netSalesStatus: combineNetSalesStatuses(rows.map((row) => row.netSalesStatus)),
+    marketplaceFeeStatus: combineMarketplaceFeeStatuses(rows.map((row) => row.marketplaceFeeStatus)),
     summary,
     totals: {
       groupCount,

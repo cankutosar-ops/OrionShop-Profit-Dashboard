@@ -53,7 +53,7 @@ export function MarketplaceCostAnalysisSection({
 
       <ReportSubsection
         title="Cost composition"
-        description="Fee, logistics, storage, and other marketplace expenses"
+        description="The composition chart plots positive components; signed negative fees remain in the table and total."
       >
         <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
           <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-border/60 bg-background/40 p-4">
@@ -82,7 +82,7 @@ export function MarketplaceCostAnalysisSection({
                 align: "right",
                 sortable: true,
                 sortValue: (r) => r.amount,
-                cell: (r) => reportMoney(r.amount, currency),
+                cell: (r) => `${reportMoney(r.amount, currency)}${r.id === "marketplaceFee" && d.marketplaceFeeStatus === "anomaly" ? " · anomaly" : ""}`,
               },
               {
                 key: "pct",

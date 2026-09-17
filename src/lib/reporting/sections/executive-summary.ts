@@ -24,6 +24,7 @@ export type ExecutiveSummaryData = {
   marketplaceFee: number;
   netSales: number;
   netSalesStatus: string;
+  marketplaceFeeStatus: string;
   bestPerformingBrand: { name: string; revenue: number; finalNetProfit: number } | null;
   bestProduct: RankedProduct | null;
   worstProduct: RankedProduct | null;
@@ -61,6 +62,7 @@ export function buildExecutiveSummarySection(
       marketplaceFee: fe.marketplaceFee ?? fe.commission,
       netSales: fe.netSales,
       netSalesStatus: fe.netSalesStatus,
+      marketplaceFeeStatus: fe.marketplaceFeeStatus ?? "unavailable",
       bestPerformingBrand: bestBrand
         ? {
             name: bestBrand.name,

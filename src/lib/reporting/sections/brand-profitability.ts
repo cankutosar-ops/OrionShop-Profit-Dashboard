@@ -13,6 +13,7 @@ import {
   type RankedBrand,
 } from "@/lib/reporting/section-utils";
 import type { ProductProfitability } from "@/types/database";
+import { combineMarketplaceFeeStatuses, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 const RANK_N = 10;
 
@@ -25,6 +26,7 @@ export type BrandProfitabilityRow = {
   orders: number;
   productCost: number;
   marketplaceFee: number;
+  marketplaceFeeStatus?: MarketplaceFeeStatus;
   logistics: number;
   storage: number;
   returns: number;
@@ -69,6 +71,7 @@ type BrandAcc = {
   orders: number;
   productCost: number;
   marketplaceFee: number;
+  feeStatuses: MarketplaceFeeStatus[];
   logistics: number;
   storage: number;
   returns: number;
@@ -85,6 +88,7 @@ function emptyBrand(brandName: string): BrandAcc {
     orders: 0,
     productCost: 0,
     marketplaceFee: 0,
+    feeStatuses: [],
     logistics: 0,
     storage: 0,
     returns: 0,
@@ -100,6 +104,7 @@ function accumulateProduct(acc: BrandAcc, p: ProductProfitability): void {
   acc.orders += p.orders;
   acc.productCost += p.productCost;
   acc.marketplaceFee += p.marketplaceFees;
+  acc.feeStatuses.push(p.marketplaceFeeStatus ?? "unavailable");
   acc.logistics += p.logistics;
   acc.storage += p.storage;
   acc.returns += p.unitsReturned;
@@ -146,6 +151,7 @@ export function rollupBrandProfitability(
         orders: row.orders,
         productCost: row.productCost,
         marketplaceFee: row.marketplaceFee,
+        marketplaceFeeStatus: combineMarketplaceFeeStatuses(row.feeStatuses),
         logistics: row.logistics,
         storage: row.storage,
         returns: row.returns,

@@ -51,9 +51,9 @@ import { calculateEstimatedTax } from "@/lib/financial-engine-tax";
 
 export { calculateEstimatedTax } from "@/lib/financial-engine-tax";
 
-/** Marketplace Fee = max(0, Sales − Sales API forPay). Never from ppvz_*. */
+/** Signed Marketplace Fee = Sales − Sales API forPay. Never from ppvz_*. */
 export function marketplaceFeeFromSales(netSales: number, salesForPay: number): number {
-  return Math.max(0, netSales - salesForPay);
+  return netSales - salesForPay;
 }
 
 /** Net Σ finishedPrice from persisted sales (wb_sales.revenue = finishedPrice). */

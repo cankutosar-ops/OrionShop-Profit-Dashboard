@@ -34,7 +34,7 @@ export function FinancialSummarySection({
             align: "right",
             sortable: true,
             sortValue: (row) => row.amount,
-            cell: (row) => reportMoney(row.amount, currency),
+            cell: (row) => `${reportMoney(row.amount, currency)}${row.id === "marketplaceFee" && d.marketplaceFeeStatus === "anomaly" ? " · anomaly" : ""}`,
           },
         ]}
         rows={d.lines}

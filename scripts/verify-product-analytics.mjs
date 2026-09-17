@@ -15,6 +15,7 @@ loadEnv();
 
 const from = process.env.AUDIT_FROM || "2026-05-24";
 const to = process.env.AUDIT_TO || "2026-06-23";
+const scope = { from, to, marketplaceAccountId: process.env.AUDIT_ACCOUNT_ID || "1", companyId: "" };
 
 const { getProductAnalytics } = await import("../src/services/product-analytics-service.ts");
 const {
@@ -23,14 +24,14 @@ const {
   verifyProductAnalyticsOperationalTotals,
 } = await import("../src/lib/product-analytics.ts");
 
-const report = await getProductAnalytics({ from, to });
+const report = await getProductAnalytics(scope);
 if (!report) {
   console.error("No report — Supabase not configured");
   process.exit(1);
 }
 
 const products = await import("../src/services/dashboard-service.ts").then((m) =>
-  m.getProductProfitability({ from, to })
+  m.getProductProfitability(scope)
 );
 
 const v2Check = verifyProductAnalyticsTotals(products, report.totals);

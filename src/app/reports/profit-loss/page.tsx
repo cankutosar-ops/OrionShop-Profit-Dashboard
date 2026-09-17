@@ -21,6 +21,8 @@ import {
 import { parseReportCategory } from "@/lib/reporting/module/report-filters";
 import { inferPeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 import { buildPnLExportDocument } from "@/lib/reporting/module/export/build-export-document";
+import { MarketplaceFeeStatusNotice } from "@/components/reporting/marketplace-fee-status-notice";
+import { combineMarketplaceFeeStatuses } from "@/lib/marketplace-fee-status";
 import { buildPeriodChunks } from "@/lib/reporting/weekly-business/period-chunks";
 import type { ScopedDateRange } from "@/types/database";
 
@@ -80,7 +82,12 @@ function periodColumns(currency: string) {
     money("returnedSales", "Returns"),
     money("netSales", "Net Sales"),
     money("revenue", "Revenue"),
-    money("marketplaceFees", "Fees"),
+    {
+      key: "marketplaceFees",
+      header: "Marketplace Fee",
+      align: "right" as const,
+      cell: (row: PnLPeriodBreakdownRow) => `${formatKpiCurrency(row.marketplaceFees, currency)}${row.marketplaceFeeStatus === "anomaly" ? " · anomaly" : ""}`,
+    },
     money("logistics", "Logistics"),
     money("storage", "Storage"),
     money("productCost", "Product Cost"),
@@ -162,6 +169,7 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
           netSales: period.rows.reduce((s, r) => s + r.netSales, 0),
           revenue: period.rows.reduce((s, r) => s + r.revenue, 0),
           marketplaceFees: period.rows.reduce((s, r) => s + r.marketplaceFees, 0),
+          marketplaceFeeStatus: combineMarketplaceFeeStatuses(period.rows.map((row) => row.marketplaceFeeStatus)),
           logistics: period.rows.reduce((s, r) => s + r.logistics, 0),
           storage: period.rows.reduce((s, r) => s + r.storage, 0),
           productCost: period.rows.reduce((s, r) => s + r.productCost, 0),
@@ -200,6 +208,7 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
             lines: pnl.lines,
             summaryLines,
             netSalesStatus: pnl.netSalesStatus,
+            marketplaceFeeStatus: pnl.marketplaceFeeStatus,
           })}
           fileName={`pnl-${scope.from}-${scope.to}`}
         />
@@ -210,6 +219,7 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
           Sales coverage: {pnl.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
         </p>
       )}
+      <MarketplaceFeeStatusNotice status={pnl.marketplaceFeeStatus} />
 
       {isEmpty ? (
         <ReportEmptyState />

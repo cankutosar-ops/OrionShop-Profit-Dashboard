@@ -543,7 +543,7 @@ const model = {
 const buffer = await renderWeeklyBusinessWorkbook(model);
 check("Workbook buffer non-empty", buffer.byteLength > 1000, `${buffer.byteLength}b`);
 
-const outDir = resolve("exports/reporting-weekly-business");
+const outDir = resolve(process.env.WEEKLY_VERIFY_OUTPUT_DIR ?? "exports/reporting-weekly-business");
 mkdirSync(outDir, { recursive: true });
 const outPath = resolve(outDir, "unified-business-sample.xlsx");
 writeFileSync(outPath, Buffer.from(buffer));

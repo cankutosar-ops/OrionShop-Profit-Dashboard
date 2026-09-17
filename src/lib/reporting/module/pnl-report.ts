@@ -5,6 +5,7 @@
 
 import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
+import { combineMarketplaceFeeStatuses, resolveMarketplaceFeeStatus, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 import type { ModelBProfitMetrics, ProductProfitability } from "@/types/database";
 
 export type PnLLineId =
@@ -40,6 +41,7 @@ export type PnLReportView = {
   currency: string;
   lines: PnLLine[];
   netSalesStatus: NetSalesStatus;
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   /** Engine Net Profit for identity checks. */
   netProfit: number;
   netMarginPercent: number;
@@ -125,6 +127,7 @@ export function buildPnLFromModelB(
     currency,
     lines,
     netSalesStatus: fe.netSalesStatus,
+    marketplaceFeeStatus: fe.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(fe.netSalesStatus, fe.marketplaceFee ?? fe.commission),
     netProfit,
     netMarginPercent: calculateModelBMarginPercent(fe.revenue, netProfit),
   };
@@ -198,6 +201,7 @@ export function buildPnLFromProductRows(
     currency,
     lines,
     netSalesStatus: combineNetSalesStatuses(products.map((row) => row.netSalesStatus)),
+    marketplaceFeeStatus: combineMarketplaceFeeStatuses(products.map((row) => row.marketplaceFeeStatus)),
     netProfit,
     netMarginPercent: calculateModelBMarginPercent(revenue, netProfit),
   };
@@ -222,6 +226,7 @@ export type PnLPeriodBreakdownRow = {
   netSales: number;
   revenue: number;
   marketplaceFees: number;
+  marketplaceFeeStatus?: MarketplaceFeeStatus;
   logistics: number;
   storage: number;
   productCost: number;
@@ -244,6 +249,7 @@ export function pnlPeriodRowFromModelB(
     netSales: fe.netSales,
     revenue: fe.revenue,
     marketplaceFees: fe.marketplaceFee ?? fe.commission,
+    marketplaceFeeStatus: fe.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(fe.netSalesStatus, fe.marketplaceFee ?? fe.commission),
     logistics: fe.logistics,
     storage: fe.storage,
     productCost: fe.productCost,

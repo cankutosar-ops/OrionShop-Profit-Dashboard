@@ -12,6 +12,7 @@ import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
 import { PRODUCT_INTEL_NAV_PARAMS } from "@/lib/product-intelligence-nav";
 import { getOperationalMarginBand } from "@/lib/product-operational-metrics";
 import type { ProductAnalyticsSkuRow, ProductAnalyticsV3Row } from "@/types/database";
+import { MarketplaceFeeValue } from "@/components/marketplace-fee-value";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type ProductAnalyticsV8TableProps = {
@@ -548,7 +549,7 @@ export function ProductAnalyticsV8Table({
                         {formatCurrency(row.revenue)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                        <div>{formatCurrency(row.marketplaceFees)}</div>
+                        <MarketplaceFeeValue value={formatCurrency(row.marketplaceFees)} status={row.marketplaceFeeStatus} />
                         <div className="text-[10px] leading-tight text-muted-foreground/80">
                           {row.marketplaceFeesPctOfNetSales != null
                             ? `${formatPercent(row.marketplaceFeesPctOfNetSales)} of Net Sales`

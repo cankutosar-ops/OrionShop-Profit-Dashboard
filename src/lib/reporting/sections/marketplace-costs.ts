@@ -4,6 +4,7 @@
 import type { ReportContext } from "@/lib/reporting/report-context";
 import type { ReportSection } from "@/lib/reporting/types";
 import { percentOfRevenue } from "@/lib/reporting/section-utils";
+import type { MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 export type MarketplaceCostLine = {
   id: string;
@@ -13,6 +14,7 @@ export type MarketplaceCostLine = {
 };
 
 export type MarketplaceCostsData = {
+  marketplaceFeeStatus: MarketplaceFeeStatus;
   revenueBase: number;
   lines: MarketplaceCostLine[];
   totalAmount: number;
@@ -53,6 +55,7 @@ export function buildMarketplaceCostsSection(
     title: "Marketplace Cost Analysis",
     description: "Marketplace expense breakdown with share of Revenue (Financial Engine V4)",
     data: {
+      marketplaceFeeStatus: fe.marketplaceFeeStatus ?? "unavailable",
       revenueBase: revenue,
       lines,
       totalAmount,

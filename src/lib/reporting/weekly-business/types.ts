@@ -147,6 +147,7 @@ export type PeriodBreakdownRow = {
   chunk: PeriodChunk;
   netSales: number;
   marketplaceFee: number;
+  marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   revenue: number;
   logistics: number;
   storage: number;

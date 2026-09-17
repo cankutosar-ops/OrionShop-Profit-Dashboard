@@ -235,7 +235,7 @@ export function ProductIntelligenceSection({
               align: "right",
               sortable: true,
               sortValue: (r) => r.marketplaceFees,
-              cell: (r) => reportMoney(r.marketplaceFees, currency),
+              cell: (r) => `${reportMoney(r.marketplaceFees, currency)}${r.marketplaceFeeStatus === "anomaly" ? " · anomaly" : ""}`,
             },
             {
               key: "logistics",

@@ -79,6 +79,7 @@ function writeFePeriodBreakdown(
       "To",
       "Net Sales",
       "Marketplace Fee",
+      "Marketplace Fee Status",
       "Revenue",
       "Logistics",
       "Storage",
@@ -98,6 +99,7 @@ function writeFePeriodBreakdown(
       r.chunk.to,
       r.netSales,
       r.marketplaceFee,
+      r.marketplaceFeeStatus ?? "unavailable",
       r.revenue,
       r.logistics,
       r.storage,
@@ -264,6 +266,7 @@ function buildExecutiveSheet(
   }
 
   addSectionHeader(sheet, "Selected period — Financial Engine KPIs");
+  kv(sheet, "Marketplace Fee status", fe.marketplaceFeeStatus ?? "unavailable");
   addKpiBlock(sheet, [
     { label: "Net Sales", value: fe.netSales, numFmt: NUM_FMT.currency },
     {

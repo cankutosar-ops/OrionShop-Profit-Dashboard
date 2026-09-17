@@ -163,8 +163,8 @@ export function DashboardProfitSection({
           <MetricCard
             title="Marketplace Fee"
             value={formatMoneyOrPending(modelB.marketplaceFee ?? modelB.commission)}
-            subtitle={`${shareOfEngineSales(modelB.marketplaceFee ?? modelB.commission)} of sales`}
-            hint="Sales − Sales API forPay (priceWithDisc net). Not from ppvz_sales_commission / ppvz_reward / ppvz_vw."
+            subtitle={modelB.marketplaceFeeStatus === "anomaly" ? "Anomaly · negative signed difference" : `${shareOfEngineSales(modelB.marketplaceFee ?? modelB.commission)} of sales`}
+            hint="Signed Sales − Sales API forPay. A negative informational value can occur with returns or an unusual Sales/forPay relationship; it is not deducted from Net Profit."
             icon={KPI_ICONS.commission}
             {...expenseProps}
           />

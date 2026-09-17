@@ -13,7 +13,6 @@ import {
 } from "../src/lib/finance-rollup.ts";
 import {
   buildModelBProfitMetrics,
-  marketplaceFeeFromSales,
   sumSalesAndMarketplaceFee,
   verifyModelBFinalProfitArithmetic,
 } from "../src/lib/financial-engine.ts";
@@ -153,6 +152,11 @@ async function main() {
     .reduce((sum, row) => sum + Number(row.amount), 0);
   const independentlyObservedCustomerPaid = sales.reduce((sum, row) =>
     sum + (row.is_return ? -1 : 1) * Math.abs(Number(row.revenue ?? 0)) * Number(row.quantity), 0);
+  const independentlyObservedNetSales = sales.reduce((sum, row) =>
+    sum + (row.is_return ? -1 : 1) * Math.abs(Number(row.price_with_disc ?? 0)) * Number(row.quantity), 0);
+  const independentlyObservedForPay = sales.reduce((sum, row) =>
+    sum + (row.is_return ? -1 : 1) * Math.abs(Number(row.for_pay ?? 0)) * Number(row.quantity), 0);
+  const independentlyExpectedFee = independentlyObservedNetSales - independentlyObservedForPay;
   const independentlyExpectedTax = Math.max(0, independentlyObservedCustomerPaid) * 0.06;
 
   const add = (name, pass, detail) => {
@@ -166,9 +170,8 @@ async function main() {
   );
   add(
     "Marketplace Fee = Sales − forPay",
-    Math.abs(account.commission - marketplaceFeeFromSales(netSales.netSales, salesForPay)) <
-      0.02,
-    `fee=${account.commission}`
+    Math.abs(account.commission - independentlyExpectedFee) < 0.02,
+    `fee=${account.commission} rawSales=${independentlyObservedNetSales} rawForPay=${independentlyObservedForPay}`
   );
   add(
     "Smart Pricing fee ≡ engine fee",

@@ -16,6 +16,7 @@ import {
   type GroupPerformanceDimension,
 } from "@/lib/reporting/module/group-performance-report";
 import { buildGroupPerformanceExportDocument } from "@/lib/reporting/module/export/build-export-document";
+import { MarketplaceFeeStatusNotice } from "@/components/reporting/marketplace-fee-status-notice";
 import { inferPeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 import type { ScopedDateRange } from "@/types/database";
 import type { ReportExportFilter } from "@/lib/reporting/module/export/export-document";
@@ -118,6 +119,7 @@ export async function GroupPerformanceReportPage({
             rows: view.rows,
             summary: view.summary,
             netSalesStatus: view.netSalesStatus,
+            marketplaceFeeStatus: view.marketplaceFeeStatus,
           })}
           fileName={`${config.reportId}-${scope.from}-${scope.to}`}
         />
@@ -128,6 +130,7 @@ export async function GroupPerformanceReportPage({
           Sales coverage: {view.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
         </p>
       )}
+      <MarketplaceFeeStatusNotice status={view.marketplaceFeeStatus} />
 
       {isEmpty ? (
         <ReportEmptyState />

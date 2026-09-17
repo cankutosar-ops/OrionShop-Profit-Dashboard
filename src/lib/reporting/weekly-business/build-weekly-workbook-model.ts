@@ -244,6 +244,7 @@ async function buildPeriodBreakdowns(
       chunk,
       netSales: fe.netSales,
       marketplaceFee: fe.marketplaceFee ?? fe.commission,
+      marketplaceFeeStatus: fe.marketplaceFeeStatus,
       revenue: fe.revenue,
       logistics: fe.logistics,
       storage: fe.storage,

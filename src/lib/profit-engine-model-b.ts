@@ -5,6 +5,7 @@ import {
 } from "@/lib/sales-revenue-resolution";
 import { DEFAULT_TAX_PERCENT } from "@/lib/smart-pricing-constants";
 import { calculateEstimatedTax } from "@/lib/financial-engine-tax";
+import { resolveMarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
 /**
  * Commercial Performance Engine V4 (implementation).
@@ -60,7 +61,7 @@ export function calculateModelBNetProfit(
       ? params.customerPaid
       : 0;
 
-  const marketplaceFee = Math.max(0, params.netSales - params.salesForPay);
+  const marketplaceFee = params.netSales - params.salesForPay;
   const revenue = params.financeNetForPay;
 
   const sellerPayout =
@@ -93,6 +94,7 @@ export function calculateModelBNetProfit(
     netSalesStatus: params.netSalesStatus,
     commission: marketplaceFee,
     marketplaceFee,
+    marketplaceFeeStatus: resolveMarketplaceFeeStatus(params.netSalesStatus, marketplaceFee),
     acquiring: params.acquiring,
     revenue,
     logistics: params.logistics,
