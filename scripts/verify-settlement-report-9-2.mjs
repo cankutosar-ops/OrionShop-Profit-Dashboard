@@ -41,6 +41,7 @@ console.log("=== Sprint 9.2 — Settlement Report ===\n");
 const { REPORTING_CATALOG } = await import("../src/lib/reporting/module/report-catalog.ts");
 const {
   buildSettlementFromEngine,
+  buildSettlementFromProductRows,
   buildSettlementReport,
 } = await import("../src/lib/reporting/module/settlement-report.ts");
 const { StubReportExporter } = await import("../src/lib/reporting/module/export-types.ts");
@@ -89,14 +90,16 @@ check("Gross Sales from engine", byId.grossSales === 1200);
 check("Returns from engine", byId.returns === 200);
 check("Net Sales from engine", byId.netSales === 1000);
 check("Revenue from engine", byId.revenue === 850);
-check("Marketplace Fees from engine", byId.marketplaceFees === 150);
+check("Marketplace Fee from engine", byId.marketplaceFees === 150 && view.lines.find((l) => l.id === "marketplaceFees")?.label === "Marketplace Fee");
 check("Logistics outbound split", byId.logistics === 50);
 check("Return Logistics split", byId.returnLogistics === 30);
 check("Storage from engine", byId.storage === 25);
 check("Acceptance from engine", byId.acceptance === 10);
 check("Penalties from engine", byId.penalties === 5);
-check("Other Deductions = adjustments", byId.otherDeductions === 15);
+check("Account Adjustments are labeled and unchanged", byId.otherDeductions === 15 && view.lines.find((l) => l.id === "otherDeductions")?.label === "Adjustments");
 check("Net Transfer === sellerPayout", view.netTransfer === fe.sellerPayout && byId.netTransfer === 715);
+const categoryView = buildSettlementFromProductRows([{ netSales: 100, netSalesStatus: "unavailable", revenue: 80, marketplaceFees: 20, logistics: 0, returnLogistics: 0, storage: 0, penalties: 0, otherExpenses: 7, accountAdjustments: 3 }]);
+check("Category legacy Other Expenses are honestly labeled without changing transfer", categoryView.lines.find((l) => l.id === "otherDeductions")?.label === "Other Expenses (finance rollup)" && categoryView.netTransfer === 73 && categoryView.netSalesStatus === "unavailable");
 
 const summaryIds = ["grossSales", "netSales", "revenue", "netTransfer"];
 const summary = view.lines.filter((l) => summaryIds.includes(l.id));

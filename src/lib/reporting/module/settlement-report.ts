@@ -60,7 +60,10 @@ export type SettlementEngineSlice = {
   netTransfer: number;
 };
 
-function linesFromSlice(slice: SettlementEngineSlice): SettlementLine[] {
+function linesFromSlice(
+  slice: SettlementEngineSlice,
+  deductionLabel = "Adjustments"
+): SettlementLine[] {
   return [
     { id: "grossSales", label: "Gross Sales", amount: slice.grossSales, section: "sales" },
     { id: "returns", label: "Returns", amount: slice.returnedSales, section: "sales" },
@@ -89,7 +92,7 @@ function linesFromSlice(slice: SettlementEngineSlice): SettlementLine[] {
     { id: "penalties", label: "Penalties", amount: slice.penalties, section: "costs" },
     {
       id: "otherDeductions",
-      label: "Other Deductions",
+      label: deductionLabel,
       amount: slice.otherDeductions,
       section: "costs",
     },
@@ -195,7 +198,7 @@ export function buildSettlementFromProductRows(
   return {
     source: "productRows.aggregated",
     currency,
-    lines: linesFromSlice(slice),
+    lines: linesFromSlice(slice, "Other Expenses (finance rollup)"),
     netSalesStatus: combineNetSalesStatuses(products.map((row) => row.netSalesStatus)),
     netTransfer,
   };

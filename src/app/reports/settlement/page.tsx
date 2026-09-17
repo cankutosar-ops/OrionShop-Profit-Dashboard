@@ -132,6 +132,11 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
           Sales coverage: {settlement.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
         </p>
       )}
+      {category && (
+        <p role="note" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
+          Category Net Transfer uses the legacy Other Expenses finance rollup. The account-level transfer uses Adjustments; these deductions are not equivalent.
+        </p>
+      )}
 
       {isEmpty ? (
         <ReportEmptyState />
