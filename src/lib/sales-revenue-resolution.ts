@@ -104,12 +104,15 @@ export function buildNetSalesFromApiSales(
 }
 
 /**
- * True when sales exist but price_with_disc was not populated (pre-backfill rows).
+ * True when any persisted sale/return price is still zero or invalid.
+ * WB may fill priceWithDisc asynchronously; one priced row cannot establish
+ * completeness for the rest of the period.
  */
 export function netSalesNeedsApiFallback(sales: WbSale[]): boolean {
-  if (sales.length === 0) return false;
-  const hasStoredDisc = sales.some((sale) => Number(sale.price_with_disc) > 0);
-  return !hasStoredDisc;
+  return sales.some((sale) => {
+    const price = Number(sale.price_with_disc);
+    return !Number.isFinite(price) || price <= 0;
+  });
 }
 
 const EMPTY_NET_SALES: NetSalesBreakdown = {
@@ -133,8 +136,9 @@ export function resolveNetSalesFromSources(params: {
     return { ...fromDb, dataSource: "db", status: "ready" };
   }
 
-  // Sales exist but price_with_disc not backfilled — run sales history backfill.
-  return { ...EMPTY_NET_SALES, dataSource: "db", status: "unavailable" };
+  // Keep the observed amount for existing arithmetic; status consumers must
+  // not present partial price coverage as ready.
+  return { ...fromDb, dataSource: "db", status: "unavailable" };
 }
 
 export function isNetSalesReady(status: NetSalesStatus): boolean {
