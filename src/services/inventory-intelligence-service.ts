@@ -60,6 +60,7 @@ async function fetchDistributionSales(
       .lte("sale_date", scope.to)
       .eq("is_return", false)
       .order("sale_date", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (productIds) {
@@ -121,6 +122,7 @@ async function fetchLastSaleCandidates(
       .eq("marketplace_account_id", marketplaceAccountId)
       .eq("is_return", false)
       .order("sale_date", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (productIds) {

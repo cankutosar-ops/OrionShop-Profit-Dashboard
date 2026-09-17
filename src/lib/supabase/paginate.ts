@@ -57,6 +57,9 @@ export async function fetchAllInDateRange<T>(
 
     const orderColumn = filter.orderBy?.column ?? filter.column;
     query = query.order(orderColumn, { ascending: filter.orderBy?.ascending ?? true });
+    if (orderColumn !== "id") {
+      query = query.order("id", { ascending: true });
+    }
 
     const { data, error } = await query.range(offset, offset + PAGE_SIZE - 1);
 
@@ -134,6 +137,9 @@ export async function fetchAllRows<T>(
       query = query.order(options.orderBy.column, {
         ascending: options.orderBy.ascending ?? true,
       });
+    }
+    if (options?.orderBy?.column !== "id") {
+      query = query.order("id", { ascending: true });
     }
 
     const { data, error } = await query;

@@ -176,6 +176,8 @@ async function fetchDistinctOperationDates(
       .eq("marketplace_account_id", accountId)
       .gte("operation_date", from)
       .lte("operation_date", to)
+      .order("operation_date", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + 999);
     if (error) break;
     for (const row of data ?? []) {
@@ -203,6 +205,8 @@ async function fetchDistinctReportIdsInDb(
       .gte("operation_date", from)
       .lte("operation_date", to)
       .not("realizationreport_id", "is", null)
+      .order("operation_date", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + 999);
     if (error) {
       // Column may be missing before migration — degrade gracefully.

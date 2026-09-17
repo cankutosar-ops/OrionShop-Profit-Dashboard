@@ -70,6 +70,7 @@ async function fetchOrdersForWarehouseAnalytics(
       .gte("order_date", scope.from)
       .lte("order_date", scope.to)
       .order("order_date", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (productIds) {
@@ -131,6 +132,7 @@ async function fetchCompletedSalesForWarehouseAnalytics(
       .lte("sale_date", scope.to)
       .eq("is_return", false)
       .order("sale_date", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (productIds) {
