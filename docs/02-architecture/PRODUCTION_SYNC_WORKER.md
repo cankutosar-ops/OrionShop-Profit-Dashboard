@@ -292,14 +292,20 @@ for real and fails if any of them starts deleting.
 ## Platform cron
 
 `vercel.json` still declares an hourly cron for
-`/api/sync/commercial-continuity`. It is **legacy** and inert on Netlify.
+`/api/sync/commercial-continuity`. GitHub Actions is the approved primary and
+only scheduled owner for production commercial sync, inventory, and Finance
+incremental. The route remains available for authenticated manual operations.
 
-- Keep it while the Vercel deployment exists, as a fallback.
-- Once production is on Netlify with the worker running, delete it — otherwise
-  two schedulers drive the same tick. They will not corrupt data (the account
-  lock and cursor rules hold), but they double WB quota consumption.
-- `/api/sync/commercial-continuity` itself stays. It is still useful for manual
-  operator triggers.
+- Live Vercel Cron activation is **unverified** from repository evidence. Check
+  the active Vercel project's Production Cron Jobs and recent invocations.
+- Confirm the GitHub worker runs from the default branch and its production
+  Secrets/Variables agree with the active web host before the handover.
+- Then remove `vercel.json`'s commercial cron and redeploy, or disable the
+  active Vercel cron as part of the approved handover. Do not remove it solely
+  from repository inference about current deployment state.
+- The shared durable `entityDue` state limits routine duplicate requests at
+  the default interval, but a shorter configured interval or retries can make
+  both schedulers due. It is defense in depth, not scheduler ownership.
 
 ## Verification
 

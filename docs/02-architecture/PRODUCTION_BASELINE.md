@@ -608,7 +608,16 @@ recovery campaign for the one-request-per-minute Reports quota.
 
 ### Y6 — One WB ingestion per hour, enforced by durable state
 
-**Rule.** Two schedulers exist and they do not double-spend WB quota.
+**Later production decision (2026-09-17).** GitHub Actions is the intended
+primary and only scheduled owner for commercial, inventory, and Finance
+incremental sync. The two-scheduler analysis below describes the historical
+repository configuration, not an approved steady-state deployment. Vercel's
+live Production Cron Jobs must be checked before its commercial cron is
+disabled or removed; GitHub worker readiness and environment alignment must
+be confirmed first. `entityDue` remains defense in depth.
+
+**Historical assessment.** Two schedulers are configured and the default
+60-minute due interval normally prevents a second WB request.
 
 **The two paths.**
 
@@ -638,8 +647,8 @@ for `commercial` in steady state. The GitHub worker's distinctive contribution
 is `inventory`, which the Vercel cron does not run, plus `commercial` failover.
 Neither path is dead code.
 
-**But neither scheduler is currently live.** This is the finding that reframes
-the whole section:
+**Repository evidence does not establish live scheduler state.** The following
+was the checkout evidence at the time of the original audit:
 
 | Fact | Evidence |
 |---|---|
@@ -649,18 +658,16 @@ the whole section:
 | `origin/main` contains **no** `.github/workflows/` | `git ls-tree -r origin/main -- .github/` returns empty |
 | `origin/main` contains **no** `vercel.json` | `git ls-tree -r origin/main -- vercel.json` returns empty |
 
-GitHub Actions fires `schedule:` triggers **only from the default branch**, so
-the hourly worker tick has never run. `vercel.json` was untracked until
-`49f2431` (2026-09-09) and is still absent from `main`, so the platform cron has
-no configuration to load either.
+GitHub Actions fires `schedule:` triggers only from the default branch. On
+2026-09-17, GitHub `main` still lacks this workflow, so its scheduled worker
+cannot run from the current default branch. The absence of `vercel.json` on
+GitHub `main` does **not** establish whether a Vercel production deployment has
+an active cron: its production branch, deployed artifact, Cron Jobs settings,
+and recent invocations must be checked in Vercel.
 
-So the quota double-spend described above is **latent, not active**. It
-materialises on the merge that puts both files on the default branch — which is
-precisely the merge this audit precedes. Treat Y6 as a pre-merge design review,
-not as a description of today's runtime.
-
-**Status.** CORRECT BY DESIGN, NOT YET LIVE. One configuration hazard on
-activation — see R3.
+**Status.** Human verification required for live Vercel cron activation. The
+approved target is one scheduled owner, GitHub Actions; see the later decision
+above and configuration hazard R3.
 
 ### Y7 — Expensive tasks are opt-in
 

@@ -1,6 +1,6 @@
 # Commercial Data Continuity
 
-Status: Production
+Status: Production architecture; scheduler handover pending verification
 
 Owner: Platform Operations
 
@@ -16,6 +16,41 @@ Inventory Snapshot Continuity (Sprint 10.7) and Stock remain separate.
 ---
 
 ## Architecture
+
+```text
+GitHub Actions sync worker (scheduled owner)
+        ↓
+runCommercialContinuityTick()
+        ↓
+DB: commercial_sync_ticks + commercial_entity_sync_state
+        ↓
+Existing sync: runBlockingDashboardSync → WbSyncService / Finance Sync V2
+        ↓
+Actual data coverage (latest_data_date)
+        ↓
+Freshness evaluation + durable retry
+```
+
+The authenticated `/api/sync/commercial-continuity` route remains available
+for manual operations. It is not the intended production schedule owner.
+
+## Scheduler ownership decision (2026-09-17)
+
+GitHub Actions is the primary and only intended scheduled write-plane owner
+for commercial sync, inventory, and Finance incremental. The durable
+`entityDue` check is defense in depth, not permission to operate two
+production commercial schedulers. Advertising has no approved scheduled cadence.
+
+`vercel.json` still contains the hourly commercial cron. Its live production
+activation cannot be established from repository contents. Before removing or
+disabling it, an operator must check the active Vercel project's Production
+Cron Jobs and recent invocations, confirm GitHub worker runs on the default
+branch, and verify its required Secrets/Variables match the active web host.
+Then remove the Vercel cron configuration and redeploy, or disable the live
+Vercel cron as part of the approved handover. Do not infer live state from this
+file or the repository's default branch.
+
+The configured route-based path (live Vercel status unverified) is:
 
 ```text
 External Durable Scheduler (Vercel Cron / external cron)
@@ -37,7 +72,7 @@ Freshness evaluation + durable retry
 
 ## Scheduler configuration
 
-### Vercel Cron (preferred when deployed on Vercel)
+### Vercel Cron (transition only; not the intended schedule owner)
 
 `vercel.json`:
 
