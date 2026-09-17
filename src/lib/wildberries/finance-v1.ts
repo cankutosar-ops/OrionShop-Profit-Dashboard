@@ -341,8 +341,11 @@ export function parseFinanceV1Money(
   value: string | number | null | undefined
 ): number | undefined {
   if (value == null || value === "") return undefined;
-  const parsed = parseWbMoney(value);
-  return parsed === 0 && (value === 0 || value === "0" || value === "0.0") ? 0 : parsed;
+  // Invalid payloads must not become explicit zero corrections in persistence.
+  const text = String(value).replace(",", ".").trim();
+  if (!text) return undefined;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function asFiniteNumber(value: unknown): number | undefined {

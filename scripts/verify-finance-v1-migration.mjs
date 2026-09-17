@@ -195,8 +195,8 @@ check(
 );
 check("V1 source_key format", v1SourceKey(99, "logistics") === "rrd:99:logistics");
 check(
-  "Logistics line absent when delivery_rub is zero",
-  mapped.every((line) => line.wb_source_suffix !== "logistics")
+  "Explicit zero logistics retains its source key for corrections",
+  mapped.some((line) => line.wb_source_suffix === "logistics" && line.amount === 0)
 );
 check(
   "Logistics line present when deliveryService carries money",

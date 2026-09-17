@@ -179,7 +179,9 @@ export function mapFinanceRowsFromReport(
   const lines: Omit<WbFinance, "id" | "marketplace_account_id">[] = [];
 
   const add = (amount: number | undefined, suffix: string) => {
-    if (amount && Math.abs(amount) > 0) {
+    // Explicit zero is a correction to the same source key, not an absent field.
+    // Keep missing/non-finite values absent so partial payloads cannot erase data.
+    if (typeof amount === "number" && Number.isFinite(amount)) {
       lines.push(buildFinanceLine({ row, productId, amount, suffix }));
     }
   };
@@ -196,7 +198,7 @@ export function mapFinanceRowsFromReport(
   add(row.additional_payment, "additional_payment");
   add(row.ppvz_vw, "ppvz_vw");
 
-  if (row.ppvz_for_pay && Math.abs(row.ppvz_for_pay) > 0) {
+  if (typeof row.ppvz_for_pay === "number" && Number.isFinite(row.ppvz_for_pay)) {
     const isReturn =
       row.doc_type_name === "Возврат" || row.supplier_oper_name === "Возврат";
     const signed = isReturn ? -Math.abs(row.ppvz_for_pay) : Math.abs(row.ppvz_for_pay);
@@ -206,7 +208,7 @@ export function mapFinanceRowsFromReport(
   }
 
   const operName = (row.supplier_oper_name ?? "").toLowerCase();
-  if (!lines.length && operName) {
+  if (!lines.some((line) => Math.abs(Number(line.amount)) > 0) && operName) {
     if (operName.includes("логист") && operName.includes("обрат")) {
       add(row.delivery_rub, "oper_return_logistics");
     } else if (operName.includes("логист")) {
