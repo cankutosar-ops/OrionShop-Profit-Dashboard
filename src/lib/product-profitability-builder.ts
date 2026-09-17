@@ -128,8 +128,15 @@ export function buildProductProfitabilityResult(
 
   const adsByProductId = indexAdsByProductId(scopedAds);
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
+  const activeProductIds = new Set([
+    ...ordersByProductId.keys(),
+    ...salesByProductId.keys(),
+    ...financeByProductId.keys(),
+    ...adsByProductId.keys(),
+  ]);
 
   const rows = products
+    .filter((product) => activeProductIds.has(String(product.id)))
     .map((product) => {
       const productId = String(product.id);
       const productOrders = ordersByProductId.get(productId) ?? [];
@@ -218,15 +225,6 @@ export function buildProductProfitabilityResult(
         excludedLogisticsRows,
       };
     })
-    .filter(
-      (row) =>
-        row.orders > 0 ||
-        row.purchases > 0 ||
-        row.netSales > 0 ||
-        row.revenue > 0 ||
-        row.advertising > 0 ||
-        row.purchaseLogistics > 0
-    )
     .sort((a, b) => b.finalNetProfit - a.finalNetProfit);
 
   const attributedProductLogistics = rows.reduce(

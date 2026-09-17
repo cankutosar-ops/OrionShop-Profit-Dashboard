@@ -23,11 +23,11 @@ import type {
 export type ProductAnalyticsReport = {
   range: ScopedDateRange;
   totals: ProductAnalyticsTotals;
-  /** V2 rows — products with revenue > 0. */
+  /** V2 rows — products with attributed activity, including returns and expenses. */
   top10: ProductAnalyticsRow[];
   bottom10: ProductAnalyticsRow[];
   all: ProductAnalyticsRow[];
-  /** V3 rows — orders > 0 OR purchases > 0 OR revenue > 0. */
+  /** V3 rows — products with attributed activity, including returns and expenses. */
   v3All: ProductAnalyticsV3Row[];
   v3Top10: ProductAnalyticsV3Row[];
   v3Bottom10: ProductAnalyticsV3Row[];

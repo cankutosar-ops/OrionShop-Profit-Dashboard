@@ -3,7 +3,6 @@ import {
   calculateGrossProfitFromRow,
   calculateNetMarginPercent,
 } from "@/lib/profit-margin";
-import { isProductAnalyticsV3Candidate } from "@/lib/product-funnel-metrics";
 import {
   buildProductOperationalMetrics,
   calculateOperationalProfit,
@@ -72,7 +71,6 @@ export function toProductAnalyticsV3Row(product: ProductProfitability): ProductA
 
 export function buildProductAnalyticsRows(products: ProductProfitability[]): ProductAnalyticsRow[] {
   return products
-    .filter((product) => product.revenue > 0)
     .map(toProductAnalyticsRow)
     .sort((a, b) => b.netProfit - a.netProfit);
 }
@@ -81,7 +79,6 @@ export function buildProductAnalyticsV3Rows(
   products: ProductProfitability[]
 ): ProductAnalyticsV3Row[] {
   return products
-    .filter(isProductAnalyticsV3Candidate)
     .map(toProductAnalyticsV3Row)
     .sort((a, b) => b.operationalProfit - a.operationalProfit);
 }
@@ -117,10 +114,9 @@ export const pickTopV3ByNetProfit = pickTopV3ByOperationalProfit;
 /** @deprecated Use pickBottomV3ByOperationalProfit */
 export const pickBottomV3ByNetProfit = pickBottomV3ByOperationalProfit;
 
-/** Sum financial validation metrics across products with revenue. */
+/** Sum financial validation metrics across the active product rows. */
 function sumFinancialTotals(products: ProductProfitability[]) {
   return products
-    .filter((product) => product.revenue > 0)
     .reduce(
       (acc, product) => {
         acc.revenue += product.revenue;
@@ -149,7 +145,7 @@ function sumFinancialTotals(products: ProductProfitability[]) {
     );
 }
 
-/** Sum metrics across V3 table rows (orders > 0 OR purchases > 0 OR revenue > 0). */
+/** Sum metrics across the active V3 product rows. */
 export function buildProductAnalyticsTotals(
   products: ProductProfitability[],
   reconciliation?: {
@@ -160,9 +156,9 @@ export function buildProductAnalyticsTotals(
   }
 ): ProductAnalyticsTotals {
   const financial = sumFinancialTotals(products);
-  financial.productCount = products.filter((product) => product.revenue > 0).length;
+  financial.productCount = products.length;
 
-  const v3Products = products.filter(isProductAnalyticsV3Candidate);
+  const v3Products = products;
   const v3Rollup = v3Products.reduce(
     (acc, product) => {
       acc.orders += product.orders;
@@ -222,8 +218,7 @@ export function verifyProductAnalyticsTotals(
   products: ProductProfitability[],
   totals: ProductAnalyticsTotals
 ): { ok: boolean; delta: number } {
-  const withRevenue = products.filter((product) => product.revenue > 0);
-  const recomputedNet = withRevenue.reduce(
+  const recomputedNet = products.reduce(
     (sum, product) => sum + product.finalNetProfit,
     0
   );
