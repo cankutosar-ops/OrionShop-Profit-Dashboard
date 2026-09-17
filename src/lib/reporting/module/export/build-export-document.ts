@@ -255,7 +255,7 @@ export function buildGroupPerformanceExportDocument(params: {
     { key: "netSalesStatus", header: "Sales Status", type: "text" },
     { key: "revenue", header: "Revenue", type: "currency" },
     { key: "productCost", header: "Product Cost", type: "currency" },
-    { key: "marketplaceFees", header: "Marketplace Fees", type: "currency" },
+    { key: "marketplaceFees", header: "Marketplace Fee", type: "currency" },
     { key: "logistics", header: "Logistics", type: "currency" },
     { key: "storage", header: "Storage", type: "currency" },
     { key: "adjustments", header: "Adjustments", type: "currency" },

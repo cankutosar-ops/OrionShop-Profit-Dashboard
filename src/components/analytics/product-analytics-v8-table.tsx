@@ -434,7 +434,7 @@ export function ProductAnalyticsV8Table({
                 className="px-3 py-2"
               />
               <SortableTh
-                label="Marketplace Fees"
+                label="Marketplace Fee"
                 active={isActive("marketplaceFees")}
                 direction={directionFor("marketplaceFees")}
                 onClick={() => onSort("marketplaceFees")}

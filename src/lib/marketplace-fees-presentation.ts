@@ -8,7 +8,7 @@ export type { MarketplaceFeesPresentation };
 export { parseWbSourceSuffix };
 
 /**
- * Dashboard Marketplace Fees presentation — delegates to shared finance rollup.
+ * Dashboard Finance Fee Breakdown presentation — delegates to shared finance rollup.
  * Does not alter net profit.
  */
 export function buildMarketplaceFeesPresentation(

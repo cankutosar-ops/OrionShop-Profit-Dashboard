@@ -110,7 +110,7 @@ export function ProductProfitabilityTable({
                 className="px-6 py-3"
               />
               <SortableTh
-                label="Marketplace Fees"
+                label="Marketplace Fee"
                 active={isActive("marketplaceFees")}
                 direction={directionFor("marketplaceFees")}
                 onClick={() => onSort("marketplaceFees")}

@@ -73,7 +73,7 @@ function linesFromSlice(slice: SettlementEngineSlice): SettlementLine[] {
     },
     {
       id: "marketplaceFees",
-      label: "Marketplace Fees",
+      label: "Marketplace Fee",
       amount: slice.marketplaceFees,
       section: "wb",
     },

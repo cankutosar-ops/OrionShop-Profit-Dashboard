@@ -166,7 +166,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
                 {formatKpiCurrency(ctx.financialEngine.sellerPayout, ctx.tenant.currency)})
               </>
             )}
-            . Marketplace Fees are informational (Sales − Sales API forPay) and are not
+            . Marketplace Fee is informational (Sales − Sales API forPay) and is not
             subtracted again in Net Transfer.{" "}
             <a href={hubHref} className="text-primary hover:underline">
               Reports hub

@@ -8,7 +8,7 @@ const MARKETPLACE_FEES_TOOLTIP =
   "Per-sale marketplace costs: commission, acquiring, PPVZ reward/VW, and other marketplace expenses. Account adjustments are shown separately.";
 
 type MarketplaceFeesMetricCardProps = {
-  /** Total Marketplace Fees for the period (excludes account adjustments). */
+  /** Finance fee components for the period (excludes account adjustments). */
   totalMarketplaceFees: number;
   /** Commission component — informational secondary line only. */
   commission: number;
@@ -25,7 +25,7 @@ export function MarketplaceFeesMetricCard({
 
   return (
     <MetricCard
-      title="Marketplace Fees"
+      title="Finance Fee Breakdown"
       value={formatMoney(totalMarketplaceFees)}
       subtitle={!isEmptyPeriod ? `Fee detail ${formatMoney(commission)}` : undefined}
       icon={KPI_ICONS.tax}

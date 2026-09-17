@@ -154,7 +154,7 @@ export function ProductAnalyticsV3Table({
                 className={cn(headPad, "w-[9%]")}
               />
               <SortableTh
-                label="Marketplace Fees"
+                label="Marketplace Fee"
                 active={isActive("commission")}
                 direction={directionFor("commission")}
                 onClick={() => onSort("commission")}
