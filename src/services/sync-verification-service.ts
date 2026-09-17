@@ -9,6 +9,7 @@ import type {
   VerificationSourceId,
 } from "@/lib/sync-verification/types";
 import { getMarketplaceAccountSyncState } from "@/services/marketplace-account-service";
+import { readCurrentStockExtent } from "@/services/current-stock-repository";
 
 type DateExtent = {
   earliestDate: string | null;
@@ -34,8 +35,8 @@ function daysBehind(latestDate: string | null, expectedAsOf: string): number | n
 }
 
 async function readDateExtent(
-  table: "wb_orders" | "wb_sales" | "wb_finance" | "wb_stock",
-  dateColumn: "order_date" | "sale_date" | "operation_date" | "last_synced_at",
+  table: "wb_orders" | "wb_sales" | "wb_finance",
+  dateColumn: "order_date" | "sale_date" | "operation_date",
   marketplaceAccountId: string
 ): Promise<DateExtent> {
   const client = await createServerClient();
@@ -111,7 +112,11 @@ export async function runSyncVerification(
     readDateExtent("wb_orders", "order_date", marketplaceAccountId),
     readDateExtent("wb_sales", "sale_date", marketplaceAccountId),
     readDateExtent("wb_finance", "operation_date", marketplaceAccountId),
-    readDateExtent("wb_stock", "last_synced_at", marketplaceAccountId),
+    createServerClient().then((client) => readCurrentStockExtent(marketplaceAccountId, client).then((extent) => ({
+      earliestDate: toCalendarDate(extent.earliestDate),
+      latestDate: toCalendarDate(extent.latestDate),
+      recordCount: extent.recordCount,
+    }))),
   ]);
 
   if (!account) {

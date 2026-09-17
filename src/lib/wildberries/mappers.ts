@@ -31,7 +31,7 @@ export function mapApiProductToDb(card: WbApiProductCard) {
 export function mapApiProductVariants(
   card: WbApiProductCard,
   productId: string
-): Array<{ product_id: string; nm_id: number; tech_size: string; barcode: string | null }> {
+): Array<{ product_id: string; nm_id: number; chrt_id: number | null; tech_size: string; barcode: string | null }> {
   const sizes = card.sizes ?? [];
   const nmId = card.nmID;
   if (!sizes.length) {
@@ -39,6 +39,7 @@ export function mapApiProductVariants(
       {
         product_id: productId,
         nm_id: nmId,
+        chrt_id: null,
         tech_size: "",
         barcode: card.sizes?.[0]?.skus?.[0] ?? null,
       },
@@ -48,6 +49,7 @@ export function mapApiProductVariants(
   const variants: Array<{
     product_id: string;
     nm_id: number;
+    chrt_id: number | null;
     tech_size: string;
     barcode: string | null;
   }> = [];
@@ -55,13 +57,14 @@ export function mapApiProductVariants(
     const techSize = size.techSize ?? "";
     const skus = size.skus ?? [];
     if (!skus.length) {
-      variants.push({ product_id: productId, nm_id: nmId, tech_size: techSize, barcode: null });
+      variants.push({ product_id: productId, nm_id: nmId, chrt_id: Number(size.chrtID ?? size.chrtId) || null, tech_size: techSize, barcode: null });
       continue;
     }
     for (const sku of skus) {
       variants.push({
         product_id: productId,
         nm_id: nmId,
+        chrt_id: Number(size.chrtID ?? size.chrtId) || null,
         tech_size: techSize,
         barcode: sku || null,
       });

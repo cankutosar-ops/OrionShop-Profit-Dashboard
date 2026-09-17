@@ -14,6 +14,7 @@ import {
 import type { InventoryValidationResult } from "@/lib/inventory-types";
 import { getInventoryForAccount } from "@/services/inventory-service";
 import type { Product, ProductVariant, WbStock } from "@/types/database";
+import { readCurrentStockRows } from "@/services/current-stock-repository";
 
 async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
   return client ?? (await createServerClient());
@@ -49,13 +50,7 @@ async function fetchStockRowsForAccount(
   marketplaceAccountId: string,
   client: SupabaseClient
 ): Promise<WbStock[]> {
-  const { data, error } = await client
-    .from("wb_stock")
-    .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId);
-
-  if (error) throw new Error(`Failed to fetch wb_stock: ${error.message}`);
-  return (data ?? []) as WbStock[];
+  return readCurrentStockRows(marketplaceAccountId, client);
 }
 
 type FieldMismatch = InventoryValidationResult["mismatches"][number];
@@ -150,6 +145,7 @@ export async function validateInventoryDataChain(
     serviceRows.map((row) => [
       buildInventoryRowKey({
         productId: row.productId,
+        chrtId: row.chrtId,
         techSize: row.techSize,
         barcode: row.barcode,
         warehouse: row.warehouse,

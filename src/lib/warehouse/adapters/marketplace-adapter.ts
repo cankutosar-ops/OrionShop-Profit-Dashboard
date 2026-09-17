@@ -55,8 +55,12 @@ export type MarketplaceFinanceLineDto = {
 
 export type MarketplaceStockDto = {
   externalProductId: string;
+  externalVariantId?: string | null;
   warehouseCode: string | null;
+  warehouseId?: number | null;
   quantity: number | null;
+  inWayToClient?: number | null;
+  inWayFromClient?: number | null;
   observedAt: string | null;
   raw?: unknown;
 };

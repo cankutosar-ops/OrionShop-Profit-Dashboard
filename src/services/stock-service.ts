@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, WbStock } from "@/types/database";
+import { readCurrentStockRows } from "@/services/current-stock-repository";
 
 export function buildStockKey(techSize: string | null | undefined, barcode: string | null | undefined): string {
   return `${techSize ?? ""}|${barcode ?? ""}`;
@@ -12,16 +13,7 @@ export async function fetchStockForProduct(
   client?: SupabaseClient<Database>
 ): Promise<WbStock[]> {
   const supabase = client ?? (await createServerClient());
-  const { data, error } = await supabase
-    .from("wb_stock")
-    .select("*")
-    .eq("marketplace_account_id", marketplaceAccountId)
-    .eq("product_id", productId);
-
-  if (error) {
-    throw new Error(`Failed to fetch stock: ${error.message}`);
-  }
-  return (data ?? []) as WbStock[];
+  return readCurrentStockRows(marketplaceAccountId, supabase, productId);
 }
 
 export function getStockQuantity(

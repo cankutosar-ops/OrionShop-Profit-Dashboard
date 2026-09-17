@@ -859,6 +859,7 @@ export type ProductVariant = {
   marketplace_account_id: string;
   product_id: string;
   nm_id: number | null;
+  chrt_id?: number | null;
   tech_size: string;
   barcode: string | null;
   created_at: string;
@@ -868,6 +869,7 @@ export type WbStock = {
   id: string;
   marketplace_account_id: string;
   product_id: string;
+  chrt_id?: number | null;
   tech_size: string;
   barcode: string | null;
   warehouse: string | null;
@@ -1151,6 +1153,26 @@ type PublicTables = {
     Row: WbStock;
     Insert: Omit<WbStock, "id"> & { id?: string };
     Update: Partial<WbStock>;
+    Relationships: NoRelationships;
+  };
+  wb_current_stocks: {
+    Row: {
+      marketplace_account_id: string;
+      nm_id: number;
+      chrt_id: number;
+      warehouse_key: string;
+      warehouse_id: number | null;
+      warehouse_name: string;
+      quantity: number;
+      in_way_to_client: number;
+      in_way_from_client: number;
+      barcode: string | null;
+      tech_size: string | null;
+      observed_at: string;
+      updated_at: string;
+    };
+    Insert: Database["public"]["Tables"]["wb_current_stocks"]["Row"];
+    Update: Partial<Database["public"]["Tables"]["wb_current_stocks"]["Row"]>;
     Relationships: NoRelationships;
   };
   wb_current_prices: {

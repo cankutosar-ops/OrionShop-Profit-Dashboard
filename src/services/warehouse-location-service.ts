@@ -9,6 +9,7 @@ import {
   warehouseLocationNames,
   type WarehouseLocation,
 } from "@/lib/warehouse-locations";
+import { readCurrentStockWarehouseNames } from "@/services/current-stock-repository";
 
 const PAGE_SIZE = 1000;
 
@@ -21,7 +22,7 @@ async function getClient(client?: SupabaseClient): Promise<SupabaseClient> {
  */
 async function collectDistinctWarehouseColumn(
   client: SupabaseClient,
-  table: "wb_stock" | "wb_sales" | "wb_orders",
+  table: "wb_sales" | "wb_orders",
   marketplaceAccountId: string
 ): Promise<string[]> {
   const names = new Set<string>();
@@ -70,7 +71,7 @@ export async function listWarehouseLocations(
 ): Promise<WarehouseLocation[]> {
   const client = await getClient(options.client);
   const [stock, sales, orders] = await Promise.all([
-    collectDistinctWarehouseColumn(client, "wb_stock", marketplaceAccountId),
+    readCurrentStockWarehouseNames(marketplaceAccountId, client),
     collectDistinctWarehouseColumn(client, "wb_sales", marketplaceAccountId),
     collectDistinctWarehouseColumn(client, "wb_orders", marketplaceAccountId),
   ]);

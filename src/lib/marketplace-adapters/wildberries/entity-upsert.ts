@@ -35,6 +35,7 @@ import type {
   WbApiSale,
 } from "@/lib/wildberries/types";
 import type { WbFinance, WbOrder, WbStock } from "@/types/database";
+import { persistCanonicalCurrentStocks } from "@/lib/marketplace-adapters/wildberries/canonical-stock";
 
 function empty(): WarehouseEntityUpsertResult {
   return { upserted: 0, inserted: 0, updated: 0, skipped: 0 };
@@ -108,9 +109,10 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
         marketplace_account_id: this.marketplaceAccountId,
       }));
       if (variants.length) {
-        await supabase.from("product_variants").upsert(variants as never, {
+        const { error } = await supabase.from("product_variants").upsert(variants as never, {
           onConflict: "product_id,tech_size,barcode",
         });
+        if (error) throw error;
       }
       result.upserted += 1;
     }
@@ -301,11 +303,16 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
   }
 
   async upsertStocks(
-    _scope: WarehouseScope,
+    scope: WarehouseScope,
     items: MarketplaceStockDto[]
   ): Promise<WarehouseEntityUpsertResult> {
     const result = empty();
-    const supabase = createAdminClient();
+    if (scope.marketplaceType !== "wildberries" ||
+        String(scope.marketplaceAccountId) !== this.marketplaceAccountId) {
+      throw new Error("Stock upsert refused: marketplace account mismatch");
+    }
+    const supabase = this.adminClient();
+    await persistCanonicalCurrentStocks(this.marketplaceAccountId, items, supabase);
     const batch: Array<Omit<WbStock, "id">> = [];
     const syncedAt = new Date().toISOString();
 

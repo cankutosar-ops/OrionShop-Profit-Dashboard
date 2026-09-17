@@ -2,6 +2,8 @@
 export type InventoryStockRow = {
   productId: string;
   marketplaceAccountId: string;
+  /** WB Analytics variant identity; present for canonical current stock. */
+  chrtId?: number | null;
   techSize: string;
   barcode: string | null;
   warehouse: string | null;

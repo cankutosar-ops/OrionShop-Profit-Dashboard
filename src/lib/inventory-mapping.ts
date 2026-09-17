@@ -6,12 +6,16 @@ import type { Product, ProductVariant, WbStock } from "@/types/database";
 export function buildInventoryRowKey(input: {
   nmId?: number | null;
   productId?: string;
+  chrtId?: number | null;
   techSize: string;
   barcode: string | null;
   warehouse: string | null;
 }): string {
   const idPart = input.nmId != null ? `nm:${input.nmId}` : `pid:${input.productId ?? ""}`;
-  return `${idPart}|${buildStockKey(input.techSize, input.barcode)}|${input.warehouse ?? ""}`;
+  const variantPart = input.chrtId != null
+    ? `chrt:${input.chrtId}`
+    : buildStockKey(input.techSize, input.barcode);
+  return `${idPart}|${variantPart}|${input.warehouse ?? ""}`;
 }
 
 /**
@@ -64,6 +68,7 @@ export function mapDbStockRowToInventory(
   return {
     productId: String(row.product_id),
     marketplaceAccountId: String(row.marketplace_account_id),
+    chrtId: row.chrt_id ?? null,
     techSize: (row.tech_size ?? "").trim(),
     barcode: row.barcode?.trim() || null,
     warehouse: row.warehouse?.trim() || null,
@@ -80,10 +85,12 @@ export function mapWbStockRowKey(row: {
   product_id: string;
   tech_size: string;
   barcode: string | null;
+  chrt_id?: number | null;
   warehouse: string | null;
 }): string {
   return buildInventoryRowKey({
     productId: String(row.product_id),
+    chrtId: row.chrt_id,
     techSize: row.tech_size ?? "",
     barcode: row.barcode,
     warehouse: row.warehouse,
@@ -108,6 +115,7 @@ export function aggregateInventoryBySkuKey(rows: InventoryStockRow[]): Inventory
   for (const row of rows) {
     const key = buildInventoryRowKey({
       productId: row.productId,
+      chrtId: row.chrtId,
       techSize: row.techSize,
       barcode: row.barcode,
       warehouse: row.warehouse,
