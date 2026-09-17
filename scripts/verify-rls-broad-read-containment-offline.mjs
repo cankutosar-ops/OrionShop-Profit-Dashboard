@@ -1,7 +1,7 @@
 /**
- * Structural RLS verifier for 20260917110000. The default catalog is the
- * read-only production snapshot in .audit; pass --catalog=PATH for a fresh
- * clone catalog and --post after applying the migration to that clone.
+ * Structural RLS verifier for 20260917110000. Supply a locally stored
+ * SELECT-only catalog JSON with --catalog=PATH; use --post after applying the
+ * migration to a clone. Do not commit production catalog snapshots.
  * This does not query or change production.
  */
 import { readFileSync } from "node:fs";
@@ -11,8 +11,11 @@ const targets = [
   ["wb_sales", "dashboard_read_sales", "tenant_select_wb_sales"],
   ["product_cost_history", "dashboard_read_costs", "tenant_select_product_cost_history"],
 ];
-const catalogPath = process.argv.find((arg) => arg.startsWith("--catalog="))?.slice(10)
-  ?? ".audit/production-catalog-raw.json";
+const catalogPath = process.argv.find((arg) => arg.startsWith("--catalog="))?.slice(10);
+if (!catalogPath) {
+  console.error("Usage: node scripts/verify-rls-broad-read-containment-offline.mjs --catalog=PATH [--post]");
+  process.exit(2);
+}
 const post = process.argv.includes("--post");
 const raw = JSON.parse(readFileSync(catalogPath, "utf8"));
 const catalog = raw.rows?.[0]?.catalog ?? raw.catalog ?? raw;
