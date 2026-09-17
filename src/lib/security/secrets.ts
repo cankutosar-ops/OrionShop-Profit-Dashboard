@@ -48,6 +48,18 @@ export function tryResolveInternalApiSecret(): string | null {
   }
 }
 
+/** Vercel Cron credential, accepted only by the commercial continuity endpoint. */
+export function isCommercialContinuityCronRequest(request: Request): boolean {
+  if (new URL(request.url).pathname !== "/api/sync/commercial-continuity") return false;
+  const secret = process.env.CRON_SECRET?.trim();
+  if (!secret || isPlaceholderSecret(secret)) return false;
+  const header = request.headers.get("authorization");
+  const bearer = header?.toLowerCase().startsWith("bearer ")
+    ? header.slice(7).trim()
+    : null;
+  return bearer === secret;
+}
+
 /**
  * Redact common secret patterns from log/error strings.
  * Does not claim to catch every format — prefer never logging secrets.

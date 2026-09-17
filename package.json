@@ -138,6 +138,7 @@
     "verify:warehouse-scheduler-10-4": "npx tsx scripts/verify-warehouse-ops-10-4.mjs",
     "apply:commercial-continuity-migration": "npx tsx scripts/apply-commercial-continuity-migration.mjs",
     "verify:commercial-continuity": "npx tsx scripts/verify-commercial-continuity.mjs",
+    "verify:commercial-continuity-authz": "node scripts/verify-commercial-continuity-authz-offline.mjs",
     "apply:warehouse-platform-foundation-10-1": "npx tsx scripts/apply-warehouse-platform-foundation-10-1.mjs",
     "grant:tenant-access": "node scripts/grant-tenant-access.mjs",
     "grant:platform-role": "node scripts/grant-platform-role.mjs",

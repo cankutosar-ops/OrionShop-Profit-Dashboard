@@ -13,7 +13,10 @@ import {
 } from "@/lib/security/containment-gate";
 import { isAuthPublicPath } from "@/lib/security/auth-paths";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { tryResolveInternalApiSecret } from "@/lib/security/secrets";
+import {
+  isCommercialContinuityCronRequest,
+  tryResolveInternalApiSecret,
+} from "@/lib/security/secrets";
 
 function isInternalBearer(request: NextRequest): boolean {
   const secret = tryResolveInternalApiSecret();
@@ -75,6 +78,7 @@ export async function middleware(request: NextRequest) {
   const { response, userId } = await withAuthSession(request);
   const isPublic = isAuthPublicPath(pathname);
   const internal = isInternalBearer(request);
+  const commercialCron = isCommercialContinuityCronRequest(request);
 
   if (pathname.startsWith("/api/")) {
     if (
@@ -86,10 +90,10 @@ export async function middleware(request: NextRequest) {
 
     // Public auth API endpoints still mint containment cookie but skip user gate.
     if (!isPublic) {
-      if (!(await hasContainmentAccess(request))) {
+      if (!commercialCron && !(await hasContainmentAccess(request))) {
         return containmentUnauthorizedResponse();
       }
-      if (!userId && !internal) {
+      if (!userId && !internal && !commercialCron) {
         return NextResponse.json(
           {
             error: "Unauthorized",

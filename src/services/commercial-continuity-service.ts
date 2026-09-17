@@ -90,16 +90,18 @@ async function finishTick(
     .eq("id", tickId);
 }
 
-export async function listEligibleCommercialAccounts(): Promise<
+export async function listEligibleCommercialAccounts(accountIds?: readonly string[]): Promise<
   Array<Pick<MarketplaceAccountPublic, "id" | "account_name" | "is_active" | "sync_enabled">>
 > {
+  if (accountIds && accountIds.length === 0) return [];
   const sb = createAdminClient();
-  const { data, error } = await sb
+  let query = sb
     .from("marketplace_accounts")
     .select("id, account_name, is_active, sync_enabled")
     .eq("is_active", true)
-    .eq("sync_enabled", true)
-    .order("id");
+    .eq("sync_enabled", true);
+  if (accountIds) query = query.in("id", [...accountIds]);
+  const { data, error } = await query.order("id");
 
   if (error) {
     throw new Error(`Failed to list marketplace accounts: ${error.message}`);

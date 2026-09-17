@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
-import { authorize, isAuthzFailure } from "@/lib/security/authorize";
-import { isInternalServiceRequest } from "@/lib/security/require-auth";
-import { tryResolveInternalApiSecret } from "@/lib/security/secrets";
+import { authorize, isAuthzFailure, authForbiddenResponse } from "@/lib/security/authorize";
+import {
+  isInternalServiceRequest,
+  requireAuth,
+  isAuthFailure,
+} from "@/lib/security/require-auth";
+import { hasAdministrationRole } from "@/lib/security/admin-authorization";
+import { lookupMarketplaceAccount } from "@/lib/security/tenant-membership";
+import {
+  isCommercialContinuityCronRequest,
+  tryResolveInternalApiSecret,
+} from "@/lib/security/secrets";
 import { COMMERCIAL_SYNC_EXECUTION_TIMEOUT_MS } from "@/lib/commercial-continuity/execution-bounds";
 import { syncLog } from "@/lib/wildberries/sync-log";
 import { runCommercialContinuityTick } from "@/services/commercial-continuity-service";
@@ -20,42 +29,42 @@ export const maxDuration = 300;
  * - x-orion-containment: <INTERNAL_API_SECRET>
  * - Vercel Cron: Authorization Bearer CRON_SECRET (standard)
  *
- * Does NOT require dashboard/browser session.
+ * Browser callers require an authenticated session and explicit account scope.
  * Invokes Orders/Sales/Finance via existing sync services.
  *
  * Scheduled cron runs a **bounded blocking tick** (≤ maxDuration − buffer).
  * Durable retry/backoff (`next_retry_at`) handles follow-up attempts hourly.
  */
-function isCronAuthorized(request: Request): boolean {
-  if (isInternalServiceRequest(request)) return true;
-  const cronSecret = process.env.CRON_SECRET?.trim();
-  if (!cronSecret) return false;
-  const header = request.headers.get("authorization");
-  const bearer = header?.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : null;
-  return bearer === cronSecret;
-}
-
-function unauthorized() {
-  return NextResponse.json(
-    {
-      error: "Unauthorized",
-      code: "CRON_AUTH_REQUIRED",
-      message:
-        "Commercial continuity requires INTERNAL_API_SECRET or CRON_SECRET Bearer token.",
-    },
-    { status: 401 }
-  );
-}
-
 async function handleTick(request: Request, opts: { force: boolean }) {
-  if (!isCronAuthorized(request) && !isInternalServiceRequest(request)) {
-    const authz = await authorize(request);
-    if (isAuthzFailure(authz)) return unauthorized();
-  }
-
   const url = new URL(request.url);
-  const accountId = url.searchParams.get("marketplaceAccountId") ?? undefined;
+  const rawAccountId = url.searchParams.get("marketplaceAccountId");
+  if (url.searchParams.has("marketplaceAccountId") && !rawAccountId?.trim()) {
+    return NextResponse.json({ error: "marketplaceAccountId is required" }, { status: 400 });
+  }
+  const accountId = rawAccountId?.trim() ?? undefined;
   const force = opts.force || url.searchParams.get("force") === "1";
+
+  const internal = isInternalServiceRequest(request);
+  const cron = isCommercialContinuityCronRequest(request);
+  if (internal || cron) {
+    if (accountId && !(await lookupMarketplaceAccount(accountId))) {
+      return authForbiddenResponse("Marketplace account not found or not permitted.", "AUTHZ_ACCOUNT_FORBIDDEN");
+    }
+  } else {
+    const user = await requireAuth(request);
+    if (isAuthFailure(user)) return user;
+    if (!accountId) {
+      return NextResponse.json({ error: "marketplaceAccountId is required" }, { status: 400 });
+    }
+    if (hasAdministrationRole(user)) {
+      if (!(await lookupMarketplaceAccount(accountId))) {
+        return authForbiddenResponse("Marketplace account not found or not permitted.", "AUTHZ_ACCOUNT_FORBIDDEN");
+      }
+    } else {
+      const authz = await authorize(request, { marketplaceAccountId: accountId });
+      if (isAuthzFailure(authz)) return authz;
+    }
+  }
 
   syncLog("commercial-continuity", "TICK REQUEST", {
     mode: "blocking_bounded",
@@ -93,9 +102,12 @@ export async function POST(request: Request) {
     body = {};
   }
 
-  if (body.marketplaceAccountId) {
+  if (body.marketplaceAccountId !== undefined) {
+    if (typeof body.marketplaceAccountId !== "string" || !body.marketplaceAccountId.trim()) {
+      return NextResponse.json({ error: "Invalid marketplaceAccountId" }, { status: 400 });
+    }
     const url = new URL(request.url);
-    url.searchParams.set("marketplaceAccountId", body.marketplaceAccountId);
+    url.searchParams.set("marketplaceAccountId", body.marketplaceAccountId.trim());
     const rewritten = new Request(url.toString(), request);
     return handleTick(rewritten, { force: !!body.force });
   }
