@@ -14,6 +14,7 @@ import type {
 } from "@/lib/reporting/module/export/export-document";
 import type { PnLLine } from "@/lib/reporting/module/pnl-report";
 import type { SettlementLine } from "@/lib/reporting/module/settlement-report";
+import { CATEGORY_SETTLEMENT_LEGACY_TITLE } from "@/lib/reporting/module/settlement-report";
 import type { ProductProfitReportRow } from "@/lib/reporting/module/product-profit-report";
 import type { NetSalesStatus } from "@/lib/sales-revenue-resolution";
 import { MARKETPLACE_FEE_ANOMALY_MESSAGE, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
@@ -146,11 +147,14 @@ export function buildSettlementExportDocument(params: {
   filters.push(...feeFilters(params.marketplaceFeeStatus));
   filters.push({ label: "Sales completeness", value: params.netSalesStatus ?? "unavailable" });
   if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales and Marketplace Fee include observed partial values" });
-  if (params.category) filters.push({ label: "Category", value: params.category });
+  if (params.category) {
+    filters.push({ label: "Category", value: params.category });
+    filters.push({ label: "Projection scope", value: "Legacy category Net Transfer uses product Other Expenses; account Settlement uses Adjustments. The accounting classifications need not reconcile." });
+  }
 
   return baseDoc({
     reportId: "settlement",
-    title: "Settlement",
+    title: params.category ? CATEGORY_SETTLEMENT_LEGACY_TITLE : "Settlement",
     tenant: params.tenant,
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,

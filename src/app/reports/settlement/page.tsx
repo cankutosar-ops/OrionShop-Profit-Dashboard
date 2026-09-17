@@ -13,6 +13,7 @@ import { loadReportContext } from "@/lib/reporting/report-context";
 import { getReportDefinition } from "@/lib/reporting/module/report-catalog";
 import { parseReportCategory } from "@/lib/reporting/module/report-filters";
 import {
+  CATEGORY_SETTLEMENT_LEGACY_TITLE,
   buildSettlementReport,
   type SettlementLine,
 } from "@/lib/reporting/module/settlement-report";
@@ -98,8 +99,10 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
 
   return (
     <ReportShell
-      title={report.title}
-      description="Money flow between Wildberries and the seller — Financial Engine settlement presentation"
+      title={category ? CATEGORY_SETTLEMENT_LEGACY_TITLE : report.title}
+      description={category
+        ? "Legacy category-level Net Transfer projection from product rows"
+        : "Money flow between Wildberries and the seller — Financial Engine settlement presentation"}
       categories={categories}
       selectedCategory={category}
     >
@@ -125,7 +128,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
             netSalesStatus: settlement.netSalesStatus,
             marketplaceFeeStatus: settlement.marketplaceFeeStatus,
           })}
-          fileName={`settlement-${scope.from}-${scope.to}`}
+          fileName={`${category ? "category-settlement-legacy" : "settlement"}-${scope.from}-${scope.to}`}
         />
       </div>
 
@@ -137,7 +140,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
       <MarketplaceFeeStatusNotice status={settlement.marketplaceFeeStatus} />
       {category && (
         <p role="note" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
-          Category Net Transfer uses the legacy Other Expenses finance rollup. The account-level transfer uses Adjustments; these deductions are not equivalent.
+          Category Settlement (Legacy) uses the product Other Expenses finance rollup. Account Settlement uses canonical account-level Adjustments. These accounting classifications are different and the two transfers are not guaranteed to reconcile. No account-level adjustment is attributed to a category here.
         </p>
       )}
 

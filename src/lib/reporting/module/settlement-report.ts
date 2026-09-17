@@ -11,6 +11,8 @@ import { filterProductsByCategory } from "@/lib/reporting/module/pnl-report";
 import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
 import { combineMarketplaceFeeStatuses, resolveMarketplaceFeeStatus, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 
+export const CATEGORY_SETTLEMENT_LEGACY_TITLE = "Category Settlement (Legacy)";
+
 export type SettlementLineId =
   | "grossSales"
   | "returns"

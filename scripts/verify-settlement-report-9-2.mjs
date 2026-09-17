@@ -40,11 +40,13 @@ console.log("=== Sprint 9.2 — Settlement Report ===\n");
 
 const { REPORTING_CATALOG } = await import("../src/lib/reporting/module/report-catalog.ts");
 const {
+  CATEGORY_SETTLEMENT_LEGACY_TITLE,
   buildSettlementFromEngine,
   buildSettlementFromProductRows,
   buildSettlementReport,
 } = await import("../src/lib/reporting/module/settlement-report.ts");
 const { StubReportExporter } = await import("../src/lib/reporting/module/export-types.ts");
+const { buildSettlementExportDocument } = await import("../src/lib/reporting/module/export/build-export-document.ts");
 
 check(
   "Settlement catalog entry is ready",
@@ -100,6 +102,16 @@ check("Account Adjustments are labeled and unchanged", byId.otherDeductions === 
 check("Net Transfer === sellerPayout", view.netTransfer === fe.sellerPayout && byId.netTransfer === 715);
 const categoryView = buildSettlementFromProductRows([{ netSales: 100, netSalesStatus: "unavailable", revenue: 80, marketplaceFees: 20, logistics: 0, returnLogistics: 0, storage: 0, penalties: 0, otherExpenses: 7, accountAdjustments: 3 }]);
 check("Category legacy Other Expenses are honestly labeled without changing transfer", categoryView.lines.find((l) => l.id === "otherDeductions")?.label === "Other Expenses (finance rollup)" && categoryView.netTransfer === 73 && categoryView.netSalesStatus === "unavailable");
+const categoryExport = buildSettlementExportDocument({ tenant: { companyName: "Test", marketplaceLabel: "WB", currency: "RUB" },
+  dateFrom: "2026-09-01", dateTo: "2026-09-01", category: "Category", source: categoryView.source,
+  lines: categoryView.lines, summaryLines: categoryView.lines, netSalesStatus: categoryView.netSalesStatus,
+  marketplaceFeeStatus: categoryView.marketplaceFeeStatus });
+check("Category export names legacy scope and preserves numeric transfer", categoryExport.title === CATEGORY_SETTLEMENT_LEGACY_TITLE && categoryExport.rows.find((r) => r.label === "Net Transfer")?.amount === 73 && categoryExport.meta.filters.some((f) => f.label === "Projection scope" && f.value.includes("account Settlement uses Adjustments")));
+const accountExport = buildSettlementExportDocument({ tenant: { companyName: "Test", marketplaceLabel: "WB", currency: "RUB" },
+  dateFrom: "2026-09-01", dateTo: "2026-09-01", source: view.source, lines: view.lines, summaryLines: view.lines,
+  netSalesStatus: view.netSalesStatus, marketplaceFeeStatus: view.marketplaceFeeStatus });
+check("Account export retains canonical Settlement title and seller payout", accountExport.title === "Settlement" && accountExport.rows.find((r) => r.label === "Net Transfer")?.amount === 715);
+check("Category page visibly names legacy scope", readFileSync(resolve(process.cwd(), "src/app/reports/settlement/page.tsx"), "utf8").includes("CATEGORY_SETTLEMENT_LEGACY_TITLE"));
 
 const summaryIds = ["grossSales", "netSales", "revenue", "netTransfer"];
 const summary = view.lines.filter((l) => summaryIds.includes(l.id));

@@ -165,6 +165,8 @@ The project uses more than one financial model because sellers ask more than one
 
 **Must not be treated as.** A substitute Commercial Performance statement. Settlement Profit is a distinct framing and must remain labeled as such.
 
+**Category Settlement (Legacy).** The category-filtered report retains its existing product-level Net Transfer projection, which subtracts product `otherExpenses` (the finance Other Expenses rollup). Account Settlement uses Financial Engine `sellerPayout`, which subtracts account-level `ADJUSTMENT` through `adjustments`. These are different accounting classifications and the values are not guaranteed to reconcile. The category report does not redistribute account Adjustments or alter Net Profit.
+
 ### 3.3 Smart Pricing (simulation)
 
 **Purpose.** Support forward pricing decisions by simulating unit economics toward a Target Margin (or equivalent pricing goal).
