@@ -1,4 +1,5 @@
 import type { SyncVerificationReportRow } from "@/lib/sync-verification-audit/types";
+import { escapeSpreadsheetCsvCell } from "@/lib/csv-cell";
 
 export function verificationReportToJson(row: SyncVerificationReportRow): string {
   return JSON.stringify(
@@ -55,8 +56,7 @@ export function verificationReportToCsv(row: SyncVerificationReportRow): string 
 }
 
 function csv(field: string, value: string): string {
-  const escaped = `"${value.replace(/"/g, '""')}"`;
-  return `${field},${escaped}`;
+  return `${escapeSpreadsheetCsvCell(field)},${escapeSpreadsheetCsvCell(value)}`;
 }
 
 /** Minimal single-page PDF (Helvetica) for audit export — no external PDF dependency. */

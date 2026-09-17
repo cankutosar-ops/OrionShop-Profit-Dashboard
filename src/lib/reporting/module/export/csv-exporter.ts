@@ -4,18 +4,12 @@
 
 import type { ReportExportDocument } from "@/lib/reporting/module/export/export-document";
 import { formatExportCell } from "@/lib/reporting/module/export/format-values";
+import { escapeSpreadsheetCsvCell } from "@/lib/csv-cell";
 
 const DELIMITER = ";";
 
-function escapeCsv(value: string): string {
-  if (/[;"\r\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function line(cells: string[]): string {
-  return cells.map(escapeCsv).join(DELIMITER);
+function line(cells: string[], numeric: boolean[] = []): string {
+  return cells.map((cell, index) => escapeSpreadsheetCsvCell(cell, numeric[index])).join(DELIMITER);
 }
 
 export function exportReportCsv(doc: ReportExportDocument): Uint8Array {
@@ -36,7 +30,7 @@ export function exportReportCsv(doc: ReportExportDocument): Uint8Array {
     lines.push(line(["Metric", "Value"]));
     for (const s of doc.summary) {
       lines.push(
-        line([s.label, formatExportCell(s.value, s.type, doc.currency)])
+        line([s.label, formatExportCell(s.value, s.type, doc.currency)], [false, s.type !== "text"])
       );
     }
     lines.push("");
@@ -46,9 +40,8 @@ export function exportReportCsv(doc: ReportExportDocument): Uint8Array {
   for (const row of doc.rows) {
     lines.push(
       line(
-        doc.columns.map((col) =>
-          formatExportCell(row[col.key], col.type, doc.currency)
-        )
+        doc.columns.map((col) => formatExportCell(row[col.key], col.type, doc.currency)),
+        doc.columns.map((col) => col.type !== "text")
       )
     );
   }
