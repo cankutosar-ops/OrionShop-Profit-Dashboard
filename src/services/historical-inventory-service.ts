@@ -15,8 +15,6 @@ import type {
   HistoricalInventorySnapshot,
   HistoricalInventorySortField,
 } from "@/lib/historical-inventory-types";
-import { WbApiClient } from "@/lib/wildberries/api-client";
-import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import { listWarehouseLocationNames } from "@/services/warehouse-location-service";
 
 const DEFAULT_PAGE_SIZE = 100;
@@ -52,7 +50,8 @@ function normalizeSnapshotRow(row: HistoricalInventorySnapshot): HistoricalInven
 
 /**
  * Replace internal chrt size ids with techSize for display / pivot.
- * Uses product_variants (barcode) first; Content cards when still unresolved.
+ * Uses account-scoped product_variants in the database. Historical reads must
+ * remain independent of the current WB API and its credentials.
  */
 async function resolveDisplaySizes(
   marketplaceAccountId: string,
@@ -89,34 +88,6 @@ async function resolveDisplaySizes(
     from += page;
   }
 
-  const chrtToSize = new Map<string, string>();
-  const stillNeedCards = rows.some((r) => {
-    if (!isInternalSizeId(r.size)) return false;
-    if (r.barcode && barcodeToSize.has(r.barcode)) return false;
-    const only = nmToSizes.get(r.nm_id);
-    return !(only && only.length === 1);
-  });
-
-  if (stillNeedCards) {
-    try {
-      const account = await getMarketplaceAccountForSync(marketplaceAccountId);
-      const cards = await new WbApiClient(account.apiKey).fetchAllProductCards();
-      for (const card of cards) {
-        const nmId = Number(card.nmID);
-        for (const size of card.sizes ?? []) {
-          const chrtId = Number(size.chrtID ?? size.chrtId ?? 0);
-          const tech = String(size.techSize ?? size.wbSize ?? "").trim();
-          if (!nmId || !chrtId || !tech || isInternalSizeId(tech)) continue;
-          chrtToSize.set(`${nmId}:${chrtId}`, tech);
-          const sku = size.skus?.find(Boolean);
-          if (sku) barcodeToSize.set(String(sku), tech);
-        }
-      }
-    } catch {
-      /* keep barcode / single-size fallbacks */
-    }
-  }
-
   return rows.map((row) => {
     const base = normalizeSnapshotRow(row);
     if (!isInternalSizeId(base.size)) return base;
@@ -125,12 +96,8 @@ async function resolveDisplaySizes(
     if (base.barcode && barcodeToSize.has(base.barcode)) {
       size = barcodeToSize.get(base.barcode)!;
     } else {
-      const fromChrt = chrtToSize.get(`${base.nm_id}:${base.size}`);
-      if (fromChrt) size = fromChrt;
-      else {
-        const only = nmToSizes.get(base.nm_id);
-        if (only?.length === 1) size = only[0];
-      }
+      const only = nmToSizes.get(base.nm_id);
+      if (only?.length === 1) size = only[0];
     }
     // Never surface raw chrt ids — empty if unresolved
     return { ...base, size };
