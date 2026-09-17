@@ -1153,6 +1153,31 @@ type PublicTables = {
     Update: Partial<WbStock>;
     Relationships: NoRelationships;
   };
+  wb_current_prices: {
+    Row: {
+      marketplace_account_id: string;
+      nm_id: number;
+      price: number | null;
+      currency: string;
+      observed_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      marketplace_account_id: string;
+      nm_id: number;
+      price: number | null;
+      currency: string;
+      observed_at: string;
+      updated_at?: string;
+    };
+    Update: Partial<{
+      price: number | null;
+      currency: string;
+      observed_at: string;
+      updated_at: string;
+    }>;
+    Relationships: NoRelationships;
+  };
   historical_inventory_snapshots: {
     Row: HistoricalInventorySnapshotRow;
     Insert: Omit<

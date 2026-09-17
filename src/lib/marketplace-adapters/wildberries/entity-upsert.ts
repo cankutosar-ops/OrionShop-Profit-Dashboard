@@ -1,7 +1,7 @@
 /**
  * Sprint 10.2 — Wildberries durable upsert (idempotent) for historical backfill.
  * Persists into existing project tables with upsert conflict keys.
- * Prices are held in-process until a dedicated prices table exists.
+ * Current product-level prices persist in wb_current_prices.
  */
 
 import type {
@@ -18,6 +18,7 @@ import type {
 } from "@/lib/warehouse/backfill/entity-upsert";
 import type { WarehouseScope } from "@/lib/warehouse/types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { AdminClient } from "@/lib/supabase/admin";
 import {
   mapApiOrderToDb,
   mapApiProductToDb,
@@ -42,12 +43,14 @@ function empty(): WarehouseEntityUpsertResult {
 type IdRow = { id: string };
 
 export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPort {
-  private readonly priceKeys = new Map<string, MarketplacePriceDto>();
   private readonly productIdByNm = new Map<number, string>();
   private readonly brandCache = new Map<string, string>();
   private readonly categoryCache = new Map<string, string>();
 
-  constructor(private readonly marketplaceAccountId: string) {}
+  constructor(
+    private readonly marketplaceAccountId: string,
+    private readonly adminClient: () => AdminClient = createAdminClient
+  ) {}
 
   async upsertProducts(
     _scope: WarehouseScope,
@@ -344,13 +347,44 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
     items: MarketplacePriceDto[]
   ): Promise<WarehouseEntityUpsertResult> {
     const result = empty();
-    const prefix = `${scope.marketplaceType}|${scope.companyId}|${scope.marketplaceAccountId}`;
+    if (scope.marketplaceType !== "wildberries" ||
+        String(scope.marketplaceAccountId) !== this.marketplaceAccountId) {
+      throw new Error("Price upsert refused: marketplace account mismatch");
+    }
+    const rows: Array<{
+      marketplace_account_id: string;
+      nm_id: number;
+      price: number | null;
+      currency: string;
+      observed_at: string;
+      updated_at: string;
+    }> = [];
     for (const item of items) {
-      const key = `${prefix}|${item.externalProductId}`;
-      if (this.priceKeys.has(key)) result.updated += 1;
-      else result.inserted += 1;
-      this.priceKeys.set(key, item);
-      result.upserted += 1;
+      const nmId = Number(item.externalProductId);
+      const observedAt = item.observedAt ? Date.parse(item.observedAt) : NaN;
+      if (!Number.isSafeInteger(nmId) || nmId <= 0 ||
+          (item.price !== null && (!Number.isFinite(item.price) || item.price < 0)) ||
+          !Number.isFinite(observedAt) || !item.currency?.trim()) {
+        throw new Error(`Invalid current price observation for nmId=${item.externalProductId}`);
+      }
+      rows.push({
+        marketplace_account_id: this.marketplaceAccountId,
+        nm_id: nmId,
+        price: item.price,
+        currency: item.currency.trim(),
+        observed_at: item.observedAt!,
+        updated_at: new Date().toISOString(),
+      });
+    }
+    const supabase = this.adminClient();
+    for (let i = 0; i < rows.length; i += 500) {
+      const batch = rows.slice(i, i + 500);
+      const { error } = await supabase.from("wb_current_prices").upsert(batch, {
+        onConflict: "marketplace_account_id,nm_id",
+      });
+      if (error) throw new Error(`Current price upsert failed: ${error.message}`);
+      result.upserted += batch.length;
+      result.updated += batch.length;
     }
     return result;
   }
