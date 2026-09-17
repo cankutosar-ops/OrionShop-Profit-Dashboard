@@ -243,5 +243,17 @@ export function isWithinDateRange(dateStr: string, from: string, to: string): bo
   return dateStr >= from && dateStr <= to;
 }
 
+/** Statistics Sales are fetched by lastChangeDate; keep late changes to older events. */
+export function isSaleInSyncWindow(
+  sale: Pick<WbApiSale, "date" | "lastChangeDate">,
+  from: string,
+  to: string
+): boolean {
+  return (
+    isWithinDateRange(toDateString(sale.date), from, to) ||
+    isWithinDateRange(toDateString(sale.lastChangeDate), from, to)
+  );
+}
+
 // Re-export types used by legacy imports
 export type { WbApiOrder, WbApiSale, WbApiFinanceRow as WbApiFinanceRecord, WbApiProductCard };

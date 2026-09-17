@@ -5,7 +5,7 @@
  *   npx tsx scripts/verify-sales-event-identity.mjs
  */
 import assert from "node:assert/strict";
-import { mapApiSaleToDb } from "../src/lib/wildberries/mappers.ts";
+import { isSaleInSyncWindow, mapApiSaleToDb } from "../src/lib/wildberries/mappers.ts";
 import {
   dedupeSalesEvents,
   saleEventMayUpdate,
@@ -195,6 +195,23 @@ check("TEST 9 — logistics SRID map prefers SALE product_id when both events ex
   ];
   const map = buildSridToProductIdMap(sales);
   assert.equal(map.get("SRID-X"), "sale-product");
+});
+
+check("TEST 10 — late Sales correction is ingested under its original reporting date", () => {
+  const late = apiSale({ date: "2026-08-03T10:00:00", lastChangeDate: "2026-09-16T10:00:00" });
+  assert.equal(isSaleInSyncWindow(late, "2026-09-16", "2026-09-17"), true);
+  assert.equal(mapApiSaleToDb(late, "p1").sale_date, "2026-08-03");
+  assert.equal(isSaleInSyncWindow(apiSale({ date: "2026-09-16T10:00:00" }), "2026-09-16", "2026-09-17"), true);
+  assert.equal(isSaleInSyncWindow(apiSale({ date: "2026-08-03T10:00:00", lastChangeDate: "2026-08-04T10:00:00" }), "2026-09-16", "2026-09-17"), false);
+});
+
+check("TEST 11 — identical saleID remains isolated by marketplace account", () => {
+  const { rows, dropped } = dedupeSalesEvents([
+    event({ marketplace_account_id: "A1", sale_id: "S1" }),
+    event({ marketplace_account_id: "A2", sale_id: "S1" }),
+  ]);
+  assert.equal(rows.length, 2);
+  assert.equal(dropped, 0);
 });
 
 if (failed) {

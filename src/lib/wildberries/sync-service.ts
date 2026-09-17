@@ -19,6 +19,7 @@ import { yieldEventLoop } from "./sync-runtime";
 import { getActiveSyncTimer } from "./sync-timer";
 import {
   isWithinDateRange,
+  isSaleInSyncWindow,
   mapApiOrderToDb,
   mapApiProductToDb,
   mapApiProductVariants,
@@ -587,7 +588,7 @@ export class WbSyncService {
       console.log("[SYNC] sales fetched");
       syncLog("sales", "Wildberries API END: fetchSales", { rawCount: sales.length });
 
-      const filtered = sales.filter((s) => isWithinDateRange(toDateString(s.date), dateFrom, dateTo));
+      const filtered = sales.filter((sale) => isSaleInSyncWindow(sale, dateFrom, dateTo));
       result.recordsProcessed = filtered.length;
       syncLog("sales", "Sales filtered", { filteredCount: filtered.length });
 
