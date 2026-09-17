@@ -668,6 +668,8 @@ export type ProductProfitability = ProfitBreakdown & {
    * `revenue` on this row is Commercial Performance Revenue (Finance ppvz_for_pay).
    */
   netSales: number;
+  /** Persisted Sales priceWithDisc completeness for this product and period. */
+  netSalesStatus?: import("@/lib/sales-revenue-resolution").NetSalesStatus;
   /**
    * Model B Final Net Profit (after tax).
    * `netProfit` remains Operating Profit (before tax) for Smart Pricing / ops compatibility.

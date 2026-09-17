@@ -126,13 +126,18 @@ export function resolveNetSalesFromSources(params: {
   scopeFrom: string;
   scopeTo: string;
 }): NetSalesResolution {
-  if (params.sales.length === 0) {
+  return resolveNetSalesFromDb(params.sales);
+}
+
+/** Shared readiness rule for persisted Sales at account and product grain. */
+export function resolveNetSalesFromDb(sales: WbSale[]): NetSalesResolution {
+  if (sales.length === 0) {
     return { ...EMPTY_NET_SALES, dataSource: "db", status: "empty" };
   }
 
-  const fromDb = buildNetSalesFromDb(params.sales);
+  const fromDb = buildNetSalesFromDb(sales);
 
-  if (!netSalesNeedsApiFallback(params.sales)) {
+  if (!netSalesNeedsApiFallback(sales)) {
     return { ...fromDb, dataSource: "db", status: "ready" };
   }
 

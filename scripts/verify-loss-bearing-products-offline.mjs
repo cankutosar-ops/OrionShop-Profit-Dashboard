@@ -45,6 +45,14 @@ const input = {
     nm_id: 1, srid: "return-srid", sale_date: "2026-09-01", revenue: 90,
     price_with_disc: 100, for_pay: 80, quantity: 1, is_return: true,
     return_date: "2026-09-01",
+  }, {
+    id: "priced-sale", marketplace_account_id: "account-a", product_id: "negative",
+    nm_id: 2, srid: "priced-srid", sale_date: "2026-09-01", revenue: 110,
+    price_with_disc: 120, for_pay: 90, quantity: 1, is_return: false,
+  }, {
+    id: "unpriced-sale", marketplace_account_id: "account-a", product_id: "negative",
+    nm_id: 2, srid: "unpriced-srid", sale_date: "2026-09-01", revenue: 100,
+    price_with_disc: null, for_pay: 80, quantity: 1, is_return: false,
   }],
   finance: [
     financeRow("1", "negative", "for_pay", "OTHER", "other", -40),
@@ -69,6 +77,10 @@ assert.equal(build.rows.reduce((sum, row) => sum + row.storage, 0), 5);
 assert.equal(build.rows.find((row) => row.productId === "return").unitsReturned, 1);
 assert.ok(build.rows.find((row) => row.productId === "return").netSales < 0);
 assert.equal(build.rows.find((row) => row.productId === "negative").revenue, -40);
+assert.equal(build.rows.find((row) => row.productId === "negative").netSalesStatus, "unavailable");
+assert.equal(build.rows.find((row) => row.productId === "negative").netSales, 120);
+assert.equal(build.rows.find((row) => row.productId === "return").netSalesStatus, "ready");
+assert.equal(build.rows.find((row) => row.productId === "storage").netSalesStatus, "empty");
 for (const id of ["storage", "penalty", "adjustment", "return-logistics", "acceptance"]) {
   assert.ok(build.rows.find((row) => row.productId === id).finalNetProfit < 0, id);
 }

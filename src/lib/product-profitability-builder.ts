@@ -20,7 +20,7 @@ import { aggregateSalesMetrics } from "@/lib/sales-metrics";
 import {
   buildNetFinishedPriceFromDb,
   buildNetForPayFromDb,
-  buildNetSalesFromDb,
+  resolveNetSalesFromDb,
 } from "@/lib/sales-revenue-resolution";
 import {
   sumAcceptanceFromFinance,
@@ -156,7 +156,7 @@ export function buildProductProfitabilityResult(
 
       const salesMetrics = aggregateSalesMetrics(productSales);
       const netUnits = calculateNetUnits(salesMetrics.unitsSold, salesMetrics.unitsReturned);
-      const netSales = buildNetSalesFromDb(productSales);
+      const netSales = resolveNetSalesFromDb(productSales);
       const salesForPay = buildNetForPayFromDb(productSales);
       const financeNetForPay = sumNetForPayFromFinance(financeForBreakdown);
       const productCost = computeProductCost(productSales, [], latestCostByProductId);
@@ -170,7 +170,7 @@ export function buildProductProfitabilityResult(
         grossSales: netSales.grossSales,
         returnedSales: netSales.returnedSales,
         netSales: netSales.netSales,
-        netSalesStatus: "ready",
+        netSalesStatus: netSales.status,
         salesForPay,
         financeNetForPay,
         acquiring: categorySummary.ACQUIRING,
@@ -199,6 +199,7 @@ export function buildProductProfitabilityResult(
         /** Operating Profit (before tax). */
         netProfit: modelB.netProfit,
         netSales: modelB.netSales,
+        netSalesStatus: modelB.netSalesStatus,
         finalNetProfit: modelB.finalNetProfit,
         returnRate: salesMetrics.returnRate,
         unitsSold: salesMetrics.unitsSold,
