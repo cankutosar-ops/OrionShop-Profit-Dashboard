@@ -1,0 +1,11 @@
+# OpenNext is automatically selected by Netlify for this Next.js application.
+# Do not replace this with a static export or add an SPA catch-all redirect.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Set production runtime secrets/flags in Netlify's UI with Functions scope
+# (and Builds where required), never in this tracked file.

@@ -6,9 +6,8 @@
  * quota. The deployed environment variable is therefore authoritative, and any
  * state that cannot be resolved is treated as reserved (fail closed).
  *
- * Configure ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE in Vercel:
- * Project → Settings → Environment Variables → Production (and Preview if
- * cron/API run there). Also set it in the operator .env.local before a wake.
+ * Configure ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE in the web host and
+ * GitHub worker environment. Also set it in the operator environment before a wake.
  */
 
 import { existsSync, readFileSync } from "fs";
@@ -20,13 +19,13 @@ export const FINANCE_RESERVATION_ENV_VAR =
 export const FINANCE_RESERVED_ACCOUNT_IDS = ["2"] as const;
 
 /**
- * Vercel sets VERCEL=1 on every cron and serverless invocation. Those
- * processes cannot see an operator workstation progress file, so they must
- * not consult one.
+ * Hosted web and CI processes cannot trust a workstation progress file.
+ * Explicit production Node also fails closed regardless of provider.
  */
 export function isDeployedFinanceRuntime(): boolean {
-  const vercel = process.env.VERCEL?.trim().toLowerCase();
-  return vercel === "1" || vercel === "true";
+  return [process.env.VERCEL, process.env.NETLIFY, process.env.GITHUB_ACTIONS]
+    .some((value) => ["1", "true"].includes(value?.trim().toLowerCase() ?? "")) ||
+    process.env.NODE_ENV === "production";
 }
 
 export type FinanceReservationSource =
@@ -74,7 +73,7 @@ function readCampaignStatusFromFile(
 /**
  * Resolve whether the Account 2 Finance quota is reserved for historical recovery.
  * Resolution order: reserved-account filter → deployed env → (local only)
- * progress file → fail closed. Deployed Vercel processes never trust a
+ * progress file → fail closed. Deployed processes never trust a
  * progress file: they fail closed unless the env var is an explicit boolean.
  */
 export function resolveFinanceRecoveryReservation(
