@@ -1,5 +1,8 @@
 # Commercial Data Continuity
 
+> Topology correction (2026-09-19): the owner has no Vercel account. Vercel production is NOT EVIDENCED / NOT IN USE. Provider references below describe proposed or historical configuration, not deployed infrastructure. See [current topology](../08-release/current-hosting-topology.md), which supersedes earlier Vercel handover requirements.
+
+
 Status: Production architecture; scheduler handover pending verification
 
 Owner: Platform Operations
@@ -41,16 +44,9 @@ for commercial sync, inventory, and Finance incremental. The durable
 `entityDue` check is defense in depth, not permission to operate two
 production commercial schedulers. Advertising has no approved scheduled cadence.
 
-`vercel.json` still contains the hourly commercial cron. Its live production
-activation cannot be established from repository contents. Before removing or
-disabling it, an operator must check the active Vercel project's Production
-Cron Jobs and recent invocations, confirm GitHub worker runs on the default
-branch, and verify its required Secrets/Variables match the active web host.
-Then remove the Vercel cron configuration and redeploy, or disable the live
-Vercel cron as part of the approved handover. Do not infer live state from this
-file or the repository's default branch.
+`vercel.json` is dormant repository configuration. The owner has no Vercel account and no live deployment is evidenced. Remove Vercel UI verification and cron handover from release prerequisites. GitHub is the intended first scheduled owner; local dev inventory timers and manual scripts/routes are the existing possible writers.
 
-The configured route-based path (live Vercel status unverified) is:
+The following is a supported hypothetical route-based path, not observed infrastructure:
 
 ```text
 External Durable Scheduler (Vercel Cron / external cron)
@@ -72,7 +68,7 @@ Freshness evaluation + durable retry
 
 ## Scheduler configuration
 
-### Vercel Cron (transition only; not the intended schedule owner)
+### Dormant Vercel Cron configuration (not in use)
 
 `vercel.json`:
 

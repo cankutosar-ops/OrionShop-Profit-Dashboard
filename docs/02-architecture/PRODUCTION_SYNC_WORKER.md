@@ -1,5 +1,8 @@
 # Production Sync Worker
 
+> Topology correction (2026-09-19): the owner has no Vercel account. Vercel production is NOT EVIDENCED / NOT IN USE. Provider references below describe proposed or historical configuration, not deployed infrastructure. See [current topology](../08-release/current-hosting-topology.md), which supersedes earlier Vercel handover requirements.
+
+
 How Wildberries data reaches the warehouse in production, and why the web
 application never talks to WB.
 
@@ -289,23 +292,9 @@ not a configuration toggle, so it cannot be switched on by an environment
 variable in production. `verify:inventory-retention-safety` executes these paths
 for real and fails if any of them starts deleting.
 
-## Platform cron
+## Dormant platform cron
 
-`vercel.json` still declares an hourly cron for
-`/api/sync/commercial-continuity`. GitHub Actions is the approved primary and
-only scheduled owner for production commercial sync, inventory, and Finance
-incremental. The route remains available for authenticated manual operations.
-
-- Live Vercel Cron activation is **unverified** from repository evidence. Check
-  the active Vercel project's Production Cron Jobs and recent invocations.
-- Confirm the GitHub worker runs from the default branch and its production
-  Secrets/Variables agree with the active web host before the handover.
-- Then remove `vercel.json`'s commercial cron and redeploy, or disable the
-  active Vercel cron as part of the approved handover. Do not remove it solely
-  from repository inference about current deployment state.
-- The shared durable `entityDue` state limits routine duplicate requests at
-  the default interval, but a shorter configured interval or retries can make
-  both schedulers due. It is defense in depth, not scheduler ownership.
+`vercel.json` is retained as dormant configuration. No Vercel account or deployment is evidenced, so no Vercel UI check or scheduler handover is required. GitHub Actions is the intended first production scheduler. Before enabling it, hold local/manual writers, configure its required secrets and variables, and verify a bounded tick under the approved change window. The authenticated route remains a possible manual writer.
 
 ## Verification
 

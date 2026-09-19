@@ -4,8 +4,8 @@ This runbook describes the controlled path for deploying the reviewed OrionShop 
 
 ## Gate 0: establish a frozen starting point
 
-1. Identify the production deployment, its Git SHA, active scheduler owners, and the deployed environment-variable presence. Do not record secret values.
-2. Hold the active scheduler only after the change window begins. Prevent manual sync and finance-recovery commands for the same window.
+1. Establish whether an external web deployment exists; currently none is evidenced. Record local/manual writers and the proposed first host, Git SHA, scheduler owner, and required configuration. Do not record secret values.
+2. Hold local dev servers (their inventory timer defaults on), manual sync, and finance-recovery commands after the change window begins. Hold any newly evidenced external writer. No Vercel scheduler hold is required.
 3. Run the read-only writer check. There must be no active finance lease, unfinished sync run, unfinished commercial tick, or nonterminal commercial entity.
 4. Re-run the catalog and RLS precheck. Confirm the three reviewed broad read policies and their tenant/service counterparts have the expected pre-containment definitions.
 5. If production data has changed since the most recently verified recovery point, create a fresh logical `public` schema/data backup set, verify its checksums, and restore it into a new isolated local database according to [the local recovery procedure](local-logical-backup-recovery.md).
@@ -37,9 +37,9 @@ Apply `20260917130000_wb_current_prices.sql` by itself. Verify account-scoped cu
 
 Apply `20260917140000_wb_canonical_current_stocks.sql` by itself. Verify the canonical identity preserves the supplied account, product, warehouse, variant, and barcode dimensions. Keep `ORION_CURRENT_STOCK_SOURCE=legacy` until a complete per-account canonical pull and reconciliation succeeds. Do not alter historical inventory snapshots.
 
-## Scheduler handover after all gates
+## First scheduler activation after all gates
 
-The proposed worker cadence is hourly at minute 20 (`20 * * * *`), which avoids the top-of-hour Vercel cadence and fits its 25-minute bounded runtime. GitHub Actions becomes the sole primary scheduler only after a manually triggered bounded worker tick succeeds and freshness checks pass. Disable the Vercel cron only after that evidence is recorded. Ads scheduling remains separate.
+GitHub Actions is the intended first production scheduler, hourly at minute 20 (`20 * * * *`). No Vercel deployment or cron is evidenced and no handover is required. Keep `vercel.json` dormant. Before merging the workflow onto the default branch, hold automatic scheduling so it cannot run before the bounded manual acceptance tick. Under explicit approval, verify that tick and data freshness, then enable the scheduled owner. Keep local development timers and web-host inventory timers off during this transition. Advertising cadence is a separate decision.
 
 ## Stop and rollback conditions
 

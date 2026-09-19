@@ -1,5 +1,8 @@
 # Production Baseline
 
+> Topology correction (2026-09-19): the owner has no Vercel account. Vercel production is NOT EVIDENCED / NOT IN USE. Provider references below describe proposed or historical configuration, not deployed infrastructure. See [current topology](../08-release/current-hosting-topology.md), which supersedes earlier Vercel handover requirements.
+
+
 ---
 
 Status
