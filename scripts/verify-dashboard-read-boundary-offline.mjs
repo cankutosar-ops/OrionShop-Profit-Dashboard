@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const page=readFileSync('src/app/page.tsx','utf8');
+assert.ok(!page.includes('DashboardOperationalSync'), 'dashboard navigation must not mount automatic synchronization');
+const pricing=readFileSync('src/services/smart-pricing-service.ts','utf8');
+assert.ok(!pricing.includes('getMarketplaceAccountForSync'), 'pricing reads must not decrypt ingestion credentials');
+assert.ok(pricing.includes("from('marketplace_accounts_public').select('marketplace').eq('id', dataScope.marketplaceAccountId)"));
+const inventory=readFileSync('src/services/inventory-report-service.ts','utf8');
+assert.ok(!inventory.includes('getMarketplaceAccountForSync'), 'inventory reports must not decrypt ingestion credentials');
+assert.ok(inventory.includes('fetchAllRows<ProductWithCategory>'), 'inventory product lists must paginate');
+console.log('PASS: dashboard navigation is read-only; pricing uses scoped public account metadata');

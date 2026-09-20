@@ -60,7 +60,6 @@ import {
 } from "@/services/persisted-query-service";
 import { getInventoryForAccount } from "@/services/inventory-service";
 import { getProductProfitability } from "@/services/dashboard-service";
-import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import type { ScopedDateRange, WbFinance, WbSale } from "@/types/database";
 import { logScopeAudit } from "@/lib/scope-audit-log";
 
@@ -225,14 +224,16 @@ export async function getSmartPricingInputs(
     brandId: dataScope.brandId,
   });
   const productIds = products.map((p) => String(p.id));
-  const [costHistory, sales, finance, orders, account, inventoryRows] = await Promise.all([
+  const [costHistory, sales, finance, orders, accountResult, inventoryRows] = await Promise.all([
     fetchCostHistory(dataScope.marketplaceAccountId, client, { productIds }),
     fetchSalesInRange(dataScope, client, { productIds }),
     fetchFinanceInRange(dataScope, client, { productIds }),
     fetchOrdersInRange(dataScope, client, { productIds }),
-    getMarketplaceAccountForSync(dataScope.marketplaceAccountId),
+    client.from('marketplace_accounts_public').select('marketplace').eq('id', dataScope.marketplaceAccountId).single(),
     getInventoryForAccount(dataScope.marketplaceAccountId, client),
   ]);
+  if (accountResult.error || !accountResult.data) throw new Error('Marketplace account is unavailable');
+  const account = accountResult.data;
 
   const latestCostByProductId = buildLatestCostByProductId(costHistory, products);
   const stockByProductId = aggregateStockByProduct(inventoryRows);

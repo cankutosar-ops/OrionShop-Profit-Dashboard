@@ -19,7 +19,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           "min-h-screen transition-[padding] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
-          hydrated ? (collapsed ? "pl-16" : "pl-64") : "pl-64",
+          hydrated ? (collapsed ? "pl-16" : "pl-16 md:pl-64") : "pl-16 md:pl-64",
           "print:pl-0"
         )}
       >
@@ -37,13 +37,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <SidebarProvider>
-        <Suspense fallback={null}>
+      <Suspense fallback={null}>
+        <SidebarProvider>
           <AccountSwitchProvider>
             <DashboardShell>{children}</DashboardShell>
           </AccountSwitchProvider>
-        </Suspense>
-      </SidebarProvider>
+        </SidebarProvider>
+      </Suspense>
     </QueryProvider>
   );
 }

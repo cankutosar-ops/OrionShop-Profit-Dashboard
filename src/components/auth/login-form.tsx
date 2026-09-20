@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { safeAuthRedirect } from "@/lib/security/safe-auth-redirect";
 
 export function LoginForm() {
   const router = useRouter();
@@ -31,8 +32,7 @@ export function LoginForm() {
         setError(payload.message || payload.error || "Invalid email or password");
         return;
       }
-      const safeNext =
-        nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
+      const safeNext = safeAuthRedirect(nextPath);
       router.replace(safeNext);
       router.refresh();
     } catch (err) {

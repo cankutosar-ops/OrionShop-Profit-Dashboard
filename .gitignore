@@ -32,6 +32,7 @@ yarn-error.log*
 
 # Local production-recovery artifacts — never commit or upload.
 /.local-backups/
+/.audit/
 
 # env files — never commit secrets
 .env

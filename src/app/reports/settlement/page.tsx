@@ -1,6 +1,6 @@
 import { ReportShell } from "@/components/reporting/report-shell";
 import { ReportSummaryCards } from "@/components/reporting/report-summary-cards";
-import { ReportDataTable } from "@/components/reporting/report-data-table";
+import { SettlementLinesTable } from "@/components/reporting/financial-detail-tables";
 import { ReportEmptyState } from "@/components/reporting/report-empty-state";
 import { ReportExportMenu } from "@/components/reporting/report-export-menu";
 import { formatKpiCurrency } from "@/lib/kpi-format";
@@ -15,7 +15,6 @@ import { parseReportCategory } from "@/lib/reporting/module/report-filters";
 import {
   CATEGORY_SETTLEMENT_LEGACY_TITLE,
   buildSettlementReport,
-  type SettlementLine,
 } from "@/lib/reporting/module/settlement-report";
 import { inferPeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 import { buildSettlementExportDocument } from "@/lib/reporting/module/export/build-export-document";
@@ -26,46 +25,6 @@ export const dynamic = "force-dynamic";
 type PageProps = {
   searchParams: Promise<PageScopeSearchParamsInput & { category?: string }>;
 };
-
-const SECTION_LABELS: Record<SettlementLine["section"], string> = {
-  sales: "Sales",
-  wb: "Wildberries Settlement",
-  costs: "Operational Costs",
-  result: "Final Result",
-};
-
-function settlementColumns(currency: string) {
-  return [
-    {
-      key: "section",
-      header: "Section",
-      align: "left" as const,
-      cell: (row: SettlementLine) => (
-        <span className="text-muted-foreground">{SECTION_LABELS[row.section]}</span>
-      ),
-    },
-    {
-      key: "label",
-      header: "Line",
-      align: "left" as const,
-      cell: (row: SettlementLine) => (
-        <span className={row.isTotal ? "font-semibold" : undefined}>{row.label}</span>
-      ),
-    },
-    {
-      key: "amount",
-      header: "Amount",
-      align: "right" as const,
-      sortable: true,
-      sortValue: (row: SettlementLine) => row.amount,
-      cell: (row: SettlementLine) => (
-        <span className={row.isTotal ? "font-semibold tabular-nums" : "tabular-nums"}>
-          {formatKpiCurrency(row.amount, currency)}
-        </span>
-      ),
-    },
-  ];
-}
 
 export default async function SettlementReportPage({ searchParams }: PageProps) {
   const params = await searchParams;
@@ -158,11 +117,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
             <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Settlement detail
             </h2>
-            <ReportDataTable
-              columns={settlementColumns(ctx.tenant.currency)}
-              rows={settlement.lines}
-              rowKey={(row) => row.id}
-            />
+            <SettlementLinesTable rows={settlement.lines} currency={ctx.tenant.currency} />
           </section>
 
           <p className="text-xs text-muted-foreground">

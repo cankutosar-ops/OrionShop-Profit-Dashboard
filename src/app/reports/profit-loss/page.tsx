@@ -1,9 +1,9 @@
 import { ReportShell } from "@/components/reporting/report-shell";
 import { ReportSummaryCards } from "@/components/reporting/report-summary-cards";
-import { ReportDataTable } from "@/components/reporting/report-data-table";
+import { PnLLinesTable, PnLPeriodsTable } from "@/components/reporting/financial-detail-tables";
 import { ReportEmptyState } from "@/components/reporting/report-empty-state";
 import { ReportExportMenu } from "@/components/reporting/report-export-menu";
-import { formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
+import { formatKpiCurrency } from "@/lib/kpi-format";
 import {
   type PageScopeSearchParamsInput,
   scopeParamsToSearchParams,
@@ -15,7 +15,6 @@ import {
   buildPnLFromProductRows,
   filterProductsByCategory,
   pnlPeriodRowFromModelB,
-  type PnLLine,
   type PnLPeriodBreakdownRow,
 } from "@/lib/reporting/module/pnl-report";
 import { parseReportCategory } from "@/lib/reporting/module/report-filters";
@@ -31,69 +30,6 @@ export const dynamic = "force-dynamic";
 type PageProps = {
   searchParams: Promise<PageScopeSearchParamsInput & { category?: string }>;
 };
-
-function pnlColumns(currency: string) {
-  return [
-    {
-      key: "label",
-      header: "Line",
-      align: "left" as const,
-      cell: (row: PnLLine) => (
-        <span className={row.isTotal ? "font-semibold" : undefined}>{row.label}</span>
-      ),
-    },
-    {
-      key: "amount",
-      header: "Amount",
-      align: "right" as const,
-      sortable: true,
-      sortValue: (row: PnLLine) => row.amount,
-      cell: (row: PnLLine) =>
-        row.isPercent
-          ? formatKpiPercent(row.amount)
-          : formatKpiCurrency(row.amount, currency),
-    },
-  ];
-}
-
-function periodColumns(currency: string) {
-  const money = (key: keyof PnLPeriodBreakdownRow, header: string) => ({
-    key,
-    header,
-    align: "right" as const,
-    cell: (row: PnLPeriodBreakdownRow) =>
-      formatKpiCurrency(Number(row[key]) || 0, currency),
-  });
-  return [
-    {
-      key: "label",
-      header: "Period",
-      align: "left" as const,
-      cell: (row: PnLPeriodBreakdownRow) => (
-        <span className="font-medium">
-          {row.label}
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            {row.from} → {row.to}
-          </span>
-        </span>
-      ),
-    },
-    money("grossSales", "Gross Sales"),
-    money("returnedSales", "Returns"),
-    money("netSales", "Net Sales"),
-    money("revenue", "Revenue"),
-    {
-      key: "marketplaceFees",
-      header: "Marketplace Fee",
-      align: "right" as const,
-      cell: (row: PnLPeriodBreakdownRow) => `${formatKpiCurrency(row.marketplaceFees, currency)}${row.marketplaceFeeStatus === "anomaly" ? " · anomaly" : ""}`,
-    },
-    money("logistics", "Logistics"),
-    money("storage", "Storage"),
-    money("productCost", "Product Cost"),
-    money("netProfit", "Net Profit"),
-  ];
-}
 
 async function loadPeriodBreakdown(
   parentScope: ScopedDateRange,
@@ -231,11 +167,7 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
             <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               P&amp;L detail
             </h2>
-            <ReportDataTable
-              columns={pnlColumns(ctx.tenant.currency)}
-              rows={pnl.lines}
-              rowKey={(row) => row.id}
-            />
+            <PnLLinesTable rows={pnl.lines} currency={ctx.tenant.currency} />
           </section>
 
           {period.kind !== "none" && periodRows.length > 0 && (
@@ -243,11 +175,7 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 {period.kind === "week" ? "Weekly breakdown" : "Monthly breakdown"}
               </h2>
-              <ReportDataTable
-                columns={periodColumns(ctx.tenant.currency)}
-                rows={periodRows}
-                rowKey={(row) => `${row.label}:${row.from}:${row.to}`}
-              />
+              <PnLPeriodsTable rows={periodRows} currency={ctx.tenant.currency} />
               <p className="mt-2 text-xs text-muted-foreground">
                 Period rows use the same Financial Engine for each sub-range. TOTAL is the
                 sum of period rows (may differ slightly from account totals when

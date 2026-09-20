@@ -114,6 +114,8 @@ export async function middleware(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     const redirect = NextResponse.redirect(loginUrl);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    redirect.headers.set("Cache-Control", "private, no-store");
     return applyContainmentCookie(redirect, request);
   }
 
@@ -123,6 +125,8 @@ export async function middleware(request: NextRequest) {
     home.pathname = "/";
     home.search = "";
     const redirect = NextResponse.redirect(home);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    redirect.headers.set("Cache-Control", "private, no-store");
     return applyContainmentCookie(redirect, request);
   }
 

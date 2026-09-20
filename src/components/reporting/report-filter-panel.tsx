@@ -4,6 +4,7 @@ import { useCallback, useMemo, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { REPORT_FILTER_PARAMS } from "@/lib/reporting/module/report-filters";
 import { cn } from "@/lib/utils";
+import { getIntlLocale } from "@/lib/app-locale";
 
 type ReportFilterPanelProps = {
   categories: { id: string; name: string }[];
@@ -32,7 +33,9 @@ export function ReportFilterPanel({
       seen.add(label);
       list.push({ value: label, label });
     }
-    return list.sort((a, b) => a.label.localeCompare(b.label));
+    // The server OS and browser can have different default collation locales.
+    // Use the configured app locale for mixed Cyrillic/Latin options on both.
+    return list.sort((a, b) => a.label.localeCompare(b.label, getIntlLocale()));
   }, [categories]);
 
   const onCategoryChange = useCallback(

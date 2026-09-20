@@ -12,7 +12,7 @@ import type { InventoryReport } from "@/lib/inventory-types";
 import { getDefaultDateRange } from "@/lib/utils";
 import { fetchSalesInRange } from "@/services/persisted-query-service";
 import { getInventoryForAccount } from "@/services/inventory-service";
-import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import type { Product, ScopedDateRange } from "@/types/database";
 
 type ProductWithCategory = Product & {
@@ -24,14 +24,11 @@ async function fetchProductsForAccount(
 ): Promise<ProductWithCategory[]> {
   const client = await createServerClient();
   // Same products query as before; category join is UI metadata only (filter labels).
-  const { data, error } = await client
-    .from("products")
-    .select("*, category:categories(id, name)")
-    .eq("marketplace_account_id", marketplaceAccountId)
-    .order("supplier_article");
-
-  if (error) throw new Error(`Failed to fetch products: ${error.message}`);
-  return (data ?? []) as unknown as ProductWithCategory[];
+  return fetchAllRows<ProductWithCategory>(client, 'products', {
+    marketplaceAccountId,
+    selectColumns: '*, category:categories(id, name)',
+    orderBy: {column:'supplier_article', ascending:true},
+  });
 }
 
 function buildLast30Scope(scope: ScopedDateRange): ScopedDateRange {
@@ -54,12 +51,14 @@ export async function getInventoryReport(scope: ScopedDateRange): Promise<Invent
   const client = await createServerClient();
   const salesScope = buildLast30Scope(scope);
 
-  const [inventoryRows, products, sales, account] = await Promise.all([
+  const [inventoryRows, products, sales, accountResult] = await Promise.all([
     getInventoryForAccount(scope.marketplaceAccountId, client),
     fetchProductsForAccount(scope.marketplaceAccountId),
     fetchSalesInRange(salesScope, client),
-    getMarketplaceAccountForSync(scope.marketplaceAccountId),
+    client.from('marketplace_accounts_public').select('last_successful_sync_at,last_sync_at,last_sync_status').eq('id', scope.marketplaceAccountId).single(),
   ]);
+  if (accountResult.error || !accountResult.data) throw new Error('Marketplace account is unavailable');
+  const account = accountResult.data;
 
   const stockByProduct = aggregateStockByProduct(inventoryRows);
   const purchasesByProduct = countPurchasesByProduct(sales);

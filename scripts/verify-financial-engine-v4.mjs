@@ -4,6 +4,7 @@
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { fetchAllRows, fetchAllInDateRange } from "../src/lib/supabase/paginate.ts";
 import { createAdminClient } from "../src/lib/supabase/admin.ts";
 import { buildLatestCostByProductId } from "../src/lib/cost-history-resolution.ts";
 import {
@@ -54,51 +55,17 @@ const r2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 async function main() {
   const sb = createAdminClient();
-  const { data: products, error } = await sb
-    .from("products")
-    .select("*, brand:brands(*), category:categories(*)")
-    .eq("marketplace_account_id", accountId);
-  if (error) throw error;
-
-  const productIds = (products ?? []).map((p) => String(p.id));
-  const articles = (products ?? []).map((p) => p.supplier_article);
-
-  const [salesRes, financeRes, adsRes, ordersRes, costRes] = await Promise.all([
-    sb
-      .from("wb_sales")
-      .select("*")
-      .eq("marketplace_account_id", accountId)
-      .gte("sale_date", from)
-      .lte("sale_date", to),
-    sb
-      .from("wb_finance")
-      .select("*")
-      .eq("marketplace_account_id", accountId)
-      .gte("operation_date", from)
-      .lte("operation_date", to),
-    sb.from("wb_ads").select("*").gte("campaign_date", from).lte("campaign_date", to),
-    sb
-      .from("wb_orders")
-      .select("*")
-      .eq("marketplace_account_id", accountId)
-      .gte("order_date", from)
-      .lte("order_date", to),
-    sb.from("product_cost_history").select("*"),
+  const products = await fetchAllRows(sb, "products", {marketplaceAccountId:accountId, selectColumns:"*, brand:brands(*), category:categories(*)"});
+  const productIds = products.map(p => String(p.id));
+  const [sales, finance, ads, orders, costHistory] = await Promise.all([
+    fetchAllInDateRange(sb, "wb_sales", {column:"sale_date", from, to, marketplaceAccountId:accountId}),
+    fetchAllInDateRange(sb, "wb_finance", {column:"operation_date", from, to, marketplaceAccountId:accountId}),
+    fetchAllInDateRange(sb, "wb_ads", {column:"campaign_date", from, to, marketplaceAccountId:accountId}),
+    fetchAllInDateRange(sb, "wb_orders", {column:"order_date", from, to, marketplaceAccountId:accountId}),
+    fetchAllRows(sb, "product_cost_history", {inFilters:[{column:"product_id", values:productIds}]}),
   ]);
-
-  if (salesRes.error) throw salesRes.error;
-  if (financeRes.error) throw financeRes.error;
-
-  const sales = salesRes.data ?? [];
-  const finance = financeRes.data ?? [];
-  const ads = (adsRes.data ?? []).filter(
-    (row) =>
-      (row.product_id && productIds.includes(String(row.product_id))) ||
-      (row.supplier_article && articles.includes(row.supplier_article))
-  );
-  const orders = ordersRes.data ?? [];
-  const costHistory = costRes.data ?? [];
-  const latestCost = buildLatestCostByProductId(costHistory, products ?? []);
+  const latestCost = buildLatestCostByProductId(costHistory, products);
+  console.log("Rows validated", JSON.stringify({products:products.length,sales:sales.length,finance:finance.length,ads:ads.length,orders:orders.length}));
 
   const financeTotals = rollupCategoriesToProfitBuckets(finance);
   const categorySummary = summarizeFinanceByCategory(finance);

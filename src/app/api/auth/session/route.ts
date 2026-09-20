@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/security/require-auth";
+import { hasAdministrationRole } from "@/lib/security/admin-authorization";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export async function GET() {
   }
   return NextResponse.json({
     authenticated: true,
+    permissions: { administration: hasAdministrationRole(user) },
     user: {
       id: user.id,
       email: user.email ?? null,

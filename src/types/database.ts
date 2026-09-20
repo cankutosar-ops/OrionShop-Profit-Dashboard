@@ -1660,7 +1660,12 @@ export type TableRowPick<T extends keyof PublicTables, K extends keyof TableRow<
 export type Database = {
   public: {
     Tables: PublicTables;
-    Views: Record<string, never>;
+    Views: {
+      marketplace_accounts_public: {
+        Row: Pick<MarketplaceAccountPublic, 'id' | 'company_id' | 'marketplace' | 'account_name' | 'seller_id' | 'is_active' | 'is_default' | 'sync_enabled' | 'last_sync_at' | 'last_successful_sync_at' | 'last_sync_status' | 'created_at' | 'updated_at'>;
+        Relationships: NoRelationships;
+      };
+    };
     Functions: Record<string, never>;
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

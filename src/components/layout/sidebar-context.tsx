@@ -28,8 +28,12 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setCollapsedState(loadSidebarCollapsed());
+    const narrow = window.matchMedia('(max-width: 767px)');
+    const adapt = () => setCollapsedState(narrow.matches || loadSidebarCollapsed());
+    adapt();
+    narrow.addEventListener('change', adapt);
     setHydrated(true);
+    return () => narrow.removeEventListener('change', adapt);
   }, []);
 
   const setCollapsed = useCallback((next: boolean) => {

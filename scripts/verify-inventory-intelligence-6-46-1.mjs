@@ -12,16 +12,17 @@
  *   - Pure helpers: Stock Health buckets, Sales Share = orders/total, calendar days
  *   - Live: service returns rows with product + stock + distribution + health fields
  */
-import { readFileSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
 function loadEnv() {
+  if (!existsSync(resolve(process.cwd(), ".env.local"))) return;
   for (const line of readFileSync(resolve(process.cwd(), ".env.local"), "utf8").split("\n")) {
     const t = line.trim();
     if (!t || t.startsWith("#")) continue;
     const i = t.indexOf("=");
-    if (i > 0) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    if (i > 0 && process.env[t.slice(0, i).trim()] === undefined) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
   }
 }
 

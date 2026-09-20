@@ -14,8 +14,8 @@ export const dynamic = "force-dynamic";
 async function readCredentials(request: Request): Promise<{ email: string; password: string }> {
   const contentType = request.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
-    const body = (await request.json()) as { email?: string; password?: string };
-    return { email: body.email?.trim() ?? "", password: body.password ?? "" };
+    const body = await request.json().catch(() => null) as { email?: unknown; password?: unknown } | null;
+    return { email: typeof body?.email === 'string' ? body.email.trim() : '', password: typeof body?.password === 'string' ? body.password : '' };
   }
   if (
     contentType.includes("application/x-www-form-urlencoded") ||
@@ -29,8 +29,8 @@ async function readCredentials(request: Request): Promise<{ email: string; passw
   }
   // Fallback: try JSON, then empty
   try {
-    const body = (await request.json()) as { email?: string; password?: string };
-    return { email: body.email?.trim() ?? "", password: body.password ?? "" };
+    const body = (await request.json()) as { email?: unknown; password?: unknown } | null;
+    return { email: typeof body?.email === 'string' ? body.email.trim() : '', password: typeof body?.password === 'string' ? body.password : '' };
   } catch {
     return { email: "", password: "" };
   }
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
         {
           error: "Invalid email or password",
           code: "AUTH_INVALID_CREDENTIALS",
-          message: error?.message ?? "Sign-in failed",
+          message: "Invalid email or password",
         },
         { status: 401 }
       );

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { DataFreshnessNotice } from "@/components/dashboard/data-freshness-notice";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   CostBreakdownChartLazy,
@@ -13,7 +14,6 @@ import {
 import { DataBanner } from "@/components/dashboard/data-banner";
 import { ProfitabilityBreakdown } from "@/components/dashboard/profitability-breakdown";
 import { ProfitabilityGroupedTable } from "@/components/dashboard/profitability-grouped-table";
-import { DashboardOperationalSync } from "@/components/dashboard/dashboard-operational-sync";
 import { DashboardHeaderExtras } from "@/components/dashboard/dashboard-header-extras";
 import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
@@ -151,16 +151,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     resolveScopedDateRange(params)
   );
 
-  // Prefetch independent WB + SQL work so it overlaps critical-path SQL.
+  // Prefetch independent persisted reads so they overlap critical-path SQL.
   void prefetchDashboardBackground(scope);
 
   return (
     <>
       <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
-
-      <Suspense fallback={null}>
-        <DashboardOperationalSync />
-      </Suspense>
+      <Suspense fallback={null}><DataFreshnessNotice /></Suspense>
 
       <Suspense
         key={`${scope.marketplaceAccountId}:${scope.from}:${scope.to}:${scope.brandId ?? ""}:${scope.companyId}`}

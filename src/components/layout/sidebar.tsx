@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Coins,
@@ -133,6 +133,14 @@ function SidebarNavLinks({
   hrefForItem: (base: string) => string;
   collapsed: boolean;
 }) {
+  const [canAdmin, setCanAdmin] = useState(false);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/auth/session').then(r => r.ok ? r.json() : null)
+      .then(data => { if (active) setCanAdmin(data?.permissions?.administration === true); })
+      .catch(() => { if (active) setCanAdmin(false); });
+    return () => { active = false; };
+  }, []);
   return (
     <>
       {SIDEBAR_PRIMARY_NAVIGATION.map((item) => (
@@ -153,7 +161,7 @@ function SidebarNavLinks({
         )}
       />
 
-      {SIDEBAR_SETTINGS_NAVIGATION.map((item) => (
+      {SIDEBAR_SETTINGS_NAVIGATION.filter(item => item.href !== '/administration' || canAdmin).map((item) => (
         <SidebarNavItemLink
           key={item.name}
           item={item}

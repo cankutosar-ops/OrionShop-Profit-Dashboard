@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
 function loadEnv() {
+  if (!existsSync(resolve(process.cwd(), '.env.local'))) return;
   for (const line of readFileSync(resolve(process.cwd(), ".env.local"), "utf8").split("\n")) {
     const t = line.trim();
     if (!t || t.startsWith("#")) continue;
     const i = t.indexOf("=");
-    if (i > 0) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    if (i > 0 && process.env[t.slice(0, i).trim()] === undefined) process.env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
   }
 }
 

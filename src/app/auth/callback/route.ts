@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAuthServerClient } from "@/lib/supabase/auth-server";
+import { safeAuthRedirect } from "@/lib/security/safe-auth-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -9,14 +10,13 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") || "/";
-  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const safeNext = safeAuthRedirect(url.searchParams.get("next"));
 
   if (code) {
     const supabase = await createAuthServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, url.origin));
+      return NextResponse.redirect(new URL('/login?error=callback_failed', url.origin));
     }
   }
 
