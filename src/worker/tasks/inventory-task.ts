@@ -8,7 +8,7 @@
  */
 
 import type { WorkerAccountTaskResult } from "../types";
-import type { WorkerLogger } from "../logger";
+import { redact, type WorkerLogger } from "../logger";
 import { listWorkerAccounts } from "../accounts";
 import { runWithSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 
@@ -64,20 +64,27 @@ export async function runInventoryWorkerTask(
         trigger: "scheduled",
       }));
 
+      // The capture service returns failures instead of throwing. Preserve its
+      // reason even when optional warehouse audit tables are unavailable.
+      // Redact before storing detail because the CLI summary prints it directly.
+      const captureError = outcome.capture.status === "failed"
+        ? redact(outcome.capture.message)
+        : null;
       const result: WorkerAccountTaskResult = {
         task: "inventory",
         marketplaceAccountId: account.id,
         accountName: account.accountName,
         outcome: outcome.capture.status === "failed" ? "retryable_failure" : "success",
         durationMs: Date.now() - startedMs,
-        detail: outcome.continuousFromActivation
+        detail: captureError ?? (outcome.continuousFromActivation
           ? "continuous_from_activation"
-          : `missing_dates=${outcome.missingAfter.length}`,
+          : `missing_dates=${outcome.missingAfter.length}`),
         entities: [
           {
             entity: "inventory",
             status: outcome.capture.status,
             rowsPersisted: outcome.capture.rowsUpserted ?? null,
+            error: captureError,
           },
         ],
       };
@@ -92,6 +99,7 @@ export async function runInventoryWorkerTask(
           accountName: account.accountName,
           outcome: result.outcome,
           captureStatus: outcome.capture.status,
+          captureError,
           rowsFetched: outcome.capture.recordsRead,
           rowsPersisted: outcome.capture.rowsUpserted,
           activationDate: outcome.activationDate,

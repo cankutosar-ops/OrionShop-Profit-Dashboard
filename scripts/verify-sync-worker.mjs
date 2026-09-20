@@ -719,6 +719,45 @@ console.log("\n--- G. Inventory task ---");
   );
 }
 
+console.log("\n--- Returned inventory failure diagnostics ---");
+{
+  const previous = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = "inventory-diagnostic-secret-fixture";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = secret;
+  try {
+    const { createWorkerLogger } = await import("../src/worker/logger.ts");
+    const lines = [];
+    let calls = 0;
+    const result = await runSyncWorkerTick({
+      tasks: ["inventory"], accountIds: ["1"], skipEnvironmentCheck: true,
+      logger: createWorkerLogger("inventory-failed-capture", line => lines.push(line)),
+      deps: { inventory: {
+        listAccounts: async () => [{ id: "1", accountName: "Account 1" }],
+        runForAccount: async () => {
+          calls++;
+          return {
+            marketplaceAccountId: "1", activationDate: "2026-01-01",
+            capture: { marketplaceAccountId: "1", snapshotDate: "2026-09-20",
+              status: "failed", recordsRead: 0, rowsUpserted: 0, rowsSkipped: 0,
+              missingDatesDetected: [], gapsFilled: [], auditId: null,
+              message: `Atomic snapshot replacement failed: fixture ${secret}` },
+            missingBefore: ["2026-09-20"], missingAfter: ["2026-09-20"],
+            gapsFilled: [], purgedRows: 0, retentionDays: 90, continuousFromActivation: false,
+          };
+        },
+      } },
+    });
+    const task = result.results[0];
+    check("G  returned capture failure remains retryable without retry", result.exitCode === 10 && calls === 1);
+    check("G  failure reason reaches CLI detail and entity report", task.detail.includes("Atomic snapshot replacement failed") && task.entities[0].error === task.detail);
+    check("G  failure reason reaches structured logs", lines.some(line => JSON.parse(line).captureError === task.detail));
+    check("G  returned diagnostics and logs redact secrets", !JSON.stringify({result,lines}).includes(secret) && task.detail.includes("[redacted]"));
+  } finally {
+    if (previous === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = previous;
+  }
+}
+
 console.log("\n--- Budget / extension point ---");
 {
   const { logger } = collectingLogger();
