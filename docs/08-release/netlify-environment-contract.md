@@ -1,6 +1,6 @@
 # Netlify and GitHub release contract
 
-Netlify is the selected first web host; GitHub is the only planned sync scheduler. No deployment or configuration change is authorized by this document.
+Hosting selection/deployment is deferred until internal release acceptance. Netlify remains an acceptable candidate; owner-confirmed account/team access is verified and the existing owner-designated workspace is the intended workspace if selected. Do not create another team, upgrade a plan, create a site or deploy during internal engineering. GitHub is the only planned sync scheduler. This contract is prepared configuration, not authorization to apply it.
 
 ## Build and runtime
 
@@ -43,29 +43,23 @@ Never use NEXT_PUBLIC_ aliases for the service-role, encryption or internal secr
 
 Classification: the browser-safe rows are PUBLIC_BROWSER_SAFE; required runtime secrets and server flags are SERVER_ONLY; the schedule switch is WORKER_ONLY; explicitly optional rows are OPTIONAL. Legacy seeding and local operator credentials are DEVELOPMENT_ONLY/operator-only and must not be uploaded to either host. NEXT_DIST_DIR and TSX_TSCONFIG_PATH are build/tool implementation settings, not production credentials. No secret should be supplied to deploy-preview or branch-deploy contexts.
 
-### Proven credential source (2026-09-20)
+### Credential compatibility and transfer
 
-The authorized local `.env.local` contains no dedicated MARKETPLACE_CREDENTIALS_KEY. The development encryption implementation falls back to SUPABASE_SERVICE_ROLE_KEY. A read-only check decrypted both production account ciphertexts successfully in memory with that exact existing fallback (2 checked, 2 successful, no plaintext or ciphertext logged/saved). This proves compatibility, not independent key separation: these two secrets currently share the legacy value. At Gate 2, explicitly supply that existing value as MARKETPLACE_CREDENTIALS_KEY on both hosts; do not generate a replacement or rotate either value in this release. Future separation requires a separately reviewed credential migration.
+Keep credential-source verification and authenticated production observations in the private operator record. Before activation, verify the existing encryption key against stored ciphertext in memory without logging either value. Preserve that exact key across web and worker; do not rotate keys or re-encrypt credentials during this release. Provision a distinct INTERNAL_API_SECRET.
 
-The local public anon key and service key each received HTTP 200 from the production Auth settings endpoint. INTERNAL_API_SECRET is absent locally: provision a distinct dedicated secret during Gate 2 through provider secret controls, never reuse the encryption/service value. No secret values belong in this document or chat.
-
-GitHub authenticated read checks report repository admin permissions and permit fetching the Actions encryption public key. This supports preparing a transfer; secret/variable write permission has not been mutation-tested. For automated transfer at Gate 2, read the authorized local file only in memory and pass each value to `gh secret set NAME --repo cankutosar-ops/OrionShop-Profit-Dashboard` through child-process stdin. Never interpolate values into command arguments, shell history or logs. Map NEXT_PUBLIC_SUPABASE_URL to SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY to SUPABASE_ANON_KEY, and the proven fallback to MARKETPLACE_CREDENTIALS_KEY. Verify names/update timestamps only; GitHub does not return stored secret values. If denied, use the Settings procedure below without requesting values in chat.
+For an approved automated GitHub transfer, read authorized values only in memory and pass them through child-process stdin to gh secret set; never shell arguments/history/logs. Map the public Supabase URL/key names to the worker names in the matrix. Verify secret names/update timestamps only. Actual permissions and deployed values must be verified privately at execution time.
 
 ## Authentication and hostname
 
 Password login uses `/api/auth/login` and server-set Supabase cookies. `/auth/callback` exchanges a PKCE `code` through `exchangeCodeForSession`, then redirects within the request origin. Middleware refreshes sessions; logout clears the session. No hostname should be invented before site selection.
 
-Once the real hostname exists, set NEXT_PUBLIC_APP_URL to its HTTPS origin and configure Supabase Auth Site URL and the exact `https://<hostname>/auth/callback` redirect allowlist. Confirm invite/magic-link templates use the chosen flow; do not assume every email template produces a PKCE code. Keep broad preview wildcards and production credentials out of previews. Verify cookie propagation, login/logout, callback errors, tenant selection and cross-tenant denial on that hostname.
+Once the real hostname exists, set NEXT_PUBLIC_APP_URL to its HTTPS origin and configure Supabase Auth Site URL and the exact `https://<hostname>/auth/callback` redirect allowlist. Invitation/recovery templates use the locally tested `/auth/confirm?token_hash={{ .TokenHash }}&type=invite` (or `type=recovery`) under `{{ .SiteURL }}`, then protected `/auth/password`; see the beta checklist. Keep broad preview wildcards and production credentials out of previews. Verify cookie propagation, login/logout, callback errors, tenant selection and cross-tenant denial on that hostname. Real email delivery and host cookie behavior remain publish-phase checks.
 
 Reference: https://supabase.com/docs/guides/auth/redirect-urls
 
-## Finance decision evidence
+## Finance decision record
 
-The production SELECT audit on 2026-09-19 establishes marketplace_accounts.id is bigint and Account 1 is 1, not a UUID. The allowlist parser explicitly accepts positive numeric identifiers. Account 1 has an existing completed anchor through August 30.
-
-Account 2's local campaign artifact reports completed for June 22–August 28, no active chunk and recoveryActive=false. Production incremental metadata contains the matching ten completed ranges, has no lease, and is already in normal current_week mode for August 29–September 4 at cursor 0. Its latest_successful_data_date is August 30. This proves unfinished incremental catch-up, not current freshness or unpublished WB availability.
-
-The intended reservation value is false: the completed historical campaign can retire and the existing V1-only incremental route owns later backlog. True would suppress ordinary Account 2 finance ingestion. Before activation, recheck no new recovery campaign/operator has taken ownership; any changed evidence stops activation. No historical state, cursor, or business data is rewritten by this decision.
+The intended routing values above are configuration targets, not proof of production freshness or scheduler ownership. Retain account lookup evidence, campaign completion dates, durable cursor/lease state and backlog details in the private operator record. Before activation, recheck that no recovery campaign or manual operator owns the same quota. Do not reset state to make a routing check pass.
 
 ## Single setup procedure (execute only in the approved configuration window)
 
