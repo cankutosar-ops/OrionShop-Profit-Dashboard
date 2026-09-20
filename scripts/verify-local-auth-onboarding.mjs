@@ -17,9 +17,21 @@ assert.ok(data.user && data.properties.hashed_token);
 const claims={orion:{company_ids:['1'],marketplace_account_ids:['1'],role:'viewer'}};
 assert.equal((await admin.auth.admin.updateUserById(data.user.id,{app_metadata:claims})).error,null);
 const jar=new Map();
+let authCookieWrites=0;
 async function request(path,options={}) {
   const r=await fetch(origin+path,{redirect:'manual',...options,headers:{Cookie:[...jar].map(([k,v])=>`${k}=${v}`).join('; '),...options.headers}});
-  for(const cookie of r.headers.getSetCookie()){const pair=cookie.split(';')[0],i=pair.indexOf('=');jar.set(pair.slice(0,i),pair.slice(i+1));}
+  for(const cookie of r.headers.getSetCookie()){
+    const pair=cookie.split(';')[0],i=pair.indexOf('=');
+    if(pair.startsWith('sb-')) {
+      authCookieWrites++;
+      assert.match(cookie,/;\s*HttpOnly/i,'server-owned Auth cookie must be HttpOnly');
+      assert.match(cookie,/;\s*Secure/i,'production Auth cookie must be Secure');
+      assert.match(cookie,/;\s*SameSite=Lax/i);
+      assert.match(cookie,/;\s*Path=\//i);
+    }
+    if(/;\s*Max-Age=0/i.test(cookie)) jar.delete(pair.slice(0,i));
+    else jar.set(pair.slice(0,i),pair.slice(i+1));
+  }
   return r;
 }
 const hash=data.properties.hashed_token;
@@ -44,8 +56,23 @@ response=await request('/auth/confirm?type=invite&token_hash='+encodeURIComponen
 assert.ok(response.headers.get('location').includes('confirmation_failed'),'used invite rejected');
 response=await request('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
 assert.equal(response.status,200,'new password works');
+// Exercise actual middleware refresh, not only the login cookie writer.
+const tokenNames=[...jar.keys()].filter(k=>k.startsWith('sb-') && k.includes('-auth-token')).sort();
+assert.ok(tokenNames.length);
+const encoded=tokenNames.map(k=>jar.get(k)).join('');
+assert.ok(encoded.startsWith('base64-'));
+const session=JSON.parse(Buffer.from(encoded.slice(7),'base64url').toString());
+session.expires_at=1;
+for(const name of tokenNames) jar.delete(name);
+const baseName=tokenNames[0].replace(/\.\d+$/,'');
+const expired='base64-'+Buffer.from(JSON.stringify(session)).toString('base64url');
+for(let start=0,index=0;start<expired.length;start+=3000,index++) jar.set(`${baseName}.${index}`,expired.slice(start,start+3000));
+const beforeRefresh=authCookieWrites;
+response=await request('/api/auth/session');
+assert.equal(response.status,200,'middleware refresh retains authentication');
+assert.ok(authCookieWrites>beforeRefresh,'middleware refresh writes protected cookies');
 // A metadata removal must be observed by app guards even with existing cookies.
 assert.equal((await admin.auth.admin.updateUserById(data.user.id,{app_metadata:{orion:{company_ids:[],marketplace_account_ids:[],role:'viewer'}}})).error,null);
 assert.equal((await request('/api/sync/status?marketplaceAccountId=1')).status,403,'membership revocation blocks account API');
 await request('/auth/logout');
-console.log('PASS: local invite, password setup, origin guard, single-use token, viewer denial, membership removal and logout');
+console.log('PASS: local invite/login/refresh/logout Secure HttpOnly cookies, password setup, origin guard, single-use token, viewer denial and membership removal');

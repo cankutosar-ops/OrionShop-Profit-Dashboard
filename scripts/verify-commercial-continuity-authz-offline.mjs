@@ -106,6 +106,7 @@ const route = loadTs("src/app/api/sync/commercial-continuity/route.ts", {
 });
 
 const middleware = loadTs("src/middleware.ts", {
+  "@/lib/supabase/auth-cookie-options": loadTs("src/lib/supabase/auth-cookie-options.ts", {}),
   "@supabase/ssr": {
     createServerClient: () => ({
       auth: { getUser: async () => ({ data: { user: activeRequest.headers.get("x-offline-principal") ? { id: "user" } : null } }) },

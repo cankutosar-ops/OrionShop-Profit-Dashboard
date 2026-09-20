@@ -41,6 +41,8 @@ All names below are configuration contracts, not credentials. Keep runtime value
 
 Never use NEXT_PUBLIC_ aliases for the service-role, encryption or internal secret. Do not expose them through next.config env, client props, or serialized responses. Auth middleware needs the public Supabase pair and the internal secret in its deployed server/edge environment; confirm these are available in the packaged deployment without logging values.
 
+Import public/configuration variables separately from secrets. Netlify's secret classification cannot be unchecked after creation. The first controlled deployment imported all variables as secret, producing four false positives. Its narrowly scoped `SECRETS_SCAN_OMIT_KEYS` contains only `NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,ORION_CURRENT_STOCK_SOURCE`. These are public values or the non-sensitive literal `legacy`; never add the service-role, encryption or internal secret to this exception, and never disable scanning globally. All production credentials remain absent from preview, branch, agent-runner and local contexts. On the existing Free UI, secrets use Builds/Functions/Runtime scopes; finer manual scope selection is unavailable. This does not authorize client serialization.
+
 Classification: the browser-safe rows are PUBLIC_BROWSER_SAFE; required runtime secrets and server flags are SERVER_ONLY; the schedule switch is WORKER_ONLY; explicitly optional rows are OPTIONAL. Legacy seeding and local operator credentials are DEVELOPMENT_ONLY/operator-only and must not be uploaded to either host. NEXT_DIST_DIR and TSX_TSCONFIG_PATH are build/tool implementation settings, not production credentials. No secret should be supplied to deploy-preview or branch-deploy contexts.
 
 ### Credential compatibility and transfer
@@ -52,6 +54,8 @@ For an approved automated GitHub transfer, read authorized values only in memory
 ## Authentication and hostname
 
 Password login uses `/api/auth/login` and server-set Supabase cookies. `/auth/callback` exchanges a PKCE `code` through `exchangeCodeForSession`, then redirects within the request origin. Middleware refreshes sessions; logout clears the session. No hostname should be invented before site selection.
+
+Auth tokens are server-owned: application browser components call authenticated application routes, and neither browser Supabase factory currently has a consumer. Both the route client and middleware apply the shared Auth-cookie policy: HttpOnly, SameSite=Lax, Path=/, and Secure in production. Local development keeps HTTP compatibility. The local onboarding verifier checks actual cookies for invite/login/refresh/logout. Any future direct browser Auth consumer requires an explicit architecture review rather than silently removing HttpOnly.
 
 Once the real hostname exists, set NEXT_PUBLIC_APP_URL to its HTTPS origin and configure Supabase Auth Site URL and the exact `https://<hostname>/auth/callback` redirect allowlist. Invitation/recovery templates use the locally tested `/auth/confirm?token_hash={{ .TokenHash }}&type=invite` (or `type=recovery`) under `{{ .SiteURL }}`, then protected `/auth/password`; see the beta checklist. Keep broad preview wildcards and production credentials out of previews. Verify cookie propagation, login/logout, callback errors, tenant selection and cross-tenant denial on that hostname. Real email delivery and host cookie behavior remain publish-phase checks.
 

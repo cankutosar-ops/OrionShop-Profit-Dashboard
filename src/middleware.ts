@@ -13,6 +13,7 @@ import {
 } from "@/lib/security/containment-gate";
 import { isAuthPublicPath } from "@/lib/security/auth-paths";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { authCookieOptions } from "@/lib/supabase/auth-cookie-options";
 import {
   isCommercialContinuityCronRequest,
   tryResolveInternalApiSecret,
@@ -41,6 +42,7 @@ async function withAuthSession(request: NextRequest): Promise<{
   }
 
   const supabase = createServerClient(env.url, env.anonKey, {
+    cookieOptions: authCookieOptions(),
     cookies: {
       getAll() {
         return request.cookies.getAll();

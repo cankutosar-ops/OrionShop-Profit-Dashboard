@@ -6,12 +6,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { requireSupabaseEnv } from "./env";
+import { authCookieOptions } from "./auth-cookie-options";
 
 export async function createAuthServerClient() {
   const { url, anonKey } = requireSupabaseEnv();
   const cookieStore = await cookies();
 
   return createServerClient(url, anonKey, {
+    cookieOptions: authCookieOptions(),
     cookies: {
       getAll() {
         return cookieStore.getAll();
