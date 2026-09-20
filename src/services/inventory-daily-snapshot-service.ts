@@ -14,6 +14,8 @@ import {
 } from "@/lib/historical-inventory-csv";
 import type { HistoricalInventorySnapshotInsert } from "@/lib/historical-inventory-types";
 import { filterOperationalMarketplaceAccounts } from "@/lib/marketplace-account-visibility";
+import { flattenCompleteStock } from "@/lib/wildberries/complete-stock";
+import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 import { WbApiClient } from "@/lib/wildberries/api-client";
 import { syncLog } from "@/lib/wildberries/sync-log";
 import type { WbWarehouseStockItem } from "@/lib/wildberries/types";
@@ -113,6 +115,7 @@ async function loadProductEnrichment(
       .from("products")
       .select("nm_id, supplier_article, barcode, brand:brands(name), category:categories(name)")
       .eq("marketplace_account_id", marketplaceAccountId)
+      .order("id")
       .range(from, from + page - 1);
 
     if (error) throw new Error(`Product enrichment failed: ${error.message}`);
@@ -156,8 +159,9 @@ async function loadProductEnrichment(
       .from("product_variants")
       .select("nm_id, barcode")
       .eq("marketplace_account_id", marketplaceAccountId)
+      .order("id")
       .range(from, from + page - 1);
-    if (error) break;
+    if (error) throw new Error(`Variant enrichment failed: ${error.message}`);
     if (!data?.length) break;
     for (const v of data) {
       const nmId = Number(v.nm_id);
@@ -178,38 +182,7 @@ async function loadProductEnrichment(
  * Analytics may return flat rows (current docs) or nest qty/transit under `warehouses[]`.
  * Flatten so inWayToClient / inWayFromClient are never dropped by shape drift.
  */
-function flattenWarehouseStockItems(items: WbWarehouseStockItem[]): WbWarehouseStockItem[] {
-  const out: WbWarehouseStockItem[] = [];
-  for (const item of items) {
-    const nested = item.warehouses;
-    if (Array.isArray(nested) && nested.length > 0) {
-      for (const wh of nested) {
-        out.push({
-          nmId: Number(wh.nmId ?? item.nmId),
-          chrtId: Number(wh.chrtId ?? item.chrtId),
-          warehouseId: wh.warehouseId ?? item.warehouseId,
-          warehouseName: wh.warehouseName ?? item.warehouseName,
-          regionName: wh.regionName ?? item.regionName,
-          quantity: Number(wh.quantity ?? 0),
-          inWayToClient: Number(wh.inWayToClient ?? item.inWayToClient ?? 0),
-          inWayFromClient: Number(wh.inWayFromClient ?? item.inWayFromClient ?? 0),
-        });
-      }
-      continue;
-    }
-    out.push({
-      nmId: Number(item.nmId),
-      chrtId: Number(item.chrtId),
-      warehouseId: item.warehouseId,
-      warehouseName: item.warehouseName,
-      regionName: item.regionName,
-      quantity: Number(item.quantity ?? 0),
-      inWayToClient: Number(item.inWayToClient ?? 0),
-      inWayFromClient: Number(item.inWayFromClient ?? 0),
-    });
-  }
-  return out;
-}
+const flattenWarehouseStockItems = flattenCompleteStock;
 
 function mapStockItemToSnapshotRow(
   item: WbWarehouseStockItem,
@@ -264,14 +237,19 @@ async function replaceSnapshotDay(
 ): Promise<number> {
   const supabase = createAdminClient();
   const accountId = Number(marketplaceAccountId);
-  // Full day replace so size label corrections do not leave orphan chrt-id grains.
-  const { error: delError } = await supabase
-    .from("historical_inventory_snapshots")
-    .delete()
-    .eq("marketplace_account_id", accountId)
-    .eq("snapshot_date", snapshotDate);
-  if (delError) throw new Error(`Snapshot day delete failed: ${delError.message}`);
-  return upsertSnapshotRows(rows);
+  if (!Number.isSafeInteger(accountId) || accountId <= 0 || !rows.length) {
+    throw new Error("Invalid/empty snapshot replacement; existing day retained");
+  }
+  getSyncExecutionContext()?.abortSignal?.throwIfAborted();
+  const rpc = supabase as unknown as { rpc(name: string, args: unknown): Promise<{
+    data: number | null; error: { message: string } | null;
+  }> };
+  const { data, error } = await rpc.rpc("replace_inventory_snapshot_day", {
+    p_account_id: accountId, p_snapshot_date: snapshotDate, p_rows: rows,
+  });
+  if (error) throw new Error("Atomic snapshot replacement failed: " + error.message);
+  if (data !== rows.length) throw new Error("Snapshot replacement count mismatch");
+  return data;
 }
 
 async function upsertSnapshotRows(
@@ -372,12 +350,7 @@ export async function captureDailyInventorySnapshot(params: {
     const [rawItems, enrichment, cards] = await Promise.all([
       client.fetchWbWarehousesStock(),
       loadProductEnrichment(accountId),
-      client.fetchAllProductCards().catch((err) => {
-        syncLog("inventory-daily-snapshot", "product cards for size map failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return [] as Awaited<ReturnType<WbApiClient["fetchAllProductCards"]>>;
-      }),
+      client.fetchAllProductCards(),
     ]);
     const items = flattenWarehouseStockItems(rawItems);
     const chrtSizes = buildChrtSizeMapFromCards(cards);
@@ -405,6 +378,8 @@ export async function captureDailyInventorySnapshot(params: {
       }
       rows.push(row);
     }
+
+    if (skipped || !rows.length) throw new Error("Incomplete inventory mapping; existing day retained");
 
     const mappedTo = rows.reduce((a, r) => a + (r.in_way_to_client ?? 0), 0);
     const mappedFrom = rows.reduce((a, r) => a + (r.in_way_from_client ?? 0), 0);

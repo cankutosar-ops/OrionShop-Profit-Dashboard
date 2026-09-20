@@ -423,12 +423,15 @@ export class WbApiClient {
         "/api/analytics/v1/stocks-report/wb-warehouses",
         { method: "POST", body: JSON.stringify(body) }
       );
-      const batch = res?.data?.items ?? [];
+      const batch = res?.data?.items;
+      if (!Array.isArray(batch) || batch.length > limit) throw new Error("Malformed WB stock page; replacement prohibited");
       if (!batch.length) break;
       all.push(...batch);
       if (batch.length < limit) break;
       offset += limit;
-      if (offset > 1_000_000) break;
+      if (offset > 1_000_000) throw new Error("WB stock pagination bound exceeded; incomplete replacement prohibited");
+      // Analytics permits one request per 20 seconds per account.
+      await sleepWithAbort(20_000, getSyncExecutionContext()?.abortSignal);
     }
 
     syncLog("wb-api", "WB warehouses stock END", { totalRows: all.length });

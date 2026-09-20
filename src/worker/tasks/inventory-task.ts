@@ -10,6 +10,7 @@
 import type { WorkerAccountTaskResult } from "../types";
 import type { WorkerLogger } from "../logger";
 import { listWorkerAccounts } from "../accounts";
+import { runWithSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 
 /** Injection seam, mirroring the finance kernel's `deps` pattern. Tests supply fakes. */
 export type InventoryTaskDeps = {
@@ -56,9 +57,12 @@ export async function runInventoryWorkerTask(
     });
 
     try {
-      const outcome = await runInventorySnapshotContinuityForAccount(account.id, {
+      const outcome = await runWithSyncExecutionContext({
+        abortSignal: AbortSignal.timeout(Math.max(1, input.deadlineMs - Date.now())),
+        wb429MaxRetries: 1, wb429MaxTotalWaitMs: 0, marketplaceAccountId: account.id,
+      }, () => runInventorySnapshotContinuityForAccount(account.id, {
         trigger: "scheduled",
-      });
+      }));
 
       const result: WorkerAccountTaskResult = {
         task: "inventory",
