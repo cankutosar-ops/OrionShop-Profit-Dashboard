@@ -35,7 +35,6 @@ import type {
   WbApiSale,
 } from "@/lib/wildberries/types";
 import type { WbFinance, WbOrder, WbStock } from "@/types/database";
-import { persistCanonicalCurrentStocks } from "@/lib/marketplace-adapters/wildberries/canonical-stock";
 
 function empty(): WarehouseEntityUpsertResult {
   return { upserted: 0, inserted: 0, updated: 0, skipped: 0 };
@@ -312,7 +311,7 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
       throw new Error("Stock upsert refused: marketplace account mismatch");
     }
     const supabase = this.adminClient();
-    await persistCanonicalCurrentStocks(this.marketplaceAccountId, items, supabase);
+    // Canonical replacement belongs exclusively to the complete current-stock task.
     const batch: Array<Omit<WbStock, "id">> = [];
     const syncedAt = new Date().toISOString();
 

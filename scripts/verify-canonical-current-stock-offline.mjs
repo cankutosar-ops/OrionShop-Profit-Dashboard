@@ -19,7 +19,7 @@ let failNextWrite = false;
 function fakeDb() {
   return {
     async rpc(name, args) {
-      assert.equal(name, "replace_wb_current_stocks");
+      assert.equal(name, "replace_wb_current_stocks_verified");
       if (failNextWrite) { failNextWrite = false; return { error: { message: "database unavailable" } }; }
       const account = String(args.p_account_id);
       const next = new Set();
@@ -40,6 +40,7 @@ function fakeDb() {
           select() { return this; },
           eq(_field, value) { account = value; return this; },
           not() { return this; },
+          order() { return this; },
           async range(from, to) { return { data: catalog.filter((r) => r.marketplace_account_id === account).slice(from, to + 1), error: null }; },
         };
       }
@@ -72,6 +73,8 @@ assert.deepEqual(items.map((item) => item.warehouseId), [7, 7, 8]);
 const first = new WildberriesWarehouseEntityUpsert("1", fakeDb);
 first.productIdByNm.set(100, "product-1");
 await first.upsertStocks(scope1, items);
+assert.equal(persisted.size, 0, "generic legacy sync is not a canonical producer");
+await persistCanonicalCurrentStocks("1", items, fakeDb());
 assert.equal(persisted.size, 3, "two sizes and two warehouses survive");
 assert.equal(legacy.size, 2, "legacy lossy warehouse rows stay separate");
 assert.equal(persisted.get("1:100:201:id:7").barcode, "BC-M");
@@ -81,19 +84,19 @@ assert.equal(persisted.get("1:100:201:id:7").tech_size, "M");
 // A new upsert instance simulates a process restart; durable DB state survives.
 const restarted = new WildberriesWarehouseEntityUpsert("1", fakeDb);
 restarted.productIdByNm.set(100, "product-1");
-await restarted.upsertStocks(scope1, items);
+await persistCanonicalCurrentStocks("1", items, fakeDb());
 assert.equal(persisted.size, 3, "idempotent re-sync");
-await restarted.upsertStocks(scope1, [{ ...items[0], quantity: 9 }, items[1], items[2]]);
+await persistCanonicalCurrentStocks("1", [{ ...items[0], quantity: 9 }, items[1], items[2]], fakeDb());
 assert.equal(persisted.size, 3, "quantity update does not duplicate identity");
 assert.equal(persisted.get("1:100:201:id:7").quantity, 9);
 assert.equal([...persisted.values()].reduce((sum, row) => sum + row.quantity, 0), 16);
-await restarted.upsertStocks(scope1, [{ ...items[0], quantity: 9 }]);
+await persistCanonicalCurrentStocks("1", [{ ...items[0], quantity: 9 }], fakeDb());
 assert.equal(persisted.size, 1, "absent identities leave the current snapshot atomically");
 
 await persistCanonicalCurrentStocks("2", [items[0]], fakeDb());
 assert.equal(persisted.size, 2, "accounts cannot collide");
 assert.equal(persisted.get("2:100:201:id:7").barcode, "OTHER");
-await restarted.upsertStocks(scope1, items);
+await persistCanonicalCurrentStocks("1", items, fakeDb());
 function readDb() {
   return { from(table) {
     let account;

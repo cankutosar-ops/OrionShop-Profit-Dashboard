@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       tasks:
-        description: "Comma-separated tasks (commercial,inventory,finance-catchup,ads)"
+        description: "Tasks: commercial,inventory,current-stock,finance-catchup,ads. Acceptance: one task only."
         required: false
-        default: "commercial,inventory"
+        default: "commercial"
       accounts:
         description: "Comma-separated marketplace account ids (blank = all eligible)"
         required: false
@@ -30,7 +30,7 @@ on:
       finance_wakes:
         description: "Max extra Reports/V1 page wakes per account (finance-catchup only)"
         required: false
-        default: "4"
+        default: "1"
 
 # One worker at a time. cancel-in-progress is deliberately false: killing a run
 # mid-page would abandon a held DB lock rather than release it cleanly, and the

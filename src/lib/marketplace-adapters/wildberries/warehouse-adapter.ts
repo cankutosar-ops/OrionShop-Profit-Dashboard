@@ -1,3 +1,4 @@
+import { mapCompleteStock } from "@/lib/wildberries/complete-stock";
 /**
  * Sprint 10.2 — Wildberries MarketplaceAdapter.
  * Marketplace HTTP lives here — not inside the Historical Backfill Engine.
@@ -170,24 +171,7 @@ export class WildberriesMarketplaceAdapter implements MarketplaceAdapter {
       return { items: [], nextCursor: null, done: true };
     }
     const rows = await this.client.fetchWbWarehousesStock();
-    const items: MarketplaceStockDto[] = [];
-    const observedAt = new Date().toISOString();
-    for (const row of rows) {
-      const nested = row.warehouses?.length ? row.warehouses : [row];
-      for (const wh of nested) {
-        items.push({
-          externalProductId: String(wh.nmId ?? row.nmId),
-          externalVariantId: String(wh.chrtId ?? row.chrtId),
-          warehouseId: wh.warehouseId ?? row.warehouseId ?? null,
-          warehouseCode: String(wh.warehouseName ?? row.warehouseName ?? wh.warehouseId ?? "_"),
-          quantity: Number(wh.quantity ?? 0),
-          inWayToClient: Number(wh.inWayToClient ?? row.inWayToClient ?? 0),
-          inWayFromClient: Number(wh.inWayFromClient ?? row.inWayFromClient ?? 0),
-          observedAt,
-          raw: { row, warehouse: wh },
-        });
-      }
-    }
+    const items = mapCompleteStock(rows);
     return { items, nextCursor: null, done: true };
   }
 

@@ -1,4 +1,5 @@
 import type { AdminClient } from "@/lib/supabase/admin";
+import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 import type { MarketplaceStockDto } from "@/lib/warehouse/adapters/marketplace-adapter";
 
 type CatalogVariant = {
@@ -55,6 +56,7 @@ async function persistedCatalog(client: AdminClient, accountId: string): Promise
       .select("nm_id,chrt_id,tech_size,barcode")
       .eq("marketplace_account_id", accountId)
       .not("chrt_id", "is", null)
+      .order("id")
       .range(from, from + 999);
     if (error) throw new Error(`Canonical stock catalog lookup failed: ${error.message}`);
     const page = (data ?? []) as CatalogVariant[];
@@ -81,6 +83,7 @@ export async function persistCanonicalCurrentStocks(
   client: AdminClient
 ): Promise<number> {
   positiveId(accountId, "marketplace account ID");
+  if (!items.length) throw new Error("Empty stock is not authoritative; existing stock retained");
   const catalog = items.length ? await persistedCatalog(client, accountId) : new Map<string, CatalogVariant[]>();
   const now = new Date().toISOString();
   const rows = new Map<string, CanonicalStockRow>();
@@ -120,15 +123,17 @@ export async function persistCanonicalCurrentStocks(
   }
 
   const values = [...rows.values()];
+  getSyncExecutionContext()?.abortSignal?.throwIfAborted();
   // The hand-maintained Database type intentionally leaves RPC names unlisted.
   const rpcClient = client as unknown as { rpc(name: string, args: {
     p_account_id: string;
     p_rows: CanonicalStockRow[];
-  }): Promise<{ error: { message: string } | null }> };
-  const { error } = await rpcClient.rpc("replace_wb_current_stocks", {
+  }): Promise<{ data: number | null; error: { message: string } | null }> };
+  const { data, error } = await rpcClient.rpc("replace_wb_current_stocks_verified", {
     p_account_id: accountId,
     p_rows: values,
   });
   if (error) throw new Error(`Canonical stock replacement failed: ${error.message}`);
+  if (data !== values.length) throw new Error("Canonical stock persisted count mismatch");
   return values.length;
 }

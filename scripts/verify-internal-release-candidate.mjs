@@ -21,7 +21,7 @@ const tests = [
   'commercial-continuity-authz-offline', 'tenant-authorization-p0',
   'product-pagination-offline', 'auth-redirect-offline', 'dashboard-read-boundary-offline',
   'financial-pagination-offline', 'inventory-retention-safety',
-  'inventory-history-table', 'canonical-current-stock-offline',
+  'inventory-history-table', 'canonical-current-stock-offline', 'stock-producer-offline',
   'wb-current-prices-offline', 'smart-pricing-v2-8-1', 'sync-worker',
   'worker-production-readiness', 'secrets-7-1-e',
   'warehouse-db-only-10-6', 'advertising-ingestion',

@@ -13,6 +13,7 @@ export const SYNC_WORKER_TASKS = [
   "inventory",
   "finance-catchup",
   "ads",
+  "current-stock",
 ] as const;
 
 export type SyncWorkerTask = (typeof SYNC_WORKER_TASKS)[number];

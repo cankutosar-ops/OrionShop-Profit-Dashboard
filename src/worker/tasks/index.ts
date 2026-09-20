@@ -14,6 +14,7 @@ import {
   type FinanceCatchupTaskDeps,
 } from "./finance-catchup-task";
 import { runAdsWorkerTask, type AdsTaskDeps } from "./ads-task";
+import { runCurrentStockWorkerTask, type CurrentStockTaskDeps } from "./current-stock-task";
 
 /** Fakes injected by offline verification. Production leaves this undefined. */
 export type WorkerTaskDeps = {
@@ -21,6 +22,7 @@ export type WorkerTaskDeps = {
   inventory?: Partial<InventoryTaskDeps>;
   financeCatchup?: Partial<FinanceCatchupTaskDeps>;
   ads?: Partial<AdsTaskDeps>;
+  currentStock?: Partial<CurrentStockTaskDeps>;
 };
 
 export type WorkerTaskContext = {
@@ -41,6 +43,8 @@ export type WorkerTaskRunner = (
 ) => Promise<WorkerAccountTaskResult[]>;
 
 export const WORKER_TASK_RUNNERS: Record<SyncWorkerTask, WorkerTaskRunner> = {
+  "current-stock": (ctx) => runCurrentStockWorkerTask({ accountIds: ctx.accountIds,
+    deadlineMs: ctx.deadlineMs, logger: ctx.logger, deps: ctx.deps?.currentStock }),
   commercial: (ctx) =>
     runCommercialWorkerTask({
       accountIds: ctx.accountIds,

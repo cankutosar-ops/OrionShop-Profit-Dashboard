@@ -10,7 +10,7 @@
  * from somewhere else — no business logic moves.
  *
  * Options
- *   --tasks <list>          Comma-separated: commercial,inventory,finance-catchup,ads
+ *   --tasks <list>          Comma-separated: commercial,inventory,current-stock,finance-catchup,ads
  *                           (default: commercial,inventory)
  *   --accounts <list>       Comma-separated marketplace account ids (default: all eligible)
  *   --budget-ms <n>         Wall-clock budget for this invocation (default: 1500000 = 25 min)
