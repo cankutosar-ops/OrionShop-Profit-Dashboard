@@ -1,6 +1,7 @@
 import type { AdminClient } from "@/lib/supabase/admin";
 import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 import type { MarketplaceStockDto } from "@/lib/warehouse/adapters/marketplace-adapter";
+import { WB_AGGREGATED_WAREHOUSE_ID } from "@/lib/wildberries/complete-stock";
 
 type CatalogVariant = {
   nm_id: number | null;
@@ -44,7 +45,8 @@ function warehouseIdentity(item: MarketplaceStockDto): {
 } {
   const name = item.warehouseCode?.trim() ?? "";
   const id = item.warehouseId == null || item.warehouseId === 0
-    ? null : positiveId(item.warehouseId, "warehouse ID");
+    ? null : item.warehouseId === WB_AGGREGATED_WAREHOUSE_ID
+      ? WB_AGGREGATED_WAREHOUSE_ID : positiveId(item.warehouseId, "warehouse ID");
   if (!id && (!name || name === "_")) throw new Error("Stock observation has no warehouse identity");
   return { key: id ? `id:${id}` : `name:${name}`, id, name: name && name !== "_" ? name : String(id) };
 }

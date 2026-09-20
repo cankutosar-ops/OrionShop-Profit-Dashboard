@@ -79,6 +79,17 @@ try {
     sql(canonical(invalid),true);assert.equal(current(),before,'canonical failure rollback and account isolation');
   }
   sql(canonical([stock(a,33)]));assert.equal(JSON.parse(current()).length,2);
+  const aggregate={...stock(),warehouse_id:-999999,warehouse_key:'id:-999999',warehouse_name:'Склад WB'};
+  const otherAccount=JSON.parse(current()).filter(r=>r.marketplace_account_id===b);
+  sql(canonical([aggregate,stock()]));
+  const aggregateState=current();
+  assert.equal(JSON.parse(aggregateState).filter(r=>r.marketplace_account_id===a).length,2);
+  assert.equal(JSON.parse(aggregateState).find(r=>r.warehouse_id===-999999).warehouse_key,'id:-999999');
+  assert.deepEqual(JSON.parse(aggregateState).filter(r=>r.marketplace_account_id===b),otherAccount);
+  sql(canonical([aggregate,aggregate]),true);assert.equal(current(),aggregateState,'aggregate duplicate rolls back');
+  const businessState=value=>JSON.parse(value).map(({updated_at,...r})=>r)
+    .sort((x,y)=>JSON.stringify(x).localeCompare(JSON.stringify(y)));
+  sql(canonical([aggregate,stock()]));assert.deepEqual(businessState(current()),businessState(aggregateState),'aggregate re-sync idempotent');
   assert.equal(state(),history,'canonical cannot mutate historical snapshots');
   assert.equal(sql(`SELECT count(*) FROM public.wb_stock WHERE marketplace_account_id IN (${a},${b});`),'0','legacy untouched');
   console.log('PASS: local atomic replacement, forced insert rollback, real lock contention, idempotence, service-only ACL, scope isolation, canonical rollback/history preservation');

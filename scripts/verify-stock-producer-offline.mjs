@@ -28,6 +28,30 @@ const old=JSON.stringify(stored.get('1'));fail=true;await assert.rejects(()=>syn
 assert.equal(JSON.stringify(stored.get('1')),old);fail=false;
 await assert.rejects(()=>syncCanonicalCurrentStock('1',Date.now()+1000,{client,fetchComplete:async()=>{throw Error('API unavailable');}}));
 assert.equal(JSON.stringify(stored.get('1')),old);
+// Sanitized production failure shape: numeric -999999 at item/warehouse index 0.
+// Product IDs and quantities are synthetic; WB's warehouse identity is preserved.
+const aggregate = [{nmId:100,chrtId:201,warehouseId:-999999,warehouseName:'Склад WB',
+  quantity:43,inWayToClient:14,inWayFromClient:11},
+  {nmId:100,chrtId:202,warehouseId:-999999,warehouseName:'Склад WB',quantity:3},
+  source[0]];
+assert.equal(await sync(aggregate),3);
+assert.equal(stored.get('1')[0].warehouse_id,-999999);
+assert.equal(stored.get('1')[0].warehouse_key,'id:-999999');
+assert.equal(stored.get('1')[0].warehouse_name,'Склад WB');
+assert.equal(stored.get('1')[0].quantity,43);
+assert.equal(stored.get('1')[0].in_way_to_client,14);
+assert.equal(stored.get('1')[0].barcode,'BC-1');
+assert.equal(JSON.stringify(stored.get('2')),stable,'other account retained');
+const aggregateSaved=JSON.stringify(stored.get('1'));
+for(const invalid of [-1,-999998,-1000000,0,1.5,NaN,'-999999']) {
+  const n=writes;await assert.rejects(()=>sync([{...aggregate[0],warehouseId:invalid}]));
+  assert.equal(writes,n);assert.equal(JSON.stringify(stored.get('1')),aggregateSaved);
+}
+for(const field of ['nmId','chrtId','quantity','inWayToClient','inWayFromClient']) {
+  const n=writes;await assert.rejects(()=>sync([{...aggregate[0],[field]:-999999}]));assert.equal(writes,n);
+}
+await assert.rejects(()=>sync([aggregate[0],aggregate[0]]));
+await sync(aggregate);assert.equal(stored.get('1').length,3,'same identity re-sync does not duplicate');
 const api=new WbApiClient('offline');api.request=async()=>({data:{}});
 await assert.rejects(()=>api.fetchWbWarehousesStock(),/Malformed/);
 api.request=async()=>({data:{items:source}});assert.deepEqual(await api.fetchWbWarehousesStock(),source);

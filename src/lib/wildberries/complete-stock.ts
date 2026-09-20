@@ -2,6 +2,9 @@ import type { WbWarehouseStockItem } from "./types";
 import type { MarketplaceStockDto } from "@/lib/warehouse/adapters/marketplace-adapter";
 import { getSyncExecutionContext } from "@/lib/commercial-continuity/sync-execution-context";
 
+/** WB's documented aggregate warehouse identity; never remap to a physical warehouse. */
+export const WB_AGGREGATED_WAREHOUSE_ID = -999999;
+
 // Never serialize arbitrary source strings/objects: they may contain credentials
 // or unrelated payload data. Only bounded numeric representations are reportable.
 function safeNumericValue(value: unknown): unknown {
@@ -56,7 +59,9 @@ export function flattenCompleteStock(items: WbWarehouseStockItem[]): WbWarehouse
       const nmId = integer(context.nmId, 1, "nmId", context);
       const chrtId = integer(context.chrtId, 1, "chrtId", context);
       const warehouseId = wh.warehouseId ?? item.warehouseId;
-      if (warehouseId != null) integer(warehouseId, 1, "warehouseId", context);
+      if (warehouseId != null && warehouseId !== WB_AGGREGATED_WAREHOUSE_ID) {
+        integer(warehouseId, 1, "warehouseId", context);
+      }
       const warehouseName = wh.warehouseName ?? item.warehouseName;
       if (warehouseName != null && typeof warehouseName !== "string") throw new Error("Invalid warehouse name");
       if (warehouseId == null && !warehouseName?.trim()) throw new Error("Missing warehouse identity");
