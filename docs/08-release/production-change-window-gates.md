@@ -2,6 +2,8 @@
 
 This runbook describes the controlled path for deploying the reviewed OrionShop schema changes. It does not authorize a production change. A human change-window approval is required before any step that changes production.
 
+The consolidated first-release sequence, exact configuration procedure and rollback checkpoints are in [Human Gate 2 execution package](human-gate-2-execution-package.md). The workflow now skips scheduled jobs unless SYNC_WORKER_SCHEDULE_ENABLED is exactly true; leave it absent/false through manual acceptance. This does not block explicit manual dispatch.
+
 ## Gate 0: establish a frozen starting point
 
 1. Establish whether an external web deployment exists; currently none is evidenced. Record local/manual writers and the proposed first host, Git SHA, scheduler owner, and required configuration. Do not record secret values.

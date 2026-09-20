@@ -30,6 +30,7 @@ All names below are configuration contracts, not credentials. Keep runtime value
 | FINANCE_V1_LIVE_REQUESTS_ENABLED | Required intended true | Required repository variable true | Server-only; same routing policy; activate only in approved window |
 | FINANCE_V1_ACCOUNT_IDS | Required intended 1 | Required repository variable 1 | Server-only; same numeric marketplace account ID |
 | ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE | Required intended false | Required repository variable false | Server-only; same quota ownership policy; fresh pre-activation check |
+| SYNC_WORKER_SCHEDULE_ENABLED | Not used | Required activation control; absent/false until acceptance, then true | WORKER_ONLY; scheduled jobs fail closed; manual dispatch remains explicit |
 | CRON_SECRET | Not required; omit | Not required | Dormant Vercel cron; no live cron owner |
 | NODE_VERSION | Build 22 in TOML | setup-node 22 | Build/runtime selection, not secret |
 | NEXT_PUBLIC_APP_LOCALE | Optional | Not required | Browser-safe locale |
@@ -39,6 +40,16 @@ All names below are configuration contracts, not credentials. Keep runtime value
 | SUPABASE_DB_PASSWORD / SUPABASE_ACCESS_TOKEN | Omit | Omit | Migration/operator tooling only |
 
 Never use NEXT_PUBLIC_ aliases for the service-role, encryption or internal secret. Do not expose them through next.config env, client props, or serialized responses. Auth middleware needs the public Supabase pair and the internal secret in its deployed server/edge environment; confirm these are available in the packaged deployment without logging values.
+
+Classification: the browser-safe rows are PUBLIC_BROWSER_SAFE; required runtime secrets and server flags are SERVER_ONLY; the schedule switch is WORKER_ONLY; explicitly optional rows are OPTIONAL. Legacy seeding and local operator credentials are DEVELOPMENT_ONLY/operator-only and must not be uploaded to either host. NEXT_DIST_DIR and TSX_TSCONFIG_PATH are build/tool implementation settings, not production credentials. No secret should be supplied to deploy-preview or branch-deploy contexts.
+
+### Proven credential source (2026-09-20)
+
+The authorized local `.env.local` contains no dedicated MARKETPLACE_CREDENTIALS_KEY. The development encryption implementation falls back to SUPABASE_SERVICE_ROLE_KEY. A read-only check decrypted both production account ciphertexts successfully in memory with that exact existing fallback (2 checked, 2 successful, no plaintext or ciphertext logged/saved). This proves compatibility, not independent key separation: these two secrets currently share the legacy value. At Gate 2, explicitly supply that existing value as MARKETPLACE_CREDENTIALS_KEY on both hosts; do not generate a replacement or rotate either value in this release. Future separation requires a separately reviewed credential migration.
+
+The local public anon key and service key each received HTTP 200 from the production Auth settings endpoint. INTERNAL_API_SECRET is absent locally: provision a distinct dedicated secret during Gate 2 through provider secret controls, never reuse the encryption/service value. No secret values belong in this document or chat.
+
+GitHub authenticated read checks report repository admin permissions and permit fetching the Actions encryption public key. This supports preparing a transfer; secret/variable write permission has not been mutation-tested. For automated transfer at Gate 2, read the authorized local file only in memory and pass each value to `gh secret set NAME --repo cankutosar-ops/OrionShop-Profit-Dashboard` through child-process stdin. Never interpolate values into command arguments, shell history or logs. Map NEXT_PUBLIC_SUPABASE_URL to SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY to SUPABASE_ANON_KEY, and the proven fallback to MARKETPLACE_CREDENTIALS_KEY. Verify names/update timestamps only; GitHub does not return stored secret values. If denied, use the Settings procedure below without requesting values in chat.
 
 ## Authentication and hostname
 

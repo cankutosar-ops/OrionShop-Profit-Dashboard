@@ -46,6 +46,9 @@ permissions:
 jobs:
   sync:
     name: Bounded sync tick
+    # First release must pass a manual acceptance run before scheduling starts.
+    # An absent variable fails closed; manual dispatch remains an explicit action.
+    if: github.event_name != 'schedule' || vars.SYNC_WORKER_SCHEDULE_ENABLED == 'true'
     runs-on: ubuntu-latest
     # Worker budget is 25 min; this is the hard backstop if a kernel wedges.
     timeout-minutes: 35

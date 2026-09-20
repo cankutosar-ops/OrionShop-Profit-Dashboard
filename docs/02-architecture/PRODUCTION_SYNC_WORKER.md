@@ -153,6 +153,11 @@ Actions):
 Set these as GitHub Actions repository **variables** and match the corresponding
 values on the active web host before relying on scheduled finance:
 
+Release activation is separately controlled by `SYNC_WORKER_SCHEDULE_ENABLED`.
+Absent or `false` skips scheduled jobs; set it to `true` only after the approved
+bounded manual acceptance run. Manual `workflow_dispatch` remains available and
+requires operator authorization. This variable is worker-only, not a web setting.
+
 | Variable | Contract |
 |---|---|
 | `ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE` | Explicit boolean; keep the recovery reservation aligned with the web host. Unset/invalid fails closed for Account 2. |

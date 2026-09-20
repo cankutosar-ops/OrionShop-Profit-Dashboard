@@ -540,6 +540,11 @@ console.log("\n--- 6/7. Workflow contract ---");
       );
     } else {
       check("7  workflow YAML parses", typeof doc === "object", "valid YAML");
+      check(
+        "7  scheduled runs require explicit release opt-in; manual acceptance stays available",
+        doc.jobs?.sync?.if === "github.event_name != 'schedule' || vars.SYNC_WORKER_SCHEDULE_ENABLED == 'true'",
+        "missing/false schedule variable holds automatic production writes"
+      );
 
       // `on` is parsed as the boolean true by YAML 1.1 — read both spellings.
       const on = doc.on ?? doc[true];
