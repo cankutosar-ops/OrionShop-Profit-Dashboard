@@ -1,4 +1,5 @@
 import { isFinanceHistoricalRecoveryActive } from "@/lib/finance-recovery/coordination";
+import { readFinancePublicationEvidence } from "@/lib/finance-incremental/publication";
 import { FINANCE_RESERVED_ACCOUNT_IDS } from "@/lib/finance-recovery/reservation";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
 import { createWbSyncService, type WbFinanceV1PageSyncResult } from "@/lib/wildberries/sync-service";
@@ -72,6 +73,7 @@ export function createProductionPageWakeDeps(
   store: FinanceIncrementalStateStore
 ): FinanceReportsV1PageWakeDeps {
   return {
+    readPublicationEvidence: readFinancePublicationEvidence,
     async loadAccount(accountId: string): Promise<FinanceIncrementalAccount> {
       const acc = await getMarketplaceAccountForSync(accountId);
       return {

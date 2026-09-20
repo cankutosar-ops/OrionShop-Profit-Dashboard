@@ -292,6 +292,7 @@ function incrementalToV2Result(
   else if (outcome.status === "lease_busy") status = "warning";
   else if (outcome.status === "failed") status = "failed";
   else if (outcome.status === "blocked") status = "partial";
+  else if (outcome.status === "awaiting_publication") status = "partial";
   else if (outcome.status === "idle") status = "success";
   else if (outcome.status === "week_complete" || outcome.status === "wake_ok") {
     status = "success";

@@ -44,6 +44,7 @@ function account(id = "2", seller = ACCOUNT2_FINANCE_SELLER_ID) {
 
 function wakeDeps(store, syncPage, extras = {}) {
   return {
+    readPublicationEvidence: async (id, week, before) => ({ source: "wb_sales_reports_list", marketplaceAccountId: id, from: week.from, through: week.to, reportIds: [1], observedBefore: before }),
     loadAccount: async (id) => extras.account ?? account(id, extras.seller ?? ACCOUNT2_FINANCE_SELLER_ID),
     readState: (id) => store.read(id),
     acquireLease: (id, owner) => store.acquireLease(id, owner),

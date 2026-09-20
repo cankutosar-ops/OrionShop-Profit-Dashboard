@@ -23,6 +23,7 @@ export type FinanceIncrementalCompletedWeek = {
   to: string;
   completedAt: string;
   lastRevalidatedAt?: string | null;
+  publicationEvidence?: import("./publication").FinancePublicationEvidence;
 };
 
 export type FinanceReportsRateLimitSnapshot = {
@@ -103,6 +104,7 @@ export type FinanceIncrementalWakeOutcome = {
   status:
     | "wake_ok"
     | "week_complete"
+    | "awaiting_publication"
     | "blocked"
     | "lease_busy"
     | "rate_limited"

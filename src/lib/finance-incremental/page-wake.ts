@@ -39,6 +39,8 @@ export type FinanceReportsV1PageWakeInput = {
 };
 
 export type FinanceReportsV1PageWakeDeps = {
+  readPublicationEvidence?: (accountId: string, week: FinanceIncrementalWeek, observedBefore: string) =>
+    Promise<import("./publication").FinancePublicationEvidence | null>;
   loadAccount: (accountId: string) => Promise<FinanceIncrementalAccount>;
   readState: (accountId: string) => Promise<FinanceIncrementalSyncState>;
   acquireLease: (accountId: string, owner: string) => Promise<FinanceIncrementalSyncState | null>;
@@ -350,6 +352,26 @@ export async function runFinanceReportsV1PageWake(
   }
 
   if (page.kind === "terminal") {
+    // Persist pending state using the existing in_progress + last_error columns.
+    // No schema change, cursor reset, historical anchor reclassification or extra WB call.
+    let publicationEvidence: import("./publication").FinancePublicationEvidence | null = null;
+    let evidenceReadFailed = false;
+    try { publicationEvidence = await deps.readPublicationEvidence?.(input.accountId, week, nowIso) ?? null; }
+    catch { evidenceReadFailed = true; }
+    const covered = publicationEvidence?.source === "wb_sales_reports_list" &&
+      publicationEvidence.marketplaceAccountId === input.accountId &&
+      publicationEvidence.from === week.from && publicationEvidence.through === week.to &&
+      publicationEvidence.reportIds.length > 0 && publicationEvidence.observedBefore === nowIso;
+    if (!covered) {
+      state = { ...state, weekStatus: "in_progress", lastPersistedRrdId: cursorBefore,
+        lastHttpStatus: 204, lastRowsReceived: 0, lastRowsPersisted: 0, lastHasMore: false,
+        lastCursorAfter: cursorBefore, lastError: evidenceReadFailed
+          ? "awaiting_publication:evidence_unavailable" : "awaiting_publication" };
+      if (!await commit(true)) return leaseLost();
+      return { ...blockedBase(), status: "awaiting_publication", weekStatus: "in_progress",
+        cursorAfter: cursorBefore, httpStatus: 204, httpRequests, liveHttpAttempted: true,
+        hasMore: false, error: state.lastError };
+    }
     state = markWeekComplete({
       state: {
         ...state,
@@ -365,6 +387,7 @@ export async function runFinanceReportsV1PageWake(
       today,
       nowIso: new Date().toISOString(),
     });
+    state.completedWeeks[week.key] = { ...state.completedWeeks[week.key], publicationEvidence: publicationEvidence! };
     if (!await commit(true)) return leaseLost();
     return {
       accountId: input.accountId,

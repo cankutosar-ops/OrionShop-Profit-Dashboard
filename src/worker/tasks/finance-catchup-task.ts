@@ -33,7 +33,7 @@ export type FinanceCatchupTaskInput = {
 };
 
 /** Outcomes that must end the loop rather than trigger another request. */
-const STOP_STATUSES = new Set(["rate_limited", "blocked", "failed", "idle", "week_complete"]);
+const STOP_STATUSES = new Set(["rate_limited", "blocked", "failed", "idle", "week_complete", "awaiting_publication"]);
 
 export async function runFinanceCatchupWorkerTask(
   input: FinanceCatchupTaskInput
@@ -108,7 +108,7 @@ export async function runFinanceCatchupWorkerTask(
       outcome:
         lastStatus === "failed"
           ? "retryable_failure"
-          : lastStatus === "rate_limited" || lastStatus === "blocked"
+          : lastStatus === "rate_limited" || lastStatus === "blocked" || lastStatus === "awaiting_publication"
             ? "skipped"
             : "success",
       durationMs: Date.now() - startedMs,

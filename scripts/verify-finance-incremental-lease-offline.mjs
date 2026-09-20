@@ -42,6 +42,7 @@ const page = (kind, extras = {}) => ({
   remaining: null, limit: null, resetSeconds: null, retrySeconds: null, ...extras,
 });
 const deps = (memory, syncPage) => ({
+  readPublicationEvidence: async (id, week, before) => ({ source: "wb_sales_reports_list", marketplaceAccountId: id, from: week.from, through: week.to, reportIds: [1], observedBefore: before }),
   loadAccount: async (id) => ({ id, sellerId: id === "2" ? "68674" : null, apiKey: "offline" }),
   readState: (id) => memory.read(id),
   acquireLease: (id, owner) => memory.acquireLease(id, owner),
