@@ -28,9 +28,9 @@ The task requires exactly one account, inherits a deadline, stops on 429 without
 
 No production migration, ledger repair, worker dispatch, WB request, hosting deployment or financial rewrite is part of this remediation.
 
-## Frozen migration sequence: seven
+## Original seven gates within the revised eight-migration package
 
-All seven have local rehearsal coverage. None was applied to production by this task. Each is a schema/security change without a business-data rewrite; retain the last validated schema and hold writers if validation fails. RLS containment is not rolled back by restoring broad access.
+All seven below retain local rehearsal coverage. The later comment-only correction is the eighth forward file and executes BEFORE these gates and historical ledger reconciliation; see [the revised baseline contract](historical-comment-correction.md). None was applied to production by this task. Each is a schema/security change without a business-data rewrite; retain the last validated schema and hold writers if validation fails. RLS containment is not rolled back by restoring broad access.
 
 1. `20260917110000_contain_residual_tenant_read_policies.sql` — remove residual broad tenant reads; required security boundary; first, existing scoped policy prerequisites; medium access risk; safe hold with contained reads.
 2. `20260917120000_finance_incremental_atomic_lease.sql` — durable atomic lease/fencing RPCs; required before worker activation; existing incremental tables prerequisite; medium concurrency risk; additive safe hold with worker off.
@@ -40,4 +40,4 @@ All seven have local rehearsal coverage. None was applied to production by this 
 6. `20260920063101_finance_rls_statement_scope.sql` — equivalent statement-scoped allowed-account lookup; required for verified report performance; guarded existing policy prerequisite; low-to-medium read risk; no accounting change.
 7. `20260920091512_inventory_atomic_replacement.sql` — atomic historical-day replacement plus strict canonical wrapper; requires historical snapshot/transit schema and migration 4; medium write-path risk at later worker activation, no data touched on apply; hold inventory/current-stock tasks if RPC validation fails.
 
-The accepted count increases from six to seven solely because blocker remediation requires new database transaction functions. No previous migration is edited or replayed. Exact hashes, the unchanged conditional historical metadata repair set and production STOP checkpoints are in the execution package. Migration 7 SHA256 (Git/LF bytes): `DF10AFF0955152CD59D0D11D204726918832511F70ED7E784A5563CC912F6A05`.
+Inventory remediation increased the original count from six to seven. The subsequent historical comment-proof correction increases the current package to eight. No previous migration is edited or replayed. Exact hashes, the unchanged conditional historical metadata repair set and production STOP checkpoints are in the execution package. Migration 7 SHA256 (Git/LF bytes): `DF10AFF0955152CD59D0D11D204726918832511F70ED7E784A5563CC912F6A05`.

@@ -1,6 +1,6 @@
 # Controlled first production release — execution package
 
-Updated 2026-09-20 for the internal release candidate derived from baseline `7e1a11e2b80cddc7eb0f6516873f5c1af2454635`. Use the release SHA in [the internal candidate report](internal-release-candidate-2026-09-20.md), then freeze the final pushed feature SHA before execution. **NOT EXECUTED.** This document is not approval. Resolve the approved project reference from the private operator record. No Vercel deployment exists in the evidenced topology; its repository configuration stays dormant.
+Updated 2026-09-20 for the internal release candidate derived from baseline `7e1a11e2b80cddc7eb0f6516873f5c1af2454635`. Use the release SHA in [the internal candidate report](internal-release-candidate-2026-09-20.md), then freeze the final pushed feature SHA before execution. **HELD AT GATE 0B; REVISED PACKAGE REQUIRES RE-APPROVAL.** This document is not approval. Resolve the approved project reference from the private operator record. No Vercel deployment exists in the evidenced topology; its repository configuration stays dormant.
 
 ## Gate 1 status and single human action card
 
@@ -8,7 +8,7 @@ Superseding owner update: Netlify account/team access is VERIFIED. The existing 
 
 No hosting action is required now. All site creation, secret writes, repository grants, merge, deployment and Auth changes remain deferred to the controlled publish phase. Do not send passwords, tokens or key values in chat.
 
-At Gate 2, use the one Netlify procedure under L/M; no Vercel UI confirmation is required. A dedicated INTERNAL_API_SECRET will be provisioned then. The beta recipient and exact company/account assignment are required only before T; do not infer them from Account 1's finance allowlist.
+Netlify L/M is outside the resumed database/worker window and requires later separate authorization; no Vercel UI confirmation is required. A dedicated INTERNAL_API_SECRET will be provisioned then. The beta recipient and exact company/account assignment are required only before T; do not infer them from Account 1's finance allowlist.
 
 ## Engineering evidence and private inputs
 
@@ -16,23 +16,23 @@ The generic [candidate record](internal-release-candidate-2026-09-20.md) lists l
 
 ## Execution order, evidence and stop discipline
 
-Run B before A so the backup is taken during quiescence; then C through K, including I3. Hosting L/M is a later, separately approved web acceptance step, never part of database migration. N–R bounded data acceptance can occur before L/M while hosting remains deferred. Complete L/M before T; S needs a separate recurring-activation approval. Keep an operator log with UTC time, release SHA, hashes, sanitized counts, validations and each checkpoint. No secret-bearing URLs, dumps, tokens or raw user data go in Git or chat. A failed check halts dependent steps; it does not authorize a bypass or destructive restore.
+Run B before A so the backup is taken during quiescence; then C, D0, D and the remaining gates through K, including I3. Hosting L/M is a later, separately approved web acceptance step, never part of database migration. N–R bounded data acceptance can occur before L/M while hosting remains deferred. Complete L/M before T; S needs a separate recurring-activation approval. Keep an operator log with UTC time, release SHA, hashes, sanitized counts, validations and each checkpoint. No secret-bearing URLs, dumps, tokens or raw user data go in Git or chat. A failed check halts dependent steps; it does not authorize a bypass or destructive restore.
 
 ### A — fresh logical recovery point
 
-Action: after B, create a NEW timestamped public schema/data backup immediately before the first database mutation. The previous restore-verified backup is retained but does not replace this fresh recovery point. Follow [backup/restore procedure](local-logical-backup-recovery.md), recording source counts before/after both dumps and SHA256s. Restore to a NEW local Docker database; never restore to the linked production project.
+Action: after B, revalidate the retained fresh restore-verified recovery point against production and writer history. Reuse only if unchanged state is proven, including schema/security/comments and data, not row counts alone. If production changed or unchanged state cannot be proved, create a NEW timestamped backup and restore-verify it before any mutation. Do not take another backup during comment-correction preparation. Follow [backup/restore procedure](local-logical-backup-recovery.md), recording source counts before/after both dumps and SHA256s. Restore to a NEW local Docker database; never restore to the linked production project.
 
 Expected/validate: clean ON_ERROR_STOP restore, matching catalog/grants/policies/counts, zero account or identity violations. Retain the previous backup too. STOP on changed source during capture, incomplete dump or failed restore. Hold all writers; no production restore or delete is authorized by this package. Record ledger definitions separately if present, since the public dump excludes the migration schema. Auth settings and secret source references require a separate configuration change record without secret values.
 
 ### B — writer quiescence
 
-Action: owner/operator stop local dev servers, inventory timers, manual sync routes/CLI, backfills and recovery campaigns. In GitHub set `SYNC_WORKER_SCHEDULE_ENABLED=false` in the approved window; verify no queued/running worker. No Netlify site or Vercel cron currently needs a handover. Inspect any newly evidenced external writer before proceeding.
+Action: owner/operator stop local dev servers, inventory timers, manual sync routes/CLI, backfills and recovery campaigns. Read GitHub scheduling state and verify no queued/running worker. An absent schedule flag with no registered workflow is not activation. Do not write configuration before the recovery gate; explicitly set false at J before main merge. No Netlify site or Vercel cron currently needs a handover. Inspect any newly evidenced external writer before proceeding.
 
 Expected/validate: no active finance lease or unfinished sync/commercial tick/entity, no new heartbeat or data change between two read-only observations at least five minutes apart. Use the existing local `.audit/gate0-production-writer-readonly.sql` and process inventory; database silence alone is not proof that an external timer is stopped. STOP if writer ownership is unknown, activity continues or a recovery campaign owns Account 2. Hold rather than clearing locks/cursors. Do not force-kill a transaction to manufacture quiescence.
 
 ### C — fresh catalog, policy and file freeze
 
-Action: read catalog/ledger and capture per-account counts and finance aggregates, legacy stock and snapshot counts. Compare to rehearsed definitions and confirm the three residual broad policies alongside their tenant/service counterparts. Check all seven hashes below and freeze feature/main SHAs. Confirm expected schema prerequisites and zero duplicate source identities.
+Action: read catalog/ledger and capture per-account counts and finance aggregates, legacy stock and snapshot counts. Compare to rehearsed definitions and confirm the three residual broad policies alongside their tenant/service counterparts. Check all eight hashes below and freeze feature/main SHAs. Confirm expected schema prerequisites and zero duplicate source identities. Include column comments in catalog proof: only the five known missing comments documented in the correction contract may proceed to D0; all other gaps stop the window.
 
 Expected/validate: no unexplained drift; ledger absent or exactly understood. STOP on changed migration bytes, unknown ledger entry, active writer or catalog/policy mismatch. Hold before metadata repair. Local catalog evidence is in `.audit/gate0-production-catalog-2026-09-19.json`; these private artifacts are operator inputs, not committed exports. Missing inputs must be regenerated read-only.
 
@@ -48,13 +48,19 @@ Frozen migration SHA256s:
 
 - `20260920091512_inventory_atomic_replacement.sql`: `DF10AFF0955152CD59D0D11D204726918832511F70ED7E784A5563CC912F6A05` (SHA256 of Git/LF bytes; use the exact rehearsed bytes).
 
+- `20260920095101_restore_historical_column_comments.sql`: `8D255F5210E04C2A197375FBCD9B57F0E3D6DBCB94980877CD377698DBC7DE35` (Git/LF bytes).
+
+### D0 — comment-only forward correction BEFORE historical baseline
+
+Apply only the new comment correction after recovery/preflight PASS. Follow the [exact contract and proof](historical-comment-correction.md). Validate exact five comments, unchanged full schema excluding comments, and unchanged business counts/content before historical repair. Re-prove every enduring historical postcondition. Record the correction's own version only after successful validation, then read it back. Its later timestamp does not dictate this explicitly approved execution order. STOP on any mismatch; retain comments and hold all later gates. No column/index/RLS/grant alteration or business rewrite is permitted here.
+
 ### D — conditional ledger metadata reconciliation
 
-Action: approve only these seven versions after fresh postcondition proof: `20260624120000` (finance srid/index), `20260712180000` (sales price columns), `20260712200000` (order price/date/index), `20260720170000` (sales warehouse/index), `20260726160000` (snapshot transit columns), `20260731120000` (invoice number), `20260909110000` (nonpartial ads account/source unique arbiter). Match exact types/defaults/nullability/index predicates against the SQL, not names alone. Rehearse metadata repair on the local restored clone first.
+Action: approve only these seven versions after fresh postcondition proof: `20260624120000` (finance srid/index), `20260712180000` (sales price columns), `20260712200000` (order price/date/index), `20260720170000` (sales warehouse/index), `20260726160000` (snapshot transit columns), `20260731120000` (invoice number), `20260909110000` (nonpartial ads account/source unique arbiter). Match exact types/defaults/nullability/index predicates AND column comments against the SQL, not names alone. The three corrected versions become CURRENT-STATE EQUIVALENT AFTER FORWARD CORRECTION; they are not historically proven executed. Classify all seven repairs as baseline_reconciliation in the separate operator audit, with actual timestamp, file hash, evidence and correction linkage. Supabase repair inserts tracking metadata; it does not establish execution provenance. Rehearse metadata repair on the local restored clone first.
 
 Execute one version at a time with the verified Supabase 2.117.0 CLI: `supabase migration repair VERSION --status applied --linked`. Verify the linked ref before every invocation. This changes ledger metadata only; never replay historical SQL. Read `SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version;` after each operation.
 
-Expected/validate: precisely the seven proven baseline entries, once each, unchanged business counts/aggregates. Exclude `20260629120000` and `20260911100000`; never replay destructive `20260710120000`. STOP on unproven history or changed business data. An incorrect ledger mark requires review before a metadata-only `--status reverted`; it does not undo SQL. Never use blind `db push` or bulk migration-up with unreconciled history.
+Expected/validate: precisely the seven proven baseline entries plus the executed comment-correction entry, once each, unchanged business counts/aggregates. Exclude `20260629120000` and `20260911100000`; never replay destructive `20260710120000`. STOP on unproved current-state equivalence, missing provenance classification or changed business data. An incorrect ledger mark requires review before a metadata-only `--status reverted`; it does not undo SQL. Never use blind `db push` or bulk migration-up with unreconciled history.
 
 ### E–H — apply four migrations individually
 
@@ -80,7 +86,7 @@ Apply `20260920063101_finance_rls_statement_scope.sql`. Its guard requires the e
 
 Action: run the relevant section of `scripts/verify-release-forward-schema-readonly.sql` after F/G/H and the full script at completion, plus `scripts/verify-release-account-security-readonly.sql` after H2/H3. Check returned rows/definitions, not merely SQL exit status: required functions/relations must exist and privilege booleans must match comments. Compare financial counts/aggregates, legacy stock, snapshots and costs to C after every gate. Run rolled-back local role probes for anonymous, own-company/account, foreign-company and same-company foreign-account access; production probes use existing controlled sessions only, no new test data/users.
 
-Expected: no business-data mutation, all expected security boundaries, baseline seven plus seven actually executed ledger versions. STOP on mismatch, including missing role-test evidence. Hold at last validated additive checkpoint. A failed transactional SQL apply rolls back itself; a committed migration with failed validation is held for diagnosis, never automatically down-migrated or marked successful.
+Expected: no business-data mutation, all expected security boundaries, baseline seven plus eight actually executed forward versions. STOP on mismatch, including missing role-test evidence. Hold at last validated additive checkpoint. A failed transactional SQL apply rolls back itself; a committed migration with failed validation is held for diagnosis, never automatically down-migrated or marked successful.
 
 ### I3 — atomic inventory and verified canonical replacement
 
@@ -97,7 +103,7 @@ Expected/validate: four secret names and update timestamps, exact nonsecret vari
 
 Action: refresh remote refs, record reviewed feature SHA, require clean isolated checkout and all applicable tests/checks, compare final diff, then merge the reviewed feature into main through the repository's required merge procedure. No force push. This package's schedule opt-in guard must be present in the resulting main workflow.
 
-Expected/validate: main contains reviewed release and all seven migration files, schedule flag false; zero worker execution. STOP on conflicts, unexpected main changes, failed checks or a missing guard. Hold main release/deployment and do not enable schedule. Reverting code, if required, must retain compatibility with additive schema; never reverse data migrations automatically.
+Expected/validate: main contains reviewed release and all eight migration files, schedule flag false; zero worker execution. STOP on conflicts, unexpected main changes, failed checks or a missing guard. Hold main release/deployment and do not enable schedule. Reverting code, if required, must retain compatibility with additive schema; never reverse data migrations automatically.
 
 ### L — one Netlify first-site setup (Gate 2 only)
 
