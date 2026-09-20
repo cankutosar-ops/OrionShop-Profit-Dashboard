@@ -4,7 +4,7 @@ Updated 2026-09-20 for the internal release candidate derived from baseline `7e1
 
 ## Gate 1 status and single human action card
 
-Superseding owner update: Netlify account/team access is VERIFIED. The existing owner-designated workspace is intended if Netlify is selected; do not create another team or upgrade a plan. Hosting selection/deployment is deferred until INTERNAL RELEASE CANDIDATE. Hosting is not a current engineering blocker.
+Superseding owner update: Netlify account/team access is VERIFIED. The existing owner-designated Netlify workspace `orion` is intended; do not create another team or upgrade a plan. Hosting deployment remains deferred to the separately approved web acceptance step. Hosting is not a current engineering blocker.
 
 No hosting action is required now. All site creation, secret writes, repository grants, merge, deployment and Auth changes remain deferred to the controlled publish phase. Do not send passwords, tokens or key values in chat.
 
@@ -16,11 +16,11 @@ The generic [candidate record](internal-release-candidate-2026-09-20.md) lists l
 
 ## Execution order, evidence and stop discipline
 
-Run B before A so the backup is taken during quiescence; then C through T. Keep an operator log with UTC time, release SHA, hashes, sanitized counts, validations and each checkpoint. No secret-bearing URLs, dumps, tokens or raw user data go in Git or chat. A failed check halts dependent steps; it does not authorize a bypass or destructive restore.
+Run B before A so the backup is taken during quiescence; then C through K, including I3. Hosting L/M is a later, separately approved web acceptance step, never part of database migration. N–R bounded data acceptance can occur before L/M while hosting remains deferred. Complete L/M before T; S needs a separate recurring-activation approval. Keep an operator log with UTC time, release SHA, hashes, sanitized counts, validations and each checkpoint. No secret-bearing URLs, dumps, tokens or raw user data go in Git or chat. A failed check halts dependent steps; it does not authorize a bypass or destructive restore.
 
 ### A — fresh logical recovery point
 
-Action: after B, create a fresh public schema/data backup unless a count/catalog and writer-history check proves the previously verified point unchanged. When uncertain, make a fresh one. Follow [backup/restore procedure](local-logical-backup-recovery.md), recording source counts before/after both dumps and SHA256s. Restore to a NEW local Docker database; never restore to the linked production project.
+Action: after B, create a NEW timestamped public schema/data backup immediately before the first database mutation. The previous restore-verified backup is retained but does not replace this fresh recovery point. Follow [backup/restore procedure](local-logical-backup-recovery.md), recording source counts before/after both dumps and SHA256s. Restore to a NEW local Docker database; never restore to the linked production project.
 
 Expected/validate: clean ON_ERROR_STOP restore, matching catalog/grants/policies/counts, zero account or identity violations. Retain the previous backup too. STOP on changed source during capture, incomplete dump or failed restore. Hold all writers; no production restore or delete is authorized by this package. Record ledger definitions separately if present, since the public dump excludes the migration schema. Auth settings and secret source references require a separate configuration change record without secret values.
 
@@ -32,7 +32,7 @@ Expected/validate: no active finance lease or unfinished sync/commercial tick/en
 
 ### C — fresh catalog, policy and file freeze
 
-Action: read catalog/ledger and capture per-account counts and finance aggregates, legacy stock and snapshot counts. Compare to rehearsed definitions and confirm the three residual broad policies alongside their tenant/service counterparts. Check all six hashes below and freeze feature/main SHAs. Confirm expected schema prerequisites and zero duplicate source identities.
+Action: read catalog/ledger and capture per-account counts and finance aggregates, legacy stock and snapshot counts. Compare to rehearsed definitions and confirm the three residual broad policies alongside their tenant/service counterparts. Check all seven hashes below and freeze feature/main SHAs. Confirm expected schema prerequisites and zero duplicate source identities.
 
 Expected/validate: no unexplained drift; ledger absent or exactly understood. STOP on changed migration bytes, unknown ledger entry, active writer or catalog/policy mismatch. Hold before metadata repair. Local catalog evidence is in `.audit/gate0-production-catalog-2026-09-19.json`; these private artifacts are operator inputs, not committed exports. Missing inputs must be regenerated read-only.
 
@@ -45,6 +45,8 @@ Frozen migration SHA256s:
 
 - `20260920061522_contain_public_account_metadata.sql`: `6E47E6480B7A740FC0478F0C6D1AD2C8850FD619E40D5B9878189914A7177555`
 - `20260920063101_finance_rls_statement_scope.sql`: `77ADC8B9EB600CFB0CF492F23E834AB9AE0E8EFE1CC41B0E400163EF74420A92`
+
+- `20260920091512_inventory_atomic_replacement.sql`: `DF10AFF0955152CD59D0D11D204726918832511F70ED7E784A5563CC912F6A05` (SHA256 of Git/LF bytes; use the exact rehearsed bytes).
 
 ### D — conditional ledger metadata reconciliation
 
@@ -78,7 +80,12 @@ Apply `20260920063101_finance_rls_statement_scope.sql`. Its guard requires the e
 
 Action: run the relevant section of `scripts/verify-release-forward-schema-readonly.sql` after F/G/H and the full script at completion, plus `scripts/verify-release-account-security-readonly.sql` after H2/H3. Check returned rows/definitions, not merely SQL exit status: required functions/relations must exist and privilege booleans must match comments. Compare financial counts/aggregates, legacy stock, snapshots and costs to C after every gate. Run rolled-back local role probes for anonymous, own-company/account, foreign-company and same-company foreign-account access; production probes use existing controlled sessions only, no new test data/users.
 
-Expected: no business-data mutation, all expected security boundaries, baseline seven plus six actually executed ledger versions. STOP on mismatch, including missing role-test evidence. Hold at last validated additive checkpoint. A failed transactional SQL apply rolls back itself; a committed migration with failed validation is held for diagnosis, never automatically down-migrated or marked successful.
+Expected: no business-data mutation, all expected security boundaries, baseline seven plus seven actually executed ledger versions. STOP on mismatch, including missing role-test evidence. Hold at last validated additive checkpoint. A failed transactional SQL apply rolls back itself; a committed migration with failed validation is held for diagnosis, never automatically down-migrated or marked successful.
+
+### I3 — atomic inventory and verified canonical replacement
+
+Apply `20260920091512_inventory_atomic_replacement.sql` only after E–H, H2 and H3 prerequisites and their I validations. This seventh migration adds service-only SECURITY INVOKER RPCs; it changes no existing business rows or tenant policies. It leaves the six previously rehearsed files immutable. Validate both function definitions, ACLs (anon/authenticated cannot execute), account/day lock and five-second lock timeout. Use the local synthetic rollback/concurrency evidence; do not inject failure fixtures into production. Record version only after validation. STOP on any catalog/grant/hash mismatch. Hold writers on failure; leave additive functions installed, preserve all existing snapshots and keep stock reads legacy.
+
 
 ### J — GitHub production configuration
 
@@ -90,7 +97,7 @@ Expected/validate: four secret names and update timestamps, exact nonsecret vari
 
 Action: refresh remote refs, record reviewed feature SHA, require clean isolated checkout and all applicable tests/checks, compare final diff, then merge the reviewed feature into main through the repository's required merge procedure. No force push. This package's schedule opt-in guard must be present in the resulting main workflow.
 
-Expected/validate: main contains reviewed release and all six migration files, schedule flag false; zero worker execution. STOP on conflicts, unexpected main changes, failed checks or a missing guard. Hold main release/deployment and do not enable schedule. Reverting code, if required, must retain compatibility with additive schema; never reverse data migrations automatically.
+Expected/validate: main contains reviewed release and all seven migration files, schedule flag false; zero worker execution. STOP on conflicts, unexpected main changes, failed checks or a missing guard. Hold main release/deployment and do not enable schedule. Reverting code, if required, must retain compatibility with additive schema; never reverse data migrations automatically.
 
 ### L — one Netlify first-site setup (Gate 2 only)
 
@@ -108,9 +115,18 @@ Expected/validate: `/api/auth/login` establishes SSR cookies; `/auth/callback` e
 
 ### N — bounded manual worker acceptance
 
-Action: with schedule still false and web/local timers off, dispatch on approved main: `gh workflow run sync-worker.yml --ref main -f tasks=commercial,inventory -f accounts=1 -f force=false -f finance_wakes=1`. Observe completion before dispatching the same for account 2. Each job has 25-minute worker budget and 35-minute hard timeout; concurrency serializes jobs. No all-account default dispatch. Inspect sanitized summaries and persisted state, not logs containing tokens.
+Action: keep scheduling false and web/local timers off. Execute exactly one dispatch, wait for completion, and verify before the next:
 
-Expected/validate: preflight passes, only selected account writes, durable cursors and lease release, no duplicates, failure status classified. Retryable/rate-limit outcome is not acceptance success. STOP on lease, key, schema, tenant, identity or V4 result mismatch. Leave scheduling off, retain durable cursors; do not clear state or force repeated WB calls. Release windows need not finish all historical catch-up.
+1. Account 1: `tasks=commercial`; verify Orders/Sales/Finance, lease/cursor, scope, V4 (O).
+2. Account 2: `tasks=commercial`; verify the same plus retired recovery reservation (P).
+3. Account 1: `tasks=inventory`; verify complete target day, counts/grain, other days/accounts unchanged, retention purge zero.
+4. Account 2: `tasks=inventory`; verify the same.
+5. Account 1: `tasks=current-stock`; verify canonical row identities/counts and unchanged legacy/history (R).
+6. Account 2: `tasks=current-stock`; verify the same.
+
+Command template: `gh workflow run sync-worker.yml --ref main -f tasks=TASK -f accounts=ACCOUNT -f force=false -f finance_wakes=1`. Resolve the approved Account 1/2 IDs from the private operator record. Never dispatch the bundled default for first acceptance. Each run has a 25-minute application budget and 35-minute hard backstop. Current-stock requires exactly one account; 429 fails without retry, pagination waits at least 20 seconds. No automatic repeat, recovery loop or recurring activation is authorized by this acceptance sequence. Ads are separate under Q.
+
+Expected/validate after EACH run: preflight passes, only selected account/domain writes, complete-set persisted counts/identities match, leases released, no duplicate identities, V4 and historical totals explainable. A failed/rate-limited/unavailable/skipped-required capture is not acceptance success. STOP immediately on failure or unexplained delta. Hold all remaining dispatches and scheduling; preserve existing snapshots, cursors and legacy reads. Do not clear state or force repeated WB calls. A source failure retains the previous snapshot; a lost RPC response requires read-only reconciliation before any retry.
 
 ### O — Account 1 reconciliation
 
@@ -132,13 +148,13 @@ Expected/validate: account/source arbiter works, intended coverage improves, cos
 
 ### R — canonical population, without read cutover
 
-Action: only after H/N, obtain a successful complete stocks pull through the approved account-scoped commercial worker. Compare canonical product/warehouse/size/chrt/barcode identities and quantities to that full source result, account by account. Repeat an accepted same-snapshot fixture locally to verify idempotency; do not manufacture production records for tests.
+Action: only after H/I3 and the first four N checks, populate each account through the dedicated `current-stock` worker task. Commercial sync never populates canonical stock. Compare canonical product/warehouse/size/chrt/barcode identities and quantities to that full source result, account by account. Repeat an accepted same-snapshot fixture locally to verify idempotency; do not manufacture production records for tests.
 
 Expected/validate: both sizes/warehouses survive, supplied variant/barcode preserved, no duplicate canonical identity, no cross-account replacement, legacy/history unchanged. Reconcile any differences attributable to known legacy collapse explicitly. STOP on partial pull or unexplained mismatch; atomic replacement must not commit incomplete state. Leave legacy reads enabled even after population. Canonical read cutover requires a later explicit decision, never a hidden part of this package.
 
 ### S — scheduler ownership
 
-Action: after N–R acceptance and approved freshness/staleness disposition, set SYNC_WORKER_SCHEDULE_ENABLED=true. Verify only GitHub hourly minute 20 runs commercial,inventory; no Netlify timer, local timer, manual recovery or external cron competes. Observe one scheduled tick and its account scope.
+Action: leave SYNC_WORKER_SCHEDULE_ENABLED=false throughout initial acceptance. Only a separately approved recurring-activation decision after N–R acceptance and freshness/staleness disposition may set it true. Verify only GitHub hourly minute 20 runs commercial,inventory; no Netlify timer, local timer, manual recovery or external cron competes. Observe one scheduled tick and its account scope.
 
 Expected/validate: one serialized owner, bounded budget, no overlap, correct finance reservation and no background web writes. STOP on duplicate owner, unexpected tasks or failed tick. Set schedule false to prevent new scheduled jobs; let a healthy in-flight transaction finish, then inspect leases before recovery. This control does not block explicit workflow_dispatch or manual routes, which remain operator-controlled.
 

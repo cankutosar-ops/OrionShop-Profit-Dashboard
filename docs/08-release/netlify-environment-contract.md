@@ -1,6 +1,6 @@
 # Netlify and GitHub release contract
 
-Hosting selection/deployment is deferred until internal release acceptance. Netlify remains an acceptable candidate; owner-confirmed account/team access is verified and the existing owner-designated workspace is the intended workspace if selected. Do not create another team, upgrade a plan, create a site or deploy during internal engineering. GitHub is the only planned sync scheduler. This contract is prepared configuration, not authorization to apply it.
+Hosting selection/deployment is deferred until internal release acceptance. Netlify is the intended first beta host; owner-confirmed account/team access is verified and the existing `orion` workspace is the intended workspace. Do not create another team, upgrade a plan, create a site or deploy during internal engineering. GitHub is the only planned sync scheduler. This contract is prepared configuration, not authorization to apply it.
 
 ## Build and runtime
 
@@ -30,7 +30,7 @@ All names below are configuration contracts, not credentials. Keep runtime value
 | FINANCE_V1_LIVE_REQUESTS_ENABLED | Required intended true | Required repository variable true | Server-only; same routing policy; activate only in approved window |
 | FINANCE_V1_ACCOUNT_IDS | Required intended 1 | Required repository variable 1 | Server-only; same numeric marketplace account ID |
 | ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE | Required intended false | Required repository variable false | Server-only; same quota ownership policy; fresh pre-activation check |
-| SYNC_WORKER_SCHEDULE_ENABLED | Not used | Required activation control; absent/false until acceptance, then true | WORKER_ONLY; scheduled jobs fail closed; manual dispatch remains explicit |
+| SYNC_WORKER_SCHEDULE_ENABLED | Not used | Required activation control; absent/false through acceptance; true only after separate recurring-activation approval | WORKER_ONLY; scheduled jobs fail closed; manual dispatch remains explicit |
 | CRON_SECRET | Not required; omit | Not required | Dormant Vercel cron; no live cron owner |
 | NODE_VERSION | Build 22 in TOML | setup-node 22 | Build/runtime selection, not secret |
 | NEXT_PUBLIC_APP_LOCALE | Optional | Not required | Browser-safe locale |
@@ -66,5 +66,5 @@ The intended routing values above are configuration targets, not proof of produc
 1. GitHub repository Settings → Secrets and variables → Actions → Secrets: add SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY and MARKETPLACE_CREDENTIALS_KEY from the trusted existing project configuration. Never paste credentials into chat or use an encryption key different from the one protecting account tokens.
 2. On the Variables tab, add FINANCE_V1_LIVE_REQUESTS_ENABLED=true, FINANCE_V1_ACCOUNT_IDS=1 and ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE=false after the fresh ownership check.
 3. In Netlify, configure the production-only matrix and select Node 22 / npm run build / .next. Keep automatic publish and previews disconnected from production until the approved release. Do not trigger an initial deploy merely to create a hostname.
-4. Before merging the scheduled workflow, hold scheduling. Validate one bounded manual run under approval before enabling hourly scheduling. GitHub schedule activation after merge is itself a production action.
+4. Before merging the scheduled workflow, hold scheduling. Validate the six separate task/account dispatches in the execution package under approval; enable hourly scheduling only after a separate recurring-activation decision. GitHub schedule activation after merge is itself a production action.
 5. After hostname assignment, complete Auth URLs, callback/cookie checks and beta access verification. Keep canonical stock reads disabled until their separate reconciliation gate passes.
