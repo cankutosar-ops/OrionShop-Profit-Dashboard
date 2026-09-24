@@ -84,6 +84,8 @@ export function DashboardProfitSection({
 
   /** Commercial Performance Net Sales (same base as Gross / Returned Sales). */
   const displayNetSales = modelB.netSales;
+  const wbFee =
+    modelB.salesToSettlementDifference ?? modelB.marketplaceFee ?? modelB.commission;
 
   const shareOfEngineSales = (amount: number) => {
     if (isEmptyPeriod || !revenueReady || modelB.netSales <= 0) return emptyValue;
@@ -97,7 +99,7 @@ export function DashboardProfitSection({
 
   const noReturnsScenario = calculatePotentialProfitNoReturns({
     grossSales: modelB.grossSales,
-    marketplaceFee: marketplaceFees.marketplaceFees,
+    marketplaceFee: wbFee,
     productCost: modelB.productCost,
     logistics: modelB.logistics,
     storage: modelB.storage,
@@ -164,10 +166,10 @@ export function DashboardProfitSection({
           />
 
           <MetricCard
-            title="Marketplace Fees"
-            value={formatMoney(marketplaceFees.marketplaceFees)}
-            subtitle={`${shareOfEngineSales(marketplaceFees.marketplaceFees)} of Net Sales`}
-            hint="WB fee and service components recorded in Finance: commission, acquiring, reward/service, and WB remuneration including VAT."
+            title="WB Fee"
+            value={formatMoney(wbFee)}
+            subtitle={`${shareOfEngineSales(wbFee)} of Net Sales`}
+            hint="Net Sales minus net Sales API forPay for the selected period. Calculated from each persisted sale and return. Already reflected before Revenue and not deducted again from Net Profit."
             icon={KPI_ICONS.commission}
             {...expenseProps}
           />

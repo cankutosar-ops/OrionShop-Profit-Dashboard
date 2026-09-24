@@ -334,7 +334,7 @@ async function buildOverviewMetricsFromRaw(
   );
   const costBreakdown = buildCostBreakdown({
     productCost,
-    marketplaceFees: marketplaceFeesPresentation.marketplaceFees,
+    marketplaceFees: marketplaceFeesPresentation.salesToSettlementDifference,
     logistics,
     returnLogistics,
     storage,

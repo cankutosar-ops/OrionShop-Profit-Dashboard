@@ -18,7 +18,7 @@ type ProfitabilityBreakdownProps = {
 
 /**
  * Commercial Performance profitability breakdown — Net Profit matches Dashboard KPI.
- * Marketplace Fees / Acquiring are informational (not deducted again).
+ * WB Fee / Acquiring are informational (not deducted again).
  */
 export function ProfitabilityBreakdown({
   modelB,
@@ -105,7 +105,11 @@ export function ProfitabilityBreakdown({
       </div>
 
       <div className="grid gap-3 border-b border-border bg-muted/20 px-6 py-4 sm:grid-cols-2 lg:grid-cols-4">
-        <FeeItem label="Marketplace Fees" value={marketplaceFees.marketplaceFees} />
+        <FeeItem
+          label="Finance Fee Components"
+          value={marketplaceFees.marketplaceFees}
+          note="Commission + acquiring + reward/service + WB remuneration. Component audit only."
+        />
         <FeeItem label="WB Commission" value={marketplaceFees.commission} />
         <FeeItem
           label="Acquiring (informational)"
@@ -127,9 +131,9 @@ export function ProfitabilityBreakdown({
           }
         />
         <FeeItem
-          label="Sales-to-Settlement Difference"
+          label="WB Fee (Sales API)"
           value={marketplaceFees.salesToSettlementDifference}
-          note="Reconciliation only"
+          note="Net Sales − net Sales API forPay"
         />
       </div>
     </div>

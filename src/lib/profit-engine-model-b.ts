@@ -254,9 +254,9 @@ export function buildModelBBreakdownLines(
     },
     {
       key: "salesToSettlementDifference",
-      label: "Sales-to-Settlement Difference",
+      label: "WB Fee (informational)",
       amount: metrics.salesToSettlementDifference ?? metrics.marketplaceFee ?? metrics.commission,
-      detail: "Net Sales − Sales API forPay — reconciliation only",
+      detail: "Net Sales − net Sales API forPay — already reflected before Revenue",
     },
     {
       key: "acquiring",
