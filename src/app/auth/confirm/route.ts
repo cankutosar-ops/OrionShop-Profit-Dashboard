@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthServerClient } from '@/lib/supabase/auth-server';
+import { authRedirectUrl } from '@/lib/security/auth-redirect-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (!error) destination = '/auth/password';
   }
-  const response = NextResponse.redirect(new URL(destination, url.origin));
+  const response = NextResponse.redirect(authRedirectUrl(destination, url.origin));
   response.headers.set('Cache-Control', 'private, no-store');
   response.headers.set('Referrer-Policy', 'no-referrer');
   return response;
