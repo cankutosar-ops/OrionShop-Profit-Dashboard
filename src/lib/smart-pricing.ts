@@ -266,6 +266,7 @@ function solverInputsFromProduct(
 }
 
 export type SmartPricingComputedRow = ProductSmartPricingInputs & {
+  effectiveMarketingPercent: number;
   priceFor15: number | null;
   priceFor20: number | null;
   targetPrice: number | null;
@@ -285,6 +286,14 @@ export type SmartPricingComputedRow = ProductSmartPricingInputs & {
   riskTooltip: string;
 };
 
+/** Manual marketing remains a floor; recent attributable spend can lift it. */
+export function resolveEffectiveMarketingPercent(
+  manualPercent: number,
+  recentActualPercent: number | null | undefined
+): number {
+  return Math.max(0, manualPercent, Number.isFinite(recentActualPercent) ? recentActualPercent! : 0);
+}
+
 export function buildSmartPricingRow(
   inputs: ProductSmartPricingInputs,
   targetNetProfitPercent: number,
@@ -292,15 +301,16 @@ export function buildSmartPricingRow(
   taxPercent: number = DEFAULT_TAX_PERCENT
 ): SmartPricingComputedRow {
   const solver = solverInputsFromProduct(inputs);
+  const effectiveMarketingPercent = resolveEffectiveMarketingPercent(marketingPercent, inputs.recentAdvertisingPercent);
   const hasPurchaseCost = solver !== null;
 
   const priceFor = (margin: number) =>
-    solver ? solveRecommendedPrice(solver, margin, marketingPercent, taxPercent) : null;
+    solver ? solveRecommendedPrice(solver, margin, effectiveMarketingPercent, taxPercent) : null;
 
   const priceFor15 = priceFor(15);
   const priceFor20 = priceFor(20);
   const targetPrice = hasPurchaseCost
-    ? solveRecommendedPrice(solver, targetNetProfitPercent, marketingPercent, taxPercent)
+    ? solveRecommendedPrice(solver, targetNetProfitPercent, effectiveMarketingPercent, taxPercent)
     : null;
 
   let currentNetProfit: number | null = null;
@@ -316,7 +326,7 @@ export function buildSmartPricingRow(
   ) {
     const afterTax = buildSmartPricingAfterTaxMetrics(
       solver,
-      marketingPercent,
+      effectiveMarketingPercent,
       taxPercent,
       inputs.currentAvgPrice
     );
@@ -349,10 +359,14 @@ export function buildSmartPricingRow(
     productHistoricalCommissionPercent: inputs.productHistoricalMarketplaceFeesPercent,
     categoryHistoricalCommissionPercent: inputs.categoryHistoricalMarketplaceFeesPercent,
     commissionPercent: inputs.marketplaceFeesPercent,
+    logisticsSource: inputs.resolutionSource,
+    historicalCompletedUnits: inputs.historicalCompletedUnits,
+    recentLongLogisticsVariancePercent: inputs.recentLongLogisticsVariancePercent,
   });
 
   return {
     ...inputs,
+    effectiveMarketingPercent,
     priceFor15,
     priceFor20,
     targetPrice,

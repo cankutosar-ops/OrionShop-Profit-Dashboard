@@ -5,6 +5,7 @@
 import {
   buildModelBUnitMetrics,
   buildSmartPricingAfterTaxMetrics,
+  resolveEffectiveMarketingPercent,
   type SmartPricingComputedRow,
 } from "@/lib/smart-pricing";
 import { buildSolverInputsFromRow } from "@/lib/smart-pricing-simulator";
@@ -59,13 +60,13 @@ export function buildSmartPricingCostBreakdown(
 
   const modelB = buildModelBUnitMetrics(
     solver,
-    marketingPercent,
+    resolveEffectiveMarketingPercent(marketingPercent, row.recentAdvertisingPercent),
     evalPrice,
     taxPercent
   );
   const afterTax = buildSmartPricingAfterTaxMetrics(
     solver,
-    marketingPercent,
+    resolveEffectiveMarketingPercent(marketingPercent, row.recentAdvertisingPercent),
     taxPercent,
     evalPrice
   );
@@ -101,8 +102,8 @@ export function buildSmartPricingCostBreakdown(
     });
   }
 
-  const forward = row.unitOutboundLogistics;
-  const returnLogistics = row.unitRebillLogistics;
+  const forward = row.expectedBaseLogistics ?? row.unitOutboundLogistics;
+  const returnLogistics = row.expectedReturnBurden ?? row.unitRebillLogistics;
   const logisticsSplitMatchesEngine =
     Number.isFinite(forward) &&
     Number.isFinite(returnLogistics) &&
@@ -111,7 +112,7 @@ export function buildSmartPricingCostBreakdown(
   if (logisticsSplitMatchesEngine) {
     rows.push({
       key: "forwardLogistics",
-      label: "Forward Logistics",
+      label: "Base Logistics",
       amount: forward,
       percent: null,
       section: "logistics",
@@ -119,7 +120,7 @@ export function buildSmartPricingCostBreakdown(
     if (isPresent(returnLogistics)) {
       rows.push({
         key: "returnLogistics",
-        label: "Return Logistics",
+        label: "Expected Return Burden",
         amount: returnLogistics,
         percent: null,
         section: "logistics",

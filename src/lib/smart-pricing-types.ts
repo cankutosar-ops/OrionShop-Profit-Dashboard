@@ -53,6 +53,14 @@ export type ProductSmartPricingInputs = {
   resolutionSource: SmartPricingHistoricalSource;
   /** Resolved per-unit historical logistics (outbound + rebill). */
   historicalLogistics: number;
+  /** Window and source used for the default forward-cost estimate. */
+  costWindowDays?: 30 | 60 | 90 | 180;
+  costAsOfDate?: string;
+  expectedBaseLogistics?: number;
+  expectedReturnBurden?: number;
+  expectedReturnRatePercent?: number;
+  recentLongLogisticsVariancePercent?: number | null;
+  recentAdvertisingPercent?: number | null;
   /** @deprecated Alias for historicalLogistics — used by solver. */
   effectiveLogistics: number;
   /** Resolved per-unit storage cost. */

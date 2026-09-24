@@ -1,4 +1,5 @@
 import {
+  resolveEffectiveMarketingPercent,
   verifyRecommendedPrice,
   type SmartPricingComputedRow,
   type SmartPricingSolverInputs,
@@ -91,7 +92,7 @@ export function computeSmartPricingSimulation(
   const { profit, marginPercent } = verifyRecommendedPrice(
     solver,
     0,
-    marketingPercent,
+    resolveEffectiveMarketingPercent(marketingPercent, row.recentAdvertisingPercent),
     testPrice,
     taxPercent
   );

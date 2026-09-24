@@ -76,6 +76,9 @@ export function computeSmartPricingRisk(params: {
   productHistoricalCommissionPercent: number | null;
   categoryHistoricalCommissionPercent: number | null;
   commissionPercent: number;
+  logisticsSource?: SmartPricingHistoricalSource;
+  historicalCompletedUnits?: number;
+  recentLongLogisticsVariancePercent?: number | null;
 }): SmartPricingRiskResult {
   const commissionStabilityPoints = scoreCommissionStability(params);
 
@@ -90,7 +93,10 @@ export function computeSmartPricingRisk(params: {
     scoreReturnRate(params.returnRatePercent) +
     scoreExcludedLogistics(params.excludedLogisticsPercent) +
     scoreReturnLogistics(params.returnLogisticsPercent) +
-    commissionStabilityPoints;
+    commissionStabilityPoints +
+    (params.logisticsSource === "ACCOUNT_HISTORY" ? 2 : params.logisticsSource === "CATEGORY_HISTORY" ? 1 : 0) +
+    (params.historicalCompletedUnits !== undefined && params.historicalCompletedUnits < 30 ? 1 : 0) +
+    (params.recentLongLogisticsVariancePercent !== null && params.recentLongLogisticsVariancePercent !== undefined && params.recentLongLogisticsVariancePercent > 50 ? 2 : 0);
 
   const level: SmartPricingRiskLevel =
     total >= 5 ? "high" : total >= 3 ? "medium" : "low";
@@ -101,6 +107,9 @@ export function computeSmartPricingRisk(params: {
     `Excluded logistics: ${params.excludedLogisticsPercent.toFixed(1)}% of outbound`,
     `Return logistics: ${params.returnLogisticsPercent.toFixed(1)}% of total logistics`,
     `Commission source: ${params.commissionSource}`,
+    `Logistics source: ${params.logisticsSource ?? params.commissionSource}`,
+    `Cost sample: ${params.historicalCompletedUnits ?? "—"} sales`,
+    `30d vs 90d logistics: ${params.recentLongLogisticsVariancePercent?.toFixed(1) ?? "—"}%`,
     commissionStabilityPoints > 0
       ? "Commission stability: limited product history or source fallback"
       : "Commission stability: strong product-level history",
