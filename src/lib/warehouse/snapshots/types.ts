@@ -26,6 +26,16 @@ export type WarehouseSalesReportSnapshotRecord = {
   reportType: number | null;
   retailAmountSum: number | null;
   forPaySum: number | null;
+  deliveryServiceSum: number | null;
+  paidStorageSum: number | null;
+  paidAcceptanceSum: number | null;
+  deductionSum: number | null;
+  penaltySum: number | null;
+  additionalPaymentSum: number | null;
+  cashbackAmountSum: number | null;
+  cashbackDiscountSum: number | null;
+  cashbackCommissionChangeSum: number | null;
+  paymentSchedule: number | null;
   bankPaymentSum: number | null;
   sellerFinanceName: string | null;
   observedAt: string;

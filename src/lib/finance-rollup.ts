@@ -1,5 +1,6 @@
 import {
   effectiveFinanceCategory,
+  isInactiveFinanceEvidenceCategory,
   isMarketplaceFeeCategory,
   parseWbSourceSuffix,
   profitOperationTypeForRow,
@@ -28,6 +29,11 @@ function zeroCategorySummary(): FinanceCategorySummary {
     ACQUIRING: 0,
     PPVZ_REWARD: 0,
     PPVZ_VW: 0,
+    PPVZ_VW_NDS: 0,
+    LOYALTY_CASHBACK_EXPENSE: 0,
+    LOYALTY_CASHBACK_PARTICIPATION: 0,
+    FINANCE_SERVICE_FEE: 0,
+    ACQUIRING_COFINANCING_REVIEW: 0,
     LOGISTICS: 0,
     RETURN_LOGISTICS: 0,
     STORAGE: 0,
@@ -125,6 +131,9 @@ export function rollupCategoriesToProfitBuckets(finance: WbFinance[]): FinanceEx
     if (parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay") {
       continue;
     }
+    if (isInactiveFinanceEvidenceCategory(effectiveFinanceCategory(row))) {
+      continue;
+    }
     const opType = profitOperationTypeForRow(row);
     const amount = Math.abs(Number(row.amount));
 
@@ -145,7 +154,11 @@ export function sumFinanceByType(
   type: FinanceOperationType
 ): number {
   return financeRecords
-    .filter((row) => row.operation_type === type)
+    .filter(
+      (row) =>
+        row.operation_type === type &&
+        !isInactiveFinanceEvidenceCategory(effectiveFinanceCategory(row))
+    )
     .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
 }
 

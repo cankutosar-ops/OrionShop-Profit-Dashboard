@@ -57,6 +57,7 @@
     "verify:finance-schema": "node scripts/verify-finance-schema.mjs",
     "verify:finance-sync-v2": "npx tsx scripts/verify-finance-sync-v2.mjs",
     "verify:finance-v1-migration": "npx tsx scripts/verify-finance-v1-migration.mjs",
+    "verify:finance-coverage-v2": "npx tsx scripts/verify-finance-coverage-v2.mjs",
     "verify:account2-reports-recovery": "npx tsx scripts/verify-account2-reports-recovery.mjs",
     "verify:finance-incremental": "npx tsx scripts/verify-finance-incremental-offline.mjs",
     "verify:account1-reports-v1": "npx tsx scripts/verify-account1-reports-v1-migration.mjs",

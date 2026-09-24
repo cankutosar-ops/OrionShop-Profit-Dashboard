@@ -162,6 +162,7 @@ function buildFinanceLine(
     operation_date: operationDate,
     operation_type: operationType,
     amount: normalizedAmount,
+    raw_amount: amount,
     source_key: sourceKey,
     description: null,
     srid: row.srid ?? null,
@@ -200,6 +201,12 @@ export function mapFinanceRowsFromReport(
   add(row.ppvz_reward, "ppvz_reward");
   add(row.additional_payment, "additional_payment");
   add(row.ppvz_vw, "ppvz_vw");
+  add(row.ppvz_vw_nds, "vw_nds");
+  add(row.installment_cofinancing, "installment_cofinancing");
+  add(row.cashback_amount, "cashback_amount");
+  add(row.cashback_discount, "cashback_discount");
+  add(row.cashback_commission_change, "cashback_commission_change");
+  add(row.payment_schedule, "payment_schedule");
 
   if (typeof row.ppvz_for_pay === "number" && Number.isFinite(row.ppvz_for_pay)) {
     const isReturn =

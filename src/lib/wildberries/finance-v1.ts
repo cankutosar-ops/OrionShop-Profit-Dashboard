@@ -56,6 +56,12 @@ export type WbFinanceV1DetailedRow = {
   ppvzReward?: string | number | null;
   additionalPayment?: string | number | null;
   vw?: string | number | null;
+  vwNds?: string | null;
+  installmentCofinancingAmount?: string | null;
+  cashbackAmount?: string | null;
+  cashbackDiscount?: string | null;
+  cashbackCommissionChange?: string | null;
+  paymentSchedule?: string | null;
   rebillLogisticCost?: string | number | null;
   deduction?: string | number | null;
   penalty?: string | number | null;
@@ -91,6 +97,12 @@ export const FINANCE_V1_FIELD_DECISIONS: Record<string, FinanceV1MoneyDecision> 
   ppvz_reward: "transform_required",
   additional_payment: "transform_required",
   ppvz_vw: "transform_required",
+  ppvz_vw_nds: "transform_required",
+  installment_cofinancing: "transform_required",
+  cashback_amount: "transform_required",
+  cashback_discount: "transform_required",
+  cashback_commission_change: "transform_required",
+  payment_schedule: "transform_required",
   rebill_logistic_cost: "transform_required",
   deduction: "transform_required",
   penalty: "transform_required",
@@ -388,6 +400,12 @@ export function normalizeFinanceV1DetailedRow(
     ppvz_reward: parseFinanceV1Money(row.ppvzReward),
     additional_payment: parseFinanceV1Money(row.additionalPayment),
     ppvz_vw: parseFinanceV1Money(row.vw),
+    ppvz_vw_nds: parseFinanceV1Money(row.vwNds),
+    installment_cofinancing: parseFinanceV1Money(row.installmentCofinancingAmount),
+    cashback_amount: parseFinanceV1Money(row.cashbackAmount),
+    cashback_discount: parseFinanceV1Money(row.cashbackDiscount),
+    cashback_commission_change: parseFinanceV1Money(row.cashbackCommissionChange),
+    payment_schedule: parseFinanceV1Money(row.paymentSchedule),
     rebill_logistic_cost: parseFinanceV1Money(row.rebillLogisticCost),
     deduction: parseFinanceV1Money(row.deduction),
     penalty: parseFinanceV1Money(row.penalty),

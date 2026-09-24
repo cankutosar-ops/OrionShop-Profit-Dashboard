@@ -511,6 +511,8 @@ export type WbFinance = {
   /** Permanent high-level profit bucket — always populated at sync. */
   operation_type: FinanceOperationType;
   amount: number;
+  /** Signed Reports V1 value before legacy absolute-value presentation. */
+  raw_amount?: number | null;
   /** Wildberries line id: rrd:{rrd_id}:{suffix} — unique per report line. */
   source_key: string | null;
   description: string | null;
@@ -1385,6 +1387,16 @@ type PublicTables = {
       report_type: number | null;
       retail_amount_sum: number | null;
       for_pay_sum: number | null;
+      delivery_service_sum: number | null;
+      paid_storage_sum: number | null;
+      paid_acceptance_sum: number | null;
+      deduction_sum: number | null;
+      penalty_sum: number | null;
+      additional_payment_sum: number | null;
+      cashback_amount_sum: number | null;
+      cashback_discount_sum: number | null;
+      cashback_commission_change_sum: number | null;
+      payment_schedule: number | null;
       bank_payment_sum: number | null;
       seller_finance_name: string | null;
       observed_at: string;
@@ -1404,6 +1416,16 @@ type PublicTables = {
       report_type?: number | null;
       retail_amount_sum?: number | null;
       for_pay_sum?: number | null;
+      delivery_service_sum?: number | null;
+      paid_storage_sum?: number | null;
+      paid_acceptance_sum?: number | null;
+      deduction_sum?: number | null;
+      penalty_sum?: number | null;
+      additional_payment_sum?: number | null;
+      cashback_amount_sum?: number | null;
+      cashback_discount_sum?: number | null;
+      cashback_commission_change_sum?: number | null;
+      payment_schedule?: number | null;
       bank_payment_sum?: number | null;
       seller_finance_name?: string | null;
       observed_at?: string;
