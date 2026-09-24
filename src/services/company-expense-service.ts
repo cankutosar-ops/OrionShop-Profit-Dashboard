@@ -10,6 +10,12 @@ export type ManualExpenseInput = {
   amount: unknown;
   taxDeductible: unknown;
   userOverrode: unknown;
+  evidenceStatus?: unknown;
+  documentReference?: unknown;
+  paymentStatus?: unknown;
+  paymentDate?: unknown;
+  paidAmount?: unknown;
+  paymentReference?: unknown;
 };
 
 export function validateManualExpense(input: ManualExpenseInput) {
@@ -27,6 +33,38 @@ export function validateManualExpense(input: ManualExpenseInput) {
     throw new Error("Deductibility decision is required");
   }
   const selected = input.userOverrode ? input.taxDeductible : rule.checkboxDefault;
+  const evidenceStatus = input.evidenceStatus ?? "UNVERIFIED";
+  if (!(["UNVERIFIED", "VERIFIED", "REJECTED"] as const).includes(evidenceStatus as never)) {
+    throw new Error("Invalid document evidence status");
+  }
+  const documentReference = typeof input.documentReference === "string"
+    ? input.documentReference.trim() : "";
+  if (documentReference.length > 200) throw new Error("Document reference must be at most 200 characters");
+  if (evidenceStatus === "VERIFIED" && !documentReference) {
+    throw new Error("Verified document evidence requires a reference");
+  }
+  const paymentStatus = input.paymentStatus ?? "UNVERIFIED";
+  if (!(["UNVERIFIED", "UNPAID", "PARTIALLY_PAID", "PAID"] as const).includes(paymentStatus as never)) {
+    throw new Error("Invalid payment evidence status");
+  }
+  let paidAmount = Number(input.paidAmount ?? 0);
+  let paymentDate = input.paymentDate;
+  let paymentReference = typeof input.paymentReference === "string" ? input.paymentReference.trim() : "";
+  if (paymentStatus === "UNVERIFIED" || paymentStatus === "UNPAID") {
+    paidAmount = 0; paymentDate = null; paymentReference = "";
+  } else {
+    if (!isIsoDate(paymentDate) || !paymentReference || paymentReference.length > 200 ||
+      !Number.isFinite(paidAmount) || paidAmount <= 0 ||
+      Math.abs(Math.round(paidAmount * 100) - paidAmount * 100) > 1e-7) {
+      throw new Error("Dated payment amount and reference are required");
+    }
+    if (paymentStatus === "PAID" && Math.round(paidAmount * 100) !== Math.round(amount * 100)) {
+      throw new Error("PAID requires the full expense amount");
+    }
+    if (paymentStatus === "PARTIALLY_PAID" && paidAmount >= amount) {
+      throw new Error("Use PAID when the full expense amount is paid");
+    }
+  }
   return {
     expense_date: input.expenseDate,
     category: rule.category as CompanyExpenseCategory,
@@ -35,6 +73,12 @@ export function validateManualExpense(input: ManualExpenseInput) {
     category_default: rule.checkboxDefault,
     tax_deductible: selected,
     tax_deductible_origin: input.userOverrode ? "USER_OVERRIDE" as const : "CATEGORY_DEFAULT" as const,
+    evidence_status: evidenceStatus as CompanyExpense["evidence_status"],
+    document_reference: documentReference || null,
+    payment_status: paymentStatus as CompanyExpense["payment_status"],
+    payment_date: isIsoDate(paymentDate) ? paymentDate : null,
+    paid_amount: Math.round(paidAmount * 100) / 100,
+    payment_reference: paymentReference || null,
   };
 }
 

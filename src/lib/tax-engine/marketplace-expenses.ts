@@ -2,6 +2,7 @@ import type { WbAd, WbFinance } from "@/types/database";
 import { parseWbSourceSuffix } from "@/lib/finance-category";
 
 export type TaxExpenseDecision = "AUTO_YES" | "AUTO_NO" | "REVIEW";
+export type TaxExpenseRecognitionStatus = "RECOGNIZED" | "REVIEW" | "UNVERIFIED" | "EXCLUDED";
 export type MarketplaceTaxCategory =
   | "COMMISSION" | "ACQUIRING" | "PLATFORM_FEE" | "LOGISTICS"
   | "RETURN_LOGISTICS" | "STORAGE" | "ACCEPTANCE" | "ADVERTISING"
@@ -22,6 +23,7 @@ export type MarketplaceTaxExpenseLine = {
   date: string;
   category: MarketplaceTaxCategory;
   decision: TaxExpenseDecision;
+  recognitionStatus: TaxExpenseRecognitionStatus;
   signedAmountKopeks: number;
   rule: string;
 };
@@ -47,13 +49,17 @@ const FINANCE_RULES: Record<string, { category: MarketplaceTaxCategory; decision
 
 export function classifyFinanceTaxExpense(row: WbFinance): MarketplaceTaxExpenseLine {
   const suffix = parseWbSourceSuffix(row.source_key, row.wb_source_suffix);
-  const mapped = FINANCE_RULES[suffix] ?? { category: "OTHER" as const, decision: "REVIEW" as const };
+  const configured = FINANCE_RULES[suffix];
+  const mapped = configured ?? { category: "OTHER" as const, decision: "REVIEW" as const };
   const amount = Number(row.amount);
   if (!Number.isFinite(amount)) throw new Error("Invalid WB finance amount");
   return {
     accountId: String(row.marketplace_account_id), source: "wb_finance",
     sourceKey: row.source_key ?? `finance:${row.id}`, date: row.operation_date,
     category: mapped.category, decision: mapped.decision,
+    recognitionStatus: !row.source_key || !configured ? "UNVERIFIED"
+      : mapped.decision === "AUTO_YES" ? "RECOGNIZED"
+        : mapped.decision === "AUTO_NO" ? "EXCLUDED" : "REVIEW",
     signedAmountKopeks: Math.round(amount * 100),
     rule: `TAX_WB_V1:${suffix || "unclassified"}`,
   };
@@ -66,7 +72,9 @@ export function classifyAdTaxExpense(row: WbAd): MarketplaceTaxExpenseLine {
   return {
     accountId: String(row.marketplace_account_id), source: "wb_ads",
     sourceKey: row.source_key ?? `ad:${row.id}`, date: row.campaign_date,
-    category: "ADVERTISING", decision: "REVIEW", signedAmountKopeks: Math.round(spend * 100),
+    category: "ADVERTISING", decision: "REVIEW",
+    recognitionStatus: row.source_key ? "REVIEW" : "UNVERIFIED",
+    signedAmountKopeks: Math.round(spend * 100),
     rule: "TAX_WB_V1:ads_spend_unverified",
   };
 }
@@ -75,8 +83,13 @@ export type MarketplaceTaxExpenseSummary = {
   totalBusinessKopeks: number;
   deductibleKopeks: number;
   nonDeductibleKopeks: number;
+  recognizedKopeks: number;
   reviewKopeks: number;
-  categories: Array<{ category: MarketplaceTaxCategory; businessKopeks: number; deductibleKopeks: number; reviewKopeks: number }>;
+  unverifiedKopeks: number;
+  excludedKopeks: number;
+  categories: Array<{ category: MarketplaceTaxCategory; businessKopeks: number;
+    recognizedKopeks: number; deductibleKopeks: number; reviewKopeks: number;
+    unverifiedKopeks: number; excludedKopeks: number }>;
   lines: MarketplaceTaxExpenseLine[];
   warning: string;
 };
@@ -92,6 +105,8 @@ export function summarizeMarketplaceTaxExpenses(
   let deductibleKopeks = 0;
   let nonDeductibleKopeks = 0;
   let reviewKopeks = 0;
+  let unverifiedKopeks = 0;
+  let excludedKopeks = 0;
   for (const row of rows) {
     if (!allowed.has(row.accountId)) throw new Error("Cross-company marketplace expense fact");
     if (row.date < from || row.date > to) continue;
@@ -101,24 +116,37 @@ export function summarizeMarketplaceTaxExpenses(
     lines.push(row);
     // Settlement and compensation are not expenses. Ambiguous deductions are shown for
     // review, but excluded from business total until proven non-overlapping with ads/fees.
-    if (row.category === "SETTLEMENT" || row.category === "COMPENSATION") continue;
+    const excludedComponent = row.category === "SETTLEMENT" || row.category === "COMPENSATION";
     const business = row.category === "ADJUSTMENT" ? 0 : row.signedAmountKopeks;
-    totalBusinessKopeks += business;
-    if (row.decision === "AUTO_YES") deductibleKopeks += business;
-    else if (row.decision === "AUTO_NO") nonDeductibleKopeks += business;
+    if (!excludedComponent) totalBusinessKopeks += business;
+    const status: TaxExpenseRecognitionStatus = excludedComponent ? "EXCLUDED"
+      : row.decision === "AUTO_YES" ? "RECOGNIZED"
+        : row.decision === "AUTO_NO" ? "EXCLUDED" : row.recognitionStatus;
+    if (status === "RECOGNIZED") deductibleKopeks += business;
+    else if (status === "EXCLUDED") {
+      nonDeductibleKopeks += row.signedAmountKopeks;
+      excludedKopeks += row.signedAmountKopeks;
+    } else if (status === "UNVERIFIED") unverifiedKopeks += row.signedAmountKopeks;
     else reviewKopeks += row.signedAmountKopeks;
     const current = categories.get(row.category) ?? {
-      category: row.category, businessKopeks: 0, deductibleKopeks: 0, reviewKopeks: 0,
+      category: row.category, businessKopeks: 0, recognizedKopeks: 0,
+      deductibleKopeks: 0, reviewKopeks: 0, unverifiedKopeks: 0, excludedKopeks: 0,
     };
-    current.businessKopeks += business;
-    if (row.decision === "AUTO_YES") current.deductibleKopeks += business;
-    if (row.decision === "REVIEW") current.reviewKopeks += row.signedAmountKopeks;
+    if (!excludedComponent) current.businessKopeks += business;
+    if (status === "RECOGNIZED") {
+      current.recognizedKopeks += business;
+      current.deductibleKopeks += business;
+    }
+    if (status === "REVIEW") current.reviewKopeks += row.signedAmountKopeks;
+    if (status === "UNVERIFIED") current.unverifiedKopeks += row.signedAmountKopeks;
+    if (status === "EXCLUDED") current.excludedKopeks += row.signedAmountKopeks;
     categories.set(row.category, current);
   }
   return {
-    totalBusinessKopeks, deductibleKopeks, nonDeductibleKopeks, reviewKopeks,
+    totalBusinessKopeks, deductibleKopeks, recognizedKopeks: deductibleKopeks,
+    nonDeductibleKopeks, reviewKopeks, unverifiedKopeks, excludedKopeks,
     categories: [...categories.values()].sort((a, b) => a.category.localeCompare(b.category)),
     lines,
-    warning: "WB expense direction/payment proof and cross-feed adjustments require review. Ambiguous adjustments are excluded from business total to avoid possible double counting; review can exceed that total. Confirmed tax deduction is zero.",
+    warning: "Only component amounts supported by explicit tax evidence are recognized. Review and unverified amounts remain excluded from the tax base; settlements and compensation are classified as excluded rather than expenses.",
   };
 }

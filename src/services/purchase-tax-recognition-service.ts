@@ -100,17 +100,20 @@ async function loadRecognitionInput(companyId: string, asOfDate: string): Promis
 
 export async function getCompanyPurchaseRecognition(
   companyId: string,
-  asOfDate: string
+  asOfDate: string,
+  fromDate?: string
 ): Promise<PurchaseRecognitionSummary & { persistedEventCount: number; reconciliationRequired: boolean }> {
   const input = await loadRecognitionInput(companyId, asOfDate);
   const planned = planPurchaseRecognition(input);
   const db = createAdminClient();
-  const persisted = await allPages<TaxPurchaseRecognitionEvent>((from, to) =>
+  const persistedAll = await allPages<TaxPurchaseRecognitionEvent>((from, to) =>
     db.from("tax_purchase_recognition_events").select("*").eq("company_id", companyId)
       .lte("recognition_date", asOfDate).order("id").range(from, to)
   );
-  const persistedKeys = new Set(persisted.map((event) => event.event_key));
+  const persistedKeys = new Set(persistedAll.map((event) => event.event_key));
   const reconciliationRequired = planned.events.some((event) => !persistedKeys.has(event.eventKey));
+  const persisted = fromDate
+    ? persistedAll.filter((event) => event.recognition_date >= fromDate) : persistedAll;
   const gross = persisted.filter((event) => event.event_type === "RECOGNITION")
     .reduce((sum, event) => sum + Number(event.amount_rub), 0);
   const reversals = -persisted.filter((event) => event.event_type === "REVERSAL")

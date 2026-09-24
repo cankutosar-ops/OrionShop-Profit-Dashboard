@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Company, CompanyTaxObject, CompanyTaxProfile } from "@/types/database";
+import type { Company, CompanyTaxObject, CompanyTaxProfile, CompanyVatStatus } from "@/types/database";
 
 export type TaxModelSelection = "USN_INCOME" | "USN_INCOME_MINUS_EXPENSES" | "CUSTOM";
 
@@ -28,6 +28,14 @@ export function isIsoDate(value: unknown): value is string {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
+export function parseVatStatus(value: unknown): CompanyVatStatus {
+  if (value === undefined || value === null || value === "") return "UNKNOWN";
+  if (value !== "UNKNOWN" && value !== "EXEMPT" && value !== "VAT_APPLICABLE") {
+    throw new Error("Choose a valid VAT status");
+  }
+  return value;
+}
+
 export function moscowToday(): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Moscow", year: "numeric", month: "2-digit", day: "2-digit",
@@ -51,13 +59,16 @@ export async function appendCompanyTaxProfile(input: {
   customObject?: unknown;
   customRate?: unknown;
   effectiveFrom: unknown;
+  vatStatus?: unknown;
 }): Promise<CompanyTaxProfile> {
   const { taxObject, rate } = parseTaxModel(input);
+  const vatStatus = parseVatStatus(input.vatStatus);
   if (!isIsoDate(input.effectiveFrom)) throw new Error("Valid effective date is required");
   if (!/^\d+$/.test(input.companyId)) throw new Error("Invalid company ID");
   const { data, error } = await createAdminClient().rpc("orion_append_company_tax_profile", {
     p_company_id: input.companyId, p_tax_object: taxObject,
     p_tax_rate: rate, p_effective_from: input.effectiveFrom,
+    p_vat_status: vatStatus,
   });
   if (error || !data) throw new Error(`Tax profile could not be saved: ${error?.message ?? "no row returned"}`);
   return data as CompanyTaxProfile;
@@ -66,14 +77,16 @@ export async function appendCompanyTaxProfile(input: {
 export async function createCompanyWithTaxProfile(input: {
   name: string; country?: string | null; currency?: string; timezone?: string;
   language?: string; isDefault?: boolean; model: unknown;
-  customObject?: unknown; customRate?: unknown;
+  customObject?: unknown; customRate?: unknown; vatStatus?: unknown;
 }): Promise<Company> {
   const { taxObject, rate } = parseTaxModel(input);
+  const vatStatus = parseVatStatus(input.vatStatus);
   const { data, error } = await createAdminClient().rpc("orion_create_company_with_tax_profile", {
     p_name: input.name, p_country: input.country ?? null,
     p_currency: input.currency ?? "RUB", p_timezone: input.timezone ?? "Europe/Moscow",
     p_language: input.language ?? "ru", p_is_default: input.isDefault ?? false,
     p_tax_object: taxObject, p_tax_rate: rate, p_effective_from: moscowToday(),
+    p_vat_status: vatStatus,
   });
   if (error || !data) throw new Error(`Company and tax profile could not be created: ${error?.message ?? "no row returned"}`);
   return data as Company;

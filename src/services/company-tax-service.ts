@@ -8,6 +8,7 @@ import { listCompanyTaxProfiles, resolveTaxProfile } from "@/services/tax-profil
 import type { WbAd, WbFinance } from "@/types/database";
 import { loadCompanyFinanceTaxableRevenueEvidence } from "@/lib/tax-engine/finance-transaction-evidence";
 import { getCompanyPurchaseRecognition } from "@/services/purchase-tax-recognition-service";
+import { summarizeOperatingExpenses } from "@/lib/tax-engine/operating-expenses";
 
 async function allPages<T>(queryForPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const result: T[] = [];
@@ -50,15 +51,12 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
   const marketplace = summarizeMarketplaceTaxExpenses(
     [...finance.map(classifyFinanceTaxExpense), ...ads.map(classifyAdTaxExpense)], accountIds, from, to
   );
-  const manualTotalKopeks = manualExpenses.reduce((sum, e) => sum + Math.round(Number(e.amount) * 100), 0);
-  // Checkbox is a claim, not documentation/payment evidence. Do not promote to confirmed tax deduction.
-  const manualClaimedKopeks = manualExpenses.reduce((sum, e) =>
-    sum + (e.tax_deductible ? Math.round(Number(e.amount) * 100) : 0), 0);
+  const operating = summarizeOperatingExpenses(manualExpenses, companyId, from, to);
   const profile = resolveTaxProfile(profiles, to);
   const [taxableRevenueEvidence, purchaseRecognition] = profile?.tax_object === "USN_INCOME_MINUS_EXPENSES"
     ? await Promise.all([
         loadCompanyFinanceTaxableRevenueEvidence({ db, profile, accountIds, from, to }),
-        getCompanyPurchaseRecognition(companyId, to),
+        getCompanyPurchaseRecognition(companyId, to, from),
       ])
     : [null, null];
   const income = taxableRevenueEvidence
@@ -68,8 +66,12 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
         sourceVersion: taxableRevenueEvidence.source,
       }
     : await unverifiedTaxableIncomeProvider.getYtdIncome(companyId, to);
+  const purchaseRecognizedKopeks = purchaseRecognition
+    ? Math.round(purchaseRecognition.recognizedAmount * 100) : 0;
+  const recognizedExpensesKopeks = marketplace.recognizedKopeks + operating.recognizedKopeks +
+    purchaseRecognizedKopeks;
   const calculation = calculateTaxYtd({
-    profile, income, deductibleExpensesKopeks: 0, expensesReady: false,
+    profile, income, deductibleExpensesKopeks: recognizedExpensesKopeks, expensesReady: true,
     isFinalAnnualPeriod: false,
   });
   const readinessSignals: TaxReadiness[] = [calculation.readiness];
@@ -78,27 +80,39 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
       ["POLICY_UNCONFIGURED", "UNVERIFIED_FX", "VAT_BASIS_UNVERIFIED"].includes(purchaseRecognition.status)) {
       readinessSignals.push("PURCHASE_COST_UNVERIFIED");
     }
-    if (marketplace.reviewKopeks !== 0 || manualClaimedKopeks !== 0) readinessSignals.push("REVIEW_EXPENSES");
+    if (marketplace.reviewKopeks !== 0 || marketplace.unverifiedKopeks !== 0 ||
+      operating.reviewKopeks !== 0 || operating.unverifiedKopeks !== 0) {
+      readinessSignals.push("REVIEW_EXPENSES");
+    }
   }
+  const expenseBlockerKopeks = marketplace.reviewKopeks + marketplace.unverifiedKopeks +
+    operating.reviewKopeks + operating.unverifiedKopeks;
   return {
     companyId, from, to, accountIds, profile, profiles,
     taxableIncome: income, taxableRevenueEvidence, calculation, readinessSignals,
-    manual: { totalKopeks: manualTotalKopeks, claimedPendingEvidenceKopeks: manualClaimedKopeks,
-      verifiedDeductibleKopeks: 0, count: manualExpenses.length },
+    operating,
+    manual: { totalKopeks: operating.totalKopeks,
+      claimedPendingEvidenceKopeks: operating.claimedDeductibleKopeks - operating.recognizedKopeks,
+      verifiedDeductibleKopeks: operating.recognizedKopeks, count: operating.lines.length },
     marketplace,
     purchases: {
       count: purchaseCount,
       recognition: purchaseRecognition?.status ?? "NOT_APPLICABLE",
-      taxDeductibleKopeks: purchaseRecognition
-        ? Math.round(purchaseRecognition.recognizedAmount * 100) : 0,
+      taxDeductibleKopeks: purchaseRecognizedKopeks,
       provider: purchaseRecognition,
     },
+    recognizedExpensesKopeks,
+    calculationStatus: income.status !== "VERIFIED" ? "TAXABLE_INCOME_UNVERIFIED"
+      : expenseBlockerKopeks !== 0 || purchaseRecognition?.reconciliationRequired
+        ? "ESTIMATE_WITH_BLOCKERS" : "ESTIMATE_READY",
     warnings: [
-      "Taxable income source is unverified; no tax amount is published.",
+      ...(income.status === "VERIFIED" ? [] : ["Taxable income source is unverified; no tax amount is published."]),
       ...(taxableRevenueEvidence?.reasons ?? []),
       ...(purchaseRecognition?.evidence.reasons ?? []),
       ...(marketplace.reviewKopeks !== 0 ? ["Marketplace expenses require payment/direction review."] : []),
-      ...(manualClaimedKopeks !== 0 ? ["Manual deductible claims require payment/document evidence."] : []),
+      ...(marketplace.unverifiedKopeks !== 0 ? ["Marketplace components lack complete source evidence."] : []),
+      ...(operating.reviewKopeks !== 0 || operating.unverifiedKopeks !== 0
+        ? ["Operating expense claims require complete payment/document evidence."] : []),
     ],
   };
 }

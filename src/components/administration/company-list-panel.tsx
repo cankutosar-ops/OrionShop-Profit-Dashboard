@@ -62,6 +62,7 @@ export function CompanyListPanel() {
           tax_model: taxModel.tax_model,
           custom_tax_object: taxModel.custom_tax_object,
           custom_tax_rate: Number(taxModel.custom_tax_rate),
+          vat_status: taxModel.vat_status,
         }),
       };
       const res = await fetch(

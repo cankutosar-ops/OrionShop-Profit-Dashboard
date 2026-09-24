@@ -8,18 +8,23 @@ import type { CompanyExpense, CompanyExpenseCategory, CompanyWithAccounts } from
 type Overview = {
   calculation: { readiness: string; estimatedTaxYtdKopeks: number | null };
   taxableRevenueEvidence: { status: string; reasons: string[] } | null;
-  manual: { totalKopeks: number; claimedPendingEvidenceKopeks: number; verifiedDeductibleKopeks: number; count: number };
+  operating: { totalKopeks: number; claimedDeductibleKopeks: number; recognizedKopeks: number;
+    reviewKopeks: number; unverifiedKopeks: number; excludedKopeks: number; status: string };
   purchases: { count: number; recognition: string; taxDeductibleKopeks: number | null };
   marketplace: {
-    totalBusinessKopeks: number; deductibleKopeks: number; nonDeductibleKopeks: number;
-    reviewKopeks: number; warning: string;
-    categories: Array<{ category: string; businessKopeks: number; deductibleKopeks: number; reviewKopeks: number }>;
+    totalBusinessKopeks: number; recognizedKopeks: number; excludedKopeks: number;
+    reviewKopeks: number; unverifiedKopeks: number; warning: string;
+    categories: Array<{ category: string; businessKopeks: number; recognizedKopeks: number;
+      reviewKopeks: number; unverifiedKopeks: number; excludedKopeks: number }>;
   };
   warnings: string[];
 };
 
 type Form = { expenseDate: string; category: CompanyExpenseCategory; description: string;
-  amount: string; taxDeductible: boolean; userOverrode: boolean };
+  amount: string; taxDeductible: boolean; userOverrode: boolean;
+  evidenceStatus: CompanyExpense["evidence_status"]; documentReference: string;
+  paymentStatus: CompanyExpense["payment_status"]; paymentDate: string;
+  paidAmount: string; paymentReference: string };
 
 function today(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -27,7 +32,9 @@ function today(): string {
   }).format(new Date());
 }
 const emptyForm = (): Form => ({ expenseDate: today(), category: "ACCOUNTING", description: "", amount: "",
-  taxDeductible: companyExpenseRule("ACCOUNTING")!.checkboxDefault, userOverrode: false });
+  taxDeductible: companyExpenseRule("ACCOUNTING")!.checkboxDefault, userOverrode: false,
+  evidenceStatus: "UNVERIFIED", documentReference: "", paymentStatus: "UNVERIFIED",
+  paymentDate: "", paidAmount: "0", paymentReference: "" });
 const rub = (kopeks: number) => `${(kopeks / 100).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
 
 export function ExpensesWorkspace() {
@@ -126,14 +133,14 @@ export function ExpensesWorkspace() {
       </div> : null}
       {tab === "purchases" ? <section className="rounded-2xl border border-border bg-card p-5 space-y-2">
         <h2 className="font-semibold">Purchases</h2>
-        <p className="text-sm">{overview?.purchases.count ?? 0} purchase headers in this period. Tax recognition: <strong>UNVERIFIED</strong>. Payment and resale allocations are not yet proven.</p>
+        <p className="text-sm">{overview?.purchases.count ?? 0} purchase headers in this period. Tax recognition: <strong>{overview?.purchases.recognition ?? "UNVERIFIED"}</strong>. Recognized {rub(overview?.purchases.taxDeductibleKopeks ?? 0)}.</p>
         {company?.accounts.length ? <ul className="space-y-1">{company.accounts.map((account) =>
           <li key={account.id}><Link href={`/purchases?company=${companyId}&account=${account.id}`} className="text-sm text-primary underline">Open Purchases for {account.account_name}</Link></li>)}</ul>
           : <p className="text-sm text-muted-foreground">Connect a marketplace account to enter purchases.</p>}
       </section> : null}
       {tab === "operating" ? <div className="space-y-5">
         <div className="rounded-2xl border border-border bg-card p-4 text-sm">
-          Total {rub(overview?.manual.totalKopeks ?? 0)} · Claimed pending evidence {rub(overview?.manual.claimedPendingEvidenceKopeks ?? 0)} · Confirmed tax deduction {rub(overview?.manual.verifiedDeductibleKopeks ?? 0)}
+          Total {rub(overview?.operating.totalKopeks ?? 0)} · Claimed {rub(overview?.operating.claimedDeductibleKopeks ?? 0)} · Recognized {rub(overview?.operating.recognizedKopeks ?? 0)} · Review {rub(overview?.operating.reviewKopeks ?? 0)} · Unverified {rub(overview?.operating.unverifiedKopeks ?? 0)}
         </div>
         <form onSubmit={save} className="rounded-2xl border border-border bg-card p-5 space-y-4">
           <h2 className="font-semibold">{editingId ? "Edit" : "Add"} operating expense</h2>
@@ -149,24 +156,38 @@ export function ExpensesWorkspace() {
             <label className="text-sm">Amount (RUB)<input required type="number" min="0.01" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="block w-full rounded-xl border border-border bg-background px-3 py-2" /></label>
           </div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.taxDeductible} onChange={(e) => setForm({ ...form, taxDeductible: e.target.checked, userOverrode: true })} /> Tax Deductible</label>
-          <p className="text-xs text-muted-foreground">{companyExpenseRule(form.category)?.help} {form.userOverrode ? "Manual override recorded." : "Category default."} Tax evidence remains unverified.</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="text-sm">Document status<select value={form.evidenceStatus} onChange={(e) => setForm({ ...form, evidenceStatus: e.target.value as Form["evidenceStatus"] })} className="block w-full rounded-xl border border-border bg-background px-3 py-2">
+              <option value="UNVERIFIED">Unverified</option><option value="VERIFIED">Verified</option><option value="REJECTED">Rejected</option>
+            </select></label>
+            <label className="text-sm">Document reference<input maxLength={200} value={form.documentReference} onChange={(e) => setForm({ ...form, documentReference: e.target.value })} className="block w-full rounded-xl border border-border bg-background px-3 py-2" /></label>
+            <label className="text-sm">Payment status<select value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as Form["paymentStatus"] })} className="block w-full rounded-xl border border-border bg-background px-3 py-2">
+              <option value="UNVERIFIED">Unverified</option><option value="UNPAID">Unpaid</option><option value="PARTIALLY_PAID">Partially paid</option><option value="PAID">Paid</option>
+            </select></label>
+            {form.paymentStatus === "PARTIALLY_PAID" || form.paymentStatus === "PAID" ? <>
+              <label className="text-sm">Payment date<input required type="date" value={form.paymentDate} onChange={(e) => setForm({ ...form, paymentDate: e.target.value })} className="block w-full rounded-xl border border-border bg-background px-3 py-2" /></label>
+              <label className="text-sm">Paid amount (RUB)<input required type="number" min="0.01" step="0.01" value={form.paidAmount} onChange={(e) => setForm({ ...form, paidAmount: e.target.value })} className="block w-full rounded-xl border border-border bg-background px-3 py-2" /></label>
+              <label className="text-sm">Payment reference<input required maxLength={200} value={form.paymentReference} onChange={(e) => setForm({ ...form, paymentReference: e.target.value })} className="block w-full rounded-xl border border-border bg-background px-3 py-2" /></label>
+            </> : null}
+          </div>
+          <p className="text-xs text-muted-foreground">{companyExpenseRule(form.category)?.help} {form.userOverrode ? "Manual override recorded." : "Category default."} Recognition requires verified document evidence and full dated payment evidence.</p>
           <div className="flex gap-2"><button disabled={busy || !companyId} className="rounded-xl bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">Save expense</button>
             {editingId ? <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm()); }} className="rounded-xl border border-border px-4 py-2 text-sm">Cancel</button> : null}</div>
         </form>
         <div className="overflow-x-auto rounded-2xl border border-border bg-card p-5"><h2 className="font-semibold">Operating Expenses</h2>
-          <table className="mt-3 w-full text-left text-sm"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Tax claim</th><th>Actions</th></tr></thead>
-            <tbody>{expenses.map((e) => <tr key={e.id} className="border-t border-border"><td>{e.expense_date}</td><td>{companyExpenseRule(e.category)?.label}</td><td>{e.description}</td><td>{Number(e.amount).toLocaleString("ru-RU")} ₽</td><td>{e.tax_deductible ? "Claimed / unverified" : "No"}{e.tax_deductible_origin === "USER_OVERRIDE" ? " · override" : ""}</td>
-              <td><button type="button" onClick={() => { setEditingId(e.id); setForm({ expenseDate: e.expense_date, category: e.category, description: e.description, amount: String(e.amount), taxDeductible: e.tax_deductible, userOverrode: e.tax_deductible_origin === "USER_OVERRIDE" }); }} className="mr-3 underline">Edit</button>
+          <table className="mt-3 w-full text-left text-sm"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Tax claim</th><th>Evidence</th><th>Actions</th></tr></thead>
+            <tbody>{expenses.map((e) => <tr key={e.id} className="border-t border-border"><td>{e.expense_date}</td><td>{companyExpenseRule(e.category)?.label}</td><td>{e.description}</td><td>{Number(e.amount).toLocaleString("ru-RU")} ₽</td><td>{e.tax_deductible ? "Claimed" : "No"}{e.tax_deductible_origin === "USER_OVERRIDE" ? " · override" : ""}</td><td>{e.evidence_status.replaceAll("_", " ")} · {e.payment_status.replaceAll("_", " ")}</td>
+              <td><button type="button" onClick={() => { setEditingId(e.id); setForm({ expenseDate: e.expense_date, category: e.category, description: e.description, amount: String(e.amount), taxDeductible: e.tax_deductible, userOverrode: e.tax_deductible_origin === "USER_OVERRIDE", evidenceStatus: e.evidence_status, documentReference: e.document_reference ?? "", paymentStatus: e.payment_status, paymentDate: e.payment_date ?? "", paidAmount: String(e.paid_amount), paymentReference: e.payment_reference ?? "" }); }} className="mr-3 underline">Edit</button>
                 <button type="button" disabled={busy} onClick={() => void remove(e.id)} className="underline">Delete</button></td></tr>)}</tbody>
           </table>
         </div>
       </div> : null}
       {tab === "marketplace" ? <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
         <h2 className="font-semibold">Marketplace Expenses · read only</h2>
-        <p className="text-sm">Business expense components {rub(overview?.marketplace.totalBusinessKopeks ?? 0)} · Tax deductible {rub(overview?.marketplace.deductibleKopeks ?? 0)} · Review {rub(overview?.marketplace.reviewKopeks ?? 0)}</p>
+        <p className="text-sm">Business expense components {rub(overview?.marketplace.totalBusinessKopeks ?? 0)} · Recognized {rub(overview?.marketplace.recognizedKopeks ?? 0)} · Review {rub(overview?.marketplace.reviewKopeks ?? 0)} · Unverified {rub(overview?.marketplace.unverifiedKopeks ?? 0)} · Excluded {rub(overview?.marketplace.excludedKopeks ?? 0)}</p>
         <p className="text-xs text-muted-foreground">{overview?.marketplace.warning}</p>
         <ul className="space-y-2 text-sm">{overview?.marketplace.categories.map((row) =>
-          <li key={row.category} className="border-t border-border pt-2">{row.category}: business {rub(row.businessKopeks)} · deductible {rub(row.deductibleKopeks)} · review {rub(row.reviewKopeks)}</li>)}</ul>
+          <li key={row.category} className="border-t border-border pt-2">{row.category}: business {rub(row.businessKopeks)} · recognized {rub(row.recognizedKopeks)} · review {rub(row.reviewKopeks)} · unverified {rub(row.unverifiedKopeks)} · excluded {rub(row.excludedKopeks)}</li>)}</ul>
       </section> : null}
     </div>
   );

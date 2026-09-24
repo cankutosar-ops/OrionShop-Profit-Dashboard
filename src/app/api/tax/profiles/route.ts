@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const profile = await appendCompanyTaxProfile({
       companyId: body.companyId, model: body.model,
       customObject: body.customObject, customRate: body.customRate,
-      effectiveFrom: body.effectiveFrom,
+      effectiveFrom: body.effectiveFrom, vatStatus: body.vatStatus,
     });
     return NextResponse.json({ profile }, { status: 201 });
   } catch (error) {

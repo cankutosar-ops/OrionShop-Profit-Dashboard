@@ -14,6 +14,9 @@ export async function PATCH(request: Request, context: Context) {
     const expense = await updateCompanyExpense(body.companyId, id, authz.user.id, {
       expenseDate: body.expenseDate, category: body.category, description: body.description,
       amount: body.amount, taxDeductible: body.taxDeductible, userOverrode: body.userOverrode,
+      evidenceStatus: body.evidenceStatus, documentReference: body.documentReference,
+      paymentStatus: body.paymentStatus, paymentDate: body.paymentDate,
+      paidAmount: body.paidAmount, paymentReference: body.paymentReference,
     });
     return NextResponse.json({ expense });
   } catch (error) {

@@ -1,13 +1,17 @@
 "use client";
 
+import type { CompanyVatStatus } from "@/types/database";
+
 export type TaxModelForm = {
   tax_model: "USN_INCOME" | "USN_INCOME_MINUS_EXPENSES" | "CUSTOM";
   custom_tax_object: "USN_INCOME" | "USN_INCOME_MINUS_EXPENSES";
   custom_tax_rate: string;
+  vat_status: CompanyVatStatus;
 };
 
 export const DEFAULT_TAX_MODEL_FORM: TaxModelForm = {
   tax_model: "USN_INCOME", custom_tax_object: "USN_INCOME", custom_tax_rate: "6",
+  vat_status: "UNKNOWN",
 };
 
 export function TaxModelFields({ value, onChange }: {
@@ -43,6 +47,16 @@ export function TaxModelFields({ value, onChange }: {
           </label>
         </>
       ) : null}
+      <label className="space-y-1.5 text-sm">
+        <span className="font-medium">VAT Status</span>
+        <select required value={value.vat_status}
+          onChange={(event) => onChange({ ...value, vat_status: event.target.value as CompanyVatStatus })}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2">
+          <option value="UNKNOWN">Unknown / not confirmed</option>
+          <option value="EXEMPT">VAT exempt</option>
+          <option value="VAT_APPLICABLE">VAT applicable</option>
+        </select>
+      </label>
     </>
   );
 }

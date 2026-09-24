@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     if (isAuthFailure(auth)) return auth;
 
     const body = await request.json();
-    const { name, country, currency, timezone, language, is_default, tax_model, custom_tax_object, custom_tax_rate } =
+    const { name, country, currency, timezone, language, is_default, tax_model,
+      custom_tax_object, custom_tax_rate, vat_status } =
       body as {
         name?: string;
         country?: string | null;
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
         tax_model?: string;
         custom_tax_object?: string;
         custom_tax_rate?: number;
+        vat_status?: string;
       };
 
     if (!name?.trim()) {
@@ -72,6 +74,7 @@ export async function POST(request: Request) {
       model: tax_model,
       customObject: custom_tax_object,
       customRate: custom_tax_rate,
+      vatStatus: vat_status,
     });
 
     if (auth.id !== "service:internal") {

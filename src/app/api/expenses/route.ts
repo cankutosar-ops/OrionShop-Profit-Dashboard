@@ -32,6 +32,9 @@ export async function POST(request: Request) {
     const expense = await createCompanyExpense(body.companyId, authz.user.id, {
       expenseDate: body.expenseDate, category: body.category, description: body.description,
       amount: body.amount, taxDeductible: body.taxDeductible, userOverrode: body.userOverrode,
+      evidenceStatus: body.evidenceStatus, documentReference: body.documentReference,
+      paymentStatus: body.paymentStatus, paymentDate: body.paymentDate,
+      paidAmount: body.paidAmount, paymentReference: body.paymentReference,
     });
     return NextResponse.json({ expense }, { status: 201 });
   } catch (error) {

@@ -188,6 +188,7 @@ export type FinanceSyncReportRow = {
 export type CompanyStatus = "active" | "archived";
 
 export type CompanyTaxObject = "USN_INCOME" | "USN_INCOME_MINUS_EXPENSES";
+export type CompanyVatStatus = "UNKNOWN" | "EXEMPT" | "VAT_APPLICABLE";
 
 export type CompanyTaxProfile = {
   id: string;
@@ -199,7 +200,7 @@ export type CompanyTaxProfile = {
   effective_from: string;
   effective_to: string | null;
   region_code: string | null;
-  vat_status: "UNKNOWN" | "EXEMPT" | "VAT_APPLICABLE";
+  vat_status: CompanyVatStatus;
   created_at: string;
   updated_at: string;
 };
@@ -220,6 +221,11 @@ export type CompanyExpense = {
   category_default: boolean;
   tax_deductible_origin: "CATEGORY_DEFAULT" | "USER_OVERRIDE";
   evidence_status: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+  document_reference: string | null;
+  payment_status: "UNVERIFIED" | "UNPAID" | "PARTIALLY_PAID" | "PAID";
+  payment_date: string | null;
+  paid_amount: number;
+  payment_reference: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -1146,8 +1152,12 @@ type PublicTables = {
   };
   company_expenses: {
     Row: CompanyExpense;
-    Insert: Omit<CompanyExpense, "id" | "created_at" | "updated_at" | "deleted_at" | "evidence_status"> &
-      Partial<Pick<CompanyExpense, "id" | "created_at" | "updated_at" | "deleted_at" | "evidence_status">>;
+    Insert: Omit<CompanyExpense, "id" | "created_at" | "updated_at" | "deleted_at" |
+      "evidence_status" | "document_reference" | "payment_status" | "payment_date" |
+      "paid_amount" | "payment_reference"> & Partial<Pick<CompanyExpense, "id" |
+      "created_at" | "updated_at" | "deleted_at" | "evidence_status" |
+      "document_reference" | "payment_status" | "payment_date" | "paid_amount" |
+      "payment_reference">>;
     Update: Partial<CompanyExpense>;
     Relationships: NoRelationships;
   };
@@ -1894,6 +1904,7 @@ export type Database = {
           p_tax_object: CompanyTaxObject;
           p_tax_rate: number;
           p_effective_from: string;
+          p_vat_status: CompanyVatStatus;
         };
         Returns: CompanyTaxProfile;
       };
@@ -1902,6 +1913,7 @@ export type Database = {
           p_name: string; p_country: string | null; p_currency: string;
           p_timezone: string; p_language: string; p_is_default: boolean;
           p_tax_object: CompanyTaxObject; p_tax_rate: number; p_effective_from: string;
+          p_vat_status: CompanyVatStatus;
         };
         Returns: Company;
       };

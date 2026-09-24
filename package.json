@@ -109,6 +109,7 @@
     "verify:product-cost-product-scope": "npx tsx scripts/verify-product-cost-product-scope.mjs",
     "verify:tax-purchase-recognition": "node --experimental-strip-types scripts/verify-tax-engine-purchase-recognition.mjs",
     "verify:tax-purchase-recognition-db": "node scripts/verify-tax-engine-purchase-recognition-db.mjs",
+    "verify:tax-final": "npx tsx scripts/verify-tax-engine-v1-final.mjs",
     "apply:wb-ads-account-scope-migration": "npx tsx scripts/apply-wb-ads-account-scope-migration.mjs",
     "verify:potential-profit-no-returns": "npx tsx scripts/verify-potential-profit-no-returns.mjs",
     "verify:administration-build-boundary": "npx tsx scripts/verify-administration-build-boundary.mjs",
