@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CompanyCard } from "@/components/administration/company-card";
 import { AdminSection } from "@/components/administration/admin-section";
 import type { CompanyWithAccounts } from "@/types/database";
+import { DEFAULT_TAX_MODEL_FORM, TaxModelFields, type TaxModelForm } from "@/components/tax/tax-model-fields";
 
 type CompanyFormState = {
   name: string;
@@ -24,6 +25,7 @@ export function CompanyListPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CompanyFormState>(emptyForm);
+  const [taxModel, setTaxModel] = useState<TaxModelForm>(DEFAULT_TAX_MODEL_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -56,7 +58,11 @@ export function CompanyListPanel() {
         name: form.name,
         country: form.country || null,
         currency: form.currency || "RUB",
-        default_tax_percent: Number(form.default_tax_percent) || 6,
+        ...(editingId ? { default_tax_percent: Number(form.default_tax_percent) || 6 } : {
+          tax_model: taxModel.tax_model,
+          custom_tax_object: taxModel.custom_tax_object,
+          custom_tax_rate: Number(taxModel.custom_tax_rate),
+        }),
       };
       const res = await fetch(
         editingId ? `/api/companies/${editingId}` : "/api/companies",
@@ -91,6 +97,7 @@ export function CompanyListPanel() {
           onClick={() => {
             setEditingId(null);
             setForm(emptyForm);
+            setTaxModel(DEFAULT_TAX_MODEL_FORM);
             setShowForm(true);
           }}
         >
@@ -114,6 +121,7 @@ export function CompanyListPanel() {
             {editingId ? "Edit Company" : "Create Company"}
           </h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {!editingId ? <TaxModelFields value={taxModel} onChange={setTaxModel} /> : null}
             <label className="text-xs">
               <span className="text-muted-foreground">Name</span>
               <input
@@ -139,7 +147,7 @@ export function CompanyListPanel() {
                 className="mt-1 w-full rounded-[var(--radius-control)] border border-border bg-background px-3 py-2 text-sm"
               />
             </label>
-            <label className="text-xs">
+            {editingId ? <label className="text-xs">
               <span className="text-muted-foreground">Default Tax (%)</span>
               <input
                 type="number"
@@ -151,7 +159,7 @@ export function CompanyListPanel() {
                 }
                 className="mt-1 w-full rounded-[var(--radius-control)] border border-border bg-background px-3 py-2 text-sm"
               />
-            </label>
+            </label> : null}
           </div>
           <div className="mt-4 flex gap-2">
             <button

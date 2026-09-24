@@ -73,6 +73,7 @@ const SKIP_DIRS = new Set([
   "playwright-report",
   "test-results",
   "coverage",
+  ".audit",
   ".perf",
   "dist",
   "out",

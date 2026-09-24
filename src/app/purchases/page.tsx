@@ -50,6 +50,9 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
         showFilters={true}
       />
       <ProductContextBannerSection />
+      <p className="mb-4 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+        Tax Recognition: UNVERIFIED. Purchase date and Product Cost history do not prove payment or resale for tax deductions.
+      </p>
       <PurchasesManager
         purchases={purchases}
         productCount={products.length}

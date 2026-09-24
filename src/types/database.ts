@@ -187,6 +187,46 @@ export type FinanceSyncReportRow = {
 
 export type CompanyStatus = "active" | "archived";
 
+export type CompanyTaxObject = "USN_INCOME" | "USN_INCOME_MINUS_EXPENSES";
+
+export type CompanyTaxProfile = {
+  id: string;
+  company_id: string;
+  tax_system: "USN";
+  tax_object: CompanyTaxObject;
+  tax_rate: number;
+  minimum_tax_rate: number;
+  effective_from: string;
+  effective_to: string | null;
+  region_code: string | null;
+  vat_status: "UNKNOWN" | "EXEMPT" | "VAT_APPLICABLE";
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompanyExpenseCategory =
+  | "ACCOUNTING" | "RENT" | "SOFTWARE" | "ADVERTISING" | "LOGISTICS"
+  | "BANKING" | "PAYROLL" | "OFFICE" | "PROFESSIONAL_SERVICES"
+  | "TAXES_FEES" | "FINES_PENALTIES" | "PERSONAL_GROCERIES" | "OTHER";
+
+export type CompanyExpense = {
+  id: string;
+  company_id: string;
+  expense_date: string;
+  category: CompanyExpenseCategory;
+  description: string;
+  amount: number;
+  tax_deductible: boolean;
+  category_default: boolean;
+  tax_deductible_origin: "CATEGORY_DEFAULT" | "USER_OVERRIDE";
+  evidence_status: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -992,6 +1032,20 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  company_tax_profiles: {
+    Row: CompanyTaxProfile;
+    Insert: Omit<CompanyTaxProfile, "id" | "created_at" | "updated_at" | "minimum_tax_rate" | "tax_system" | "vat_status"> &
+      Partial<Pick<CompanyTaxProfile, "id" | "created_at" | "updated_at" | "minimum_tax_rate" | "tax_system" | "vat_status">>;
+    Update: Partial<CompanyTaxProfile>;
+    Relationships: NoRelationships;
+  };
+  company_expenses: {
+    Row: CompanyExpense;
+    Insert: Omit<CompanyExpense, "id" | "created_at" | "updated_at" | "deleted_at" | "evidence_status"> &
+      Partial<Pick<CompanyExpense, "id" | "created_at" | "updated_at" | "deleted_at" | "evidence_status">>;
+    Update: Partial<CompanyExpense>;
+    Relationships: NoRelationships;
+  };
   companies: {
     Row: Company;
     Insert: {
@@ -1129,7 +1183,13 @@ type PublicTables = {
       effective_to?: string | null;
     };
     Update: Partial<ProductCostHistory>;
-    Relationships: NoRelationships;
+    Relationships: [{
+      foreignKeyName: "product_cost_history_product_id_fkey";
+      columns: ["product_id"];
+      isOneToOne: false;
+      referencedRelation: "products";
+      referencedColumns: ["id"];
+    }];
   };
   purchases: {
     Row: Purchase;
@@ -1148,7 +1208,13 @@ type PublicTables = {
       created_at?: string;
     };
     Update: Partial<PurchaseLine>;
-    Relationships: NoRelationships;
+    Relationships: [{
+      foreignKeyName: "purchase_lines_product_id_fkey";
+      columns: ["product_id"];
+      isOneToOne: false;
+      referencedRelation: "products";
+      referencedColumns: ["id"];
+    }];
   };
   product_variants: {
     Row: ProductVariant;
@@ -1666,7 +1732,29 @@ export type Database = {
         Relationships: NoRelationships;
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      orion_admin_rls_status: {
+        Args: Record<string, never>;
+        Returns: Array<Record<string, unknown>>;
+      };
+      orion_append_company_tax_profile: {
+        Args: {
+          p_company_id: string;
+          p_tax_object: CompanyTaxObject;
+          p_tax_rate: number;
+          p_effective_from: string;
+        };
+        Returns: CompanyTaxProfile;
+      };
+      orion_create_company_with_tax_profile: {
+        Args: {
+          p_name: string; p_country: string | null; p_currency: string;
+          p_timezone: string; p_language: string; p_is_default: boolean;
+          p_tax_object: CompanyTaxObject; p_tax_rate: number; p_effective_from: string;
+        };
+        Returns: Company;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
