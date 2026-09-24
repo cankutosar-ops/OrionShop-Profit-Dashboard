@@ -176,7 +176,11 @@ assert.equal(categories.PPVZ_VW, 100);
 assert.equal(categories.PPVZ_VW_NDS, 22);
 const feeParts = buildProductMarketplaceFeeParts(signed);
 assert.equal(feeParts.reimbursements, 3);
-assert.equal(feeParts.marketplaceFees, 111, "VW VAT and inactive candidates stay out of fees");
+assert.equal(
+  feeParts.marketplaceFees,
+  133,
+  "VW VAT enters canonical Marketplace Fees while unrelated inactive candidates stay out"
+);
 const modelWithCompensation = calculateModelBNetProfit({
   grossSales: 1000,
   returnedSales: 0,

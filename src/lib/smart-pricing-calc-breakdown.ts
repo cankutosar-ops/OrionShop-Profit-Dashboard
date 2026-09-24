@@ -35,7 +35,7 @@ function isPresent(amount: number): boolean {
  * Cost lines at current ASP (fallback: recommended price).
  * Amounts come from existing Model B unit metrics (and matching row logistics inputs) only.
  *
- * Smart Pricing Model B folds Sales API marketplace fees into Commission;
+ * Smart Pricing currently uses the legacy Sales-to-Settlement proxy;
  * Acquiring / Penalties / Adjustments are engine fields (usually 0 at unit level).
  * PPVZ Reward / PPVZ VW are not exposed on the unit-level Smart Pricing path — omitted (no assumptions).
  */
@@ -85,7 +85,7 @@ export function buildSmartPricingCostBreakdown(
   const rows: CostBreakdownRow[] = [
     {
       key: "commission",
-      label: "Commission",
+      label: "Sales-to-Settlement allowance",
       amount: modelB.commission,
       percent: commissionPercent,
       section: "marketplace",

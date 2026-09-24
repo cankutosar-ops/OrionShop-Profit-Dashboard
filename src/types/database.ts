@@ -387,14 +387,13 @@ export type ModelBProfitMetrics = {
   netSales: number;
   /** When not `ready`, dependent KPIs must not show temporary zero values. */
   netSalesStatus: import("@/lib/sales-revenue-resolution").NetSalesStatus;
-  /**
-   * Marketplace Fee = Sales − Sales API forPay (net).
-   * Not from ppvz_sales_commission / ppvz_reward / ppvz_vw.
-   */
+  /** @deprecated Legacy alias of salesToSettlementDifference. */
   commission: number;
-  /** Alias of commission — Marketplace Fee. */
+  /** @deprecated Legacy alias of salesToSettlementDifference. */
   marketplaceFee?: number;
-  /** Informational fee validity; a negative signed difference is an anomaly only when Sales is complete. */
+  /** Net Sales − Sales API forPay. Reconciliation only. */
+  salesToSettlementDifference?: number;
+  /** @deprecated Status of the legacy signed reconciliation difference. */
   marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   /** Finance acquiring_fee (display; not deducted again in Net Profit). */
   acquiring: number;
@@ -437,7 +436,7 @@ export type ModelBProfitMetrics = {
   /**
    * Net Profit (V4) =
    * Revenue − PC − Logistics − Storage − Acceptance − Penalties − Other − Ads − Tax.
-   * Does not subtract Marketplace Fee or Acquiring again.
+   * Does not subtract Marketplace Fees or Acquiring again.
    */
   finalNetProfit: number;
   /** @deprecated Legacy aggregate — not shown on Commercial Performance dashboard. */
@@ -719,8 +718,10 @@ export type ProductProfitability = ProfitBreakdown & {
    * `netProfit` remains Operating Profit (before tax) for Smart Pricing / ops compatibility.
    */
   finalNetProfit: number;
-  /** Marketplace Fee = Sales − Sales API forPay (Financial Engine V4). */
+  /** Explicit Finance fee/service components attributed to this product. */
   marketplaceFees: number;
+  /** Net Sales − Sales API forPay; reconciliation only. */
+  salesToSettlementDifference?: number;
   marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
   accountAdjustments: number;
@@ -868,6 +869,10 @@ export type ProductAnalyticsTotals = {
   revenue: number;
   productCost: number;
   marketplaceFees: number;
+  /** Full account canonical Marketplace Fees, independent of product allocation. */
+  accountMarketplaceFees: number;
+  /** Account fee rows without defensible product identity. */
+  unallocatedMarketplaceFees: number;
   /** Purchase-only outbound logistics included in net profit. */
   purchaseLogistics: number;
   /** Excluded outbound logistics (not in net profit). */

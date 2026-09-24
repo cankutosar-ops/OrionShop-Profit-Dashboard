@@ -13,7 +13,9 @@ export { parseWbSourceSuffix };
  */
 export function buildMarketplaceFeesPresentation(
   finance: Parameters<typeof buildMarketplaceFeesPresentationFromFinance>[0],
-  commission: number
+  commission: number,
+  netSales = 0,
+  salesForPay = 0
 ): MarketplaceFeesPresentation {
-  return buildMarketplaceFeesPresentationFromFinance(finance, commission);
+  return buildMarketplaceFeesPresentationFromFinance(finance, commission, netSales, salesForPay);
 }

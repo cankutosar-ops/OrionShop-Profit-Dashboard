@@ -27,7 +27,12 @@ check("FE object count ≥ 36", FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS.length >= 36)
 console.log("\n--- Canonical formulas ---");
 check("Revenue formula", lookupById("FE-003")?.formula?.includes("ppvz_for_pay"));
 check("Net Profit formula", lookupById("FE-013")?.formula?.includes("Estimated Tax"));
-check("Marketplace Fee formula", lookupById("FE-004")?.formula?.includes("forPay"));
+check(
+  "Marketplace Fees formula",
+  lookupById("FE-004")?.formula?.includes("commission") &&
+    lookupById("FE-004")?.formula?.includes("vw_nds") &&
+    !lookupById("FE-004")?.formula?.includes("forPay")
+);
 
 console.log("\n--- Retrieval tests (20) ---");
 runRetrievalTests(
@@ -36,8 +41,8 @@ runRetrievalTests(
     { q: "What is Sales?", expectIds: ["FE-002", "FE-027"] },
     { q: "What is Revenue?", expectIds: ["FE-003"] },
     { q: "What is the difference between Sales and Revenue?", expectIds: ["FE-027", "FE-002", "FE-003"] },
-    { q: "What is Marketplace Fee?", expectIds: ["FE-004"] },
-    { q: "How is Marketplace Fee calculated?", expectIds: ["FE-004"] },
+    { q: "What are Marketplace Fees?", expectIds: ["FE-004"] },
+    { q: "How are Marketplace Fees calculated?", expectIds: ["FE-004"] },
     { q: "What is priceWithDisc?", expectIds: ["FE-019", "FE-002"] },
     { q: "What is finishedPrice?", expectIds: ["FE-020", "FE-012"] },
     { q: "What is forPay?", expectIds: ["FE-021", "FE-004"] },

@@ -88,9 +88,9 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
         />
         <MetricCard
           size="compact"
-          title="Marketplace Fee"
+          title="Marketplace Fees"
           value={formatKpiCurrency(totals.marketplaceFees)}
-          subtitle="Informational · not deducted again"
+          subtitle={`Attributed · ${formatKpiCurrency(totals.unallocatedMarketplaceFees)} unallocated · ${formatKpiCurrency(totals.accountMarketplaceFees)} account total`}
           icon={KPI_ICONS.commission}
         />
         <MetricCard

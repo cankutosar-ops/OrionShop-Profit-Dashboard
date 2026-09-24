@@ -243,8 +243,8 @@ async function buildPeriodBreakdowns(
     periodBreakdown.push({
       chunk,
       netSales: fe.netSales,
-      marketplaceFee: fe.marketplaceFee ?? fe.commission,
-      marketplaceFeeStatus: fe.marketplaceFeeStatus,
+      marketplaceFee: sub.overview.marketplaceFeesPresentation.marketplaceFees,
+      marketplaceFeeStatus: "ready",
       revenue: fe.revenue,
       logistics: fe.logistics,
       storage: fe.storage,
@@ -509,7 +509,7 @@ export async function buildWeeklyBusinessWorkbookModel(
   const currency = ctx.tenant.currency;
   const fe = ctx.financialEngine;
 
-  const pnl = buildPnLFromModelB(fe, currency);
+  const pnl = buildPnLFromModelB(fe, currency, ctx.overview.marketplaceFeesPresentation);
   const settlement = buildSettlementReport({
     fe,
     overview: ctx.overview,

@@ -96,12 +96,12 @@ export const WEEKLY_FE_GLOSSARY: GlossaryRow[] = [
   },
   {
     wbWeeklyTerm: "(implied) Продажа − К перечислению",
-    financialEngineTerm: "Not Marketplace Fee",
+    financialEngineTerm: "Not Marketplace Fees",
     formulaMeaning:
-      "FE Marketplace Fee = Net Sales − Sales API forPay (net). Not Excel implied fee.",
+      "Sales-to-Settlement Difference = Net Sales − Sales API forPay (net). It is a reconciliation metric.",
     dateAxis: "sale_date (Sales API)",
     matchStatus: "DIFFERENT_IDENTITY",
-    notes: "Excel implied fee can be negative; never substitute for FE Marketplace Fee.",
+    notes: "Never substitute an implied workbook difference for Finance-based Marketplace Fees.",
   },
   {
     wbWeeklyTerm: "(absent)",
@@ -113,9 +113,9 @@ export const WEEKLY_FE_GLOSSARY: GlossaryRow[] = [
   },
   {
     wbWeeklyTerm: "(absent)",
-    financialEngineTerm: "Marketplace Fee",
-    formulaMeaning: "Sales − Sales API forPay.",
-    dateAxis: "sale_date",
+    financialEngineTerm: "Marketplace Fees",
+    formulaMeaning: "Finance commission + acquiring_fee + ppvz_reward + ppvz_vw + vw_nds.",
+    dateAxis: "operation_date",
     matchStatus: "FE_ONLY",
     notes: "",
   },

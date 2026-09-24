@@ -43,7 +43,7 @@ function otherMarketplaceCosts(product: ProductProfitability): number {
 
 function totalMarketplaceCost(product: ProductProfitability): number {
   return (
-    product.commission +
+    product.marketplaceFees +
     product.logistics +
     product.returnLogistics +
     product.storage +
@@ -117,7 +117,7 @@ function buildCostRows(products: ProductProfitability[]): ProductReportCostRow[]
     .map((product) => ({
       sku: product.modelCode,
       productName: product.productName,
-      commission: product.commission,
+      marketplaceFees: product.marketplaceFees,
       logistics: product.logistics,
       returnLogistics: product.returnLogistics,
       storage: product.storage,
@@ -230,7 +230,7 @@ export async function provideProductReportSections(
   const costRows = buildCostRows(products);
   const totals = costRows.reduce(
     (acc, row) => {
-      acc.commission += row.commission;
+      acc.marketplaceFees += row.marketplaceFees;
       acc.logistics += row.logistics;
       acc.returnLogistics += row.returnLogistics;
       acc.storage += row.storage;
@@ -240,7 +240,7 @@ export async function provideProductReportSections(
       return acc;
     },
     {
-      commission: 0,
+      marketplaceFees: 0,
       logistics: 0,
       returnLogistics: 0,
       storage: 0,

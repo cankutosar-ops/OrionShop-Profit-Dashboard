@@ -31,7 +31,7 @@ export type HistoricalCostBucket = {
   storage: StorageTotals;
 };
 
-/** Extension seam for an approved future fee definition; production stays Sales API spread. */
+/** Extension seam for canonical Finance fees; production stays on the named legacy proxy. */
 export type MarketplaceFeePercentResolver = (totals: MarketplaceFeesTotals) => number | null;
 export const SALES_API_SPREAD_FEE_RESOLVER: MarketplaceFeePercentResolver = (totals) =>
   weightedMarketplaceFeesPercent(totals.marketplaceFees, totals.revenue);

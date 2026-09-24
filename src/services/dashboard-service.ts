@@ -316,19 +316,6 @@ async function buildOverviewMetricsFromRaw(
   const penalties = financeTotals.penalty;
   const otherExpenses = financeTotals.other + financeTotals.unclassified;
   const dailyRevenue = groupSalesByDate(raw.sales, raw.costHistory, latestCostByProductId);
-  const marketplaceFeesPresentation = buildMarketplaceFeesPresentation(
-    raw.finance,
-    commission
-  );
-  const costBreakdown = buildCostBreakdown({
-    productCost,
-    marketplaceFees: marketplaceFeesPresentation.marketplaceFees,
-    logistics,
-    returnLogistics,
-    storage,
-    advertising,
-    penalties,
-  });
   const ordersPurchasesBase = buildOrdersPurchasesKpis(raw.orders, raw.sales);
   const ordersValueResolution = await resolveOrdersValue(scope, raw.orders);
   const ordersPurchases = {
@@ -339,6 +326,21 @@ async function buildOverviewMetricsFromRaw(
   const netSalesResolution = await resolveNetSales(scope, raw.sales);
   const categorySummary = summarizeFinanceByCategory(raw.finance);
   const salesForPay = buildNetForPayFromDb(raw.sales);
+  const marketplaceFeesPresentation = buildMarketplaceFeesPresentation(
+    raw.finance,
+    commission,
+    netSalesResolution.netSales,
+    salesForPay
+  );
+  const costBreakdown = buildCostBreakdown({
+    productCost,
+    marketplaceFees: marketplaceFeesPresentation.marketplaceFees,
+    logistics,
+    returnLogistics,
+    storage,
+    advertising,
+    penalties,
+  });
   const financeNetForPay = sumNetForPayFromFinance(raw.finance);
   const acceptance = sumAcceptanceFromFinance(raw.finance);
   const customerPaid = buildNetFinishedPriceFromDb(raw.sales);
@@ -405,8 +407,8 @@ async function buildOverviewMetricsFromRaw(
     /** Commercial Performance Revenue = Finance ppvz_for_pay. */
     revenue: modelBProfit.revenue,
     productCost,
-    /** Marketplace Fee = Sales − Sales API forPay (not Finance ppvz_sales_commission). */
-    commission: modelBProfit.commission,
+    /** Finance commission component; broad fees live in marketplaceFeesPresentation. */
+    commission: marketplaceFeesPresentation.commission,
     logistics,
     returnLogistics,
     storage,

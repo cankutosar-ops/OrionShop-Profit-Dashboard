@@ -15,7 +15,7 @@ type SmartPricingCostBreakdownDetailProps = {
 };
 
 const SECTION_LABEL: Record<NonNullable<CostBreakdownRow["section"]>, string> = {
-  marketplace: "Marketplace Fees",
+  marketplace: "Sales-to-Settlement allowance (legacy)",
   logistics: "Logistics",
   other: "Costs & Tax",
 };

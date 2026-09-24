@@ -69,7 +69,7 @@ export function buildSmartPricingExplainContent(
             { label: "Expected return burden", value: `${(row.expectedReturnBurden ?? 0).toFixed(2)} ₽ (within logistics)` },
             { label: "Ads", value: `${effectiveMarketing.toFixed(2)}% (manual floor ${marketingPercent.toFixed(2)}%, recent ${row.recentAdvertisingPercent?.toFixed(2) ?? "—"}%)` },
             {
-              label: "Tax (after Marketplace Fee)",
+              label: "Tax (after Sales-to-Settlement allowance)",
               value: `${taxPercent.toFixed(0)}% → ${tax.toFixed(2)} ₽`,
             },
             { label: "Purchase Cost", value: `${row.purchaseCost.toFixed(2)} ₽` },
@@ -104,7 +104,7 @@ export function buildSmartPricingExplainContent(
         value: `${row.marketplaceFeesPercent.toFixed(2)}% (${formatCommissionSourceLabel(row.marketplaceFeesSource)})`,
       },
       { label: "Ads", value: `${effectiveMarketing.toFixed(2)}% (manual floor ${marketingPercent.toFixed(2)}%, recent ${row.recentAdvertisingPercent?.toFixed(2) ?? "—"}%)` },
-      { label: "Tax (after Marketplace Fee)", value: `${taxPercent.toFixed(0)}%` },
+      { label: "Tax (after Sales-to-Settlement allowance)", value: `${taxPercent.toFixed(0)}%` },
       {
         label: "Target Margin (after tax)",
         value: `${targetMarginPercent.toFixed(0)}%`,

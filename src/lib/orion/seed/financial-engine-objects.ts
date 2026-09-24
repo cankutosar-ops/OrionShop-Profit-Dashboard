@@ -53,7 +53,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
       { type: "defined_by", target_id: "BIZ-001" },
     ],
     formula:
-      "Sales = Σ priceWithDisc; Marketplace Fee = Sales − forPay; Revenue = Σ ppvz_for_pay; Estimated Tax = Tax% × Σ finishedPrice; Net Profit = Revenue − costs − Estimated Tax",
+      "Sales = Σ priceWithDisc; Marketplace Fees = explicit Finance fee/service suffixes; Sales-to-Settlement Difference = Sales − forPay; Revenue = Σ ppvz_for_pay; Estimated Tax = Tax% × Σ finishedPrice; Net Profit = Revenue − costs − Estimated Tax",
     data_sources: ["wb_sales", "wb_finance"],
   }),
   fe({
@@ -192,8 +192,8 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
   }),
   fe({
     id: "FE-004",
-    title: "Marketplace Fee",
-    aliases: ["Commission", "Marketplace Fees", "What is Marketplace Fee", "How is Marketplace Fee calculated"],
+    title: "Marketplace Fees",
+    aliases: ["Marketplace fee burden", "What are Marketplace Fees", "How are Marketplace Fees calculated"],
     description:
       "The marketplace fee take in the commercial fee story. Shown for understanding; not deducted again in Net Profit when already reflected before Revenue.",
     module: "Financial Engine",
@@ -210,8 +210,8 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
       { kind: "implementation", ref: "src/lib/financial-engine.ts", priority: 5 },
     ],
     relationships: [{ type: "depends_on", target_id: "FE-002" }],
-    formula: "Marketplace Fee = max(0, Sales − Sales API forPay)",
-    exceptions: ["Never derived from ppvz_* fields."],
+    formula: "Marketplace Fees = abs(commission) + abs(acquiring_fee) + abs(ppvz_reward) + abs(ppvz_vw) + abs(vw_nds)",
+    exceptions: ["Never includes generic OTHER, logistics, storage, acceptance, penalties, adjustments, advertising, or compensation.", "Not the same as Sales-to-Settlement Difference or signed WB Remuneration."],
   }),
   fe({
     id: "FE-005",
@@ -384,7 +384,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     ],
     formula: "Estimated Tax = Tax Rate × Σ finishedPrice (historical reporting / Financial Engine)",
     exceptions: [
-      "Smart Pricing uses Tax Rate × (Sale Price − Marketplace Fee) — do not unify with reporting.",
+      "Smart Pricing uses Tax Rate × (Sale Price − legacy Sales-to-Settlement allowance) — do not unify with reporting.",
     ],
   }),
   fe({
@@ -524,7 +524,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     title: "forPay",
     aliases: ["Sales API forPay", "for_pay"],
     description:
-      "Sales API seller-payable per sale (forPay). With Sales derives Marketplace Fee = max(0, Sales − Σ forPay). Stored as wb_sales.for_pay. Differs from Finance ppvz_for_pay.",
+      "Sales API seller-payable per sale (forPay). With Net Sales it derives the Sales-to-Settlement Difference. Stored as wb_sales.for_pay. Differs from Finance ppvz_for_pay.",
     module: "Financial Engine",
     category: "definition",
     authority_level: "business_rule",
@@ -851,7 +851,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     title: "Sales API vs Finance API Reconciliation",
     aliases: ["forPay vs ppvz_for_pay", "Why Sales API differs from Finance"],
     description:
-      "Sales forPay and Finance ppvz_for_pay differ by feed/timing/settlement. Revenue uses Finance. Marketplace Fee uses Sales − forPay. State API and date axis when reconciling.",
+      "Sales forPay and Finance ppvz_for_pay differ by feed/timing/settlement. Revenue uses Finance. Sales-to-Settlement Difference uses Sales − forPay. State API and date axis when reconciling.",
     module: "Financial Engine",
     category: "comparison",
     authority_level: "business_rule",
@@ -875,7 +875,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     title: "Effective Marketplace Cost Presentation",
     aliases: ["Per-sale marketplace costs"],
     description:
-      "Finance presentation: COMMISSION + ACQUIRING + PPVZ_REWARD + PPVZ_VW + OTHER from wb_finance. Separate from Marketplace Fee formula (Sales − forPay).",
+      "Canonical Marketplace Fees: explicit commission + acquiring_fee + ppvz_reward + ppvz_vw + vw_nds suffixes from wb_finance. Generic OTHER is excluded.",
     module: "Financial Engine",
     category: "definition",
     authority_level: "business_rule",
@@ -921,7 +921,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     title: "Estimated Tax Dual Model",
     aliases: ["Dual Tax Models"],
     description:
-      "The project intentionally maintains two Estimated Tax bases: historical reporting uses Σ finishedPrice; Smart Pricing uses Sale − Marketplace Fee. Do not unify.",
+      "The project intentionally maintains two Estimated Tax bases: historical reporting uses Σ finishedPrice; Smart Pricing uses Sale minus its legacy Sales-to-Settlement allowance. Do not unify.",
     module: "Architecture",
     category: "policy",
     authority_level: "architecture_decision",
@@ -941,7 +941,7 @@ export const FINANCIAL_ENGINE_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     technical_owner: "Platform Architecture",
     exceptions: [
       "Reporting: Tax Rate × Σ finishedPrice",
-      "Smart Pricing: Tax Rate × (Sale − Marketplace Fee)",
+      "Smart Pricing: Tax Rate × (Sale − legacy Sales-to-Settlement allowance)",
     ],
   }),
 ];

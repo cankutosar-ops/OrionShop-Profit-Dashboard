@@ -273,7 +273,8 @@ and verified line by line against the running code:
 | Quantity | Formula | Code |
 |---|---|---|
 | Sales | Σ `priceWithDisc` | `params.netSales` |
-| Marketplace Fee | Sales − Sales API `forPay` | `:63` |
+| Marketplace Fees | Finance `commission + acquiring_fee + ppvz_reward + ppvz_vw + vw_nds` | canonical accounting helper |
+| Sales-to-Settlement Difference | Net Sales − Sales API `forPay` | reconciliation only |
 | Revenue | Σ Finance `ppvz_for_pay` | `:64` |
 | Estimated Tax | Tax Rate × Σ `finishedPrice` | `:74` |
 | Net Profit | Revenue − Product Cost − Logistics − Storage − Acceptance − Penalties − Other − Advertising − Estimated Tax | `:77-87` |
@@ -313,7 +314,7 @@ reads the pre-tax alias.
 ### A3 — Estimated Tax uses two different bases, deliberately
 
 **Rule.** Historical reporting taxes Σ `finishedPrice`. Smart Pricing taxes
-`Sale Price − Marketplace Fee`. These must not be unified.
+`Sale Price − legacy Sales-to-Settlement allowance`. These must not be unified.
 
 **Why.** They answer different questions. Reporting asks what tax was incurred
 on completed sales; Smart Pricing solves for the price that achieves a target

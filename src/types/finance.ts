@@ -66,17 +66,23 @@ export type FinanceExpenseTotals = Record<FinanceOperationType, number> & {
 
 export type MarketplaceFeesPresentation = {
   /**
-   * Per-sale marketplace costs:
-   * COMMISSION + ACQUIRING + PPVZ_REWARD + PPVZ_VW + OTHER.
-   * Excludes ADJUSTMENT (Account Adjustments) and COMPENSATION (reimbursements).
+   * Explicit Finance fee/service components only:
+   * commission + acquiring_fee + ppvz_reward + ppvz_vw + vw_nds.
    */
   marketplaceFees: number;
-  /** Commission component — informational breakdown only. */
+  /** Finance commission suffix; distinct from signed WB Remuneration. */
   commission: number;
   acquiring: number;
   ppvzReward: number;
   ppvzVw: number;
-  otherMarketplaceExpenses: number;
+  ppvzVwNds: number;
+  wbRemuneration: number | null;
+  wbRemunerationPercent: number | null;
+  wbRemunerationStatus: import("@/lib/marketplace-fees").WbRemunerationAvailability;
+  /** Net Sales − Sales API forPay. Reconciliation only. */
+  salesToSettlementDifference: number;
+  attributedMarketplaceFees: number;
+  unattributedMarketplaceFees: number;
   /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees. */
   accountAdjustments: number;
   /** Excluded from marketplaceFees — not a marketplace cost. */

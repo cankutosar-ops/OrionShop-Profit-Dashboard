@@ -8,11 +8,7 @@ import { resolve } from "path";
 import { createAdminClient } from "../src/lib/supabase/admin.ts";
 import { assembleFinancialComponents } from "../src/lib/financial-components.ts";
 import { buildMarketplaceFeesPresentationFromFinance } from "../src/lib/finance-rollup.ts";
-import {
-  effectiveFinanceCategory,
-  isMarketplaceFeeCategory,
-  parseWbSourceSuffix,
-} from "../src/lib/finance-category.ts";
+import { parseWbSourceSuffix } from "../src/lib/finance-category.ts";
 import {
   fetchFinanceInRange,
   fetchProductsWithRelations,
@@ -33,21 +29,19 @@ function loadEnv() {
 }
 
 const MF_CATEGORIES = [
-  "COMMISSION",
-  "ACQUIRING",
-  "PPVZ_REWARD",
-  "PPVZ_VW",
-  "OTHER",
-  "ADJUSTMENT",
+  "commission",
+  "acquiring_fee",
+  "ppvz_reward",
+  "ppvz_vw",
+  "vw_nds",
 ];
 
 const CATEGORY_LABELS = {
-  COMMISSION: "Commission",
-  ACQUIRING: "Acquiring",
-  PPVZ_REWARD: "PPVZ Reward",
-  PPVZ_VW: "PPVZ VW",
-  OTHER: "Other Marketplace Expenses",
-  ADJUSTMENT: "Account Adjustments",
+  commission: "Commission",
+  acquiring_fee: "Acquiring",
+  ppvz_reward: "PPVZ Reward",
+  ppvz_vw: "PPVZ VW",
+  vw_nds: "VW VAT",
 };
 
 function fmt(n) {
@@ -89,24 +83,16 @@ async function auditScope(scope, label) {
       continue;
     }
 
-    const category = effectiveFinanceCategory(row);
     const key = row.source_key ?? row.id;
     duplicateKeys.set(key, (duplicateKeys.get(key) ?? 0) + 1);
 
-    if (!isMarketplaceFeeCategory(category)) {
-      excluded.push({ row, reason: `category ${category} not in marketplace fees` });
+    if (!MF_CATEGORIES.includes(suffix)) {
+      excluded.push({ row, reason: `suffix ${suffix || "<none>"} not in Marketplace Fees` });
       continue;
     }
 
-    if (category === "COMPENSATION") {
-      excluded.push({ row, reason: "COMPENSATION (reimbursement) excluded" });
-      continue;
-    }
-
-    if (MF_CATEGORIES.includes(category)) {
-      byCategory[category].amount += Math.abs(Number(row.amount));
-      byCategory[category].rows.push(row);
-    }
+    byCategory[suffix].amount += Math.abs(Number(row.amount));
+    byCategory[suffix].rows.push(row);
   }
 
   const rawTotal = MF_CATEGORIES.reduce((s, c) => s + byCategory[c].amount, 0);
@@ -115,8 +101,7 @@ async function auditScope(scope, label) {
     dashboard.acquiring +
     dashboard.ppvzReward +
     dashboard.ppvzVw +
-    dashboard.otherMarketplaceExpenses +
-    dashboard.accountAdjustments;
+    dashboard.ppvzVwNds;
 
   const dupCount = [...duplicateKeys.values()].filter((n) => n > 1).length;
 
@@ -176,12 +161,11 @@ async function main() {
   );
 
   const dashMap = {
-    COMMISSION: result.dashboard.commission,
-    ACQUIRING: result.dashboard.acquiring,
-    PPVZ_REWARD: result.dashboard.ppvzReward,
-    PPVZ_VW: result.dashboard.ppvzVw,
-    OTHER: result.dashboard.otherMarketplaceExpenses,
-    ADJUSTMENT: result.dashboard.accountAdjustments,
+    commission: result.dashboard.commission,
+    acquiring_fee: result.dashboard.acquiring,
+    ppvz_reward: result.dashboard.ppvzReward,
+    ppvz_vw: result.dashboard.ppvzVw,
+    vw_nds: result.dashboard.ppvzVwNds,
   };
 
   for (const cat of MF_CATEGORIES) {

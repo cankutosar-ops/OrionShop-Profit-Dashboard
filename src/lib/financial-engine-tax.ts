@@ -6,7 +6,7 @@ import { DEFAULT_TAX_PERCENT } from "@/lib/smart-pricing-constants";
  * Callers choose the base (intentional dual model):
  *
  * - Historical reporting: base = Σ Sales API finishedPrice
- * - Smart Pricing:        base = Sale − Marketplace Fee
+ * - Smart Pricing:        base = Sale − legacy Sales-to-Settlement allowance
  *
  * Do not “normalize” those bases into one. See docs/estimated-tax-models.md.
  */

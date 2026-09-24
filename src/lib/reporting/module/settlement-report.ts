@@ -80,7 +80,7 @@ function linesFromSlice(
     },
     {
       id: "marketplaceFees",
-      label: "Marketplace Fee",
+      label: "Marketplace Fees",
       amount: slice.marketplaceFees,
       section: "wb",
     },
@@ -116,7 +116,8 @@ function linesFromSlice(
  */
 export function buildSettlementFromEngine(
   fe: ModelBProfitMetrics,
-  overview: Pick<OverviewMetrics, "logistics" | "returnLogistics" | "otherExpenses">,
+  overview: Pick<OverviewMetrics, "logistics" | "returnLogistics" | "otherExpenses"> &
+    Partial<Pick<OverviewMetrics, "marketplaceFeesPresentation">>,
   currency = "RUB"
 ): SettlementReportView {
   const outbound = overview.logistics;
@@ -131,7 +132,7 @@ export function buildSettlementFromEngine(
     returnedSales: fe.returnedSales,
     netSales: fe.netSales,
     revenue: fe.revenue,
-    marketplaceFees: fe.marketplaceFee ?? fe.commission,
+    marketplaceFees: overview.marketplaceFeesPresentation?.marketplaceFees ?? 0,
     logistics: splitOk ? outbound : fe.logistics,
     returnLogistics: splitOk ? returnLogistics : 0,
     storage: fe.storage,
@@ -146,7 +147,7 @@ export function buildSettlementFromEngine(
     currency,
     lines: linesFromSlice(slice),
     netSalesStatus: fe.netSalesStatus,
-    marketplaceFeeStatus: fe.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(fe.netSalesStatus, fe.marketplaceFee ?? fe.commission),
+    marketplaceFeeStatus: "ready",
     netTransfer: fe.sellerPayout,
   };
 }

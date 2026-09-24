@@ -13,7 +13,7 @@ export function calculateTotalLogistics(
 }
 
 /**
- * Storage, penalties, and reimbursements outside Marketplace Fee.
+ * Storage, penalties, and reimbursements outside Marketplace Fees.
  * Account adjustments are deducted inside V4 Net Profit via `adjustments`.
  */
 export function calculateOtherMarketplaceCosts(
@@ -24,7 +24,7 @@ export function calculateOtherMarketplaceCosts(
 
 /**
  * Product Analytics Net Profit (V4 finalNetProfit).
- * Does NOT deduct Marketplace Fee or Acquiring again.
+ * Does NOT deduct Marketplace Fees or Acquiring again.
  * Named calculateOperationalProfit for historical call-site compatibility.
  */
 export function calculateOperationalProfit(product: ProductProfitability): number {

@@ -23,7 +23,7 @@ runRetrievalTests(
     { q: "What does Gross Sales mean?", expectIds: ["FE-001", "DASH-005"] },
     { q: "How is Net Profit calculated?", expectIds: ["FE-013", "DASH-006"] },
     { q: "Which date does the Dashboard use?", expectIds: ["DASH-002", "FE-034", "REP-006"] },
-    { q: "What is Marketplace Fee?", expectIds: ["FE-004", "DASH-007"] },
+    { q: "What are Marketplace Fees?", expectIds: ["FE-004", "DASH-007"] },
     { q: "What does Settlement show?", expectIds: ["DASH-008", "FE-014", "REP-004"] },
     { q: "What are Units Sold?", expectIds: ["FE-028", "DASH-009"] },
     { q: "What are Returned Units?", expectIds: ["FE-029", "DASH-009"] },

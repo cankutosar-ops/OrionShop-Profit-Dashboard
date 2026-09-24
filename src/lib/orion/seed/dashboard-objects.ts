@@ -205,9 +205,9 @@ export const DASHBOARD_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
   dash({
     id: "DASH-007",
     title: "Dashboard Marketplace Fees Card",
-    aliases: ["Marketplace Fee KPI", "Commission card"],
+    aliases: ["Marketplace Fees KPI", "Marketplace fee burden card"],
     description:
-      "Shows Marketplace Fee = max(0, Sales − Sales API forPay) from wb_sales in period. Informational in Net Profit story (fee reflected before Revenue). Finance breakdown card may show COMMISSION+ACQUIRING+PPVZ components separately.",
+      "Shows canonical Finance-based Marketplace Fees from explicit commission, acquiring_fee, ppvz_reward, ppvz_vw, and vw_nds suffixes. The breakdown separately exposes signed WB Remuneration and Sales-to-Settlement Difference.",
     module: "Dashboard",
     category: "definition",
     authority_level: "financial_engine",

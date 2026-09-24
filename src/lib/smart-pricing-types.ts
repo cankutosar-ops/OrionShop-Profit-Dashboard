@@ -96,7 +96,7 @@ export type ProductSmartPricingInputs = {
   currentAvgPrice: number | null;
   /**
    * Historical Σ finishedPrice / Σ priceWithDisc (reporting metadata).
-   * Not used as Smart Pricing tax base — simulator taxes after Marketplace Fee.
+   * Not used as Smart Pricing tax base — simulator taxes after its legacy Sales-to-Settlement allowance.
    */
   finishedPriceRatio: number;
   hasSalesHistory: boolean;

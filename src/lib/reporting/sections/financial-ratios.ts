@@ -34,8 +34,8 @@ export function buildFinancialRatiosSection(
   const ratios: FinancialRatioLine[] = [
     {
       id: "marketplaceFeePercent",
-      label: "Marketplace Fee %",
-      value: percentOfRevenue(fe.marketplaceFee ?? fe.commission, revenue),
+      label: "Marketplace Fees %",
+      value: percentOfRevenue(ctx.overview.marketplaceFeesPresentation.marketplaceFees, revenue),
       format: "percent",
     },
     {

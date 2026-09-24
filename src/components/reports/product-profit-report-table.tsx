@@ -78,7 +78,7 @@ const columns: ColumnDef[] = [
   },
   {
     key: "marketplaceFee",
-    label: "Marketplace Fee",
+    label: "Marketplace Fees",
     align: "right",
     value: (row) => row.marketplaceFee,
     render: (row) => formatCurrency(row.marketplaceFee),

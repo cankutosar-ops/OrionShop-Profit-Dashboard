@@ -112,16 +112,17 @@ export function isInactiveFinanceEvidenceCategory(category: FinanceCategory): bo
 }
 
 export function isMarketplaceServiceFeeCategory(category: FinanceCategory): boolean {
-  return category === "ACQUIRING" || category === "PPVZ_REWARD" || category === "PPVZ_VW";
+  return (
+    category === "ACQUIRING" ||
+    category === "PPVZ_REWARD" ||
+    category === "PPVZ_VW" ||
+    category === "PPVZ_VW_NDS"
+  );
 }
 
-/** Categories included in Marketplace Fees (per-sale marketplace costs; excludes ADJUSTMENT and reimbursements). */
+/** Category-level compatibility helper. Suffix ownership remains canonical. */
 export function isMarketplaceFeeCategory(category: FinanceCategory): boolean {
-  return (
-    category === "COMMISSION" ||
-    isMarketplaceServiceFeeCategory(category) ||
-    category === "OTHER"
-  );
+  return category === "COMMISSION" || isMarketplaceServiceFeeCategory(category);
 }
 
 /** Sprint 6.10 legacy rows may store supplier_oper_name in description. */

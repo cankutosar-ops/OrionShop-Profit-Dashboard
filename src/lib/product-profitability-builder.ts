@@ -27,6 +27,7 @@ import {
   sumNetForPayFromFinance,
 } from "@/lib/wb-settlement";
 import { parseWbSourceSuffix } from "@/lib/finance-category";
+import { calculateSalesToSettlementDifference } from "@/lib/marketplace-fees";
 import type {
   ProductCostHistory,
   ProductProfitability,
@@ -82,6 +83,10 @@ export type ProductProfitabilityBuildResult = {
   unallocatedRevenue: number;
   /** Σ finance for_pay across the full finance set. */
   accountRevenue: number;
+  /** Canonical fee allocation control; account total remains independent. */
+  attributedMarketplaceFees: number;
+  unattributedMarketplaceFees: number;
+  accountMarketplaceFees: number;
 };
 
 function sumForPay(finance: readonly WbFinance[]): number {
@@ -107,6 +112,7 @@ export function buildProductProfitabilityResult(
   const stamped = stampLogisticsProductIds(finance, sales, products);
   const accountRevenue = sumForPay(finance);
   const unallocatedRevenue = sumForPayNullProduct(finance);
+  const accountFeeParts = buildProductMarketplaceFeeParts(finance);
 
   const scopedOrders = orders.filter((row) => productIds.has(String(row.product_id)));
   const scopedSales = sales.filter((row) => productIds.has(String(row.product_id)));
@@ -188,14 +194,15 @@ export function buildProductProfitabilityResult(
         /** Commercial Performance Revenue = Finance ppvz_for_pay (net). */
         revenue: modelB.revenue,
         productCost,
-        /** Marketplace Fee = Sales − Sales API forPay (V4 engine). */
-        commission: modelB.marketplaceFee ?? modelB.commission,
+        /** Narrow Finance commission component. */
+        commission: categorySummary.COMMISSION,
         logistics: financeTotals.logistics,
         returnLogistics: financeTotals.return_logistics,
         storage: financeTotals.storage,
         advertising,
         penalties: financeTotals.penalty,
-        otherExpenses: financeTotals.other + financeTotals.unclassified,
+        /** Account adjustments attributable to this product; fee components stay in marketplaceFees. */
+        otherExpenses: feeParts.accountAdjustments,
         /** Operating Profit (before tax). */
         netProfit: modelB.netProfit,
         netSales: modelB.netSales,
@@ -206,9 +213,13 @@ export function buildProductProfitabilityResult(
         unitsReturned: salesMetrics.unitsReturned,
         netUnits,
         unitLogisticsCost,
-        /** Marketplace Fee (V4) — same as commission; not finance ppvz_* bundle. */
-        marketplaceFees: modelB.marketplaceFee ?? modelB.commission,
-        marketplaceFeeStatus: modelB.marketplaceFeeStatus,
+        /** Canonical explicit Finance fee/service components for this product. */
+        marketplaceFees: feeParts.marketplaceFees,
+        salesToSettlementDifference: calculateSalesToSettlementDifference(
+          modelB.netSales,
+          salesForPay
+        ),
+        marketplaceFeeStatus: productFinance.length > 0 ? ("ready" as const) : ("unavailable" as const),
         accountAdjustments: feeParts.accountAdjustments,
         reimbursements: feeParts.reimbursements,
         productId: String(product.id),
@@ -250,6 +261,10 @@ export function buildProductProfitabilityResult(
     logisticsReconciliation,
     unallocatedRevenue,
     accountRevenue,
+    attributedMarketplaceFees: rows.reduce((sum, row) => sum + row.marketplaceFees, 0),
+    unattributedMarketplaceFees:
+      accountFeeParts.marketplaceFees - rows.reduce((sum, row) => sum + row.marketplaceFees, 0),
+    accountMarketplaceFees: accountFeeParts.marketplaceFees,
   };
 }
 

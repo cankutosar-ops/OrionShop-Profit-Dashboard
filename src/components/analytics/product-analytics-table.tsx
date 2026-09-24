@@ -119,7 +119,7 @@ export function ProductAnalyticsTable({
                 className="px-6 py-3"
               />
               <SortableTh
-                label="Marketplace Fee"
+                label="Marketplace Fees"
                 active={isActive("fees")}
                 direction={directionFor("fees")}
                 onClick={() => onSort("fees")}

@@ -69,13 +69,15 @@ async function main() {
 
   const financeTotals = rollupCategoriesToProfitBuckets(finance);
   const categorySummary = summarizeFinanceByCategory(finance);
-  const presentation = buildMarketplaceFeesPresentationFromFinance(
-    finance,
-    financeTotals.commission
-  );
   const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
   const netSales = buildNetSalesFromDb(sales);
   const salesForPay = buildNetForPayFromDb(sales);
+  const presentation = buildMarketplaceFeesPresentationFromFinance(
+    finance,
+    financeTotals.commission,
+    netSales.netSales,
+    salesForPay
+  );
   const financeNetForPay = sumNetForPayFromFinance(finance);
   const acceptance = sumAcceptanceFromFinance(finance);
   const productCost = computeProductCost(sales, costHistory, latestCost);
@@ -136,12 +138,12 @@ async function main() {
     `account=${account.revenue} rawFinance=${independentlyObservedRevenue}`
   );
   add(
-    "Marketplace Fee = Sales − forPay",
-    Math.abs(account.commission - independentlyExpectedFee) < 0.02,
-    `fee=${account.commission} rawSales=${independentlyObservedNetSales} rawForPay=${independentlyObservedForPay}`
+    "Sales-to-Settlement Difference = Sales − forPay",
+    Math.abs(account.salesToSettlementDifference - independentlyExpectedFee) < 0.02,
+    `difference=${account.salesToSettlementDifference} rawSales=${independentlyObservedNetSales} rawForPay=${independentlyObservedForPay}`
   );
   add(
-    "Smart Pricing fee ≡ engine fee",
+    "Smart Pricing legacy proxy ≡ Sales-to-Settlement Difference",
     Math.abs(spFees.marketplaceFees - engineFee.marketplaceFee) < 0.02 &&
       Math.abs(spCommission.commission - engineFee.marketplaceFee) < 0.02,
     `sp=${spFees.marketplaceFees} eng=${engineFee.marketplaceFee}`
@@ -152,11 +154,10 @@ async function main() {
     `Δ=${verifyModelBFinalProfitArithmetic(account)}`
   );
   add(
-    "Product marketplaceFees ≡ engine fee (per SKU)",
-    productRows.every(
-      (row) => Math.abs(row.marketplaceFees - row.commission) < 0.02
-    ),
-    `products=${productRows.length}`
+    "Product Marketplace Fees are attributed Finance components",
+    productRows.reduce((sum, row) => sum + row.marketplaceFees, 0) <=
+      presentation.marketplaceFees + 0.02,
+    `productAttributed=${productRows.reduce((sum, row) => sum + row.marketplaceFees, 0)} account=${presentation.marketplaceFees}`
   );
   add(
     "Product operationalProfit ≡ finalNetProfit",
@@ -216,7 +217,7 @@ async function main() {
     `products=${productRows.length}`
   );
 
-  // Attributed product revenue/fee may not equal account totals (unallocated finance).
+  // Attributed product revenue/fees may not equal account totals (unallocated finance).
   // Identity: each product revenue comes from finance for_pay on attributed rows.
   const productRev = r2(productRows.reduce((s, p) => s + p.revenue, 0));
   add(
@@ -238,7 +239,8 @@ async function main() {
     JSON.stringify(
       {
         sales: account.netSales,
-        marketplaceFee: account.commission,
+        salesToSettlementDifference: account.salesToSettlementDifference,
+        marketplaceFees: presentation.marketplaceFees,
         acquiring: account.acquiring,
         revenue: account.revenue,
         netProfit: account.finalNetProfit,

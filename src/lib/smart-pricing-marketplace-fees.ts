@@ -12,7 +12,7 @@ export const SMART_PRICING_MIN_PRODUCT_SALES = 20;
 export const SMART_PRICING_MIN_CATEGORY_SALES = 50;
 
 export type MarketplaceFeesTotals = {
-  /** Marketplace Fee ₽ = max(0, Sales − Sales API forPay). */
+  /** Legacy pricing proxy: Sales-to-Settlement Difference in rubles. */
   marketplaceFees: number;
   /** Sales (net priceWithDisc) — not V4 Revenue. */
   revenue: number;
@@ -21,8 +21,8 @@ export type MarketplaceFeesTotals = {
   unitsSold: number;
 };
 
-/** Marketplace Fee metrics from Sales API via Financial Engine. */
-export function sumSalesApiCommissionMetrics(sales: WbSale[]): MarketplaceFeesTotals {
+/** Legacy Smart Pricing proxy. It is not canonical Marketplace Fees. */
+export function sumSalesToSettlementDifferenceMetrics(sales: WbSale[]): MarketplaceFeesTotals {
   const totals = sumSalesAndMarketplaceFee(sales);
   return {
     marketplaceFees: totals.marketplaceFee,
@@ -31,6 +31,9 @@ export function sumSalesApiCommissionMetrics(sales: WbSale[]): MarketplaceFeesTo
     unitsSold: totals.unitsSold,
   };
 }
+
+/** @deprecated Use sumSalesToSettlementDifferenceMetrics. */
+export const sumSalesApiCommissionMetrics = sumSalesToSettlementDifferenceMetrics;
 
 /** @deprecated Finance COMMISSION is not Marketplace Fee. */
 export function sumProductMarketplaceFees(_finance: WbFinance[]): number {
@@ -41,24 +44,24 @@ export function sumCompletedSalesRevenue(sales: WbSale[]): {
   revenue: number;
   unitsSold: number;
 } {
-  const metrics = sumSalesApiCommissionMetrics(sales);
+  const metrics = sumSalesToSettlementDifferenceMetrics(sales);
   return { revenue: metrics.revenue, unitsSold: metrics.unitsSold };
 }
 
 export { saleUnitSalesAmount };
 
 /**
- * Marketplace Fee totals for Smart Pricing — Financial Engine only.
- * Finance argument is ignored.
+ * Legacy Sales-to-Settlement proxy for Smart Pricing. Finance is intentionally
+ * not switched until the canonical denominator and backtest are approved.
  */
 export function sumProductMarketplaceFeesMetrics(
   sales: WbSale[],
   _finance?: WbFinance[]
 ): MarketplaceFeesTotals {
-  return sumSalesApiCommissionMetrics(sales);
+  return sumSalesToSettlementDifferenceMetrics(sales);
 }
 
-/** Weighted Marketplace Fee %: SUM(fee) / SUM(Sales) × 100. */
+/** Weighted Sales-to-Settlement proxy %: SUM(difference) / SUM(Sales) × 100. */
 export function weightedMarketplaceFeesPercent(
   feesTotal: number,
   salesTotal: number
@@ -95,7 +98,7 @@ export function buildCategoryMarketplaceFeesTotals(
   for (const product of products) {
     const categoryId = String(product.category_id);
     const productId = String(product.id);
-    const metrics = sumSalesApiCommissionMetrics(salesByProductId.get(productId) ?? []);
+    const metrics = sumSalesToSettlementDifferenceMetrics(salesByProductId.get(productId) ?? []);
     byCategory.set(
       categoryId,
       mergeFeesTotals(byCategory.get(categoryId) ?? emptyFeesTotals(), metrics)
@@ -116,7 +119,7 @@ export function buildAccountMarketplaceFeesTotals(
     const productId = String(product.id);
     totals = mergeFeesTotals(
       totals,
-      sumSalesApiCommissionMetrics(salesByProductId.get(productId) ?? [])
+      sumSalesToSettlementDifferenceMetrics(salesByProductId.get(productId) ?? [])
     );
   }
 

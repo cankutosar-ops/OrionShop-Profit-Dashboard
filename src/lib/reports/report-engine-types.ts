@@ -223,7 +223,7 @@ export type ProductReportPerformanceRow = {
 export type ProductReportCostRow = {
   sku: string;
   productName: string;
-  commission: number;
+  marketplaceFees: number;
   logistics: number;
   returnLogistics: number;
   storage: number;
@@ -278,7 +278,7 @@ export type ProductReportProfitabilityData = {
 export type ProductReportMarketplaceCostData = {
   rows: ProductReportCostRow[];
   totals: {
-    commission: number;
+    marketplaceFees: number;
     logistics: number;
     returnLogistics: number;
     storage: number;

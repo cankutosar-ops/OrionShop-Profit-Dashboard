@@ -69,6 +69,7 @@ async function DashboardCoreSection({
       <div className="space-y-8">
         <DashboardProfitSection
           modelB={overview.modelBProfit}
+          marketplaceFees={overview.marketplaceFeesPresentation}
           quantities={quantities}
           kpis={kpis}
           totalOrdersCount={totalOrdersCount}
@@ -100,6 +101,7 @@ async function DashboardCoreSection({
       <div className="mt-8">
         <ProfitabilityBreakdown
           modelB={overview.modelBProfit}
+          marketplaceFees={overview.marketplaceFeesPresentation}
           isEmptyPeriod={Boolean(isEmptyPeriod)}
         />
       </div>

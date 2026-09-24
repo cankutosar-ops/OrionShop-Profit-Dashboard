@@ -525,7 +525,7 @@ export function SmartPricingPanel({
                   setTaxPercent(Number.isFinite(parsed) && parsed >= 0 ? parsed : 0);
                 }}
                 className={fieldClass}
-                title="Tax = Tax% × (Sale − Marketplace Fee). Default 6%."
+                title="Legacy pricing model: tax uses the amount after the Sales-to-Settlement allowance. Default 6%."
               />
             </label>
             <label className="space-y-1.5">
@@ -619,7 +619,7 @@ export function SmartPricingPanel({
                 />
               </label>
               <label className="space-y-1.5">
-                <span className={labelClass}>Commission History Window</span>
+                <span className={labelClass}>Sales-to-Settlement History Window</span>
                 <select
                   value={commissionSettings.commissionWindow}
                   onChange={(event) =>
@@ -693,7 +693,7 @@ export function SmartPricingPanel({
                   }}
                 />
                 <SortableTh
-                  label="Fee %"
+                  label="Sales→Settlement %"
                   active={isActive("commission")}
                   direction={directionFor("commission")}
                   onClick={() => onSort("commission")}

@@ -47,8 +47,8 @@ function mapSummary(lines: ReportSummaryLine[]): ReportExportSummaryItem[] {
 function feeFilters(status: MarketplaceFeeStatus | undefined): ReportExportFilter[] {
   const resolved = status ?? "unavailable";
   return [
-    { label: "Marketplace Fee status", value: resolved },
-    ...(resolved === "anomaly" ? [{ label: "Marketplace Fee warning", value: MARKETPLACE_FEE_ANOMALY_MESSAGE }] : []),
+    { label: "Marketplace Fees status", value: resolved },
+    ...(resolved === "anomaly" ? [{ label: "Sales-to-Settlement warning", value: MARKETPLACE_FEE_ANOMALY_MESSAGE }] : []),
   ];
 }
 
@@ -98,7 +98,7 @@ export function buildPnLExportDocument(params: {
   const filters: ReportExportFilter[] = [{ label: "Source", value: params.source }];
   filters.push(...feeFilters(params.marketplaceFeeStatus));
   filters.push({ label: "Sales completeness", value: params.netSalesStatus ?? "unavailable" });
-  if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales and Marketplace Fee are observed partial values; Sales coverage is not ready" });
+  if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales is an observed partial value; Sales coverage is not ready" });
   if (params.category) filters.push({ label: "Category", value: params.category });
 
   // Mixed currency/percent in one column — export as two columns for correct formatting.
@@ -118,7 +118,7 @@ export function buildPnLExportDocument(params: {
     columns: [
       { key: "label", header: "Line", type: "text" },
       { key: "salesStatus", header: "Sales Status", type: "text" },
-      { key: "marketplaceFeeStatus", header: "Marketplace Fee Status", type: "text" },
+      { key: "marketplaceFeeStatus", header: "Marketplace Fees Status", type: "text" },
       { key: "amount", header: "Amount", type: "currency" },
       { key: "percent", header: "Percent", type: "percent" },
     ],
@@ -146,7 +146,7 @@ export function buildSettlementExportDocument(params: {
   const filters: ReportExportFilter[] = [{ label: "Source", value: params.source }];
   filters.push(...feeFilters(params.marketplaceFeeStatus));
   filters.push({ label: "Sales completeness", value: params.netSalesStatus ?? "unavailable" });
-  if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales and Marketplace Fee include observed partial values" });
+  if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales includes observed partial values" });
   if (params.category) {
     filters.push({ label: "Category", value: params.category });
     filters.push({ label: "Projection scope", value: "Legacy category Net Transfer uses product Other Expenses; account Settlement uses Adjustments. The accounting classifications need not reconcile." });
@@ -169,7 +169,7 @@ export function buildSettlementExportDocument(params: {
       { key: "section", header: "Section", type: "text" },
       { key: "label", header: "Line", type: "text" },
       { key: "salesStatus", header: "Sales Status", type: "text" },
-      { key: "marketplaceFeeStatus", header: "Marketplace Fee Status", type: "text" },
+      { key: "marketplaceFeeStatus", header: "Marketplace Fees Status", type: "text" },
       { key: "amount", header: "Amount", type: "currency" },
     ],
     rows: params.lines.map((l) => ({
@@ -193,7 +193,7 @@ const PRODUCT_COLUMNS: ReportExportColumn[] = [
   { key: "netSales", header: "Net Sales", type: "currency" },
   { key: "revenue", header: "Revenue", type: "currency" },
   { key: "productCost", header: "Product Cost", type: "currency" },
-  { key: "marketplaceFees", header: "Marketplace Fee", type: "currency" },
+  { key: "marketplaceFees", header: "Marketplace Fees", type: "currency" },
   { key: "logistics", header: "Logistics", type: "currency" },
   { key: "storage", header: "Storage", type: "currency" },
   { key: "penalties", header: "Penalties", type: "currency" },
@@ -219,7 +219,7 @@ export function buildProductProfitExportDocument(params: {
   const filters: ReportExportFilter[] = [{ label: "Source", value: params.source }];
   filters.push(...feeFilters(params.marketplaceFeeStatus));
   filters.push({ label: "Sales completeness", value: params.netSalesStatus ?? "unavailable" });
-  if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales and Marketplace Fee include observed partial values" });
+  if (params.netSalesStatus !== "ready") filters.push({ label: "Warning", value: "Net Sales includes observed partial values" });
   if (params.category) filters.push({ label: "Category", value: params.category });
 
   return baseDoc({
@@ -230,7 +230,7 @@ export function buildProductProfitExportDocument(params: {
     dateTo: params.dateTo,
     filters,
     summary: mapSummary(params.summary),
-    columns: [...PRODUCT_COLUMNS, { key: "netSalesStatus", header: "Sales Status", type: "text" }, { key: "marketplaceFeeStatus", header: "Marketplace Fee Status", type: "text" }],
+    columns: [...PRODUCT_COLUMNS, { key: "netSalesStatus", header: "Sales Status", type: "text" }, { key: "marketplaceFeeStatus", header: "Marketplace Fees Status", type: "text" }],
     rows: params.rows.map((r) => ({
       sku: r.sku,
       productName: r.productName,
@@ -278,10 +278,10 @@ export function buildGroupPerformanceExportDocument(params: {
     { key: "unitsSold", header: "Units Sold", type: "integer" },
     { key: "netSales", header: "Net Sales", type: "currency" },
     { key: "netSalesStatus", header: "Sales Status", type: "text" },
-    { key: "marketplaceFeeStatus", header: "Marketplace Fee Status", type: "text" },
+    { key: "marketplaceFeeStatus", header: "Marketplace Fees Status", type: "text" },
     { key: "revenue", header: "Revenue", type: "currency" },
     { key: "productCost", header: "Product Cost", type: "currency" },
-    { key: "marketplaceFees", header: "Marketplace Fee", type: "currency" },
+    { key: "marketplaceFees", header: "Marketplace Fees", type: "currency" },
     { key: "logistics", header: "Logistics", type: "currency" },
     { key: "storage", header: "Storage", type: "currency" },
     { key: "adjustments", header: "Adjustments", type: "currency" },
@@ -301,7 +301,7 @@ export function buildGroupPerformanceExportDocument(params: {
       ...(params.filters ?? []),
       { label: "Sales completeness", value: params.netSalesStatus ?? "unavailable" },
       ...feeFilters(params.marketplaceFeeStatus),
-      ...(params.netSalesStatus === "ready" ? [] : [{ label: "Warning", value: "Net Sales and Marketplace Fee include observed partial values" }]),
+      ...(params.netSalesStatus === "ready" ? [] : [{ label: "Warning", value: "Net Sales includes observed partial values" }]),
     ],
     summary: mapSummary(params.summary),
     columns,

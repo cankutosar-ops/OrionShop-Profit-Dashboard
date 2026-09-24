@@ -157,7 +157,9 @@ async function main() {
   console.log(`Acquiring:              ${presentation.acquiring.toFixed(2)} ₽`);
   console.log(`PPVZ Reward:            ${presentation.ppvzReward.toFixed(2)} ₽`);
   console.log(`PPVZ VW:                ${presentation.ppvzVw.toFixed(2)} ₽`);
-  console.log(`Other Marketplace Exp:  ${presentation.otherMarketplaceExpenses.toFixed(2)} ₽`);
+  console.log(`VW VAT:                 ${presentation.ppvzVwNds.toFixed(2)} ₽`);
+  console.log(`WB Remuneration:        ${presentation.wbRemuneration == null ? presentation.wbRemunerationStatus : `${presentation.wbRemuneration.toFixed(2)} ₽`}`);
+  console.log(`Sales→Settlement Diff:  ${presentation.salesToSettlementDifference.toFixed(2)} ₽`);
   console.log(`Account Adjustments:    ${presentation.accountAdjustments.toFixed(2)} ₽`);
   console.log("");
   console.log("=== Operational Costs ===");
