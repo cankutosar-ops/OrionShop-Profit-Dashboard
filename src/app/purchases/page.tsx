@@ -51,7 +51,7 @@ export default async function PurchasesPage({ searchParams }: PageProps) {
       />
       <ProductContextBannerSection />
       <p className="mb-4 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-        Tax Recognition: UNVERIFIED. Purchase date and Product Cost history do not prove payment or resale for tax deductions.
+        Tax Recognition is separate from Product Cost: only documented, fully paid, FIFO-allocated sold units enter the append-only tax ledger.
       </p>
       <PurchasesManager
         purchases={purchases}

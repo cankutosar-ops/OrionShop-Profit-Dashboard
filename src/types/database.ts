@@ -632,6 +632,11 @@ export type CostManagementRow = {
 };
 
 export type PurchaseCurrency = "USD" | "RUB" | "TRY" | "EUR";
+export type PurchasePaymentStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID";
+export type PurchaseTaxRecognitionStatus =
+  | "NO_PURCHASES" | "POLICY_UNCONFIGURED" | "UNPAID" | "UNVERIFIED_FX"
+  | "VAT_BASIS_UNVERIFIED" | "PAID_NOT_SOLD" | "PARTIALLY_RECOGNIZED" | "RECOGNIZED"
+  | "RECONCILIATION_REQUIRED";
 
 export const PURCHASE_CURRENCIES: PurchaseCurrency[] = ["USD", "RUB", "TRY", "EUR"];
 
@@ -644,6 +649,12 @@ export type Purchase = {
   exchange_rate: number | null;
   /** Optional supplier invoice / document number. */
   invoice_number: string | null;
+  payment_status: PurchasePaymentStatus;
+  payment_date: string | null;
+  paid_amount: number;
+  payment_reference: string | null;
+  payment_fx_rate: number | null;
+  payment_fx_reference: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -665,6 +676,8 @@ export type PurchaseWithLines = Purchase & {
   line_count: number;
   /** Σ quantity × unit_cost for this purchase (purchase currency). */
   total_cost: number;
+  recognized_tax_cost: number;
+  tax_recognition_status: PurchaseTaxRecognitionStatus;
 };
 
 export type PurchaseListLinePreview = {
@@ -681,8 +694,45 @@ export type PurchaseListItem = Purchase & {
   supplierArticles: string[];
   /** Σ quantity × unit_cost (purchase currency). */
   total_cost: number;
+  recognized_tax_cost: number;
+  tax_recognition_status: PurchaseTaxRecognitionStatus;
   /** Line previews for inline expansion (cost history ledger). */
   lines: PurchaseListLinePreview[];
+};
+
+export type CompanyPurchaseTaxPolicy = {
+  id: string;
+  company_id: string;
+  allocation_method: "FIFO";
+  payment_policy: "FULL_PAYMENT_ONLY";
+  return_policy: "RETURN_EVENT_DATE";
+  effective_from: string;
+  evidence_reference: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TaxPurchaseRecognitionEvent = {
+  id: string;
+  event_key: string;
+  company_id: string;
+  marketplace_account_id: string;
+  purchase_id: string;
+  purchase_line_id: string;
+  product_id: string;
+  source_sale_row_id: string;
+  source_sale_id: string;
+  source_srid: string;
+  event_type: "RECOGNITION" | "REVERSAL";
+  recognition_date: string;
+  quantity: number;
+  unit_cost_rub: number;
+  amount_rub: number;
+  reversal_of_event_key: string | null;
+  allocation_method: "FIFO";
+  rule_version: string;
+  evidence: Record<string, unknown>;
+  created_at: string;
 };
 
 export type PurchaseImportResult = {
@@ -1079,6 +1129,14 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  company_purchase_tax_policies: {
+    Row: CompanyPurchaseTaxPolicy;
+    Insert: Omit<CompanyPurchaseTaxPolicy, "id" | "created_at" | "updated_at"> & {
+      id?: string; created_at?: string; updated_at?: string;
+    };
+    Update: never;
+    Relationships: NoRelationships;
+  };
   company_tax_profiles: {
     Row: CompanyTaxProfile;
     Insert: Omit<CompanyTaxProfile, "id" | "created_at" | "updated_at" | "minimum_tax_rate" | "tax_system" | "vat_status"> &
@@ -1250,10 +1308,18 @@ type PublicTables = {
   };
   purchases: {
     Row: Purchase;
-    Insert: Omit<Purchase, "id" | "created_at" | "updated_at"> & {
+    Insert: Omit<Purchase, "id" | "created_at" | "updated_at" | "payment_status" |
+      "payment_date" | "paid_amount" | "payment_reference" | "payment_fx_rate" |
+      "payment_fx_reference"> & {
       id?: string;
       created_at?: string;
       updated_at?: string;
+      payment_status?: PurchasePaymentStatus;
+      payment_date?: string | null;
+      paid_amount?: number;
+      payment_reference?: string | null;
+      payment_fx_rate?: number | null;
+      payment_fx_reference?: string | null;
     };
     Update: Partial<Purchase>;
     Relationships: NoRelationships;
@@ -1272,6 +1338,14 @@ type PublicTables = {
       referencedRelation: "products";
       referencedColumns: ["id"];
     }];
+  };
+  tax_purchase_recognition_events: {
+    Row: TaxPurchaseRecognitionEvent;
+    Insert: Omit<TaxPurchaseRecognitionEvent, "id" | "created_at"> & {
+      id?: string; created_at?: string;
+    };
+    Update: never;
+    Relationships: NoRelationships;
   };
   product_variants: {
     Row: ProductVariant;

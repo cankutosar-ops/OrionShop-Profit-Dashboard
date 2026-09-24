@@ -7,6 +7,7 @@ import { listCompanyExpenses } from "@/services/company-expense-service";
 import { listCompanyTaxProfiles, resolveTaxProfile } from "@/services/tax-profile-service";
 import type { WbAd, WbFinance } from "@/types/database";
 import { loadCompanyFinanceTaxableRevenueEvidence } from "@/lib/tax-engine/finance-transaction-evidence";
+import { getCompanyPurchaseRecognition } from "@/services/purchase-tax-recognition-service";
 
 async function allPages<T>(queryForPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const result: T[] = [];
@@ -54,9 +55,12 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
   const manualClaimedKopeks = manualExpenses.reduce((sum, e) =>
     sum + (e.tax_deductible ? Math.round(Number(e.amount) * 100) : 0), 0);
   const profile = resolveTaxProfile(profiles, to);
-  const taxableRevenueEvidence = profile?.tax_object === "USN_INCOME_MINUS_EXPENSES"
-    ? await loadCompanyFinanceTaxableRevenueEvidence({ db, profile, accountIds, from, to })
-    : null;
+  const [taxableRevenueEvidence, purchaseRecognition] = profile?.tax_object === "USN_INCOME_MINUS_EXPENSES"
+    ? await Promise.all([
+        loadCompanyFinanceTaxableRevenueEvidence({ db, profile, accountIds, from, to }),
+        getCompanyPurchaseRecognition(companyId, to),
+      ])
+    : [null, null];
   const income = taxableRevenueEvidence
     ? {
         status: taxableRevenueEvidence.status,
@@ -70,7 +74,10 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
   });
   const readinessSignals: TaxReadiness[] = [calculation.readiness];
   if (profile?.tax_object === "USN_INCOME_MINUS_EXPENSES") {
-    readinessSignals.push("PURCHASE_COST_UNVERIFIED");
+    if (!purchaseRecognition || purchaseRecognition.reconciliationRequired ||
+      ["POLICY_UNCONFIGURED", "UNVERIFIED_FX", "VAT_BASIS_UNVERIFIED"].includes(purchaseRecognition.status)) {
+      readinessSignals.push("PURCHASE_COST_UNVERIFIED");
+    }
     if (marketplace.reviewKopeks !== 0 || manualClaimedKopeks !== 0) readinessSignals.push("REVIEW_EXPENSES");
   }
   return {
@@ -79,12 +86,17 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
     manual: { totalKopeks: manualTotalKopeks, claimedPendingEvidenceKopeks: manualClaimedKopeks,
       verifiedDeductibleKopeks: 0, count: manualExpenses.length },
     marketplace,
-    purchases: { count: purchaseCount, recognition: "UNVERIFIED" as const,
-      taxDeductibleKopeks: null },
+    purchases: {
+      count: purchaseCount,
+      recognition: purchaseRecognition?.status ?? "NOT_APPLICABLE",
+      taxDeductibleKopeks: purchaseRecognition
+        ? Math.round(purchaseRecognition.recognizedAmount * 100) : 0,
+      provider: purchaseRecognition,
+    },
     warnings: [
       "Taxable income source is unverified; no tax amount is published.",
       ...(taxableRevenueEvidence?.reasons ?? []),
-      ...(purchaseCount ? ["Purchase payment and resale allocation are unverified."] : []),
+      ...(purchaseRecognition?.evidence.reasons ?? []),
       ...(marketplace.reviewKopeks !== 0 ? ["Marketplace expenses require payment/direction review."] : []),
       ...(manualClaimedKopeks !== 0 ? ["Manual deductible claims require payment/document evidence."] : []),
     ],
