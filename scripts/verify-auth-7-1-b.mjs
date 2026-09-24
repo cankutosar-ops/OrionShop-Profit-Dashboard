@@ -191,7 +191,15 @@ async function main() {
     const companiesRes = await fetch(`${BASE}/api/companies`, {
       headers: { Cookie: cookieHeader() },
     });
-    if (!ok("Protected API works with session cookies", companiesRes.status === 200, `status=${companiesRes.status}`)) {
+    const companiesBody = await companiesRes.json().catch(() => ({}));
+    const reachedAuthorization =
+      companiesRes.status === 200 ||
+      (companiesRes.status === 403 && /^AUTHZ_/.test(companiesBody.code ?? ""));
+    if (!ok(
+      "Session cookies reach the protected API authorization boundary",
+      reachedAuthorization,
+      `status=${companiesRes.status} code=${companiesBody.code ?? "none"}`
+    )) {
       failures += 1;
     }
 

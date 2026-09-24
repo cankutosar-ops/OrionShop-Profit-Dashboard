@@ -84,12 +84,16 @@ TODO
 
 Purpose
 
-TODO
+Record the manual control-plane actions that cannot be expressed as repository
+migrations and must be verified before external beta access.
 
 ---
 
 Scope
 
-TODO — Skeleton only. No product content yet.
+## Manual platform actions
+
+- [ ] Enable Supabase Auth leaked-password protection before external beta
+  invitations. Record the operator and timestamp without recording secrets.
 
 ---
