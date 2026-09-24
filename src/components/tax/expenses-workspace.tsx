@@ -7,6 +7,7 @@ import type { CompanyExpense, CompanyExpenseCategory, CompanyWithAccounts } from
 
 type Overview = {
   calculation: { readiness: string; estimatedTaxYtdKopeks: number | null };
+  taxableRevenueEvidence: { status: string; reasons: string[] } | null;
   manual: { totalKopeks: number; claimedPendingEvidenceKopeks: number; verifiedDeductibleKopeks: number; count: number };
   purchases: { count: number; recognition: string; taxDeductibleKopeks: number | null };
   marketplace: {
@@ -113,7 +114,14 @@ export function ExpensesWorkspace() {
             className={`rounded-xl px-4 py-2 text-sm ${tab === key ? "bg-primary text-primary-foreground" : "border border-border"}`}>{label}</button>)}
       </nav>
       {overview ? <div className="rounded-2xl border border-border bg-card p-4 text-sm">
-        <strong>Tax calculation unavailable</strong> · {overview.calculation.readiness}. Gross taxable-income evidence requires validation.
+        <strong>Taxable Income: Unverified</strong> · {overview.calculation.readiness}.
+        {overview.taxableRevenueEvidence?.reasons.length ? (
+          <p className="mt-1 text-muted-foreground">
+            Evidence: {overview.taxableRevenueEvidence.reasons.join(" · ")}
+          </p>
+        ) : (
+          <p className="mt-1 text-muted-foreground">Gross taxable-income evidence requires validation.</p>
+        )}
         <p className="mt-1 text-muted-foreground">Financial Engine V4 profitability is unchanged. <Link href="/tax" className="underline">Tax profile settings</Link></p>
       </div> : null}
       {tab === "purchases" ? <section className="rounded-2xl border border-border bg-card p-5 space-y-2">

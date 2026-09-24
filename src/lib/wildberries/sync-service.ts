@@ -15,6 +15,10 @@ import {
 } from "./api-client";
 import type { WbFinanceV1Period } from "./finance-v1";
 import { assertAccount2ReportsRecoveryAccount } from "@/lib/finance-recovery/reports-ingestion";
+import {
+  mapFinanceTransactionEvidence,
+  persistFinanceTransactionEvidence,
+} from "@/lib/tax-engine/finance-transaction-evidence";
 import { syncLog } from "./sync-log";
 import { yieldEventLoop } from "./sync-runtime";
 import { getActiveSyncTimer } from "./sync-timer";
@@ -784,6 +788,8 @@ export class WbSyncService {
       }
 
       const financeLines: Array<Omit<WbFinance, "id">> = [];
+      const evidenceRows: Array<ReturnType<typeof mapFinanceTransactionEvidence>> = [];
+      const observedAt = new Date().toISOString();
       const reportIds = new Set<number>();
       let minOp: string | null = null;
       let maxOp: string | null = null;
@@ -797,6 +803,7 @@ export class WbSyncService {
           ...line,
           marketplace_account_id: this.marketplaceAccountId,
         }));
+        evidenceRows.push(mapFinanceTransactionEvidence(row, this.marketplaceAccountId, observedAt));
         for (const line of mapped) {
           const op = line.operation_date?.slice(0, 10);
           if (op) {
@@ -818,6 +825,14 @@ export class WbSyncService {
         includeReportIdentity
       );
       result.errors.push(...errors);
+      if (errors.length === 0) {
+        const evidence = await persistFinanceTransactionEvidence({
+          db: supabase,
+          accountId: this.marketplaceAccountId,
+          rows: evidenceRows,
+        });
+        result.errors.push(...evidence.errors);
+      }
       result.reportIds = [...reportIds].sort((a, b) => a - b);
       result.returnedFrom = minOp;
       result.returnedTo = maxOp;
@@ -900,6 +915,8 @@ export class WbSyncService {
       }
 
       const financeLines: Array<Omit<WbFinance, "id">> = [];
+      const evidenceRows: Array<ReturnType<typeof mapFinanceTransactionEvidence>> = [];
+      const observedAt = new Date().toISOString();
       const reportIds = new Set<number>();
       let minOp: string | null = null;
       let maxOp: string | null = null;
@@ -913,6 +930,7 @@ export class WbSyncService {
           ...line,
           marketplace_account_id: this.marketplaceAccountId,
         }));
+        evidenceRows.push(mapFinanceTransactionEvidence(row, this.marketplaceAccountId, observedAt));
         for (const line of mapped) {
           if (String(line.marketplace_account_id) !== String(this.marketplaceAccountId)) {
             throw new Error(
@@ -940,7 +958,16 @@ export class WbSyncService {
         leaseOwner
       );
       result.errors.push(...errors);
-      if (errors.length === 0) result.v1Outcome = "data";
+      if (errors.length === 0) {
+        const evidence = await persistFinanceTransactionEvidence({
+          db: supabase,
+          accountId: this.marketplaceAccountId,
+          rows: evidenceRows,
+          leaseOwner,
+        });
+        result.errors.push(...evidence.errors);
+      }
+      if (result.errors.length === 0) result.v1Outcome = "data";
       result.reportIds = [...reportIds].sort((a, b) => a - b);
       result.returnedFrom = minOp;
       result.returnedTo = maxOp;
@@ -1036,6 +1063,8 @@ export class WbSyncService {
 
       timer?.startPhase("finance_map");
       const financeLines: Array<Omit<WbFinance, "id">> = [];
+      const evidenceRows: Array<ReturnType<typeof mapFinanceTransactionEvidence>> = [];
+      const observedAt = new Date().toISOString();
       const reportIdSet = new Set<number>();
       let minOp: string | null = null;
       let maxOp: string | null = null;
@@ -1051,6 +1080,7 @@ export class WbSyncService {
             ...line,
             marketplace_account_id: this.marketplaceAccountId,
           }));
+          evidenceRows.push(mapFinanceTransactionEvidence(row, this.marketplaceAccountId, observedAt));
           for (const line of mapped) {
             const op = line.operation_date?.slice(0, 10);
             if (op) {
@@ -1087,6 +1117,14 @@ export class WbSyncService {
         includeReportIdentity
       );
       result.errors.push(...batchErrors);
+      if (batchErrors.length === 0) {
+        const evidence = await persistFinanceTransactionEvidence({
+          db: supabase,
+          accountId: this.marketplaceAccountId,
+          rows: evidenceRows,
+        });
+        result.errors.push(...evidence.errors);
+      }
 
       const persistenceMs = Date.now() - persistenceStarted;
       timer?.endPhase("finance_db");

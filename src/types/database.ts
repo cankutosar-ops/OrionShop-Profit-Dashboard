@@ -531,6 +531,46 @@ export type WbFinance = {
   rr_dt?: string | null;
 };
 
+export type WbFinanceTransactionContext =
+  | "SALE" | "RETURN" | "CORRECTION" | "COMPENSATION" | "OTHER";
+export type WbFinanceTaxClassification =
+  | "TAXABLE_SALE" | "TAXABLE_REFUND" | "TAXABLE_COMPENSATION"
+  | "NON_TAXABLE_OPERATION" | "REVIEW";
+
+/** One source row per WB Finance Reports V1 rrdId; never duplicated per fee suffix. */
+export type WbFinanceTransactionEvidence = {
+  id: string;
+  marketplace_account_id: string;
+  report_id: number;
+  rrd_id: number;
+  nm_id: number | null;
+  srid: string | null;
+  sku: string | null;
+  quantity: number | null;
+  retail_price: number | null;
+  retail_amount: number | null;
+  retail_price_with_discount: number | null;
+  for_pay: number | null;
+  additional_payment: number | null;
+  cashback_amount: number | null;
+  cashback_discount: number | null;
+  cashback_commission_change: number | null;
+  doc_type_name: string | null;
+  seller_oper_name: string | null;
+  sale_dt: string | null;
+  rr_date: string | null;
+  economic_event_date: string | null;
+  finance_recognition_date: string | null;
+  operation_context: WbFinanceTransactionContext;
+  tax_classification: WbFinanceTaxClassification;
+  tax_effective_date: string | null;
+  tax_effective_date_status: "UNVERIFIED" | "APPROVED";
+  source_api_version: string;
+  observed_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type WbAd = {
   id: string;
   product_id: string | null;
@@ -1126,6 +1166,16 @@ type PublicTables = {
     Row: WbFinance;
     Insert: Omit<WbFinance, "id"> & { id?: string };
     Update: Partial<WbFinance>;
+    Relationships: NoRelationships;
+  };
+  wb_finance_transaction_evidence: {
+    Row: WbFinanceTransactionEvidence;
+    Insert: Omit<WbFinanceTransactionEvidence, "id" | "created_at" | "updated_at"> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<WbFinanceTransactionEvidence>;
     Relationships: NoRelationships;
   };
   sync_runs: {

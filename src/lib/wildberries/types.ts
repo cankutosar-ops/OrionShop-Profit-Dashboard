@@ -63,8 +63,11 @@ export type WbApiFinanceRow = {
   sale_dt?: string;
   order_dt?: string;
   supplier_oper_name?: string;
+  quantity?: number;
+  retail_price?: number;
   retail_amount?: number;
   retail_price_withdisc_rub?: number;
+  sku?: string;
   ppvz_sales_commission?: number;
   delivery_rub?: number;
   storage_fee?: number;

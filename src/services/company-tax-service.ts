@@ -6,6 +6,7 @@ import {
 import { listCompanyExpenses } from "@/services/company-expense-service";
 import { listCompanyTaxProfiles, resolveTaxProfile } from "@/services/tax-profile-service";
 import type { WbAd, WbFinance } from "@/types/database";
+import { loadCompanyFinanceTaxableRevenueEvidence } from "@/lib/tax-engine/finance-transaction-evidence";
 
 async function allPages<T>(queryForPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const result: T[] = [];
@@ -53,7 +54,16 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
   const manualClaimedKopeks = manualExpenses.reduce((sum, e) =>
     sum + (e.tax_deductible ? Math.round(Number(e.amount) * 100) : 0), 0);
   const profile = resolveTaxProfile(profiles, to);
-  const income = await unverifiedTaxableIncomeProvider.getYtdIncome(companyId, to);
+  const taxableRevenueEvidence = profile?.tax_object === "USN_INCOME_MINUS_EXPENSES"
+    ? await loadCompanyFinanceTaxableRevenueEvidence({ db, profile, accountIds, from, to })
+    : null;
+  const income = taxableRevenueEvidence
+    ? {
+        status: taxableRevenueEvidence.status,
+        amountKopeks: taxableRevenueEvidence.amountKopeks,
+        sourceVersion: taxableRevenueEvidence.source,
+      }
+    : await unverifiedTaxableIncomeProvider.getYtdIncome(companyId, to);
   const calculation = calculateTaxYtd({
     profile, income, deductibleExpensesKopeks: 0, expensesReady: false,
     isFinalAnnualPeriod: false,
@@ -65,7 +75,7 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
   }
   return {
     companyId, from, to, accountIds, profile, profiles,
-    taxableIncome: income, calculation, readinessSignals,
+    taxableIncome: income, taxableRevenueEvidence, calculation, readinessSignals,
     manual: { totalKopeks: manualTotalKopeks, claimedPendingEvidenceKopeks: manualClaimedKopeks,
       verifiedDeductibleKopeks: 0, count: manualExpenses.length },
     marketplace,
@@ -73,6 +83,7 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
       taxDeductibleKopeks: null },
     warnings: [
       "Taxable income source is unverified; no tax amount is published.",
+      ...(taxableRevenueEvidence?.reasons ?? []),
       ...(purchaseCount ? ["Purchase payment and resale allocation are unverified."] : []),
       ...(marketplace.reviewKopeks !== 0 ? ["Marketplace expenses require payment/direction review."] : []),
       ...(manualClaimedKopeks !== 0 ? ["Manual deductible claims require payment/document evidence."] : []),

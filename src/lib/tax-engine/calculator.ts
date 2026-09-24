@@ -5,7 +5,7 @@ export type TaxReadiness =
   | "PURCHASE_COST_UNVERIFIED" | "REVIEW_EXPENSES" | "INCOMPLETE_SOURCE_DATA";
 
 export type TaxableIncomeInput = {
-  status: "VERIFIED" | "UNVERIFIED" | "INCOMPLETE";
+  status: "VERIFIED" | "PARTIAL" | "UNVERIFIED" | "UNAVAILABLE" | "INCOMPLETE";
   /** Signed cumulative amount in integer kopeks. Null unless verified. */
   amountKopeks: number | null;
   sourceVersion?: string;
