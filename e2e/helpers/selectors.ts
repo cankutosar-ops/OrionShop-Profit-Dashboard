@@ -25,11 +25,11 @@ export const SIDEBAR = "nav";
 /** "Sync Wildberries" button — text-matched because it carries no aria-label */
 export const SYNC_BUTTON_TEXT = "Sync Wildberries";
 
-/** Verification panel trigger button */
-export const VERIFICATION_BUTTON_TEXT = "Verification";
+/** Compact data freshness panel trigger button */
+export const DATA_STATUS_BUTTON_TEXT = "Data Status";
 
-/** Verification dialog — matches role="dialog" aria-label */
-export const VERIFICATION_DIALOG_LABEL = "Sync verification";
+/** Data freshness dialog — matches role="dialog" aria-label */
+export const DATA_STATUS_DIALOG_LABEL = "Data freshness details";
 
 /** Close button inside any header popup */
 export const POPUP_CLOSE_ARIA = '[aria-label="Close"]';

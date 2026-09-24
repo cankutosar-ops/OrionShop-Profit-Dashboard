@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeRequestScope, isAuthzFailure } from "@/lib/security/authorize";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { fetchProductsWithRelations, fetchCostHistory } from "@/services/persisted-query-service";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +28,8 @@ export async function GET(request: Request) {
     if (state.error) throw state.error;
     const sync = await client.from("marketplace_accounts").select("last_successful_sync_at").eq("id", account).maybeSingle();
     if (sync.error) throw sync.error;
-    const products = await fetchProductsWithRelations(account, client, { columns: "id" });
-    const costs = products.length ? await fetchCostHistory(account, client, { productIds: products.map(p => String(p.id)) }) : [];
-    const today = new Date().toISOString().slice(0, 10);
-    const covered = new Set(costs.filter(c => c.cost != null && c.effective_from <= today && (!c.effective_to || c.effective_to >= today)).map(c => String(c.product_id)));
     const finance = state.data ? { ...state.data, last_error: state.data.last_error?.startsWith("awaiting_publication") ? "awaiting_publication" : null } : null;
-    return NextResponse.json({ dates, finance, lastSuccessfulSync: sync.data?.last_successful_sync_at ?? null, products: products.length, missingCost: products.filter(p => !covered.has(String(p.id))).length },
+    return NextResponse.json({ dates, finance, lastSuccessfulSync: sync.data?.last_successful_sync_at ?? null },
       { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Freshness could not be verified" }, { status: 503 });

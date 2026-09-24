@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { DataFreshnessNotice } from "@/components/dashboard/data-freshness-notice";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   CostBreakdownChartLazy,
@@ -157,7 +156,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <>
       <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
-      <Suspense fallback={null}><DataFreshnessNotice /></Suspense>
 
       <Suspense
         key={`${scope.marketplaceAccountId}:${scope.from}:${scope.to}:${scope.brandId ?? ""}:${scope.companyId}`}
