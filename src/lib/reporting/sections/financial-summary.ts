@@ -41,7 +41,7 @@ function linesFromModelB(fe: ModelBProfitMetrics, marketplaceFees = 0): Financia
     { id: "acceptance", label: "Acceptance", amount: fe.acceptance },
     { id: "penalties", label: "Penalties", amount: fe.penalties },
     { id: "adjustments", label: "Adjustments", amount: fe.adjustments },
-    { id: "acquiring", label: "Acquiring", amount: fe.acquiring },
+    { id: "acquiring", label: "Acquiring (informational)", amount: fe.acquiring },
     { id: "estimatedTax", label: "Estimated Tax", amount: fe.estimatedTax },
     {
       id: "operatingProfit",

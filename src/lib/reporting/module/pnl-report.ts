@@ -73,7 +73,7 @@ function linesFromAmounts(params: {
     { id: "netSales", label: "Net Sales", amount: params.netSales },
     { id: "revenue", label: "Revenue", amount: params.revenue },
     { id: "marketplaceFees", label: "Marketplace Fees", amount: params.marketplaceFees },
-    { id: "acquiring", label: "Acquiring", amount: params.acquiring },
+    { id: "acquiring", label: "Acquiring (informational)", amount: params.acquiring },
     { id: "logistics", label: "Logistics", amount: params.logistics },
     { id: "storage", label: "Storage", amount: params.storage },
     { id: "acceptance", label: "Acceptance", amount: params.acceptance },

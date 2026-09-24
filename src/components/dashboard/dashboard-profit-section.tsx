@@ -218,8 +218,8 @@ export function DashboardProfitSection({
           <MetricCard
             title="Acquiring"
             value={formatMoney(modelB.acquiring)}
-            subtitle={`${shareOfEngineSales(modelB.acquiring)} of sales`}
-            hint="Finance acquiring_fee — already reflected before Revenue; not deducted again in Net Profit."
+            subtitle={`${shareOfEngineSales(modelB.acquiring)} of sales · Informational`}
+            hint="Finance acquiring fee. Included in Marketplace Fees and already reflected before Revenue; shown for information only."
             icon={KPI_ICONS.acquiring}
             {...expenseProps}
           />

@@ -107,7 +107,11 @@ export function ProfitabilityBreakdown({
       <div className="grid gap-3 border-b border-border bg-muted/20 px-6 py-4 sm:grid-cols-2 lg:grid-cols-4">
         <FeeItem label="Marketplace Fees" value={marketplaceFees.marketplaceFees} />
         <FeeItem label="WB Commission" value={marketplaceFees.commission} />
-        <FeeItem label="Acquiring" value={marketplaceFees.acquiring} />
+        <FeeItem
+          label="Acquiring (informational)"
+          value={marketplaceFees.acquiring}
+          note="Finance acquiring fee. Included in Marketplace Fees and already reflected before Revenue; shown for information only."
+        />
         <FeeItem label="WB Reward / Service" value={marketplaceFees.ppvzReward} />
         <FeeItem label="WB Remuneration base" value={marketplaceFees.ppvzVw} />
         <FeeItem label="WB Remuneration VAT" value={marketplaceFees.ppvzVwNds} />
