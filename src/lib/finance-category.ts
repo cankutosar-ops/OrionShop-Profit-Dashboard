@@ -9,6 +9,12 @@ const SUFFIX_TO_CATEGORY: Record<string, FinanceCategory> = {
   acquiring_fee: "ACQUIRING",
   ppvz_reward: "PPVZ_REWARD",
   ppvz_vw: "PPVZ_VW",
+  vw_nds: "PPVZ_VW_NDS",
+  installment_cofinancing: "ACQUIRING_COFINANCING_REVIEW",
+  cashback_amount: "LOYALTY_CASHBACK_EXPENSE",
+  cashback_discount: "COMPENSATION",
+  cashback_commission_change: "LOYALTY_CASHBACK_PARTICIPATION",
+  payment_schedule: "FINANCE_SERVICE_FEE",
   logistics: "LOGISTICS",
   oper_logistics: "LOGISTICS",
   return_logistics: "RETURN_LOGISTICS",
@@ -46,6 +52,7 @@ function refineCategoryFromOperName(
   category: FinanceCategory,
   supplierOperName?: string | null
 ): FinanceCategory {
+  if (isInactiveFinanceEvidenceCategory(category)) return category;
   if (!supplierOperName?.trim()) return category;
   if (/удерж/i.test(supplierOperName)) return "ADJUSTMENT";
   if (/возмещ/i.test(supplierOperName)) return "COMPENSATION";
@@ -61,6 +68,7 @@ export function resolveFinanceCategory(input: {
   supplierOperName?: string | null;
 }): FinanceCategory {
   const base = SUFFIX_TO_CATEGORY[input.wbFieldSuffix] ?? "OTHER";
+  if (input.wbFieldSuffix === "cashback_discount") return "COMPENSATION";
   return refineCategoryFromOperName(base, input.supplierOperName);
 }
 
@@ -80,6 +88,11 @@ export function categoryToOperationType(category: FinanceCategory): FinanceOpera
     case "ACQUIRING":
     case "PPVZ_REWARD":
     case "PPVZ_VW":
+    case "PPVZ_VW_NDS":
+    case "LOYALTY_CASHBACK_EXPENSE":
+    case "LOYALTY_CASHBACK_PARTICIPATION":
+    case "FINANCE_SERVICE_FEE":
+    case "ACQUIRING_COFINANCING_REVIEW":
     case "ADJUSTMENT":
     case "COMPENSATION":
     case "OTHER":
@@ -87,17 +100,29 @@ export function categoryToOperationType(category: FinanceCategory): FinanceOpera
   }
 }
 
-export function isMarketplaceServiceFeeCategory(category: FinanceCategory): boolean {
-  return category === "ACQUIRING" || category === "PPVZ_REWARD" || category === "PPVZ_VW";
+/** Captured for audit/reconciliation but deliberately excluded from V4 totals. */
+export function isInactiveFinanceEvidenceCategory(category: FinanceCategory): boolean {
+  return (
+    category === "PPVZ_VW_NDS" ||
+    category === "LOYALTY_CASHBACK_EXPENSE" ||
+    category === "LOYALTY_CASHBACK_PARTICIPATION" ||
+    category === "FINANCE_SERVICE_FEE" ||
+    category === "ACQUIRING_COFINANCING_REVIEW"
+  );
 }
 
-/** Categories included in Marketplace Fees (per-sale marketplace costs; excludes ADJUSTMENT and reimbursements). */
-export function isMarketplaceFeeCategory(category: FinanceCategory): boolean {
+export function isMarketplaceServiceFeeCategory(category: FinanceCategory): boolean {
   return (
-    category === "COMMISSION" ||
-    isMarketplaceServiceFeeCategory(category) ||
-    category === "OTHER"
+    category === "ACQUIRING" ||
+    category === "PPVZ_REWARD" ||
+    category === "PPVZ_VW" ||
+    category === "PPVZ_VW_NDS"
   );
+}
+
+/** Category-level compatibility helper. Suffix ownership remains canonical. */
+export function isMarketplaceFeeCategory(category: FinanceCategory): boolean {
+  return category === "COMMISSION" || isMarketplaceServiceFeeCategory(category);
 }
 
 /** Sprint 6.10 legacy rows may store supplier_oper_name in description. */

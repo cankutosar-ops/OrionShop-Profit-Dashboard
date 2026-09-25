@@ -59,10 +59,10 @@ export function buildExecutiveSummarySection(
       returnRate: op.returnRate,
       purchases: op.purchasesCount,
       conversionRate: op.conversionRate,
-      marketplaceFee: fe.marketplaceFee ?? fe.commission,
+      marketplaceFee: ctx.overview.marketplaceFeesPresentation.marketplaceFees,
       netSales: fe.netSales,
       netSalesStatus: fe.netSalesStatus,
-      marketplaceFeeStatus: fe.marketplaceFeeStatus ?? "unavailable",
+      marketplaceFeeStatus: "ready",
       bestPerformingBrand: bestBrand
         ? {
             name: bestBrand.name,

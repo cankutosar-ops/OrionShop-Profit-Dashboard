@@ -13,7 +13,7 @@ const EXAMPLE_QUESTIONS = [
   "What is Model B?",
   "What is Model C?",
   "How is Revenue calculated?",
-  "What is Marketplace Fee?",
+  "What are Marketplace Fees?",
   "How do returns affect the financial model?",
 ];
 

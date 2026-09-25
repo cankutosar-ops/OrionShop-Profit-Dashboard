@@ -56,13 +56,13 @@ export type SmartPricingSolverInputs = {
  * Smart Pricing unit economics at selling price P.
  *
  * INTENTIONAL dual tax model (≠ historical reporting):
- *   Tax Base = Sale − Marketplace Fee = P × (1 − α)
+ *   Tax Base = Sale − Sales-to-Settlement allowance = P × (1 − α)
  *   Estimated Tax = Tax% × Tax Base
  *
  * Reporting uses Tax% × Σ finishedPrice instead — do not unify.
  * See docs/estimated-tax-models.md
  *
- * Flow: Sale → Marketplace Fee → Tax → Logistics / Storage / Cost / Ads → Net Profit
+ * Flow: Sale → Sales-to-Settlement allowance → Tax → Logistics / Storage / Cost / Ads → Net Profit
  */
 export function buildModelBUnitMetrics(
   inputs: SmartPricingSolverInputs,
@@ -91,7 +91,7 @@ export function buildModelBUnitMetrics(
     acceptance: 0,
     productCost: inputs.purchaseCost,
     advertising,
-    // Simulator: tax on amount after Marketplace Fee (not finishedPrice).
+    // Simulator: tax on amount after Sales-to-Settlement allowance (not finishedPrice).
     customerPaid: salesForPay,
     taxPercent,
   });
@@ -100,7 +100,7 @@ export function buildModelBUnitMetrics(
 export type SmartPricingAfterTaxMetrics = {
   operatingProfit: number;
   sellerPayout: number;
-  /** Estimated Tax = Tax% × (Sale − Marketplace Fee). */
+  /** Estimated Tax = Tax% × (Sale − Sales-to-Settlement allowance). */
   tax: number;
   afterTaxPayout: number;
   finalNetProfit: number;
@@ -108,7 +108,7 @@ export type SmartPricingAfterTaxMetrics = {
 };
 
 /**
- * Final Net Profit — tax on post–Marketplace Fee amount.
+ * Final Net Profit — tax on post–Sales-to-Settlement allowance amount.
  */
 export function buildSmartPricingAfterTaxMetrics(
   inputs: SmartPricingSolverInputs,
@@ -162,7 +162,7 @@ export function solveRecommendedPrice(
   return price;
 }
 
-/** Verify price using post–Marketplace Fee tax base. */
+/** Verify price using post–Sales-to-Settlement allowance tax base. */
 export function verifyRecommendedPrice(
   inputs: SmartPricingSolverInputs,
   _targetNetProfitPercent: number,
@@ -206,8 +206,8 @@ export function formatRecommendedPriceFormula(
   const denominator = oneMinusTau * (1 - alpha) - beta - m;
 
   return [
-    "Recommended Price (after tax) = [ProductCost + Logistics + Storage] / [(1−Tax%)×(1−Commission%) − Marketing% − TargetMargin%]",
-    `Tax = ${taxPercent}% × (Sale − Marketplace Fee)  [= P × (1 − ${inputs.marketplaceFeesPercent.toFixed(2)}%)]`,
+    "Recommended Price (after tax) = [ProductCost + Logistics + Storage] / [(1−Tax%)×(1−Sales-to-Settlement%) − Marketing% − TargetMargin%]",
+    `Tax = ${taxPercent}% × (Sale − Sales-to-Settlement allowance)  [= P × (1 − ${inputs.marketplaceFeesPercent.toFixed(2)}%)]`,
     `= (${inputs.purchaseCost.toFixed(2)} + ${feeSum.toFixed(2)}) / (${(oneMinusTau * 100).toFixed(2)}%×(1−${inputs.marketplaceFeesPercent.toFixed(2)}%) − ${marketingPercent}% − ${targetNetProfitPercent}%)`,
     `= ${numerator.toFixed(2)} / ${denominator.toFixed(4)}`,
     price !== null ? `= ${price.toFixed(2)} ₽` : "= —",
@@ -266,6 +266,7 @@ function solverInputsFromProduct(
 }
 
 export type SmartPricingComputedRow = ProductSmartPricingInputs & {
+  effectiveMarketingPercent: number;
   priceFor15: number | null;
   priceFor20: number | null;
   targetPrice: number | null;
@@ -285,6 +286,14 @@ export type SmartPricingComputedRow = ProductSmartPricingInputs & {
   riskTooltip: string;
 };
 
+/** Manual marketing remains a floor; recent attributable spend can lift it. */
+export function resolveEffectiveMarketingPercent(
+  manualPercent: number,
+  recentActualPercent: number | null | undefined
+): number {
+  return Math.max(0, manualPercent, Number.isFinite(recentActualPercent) ? recentActualPercent! : 0);
+}
+
 export function buildSmartPricingRow(
   inputs: ProductSmartPricingInputs,
   targetNetProfitPercent: number,
@@ -292,15 +301,16 @@ export function buildSmartPricingRow(
   taxPercent: number = DEFAULT_TAX_PERCENT
 ): SmartPricingComputedRow {
   const solver = solverInputsFromProduct(inputs);
+  const effectiveMarketingPercent = resolveEffectiveMarketingPercent(marketingPercent, inputs.recentAdvertisingPercent);
   const hasPurchaseCost = solver !== null;
 
   const priceFor = (margin: number) =>
-    solver ? solveRecommendedPrice(solver, margin, marketingPercent, taxPercent) : null;
+    solver ? solveRecommendedPrice(solver, margin, effectiveMarketingPercent, taxPercent) : null;
 
   const priceFor15 = priceFor(15);
   const priceFor20 = priceFor(20);
   const targetPrice = hasPurchaseCost
-    ? solveRecommendedPrice(solver, targetNetProfitPercent, marketingPercent, taxPercent)
+    ? solveRecommendedPrice(solver, targetNetProfitPercent, effectiveMarketingPercent, taxPercent)
     : null;
 
   let currentNetProfit: number | null = null;
@@ -316,7 +326,7 @@ export function buildSmartPricingRow(
   ) {
     const afterTax = buildSmartPricingAfterTaxMetrics(
       solver,
-      marketingPercent,
+      effectiveMarketingPercent,
       taxPercent,
       inputs.currentAvgPrice
     );
@@ -349,10 +359,14 @@ export function buildSmartPricingRow(
     productHistoricalCommissionPercent: inputs.productHistoricalMarketplaceFeesPercent,
     categoryHistoricalCommissionPercent: inputs.categoryHistoricalMarketplaceFeesPercent,
     commissionPercent: inputs.marketplaceFeesPercent,
+    logisticsSource: inputs.resolutionSource,
+    historicalCompletedUnits: inputs.historicalCompletedUnits,
+    recentLongLogisticsVariancePercent: inputs.recentLongLogisticsVariancePercent,
   });
 
   return {
     ...inputs,
+    effectiveMarketingPercent,
     priceFor15,
     priceFor20,
     targetPrice,

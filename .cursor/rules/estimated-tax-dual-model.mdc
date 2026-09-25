@@ -26,11 +26,11 @@ Do **not** tax historical modules from Revenue, Seller Payout, `ppvz_for_pay`, `
 **Purpose:** Solve the selling price needed for a target profit.
 
 ```
-Tax Base = Sale Price − Marketplace Fee
+Tax Base = Sale Price − legacy Sales-to-Settlement allowance
 Estimated Tax = Tax Rate × Tax Base
 ```
 
-Flow: Sale → Marketplace Fee → Tax → Logistics → Storage → Product Cost → Advertising → Net Profit
+Flow: Sale → legacy Sales-to-Settlement allowance → Tax → Logistics → Storage → Product Cost → Advertising → Net Profit
 
 - Used only by Smart Pricing / Profit Simulator (`src/lib/smart-pricing.ts`)
 - Does **not** use Σ(finishedPrice)
@@ -40,7 +40,7 @@ Flow: Sale → Marketplace Fee → Tax → Logistics → Storage → Product Cos
 | Question | Module | Tax base |
 |---|---|---|
 | What tax was incurred on completed sales? | Reporting / Financial Engine | Σ finishedPrice |
-| What selling price achieves target profit? | Smart Pricing | Sale − Marketplace Fee |
+| What selling price achieves target profit? | Smart Pricing | Sale − legacy Sales-to-Settlement allowance |
 
 This split is **expected**. Never “normalize” Smart Pricing onto finishedPrice (or reporting onto post-fee) during refactors.
 

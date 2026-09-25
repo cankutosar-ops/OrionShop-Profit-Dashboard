@@ -314,7 +314,7 @@ function costHeader(): SheetCell[] {
   return [
     "SKU",
     "Product",
-    "Commission",
+    "Marketplace Fees",
     "Logistics",
     "Return Logistics",
     "Storage",
@@ -328,7 +328,7 @@ function costCells(row: ProductReportCostRow, currency: string): SheetCell[] {
   return [
     row.sku,
     row.productName,
-    money(row.commission, currency),
+    money(row.marketplaceFees, currency),
     money(row.logistics, currency),
     money(row.returnLogistics, currency),
     money(row.storage, currency),
@@ -367,7 +367,7 @@ function buildMarketplaceCostSheet(
     ["Total Marketplace Cost", money(data.totals.totalMarketplaceCost, currency), pct(100)],
     [],
     ["Totals (detail)"],
-    ["Commission", money(data.totals.commission, currency)],
+    ["Marketplace Fees", money(data.totals.marketplaceFees, currency)],
     ["Logistics", money(data.totals.logistics, currency)],
     ["Return Logistics", money(data.totals.returnLogistics, currency)],
     ["Storage", money(data.totals.storage, currency)],

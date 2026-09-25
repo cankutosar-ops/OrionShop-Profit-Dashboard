@@ -56,6 +56,8 @@ export async function getProductAnalytics(
     accountLogisticsTotal: build.logisticsReconciliation.accountLogisticsTotal,
     unallocatedRevenue: build.unallocatedRevenue,
     accountRevenue: build.accountRevenue,
+    accountMarketplaceFees: build.accountMarketplaceFees,
+    unallocatedMarketplaceFees: build.unattributedMarketplaceFees,
   });
 
   logScopeAudit("Product Analytics", scope, scope, {

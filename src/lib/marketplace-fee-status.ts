@@ -3,7 +3,7 @@ import type { NetSalesStatus } from "@/lib/sales-revenue-resolution";
 export type MarketplaceFeeStatus = "ready" | "unavailable" | "anomaly";
 
 export const MARKETPLACE_FEE_ANOMALY_MESSAGE =
-  "Negative informational Marketplace Fee: returns or an unusual Sales/forPay relationship can make Net Sales lower than Sales API forPay.";
+  "Negative Sales-to-Settlement Difference: returns or an unusual Sales/forPay relationship can make Net Sales lower than Sales API forPay.";
 
 export function resolveMarketplaceFeeStatus(
   salesStatus: NetSalesStatus | undefined,

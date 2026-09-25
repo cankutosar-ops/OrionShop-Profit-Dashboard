@@ -155,7 +155,9 @@ async function main() {
   console.log(`Acquiring:       ${fmt(mf.acquiring)}`);
   console.log(`PPVZ Reward:     ${fmt(mf.ppvzReward)}`);
   console.log(`PPVZ VW:         ${fmt(mf.ppvzVw)}`);
-  console.log(`Other MP Exp:    ${fmt(mf.otherMarketplaceExpenses)}`);
+  console.log(`VW VAT:          ${fmt(mf.ppvzVwNds)}`);
+  console.log(`WB Remuneration: ${mf.wbRemuneration == null ? mf.wbRemunerationStatus : fmt(mf.wbRemuneration)}`);
+  console.log(`Sales→Settlement:${fmt(mf.salesToSettlementDifference)}`);
   console.log(`Acct Adjustments:${fmt(mf.accountAdjustments)}`);
   console.log(`Reimbursements:  ${fmt(mf.reimbursements)} (excluded from total)`);
 

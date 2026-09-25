@@ -54,7 +54,13 @@ async function loadPeriodBreakdown(
       skipInventory: true,
       periodPresetLabel: periodPresetLabelValue,
     });
-    rows.push(pnlPeriodRowFromModelB(chunk.label, chunk.from, chunk.to, sub.financialEngine));
+    rows.push(pnlPeriodRowFromModelB(
+      chunk.label,
+      chunk.from,
+      chunk.to,
+      sub.financialEngine,
+      sub.overview.marketplaceFeesPresentation
+    ));
   }
 
   const kind = chunks[0]?.kind === "week" ? "week" : "month";
@@ -80,7 +86,11 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
 
   const pnl = category
     ? buildPnLFromProductRows(filteredProducts, ctx.tenant.currency)
-    : buildPnLFromModelB(ctx.financialEngine, ctx.tenant.currency);
+    : buildPnLFromModelB(
+        ctx.financialEngine,
+        ctx.tenant.currency,
+        ctx.overview.marketplaceFeesPresentation
+      );
 
   const period = await loadPeriodBreakdown(scope, presetLabel, category ?? null);
 
@@ -152,7 +162,7 @@ export default async function ProfitLossReportPage({ searchParams }: PageProps) 
 
       {pnl.netSalesStatus !== "ready" && (
         <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
-          Sales coverage: {pnl.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+          Sales coverage: {pnl.netSalesStatus}. Net Sales shows observed values only; Marketplace Fees uses stored Finance evidence.
         </p>
       )}
       <MarketplaceFeeStatusNotice status={pnl.marketplaceFeeStatus} />

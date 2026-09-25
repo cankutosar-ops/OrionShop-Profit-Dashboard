@@ -3,10 +3,10 @@ import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 import { requireAuth, isAuthFailure } from "@/lib/security/require-auth";
 import { grantCompanyToUser } from "@/lib/security/tenant-membership";
 import {
-  createCompany,
   ensureDefaultTenant,
   listCompanies,
 } from "@/services/marketplace-account-service";
+import { createCompanyWithTaxProfile } from "@/services/tax-profile-service";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     if (isAuthFailure(auth)) return auth;
 
     const body = await request.json();
-    const { name, country, currency, timezone, language, is_default, default_tax_percent } =
+    const { name, country, currency, timezone, language, is_default, tax_model,
+      custom_tax_object, custom_tax_rate, vat_status } =
       body as {
         name?: string;
         country?: string | null;
@@ -49,21 +50,31 @@ export async function POST(request: Request) {
         timezone?: string;
         language?: string;
         is_default?: boolean;
-        default_tax_percent?: number;
+        tax_model?: string;
+        custom_tax_object?: string;
+        custom_tax_rate?: number;
+        vat_status?: string;
       };
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
 
-    const company = await createCompany({
+    if (!tax_model) {
+      return NextResponse.json({ error: "tax_model is required" }, { status: 400 });
+    }
+
+    const company = await createCompanyWithTaxProfile({
       name,
       country,
       currency,
       timezone,
       language,
-      is_default,
-      default_tax_percent,
+      isDefault: is_default,
+      model: tax_model,
+      customObject: custom_tax_object,
+      customRate: custom_tax_rate,
+      vatStatus: vat_status,
     });
 
     if (auth.id !== "service:internal") {

@@ -78,8 +78,8 @@ function writeFePeriodBreakdown(
       "From",
       "To",
       "Net Sales",
-      "Marketplace Fee",
-      "Marketplace Fee Status",
+      "Marketplace Fees",
+      "Marketplace Fees Status",
       "Revenue",
       "Logistics",
       "Storage",
@@ -255,6 +255,12 @@ function buildExecutiveSheet(
   const qty = model.ctx.overview.quantityMetrics;
   const cash = model.ctx.overview.cashReceived;
   const expected = model.ctx.overview.expectedWbPayout;
+  const fees = model.ctx.overview.marketplaceFeesPresentation ?? {
+    marketplaceFees: 0,
+    wbRemunerationStatus: "NO_EVIDENCE" as const,
+    salesToSettlementDifference:
+      fe.salesToSettlementDifference ?? fe.marketplaceFee ?? fe.commission,
+  };
 
   writeSheetIntro(sheet, "Executive Summary", model.reportTitle);
   writeWarning(sheet, model.dataQuality.financeIncompleteWarning);
@@ -266,12 +272,17 @@ function buildExecutiveSheet(
   }
 
   addSectionHeader(sheet, "Selected period — Financial Engine KPIs");
-  kv(sheet, "Marketplace Fee status", fe.marketplaceFeeStatus ?? "unavailable");
+  kv(sheet, "WB Remuneration status", fees.wbRemunerationStatus);
   addKpiBlock(sheet, [
     { label: "Net Sales", value: fe.netSales, numFmt: NUM_FMT.currency },
     {
-      label: "Marketplace Fee",
-      value: fe.marketplaceFee ?? fe.commission,
+      label: "Marketplace Fees",
+      value: fees.marketplaceFees,
+      numFmt: NUM_FMT.currency,
+    },
+    {
+      label: "Sales-to-Settlement Difference",
+      value: fees.salesToSettlementDifference,
       numFmt: NUM_FMT.currency,
     },
     { label: "Revenue", value: fe.revenue, numFmt: NUM_FMT.currency },
@@ -606,7 +617,7 @@ function buildProductSheet(
       "Units",
       "Net Sales",
       "Revenue",
-      "Marketplace Fee",
+      "Marketplace Fees",
       "Logistics",
       "Storage",
       "Advertising",
@@ -693,7 +704,7 @@ function buildGroupSheet(
       "Units",
       "Net Sales",
       "Revenue",
-      "Marketplace Fee",
+      "Marketplace Fees",
       "Logistics",
       "Storage",
       "Product Cost",

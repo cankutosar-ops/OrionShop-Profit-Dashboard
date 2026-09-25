@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { DataFreshnessNotice } from "@/components/dashboard/data-freshness-notice";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   CostBreakdownChartLazy,
@@ -70,6 +69,7 @@ async function DashboardCoreSection({
       <div className="space-y-8">
         <DashboardProfitSection
           modelB={overview.modelBProfit}
+          marketplaceFees={overview.marketplaceFeesPresentation}
           quantities={quantities}
           kpis={kpis}
           totalOrdersCount={totalOrdersCount}
@@ -101,6 +101,7 @@ async function DashboardCoreSection({
       <div className="mt-8">
         <ProfitabilityBreakdown
           modelB={overview.modelBProfit}
+          marketplaceFees={overview.marketplaceFeesPresentation}
           isEmptyPeriod={Boolean(isEmptyPeriod)}
         />
       </div>
@@ -157,7 +158,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <>
       <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
-      <Suspense fallback={null}><DataFreshnessNotice /></Suspense>
 
       <Suspense
         key={`${scope.marketplaceAccountId}:${scope.from}:${scope.to}:${scope.brandId ?? ""}:${scope.companyId}`}

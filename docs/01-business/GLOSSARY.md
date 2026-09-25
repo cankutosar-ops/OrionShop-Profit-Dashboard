@@ -110,7 +110,8 @@ Business-first terminology already used in the product and Knowledge Base. Defin
 
 | If you see… | Prefer… |
 |-------------|---------|
-| Commission / Marketplace Fees | [Marketplace Fee](#marketplace-fee) |
+| Marketplace fee/service burden | [Marketplace Fees](#marketplace-fees) |
+| Commission | [WB Remuneration](#wb-remuneration) when referring to signed `vw + vwNds`; otherwise name the exact Finance component |
 | Final Net Profit | [Net Profit](#net-profit) |
 | Days of Stock / Days of Inventory / Days of Cover | [Days Left](#days-left) |
 | Stock Value | [Inventory Value](#inventory-value) |
@@ -198,7 +199,7 @@ Account setup, roadmap for additional platforms, report appendix, and marketplac
 #### Not To Be Confused With
 
 - [Marketplace Account](#marketplace-account)
-- [Marketplace Fee](#marketplace-fee) — a financial cost concept, not the platform
+- [Marketplace Fees](#marketplace-fees) — a financial cost concept, not the platform
 
 #### Aliases
 
@@ -678,17 +679,17 @@ Dashboard Revenue KPI, Commercial Performance breakdowns, and report financial s
 #### Related Terms
 
 - [Commercial Performance](#commercial-performance)
-- [Marketplace Fee](#marketplace-fee)
+- [Marketplace Fees](#marketplace-fees)
 - [Operating Profit](#operating-profit)
 - [Net Profit](#net-profit)
 
 ---
 
-### Marketplace Fee
+### Marketplace Fees
 
 #### Definition
 
-The marketplace’s fee take implied by the difference between sales and the seller’s for-pay amount in the commercial fee story. Shown as a Commercial Performance cost line. Informational relative to Net Profit when fee is already reflected before Revenue.
+The broad WB marketplace fee/service burden from explicit Finance suffixes: `commission`, `acquiring_fee`, `ppvz_reward`, `ppvz_vw`, and `vw_nds`. Shown as a Commercial Performance cost line. Informational relative to V4 Net Profit because these components are already reflected before Revenue.
 
 #### Context
 
@@ -697,20 +698,48 @@ Dashboard Commercial Performance, product profitability tables, and fee explanat
 #### Not To Be Confused With
 
 - [Acquiring](#acquiring)
+- [WB Remuneration](#wb-remuneration) — the narrower signed `vw + vwNds` metric
+- [Sales-to-Settlement Difference](#sales-to-settlement-difference) — a Sales API reconciliation metric
 - [Penalties](#penalties)
 - [Adjustments](#adjustments)
 - [Acceptance](#acceptance)
 
 #### Aliases
 
-- Commission (still appears in some totals and older copy)
-- Marketplace Fees (plural column label)
+- Marketplace fee/service burden
 
 #### Related Terms
 
 - [Revenue](#revenue)
 - [Acquiring](#acquiring)
 - [Commercial Performance](#commercial-performance)
+
+---
+
+### WB Remuneration
+
+#### Definition
+
+The narrow signed Finance metric `raw_amount(ppvz_vw) + raw_amount(vw_nds)`. Its percentage uses Net Sales as denominator. It is unavailable for legacy rows that lack signed `raw_amount` evidence.
+
+#### Not To Be Confused With
+
+- [Marketplace Fees](#marketplace-fees) — the broader fee/service total
+- [Sales-to-Settlement Difference](#sales-to-settlement-difference)
+
+---
+
+### Sales-to-Settlement Difference
+
+#### Definition
+
+`Net Sales − Sales API forPay`. A reconciliation metric that may be signed.
+
+#### Not To Be Confused With
+
+- [Marketplace Fees](#marketplace-fees)
+- [WB Remuneration](#wb-remuneration)
+- [Revenue](#revenue)
 
 ---
 
@@ -888,7 +917,7 @@ Commercial Performance and settlement-related expense visibility.
 #### Not To Be Confused With
 
 - [Adjustments](#adjustments)
-- [Marketplace Fee](#marketplace-fee)
+- [Marketplace Fees](#marketplace-fees)
 
 #### Aliases
 
@@ -915,7 +944,7 @@ Dashboard Adjustments KPI and commercial expense narratives.
 
 - [Advertising](#advertising) — may also appear as its own analytical line elsewhere; Adjustments is the Commercial Performance finance-adjustment bucket
 - [Penalties](#penalties)
-- [Marketplace Fee](#marketplace-fee)
+- [Marketplace Fees](#marketplace-fees)
 
 #### Aliases
 
@@ -941,7 +970,7 @@ Dashboard informational acquiring card and fee explanations.
 
 #### Not To Be Confused With
 
-- [Marketplace Fee](#marketplace-fee)
+- [Marketplace Fees](#marketplace-fees)
 - [Revenue](#revenue)
 
 #### Aliases
@@ -950,7 +979,7 @@ Dashboard informational acquiring card and fee explanations.
 
 #### Related Terms
 
-- [Marketplace Fee](#marketplace-fee)
+- [Marketplace Fees](#marketplace-fees)
 - [Revenue](#revenue)
 
 ---
@@ -1600,7 +1629,7 @@ Finance classification and reconciliation notes.
 
 #### Not To Be Confused With
 
-- [Marketplace Fee](#marketplace-fee)
+- [Marketplace Fees](#marketplace-fees)
 - [Adjustments](#adjustments)
 
 #### Aliases

@@ -139,7 +139,7 @@ async function main() {
   const npDiff = verifyModelBFinalProfitArithmetic(modelB);
   const revenueIsFinanceForPay = Math.abs(modelB.revenue - financeNetForPay) < 0.01;
   const revenueNotSalesForPay = Math.abs(modelB.revenue - salesForPay) >= 0.01 || salesForPay === financeNetForPay;
-  const feeCheck =
+  const reconciliationCheck =
     Math.abs(netSalesFromDb.netSales - salesForPay - modelB.commission) < 0.02;
   const acquiringNotInNp =
     Math.abs(
@@ -167,11 +167,11 @@ async function main() {
     `   revenue≠salesForPay (or equal only if coincidental): Δ=${(modelB.revenue - salesForPay).toFixed(2)}\n`
   );
 
-  console.log("2. Marketplace Fee = Sales − Sales API forPay (not ppvz_*)");
-  console.log(`   Fee: ${fmt(modelB.marketplaceFee ?? modelB.commission)}`);
-  console.log(`   PASS: ${feeCheck ? "YES" : "NO"}\n`);
+  console.log("2. Sales-to-Settlement Difference = Sales − Sales API forPay");
+  console.log(`   Difference: ${fmt(modelB.salesToSettlementDifference ?? modelB.marketplaceFee ?? modelB.commission)}`);
+  console.log(`   PASS: ${reconciliationCheck ? "YES" : "NO"}\n`);
 
-  console.log("3. Net Profit excludes Marketplace Fee & Acquiring");
+  console.log("3. Net Profit excludes the reconciliation difference & Acquiring");
   console.log(`   Acquiring KPI: ${fmt(modelB.acquiring)} (informational)`);
   console.log(`   Net Profit:    ${fmt(modelB.finalNetProfit)}`);
   console.log(`   Op arith Δ:    ${opDiff.toFixed(4)} (${Math.abs(opDiff) < 0.01 ? "PASS" : "FAIL"})`);

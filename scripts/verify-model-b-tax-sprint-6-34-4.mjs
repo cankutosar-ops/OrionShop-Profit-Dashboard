@@ -315,7 +315,7 @@ async function main() {
 
   console.log("OVERALL: PASS");
   console.log("✓ Reporting tax = Tax% × Σ finishedPrice (Sales API)");
-  console.log("✓ Smart Pricing tax = Tax% × (Sale − Marketplace Fee) — intentional dual model");
+  console.log("✓ Smart Pricing tax = Tax% × (Sale − legacy Sales-to-Settlement allowance) — intentional dual model");
   console.log("✓ Product Cost does not affect tax base");
   console.log("✓ Marketing does not affect tax base");
   console.log("✓ Breakdown Final Net Profit = Dashboard Final Net Profit");

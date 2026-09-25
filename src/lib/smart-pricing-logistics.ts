@@ -17,6 +17,8 @@ export type HistoricalLogisticsTotals = {
   outboundLogistics: number;
   rebillLogistics: number;
   unitsSold: number;
+  /** Return events in the same window; used to price one net successful unit. */
+  unitsReturned?: number;
 };
 
 export type LogisticsTotals = HistoricalLogisticsTotals;
@@ -49,11 +51,14 @@ export function sumProductHistoricalLogisticsMetrics(
 ): HistoricalLogisticsTotals {
   const completed = sales.filter((row) => !row.is_return);
   const unitsSold = completed.reduce((sum, row) => sum + row.quantity, 0);
+  const unitsReturned = sales.filter((row) => row.is_return)
+    .reduce((sum, row) => sum + row.quantity, 0);
 
   return {
     outboundLogistics: sumOutboundLogistics(finance),
     rebillLogistics: sumRebillLogistics(finance),
     unitsSold,
+    unitsReturned,
   };
 }
 
@@ -68,8 +73,22 @@ export function totalHistoricalLogistics(totals: HistoricalLogisticsTotals): num
 export function weightedHistoricalLogistics(
   totals: HistoricalLogisticsTotals
 ): number | null {
-  if (totals.unitsSold <= 0) return null;
-  return totalHistoricalLogistics(totals) / totals.unitsSold;
+  const netUnits = totals.unitsSold - (totals.unitsReturned ?? 0);
+  if (netUnits <= 0) return null;
+  return totalHistoricalLogistics(totals) / netUnits;
+}
+
+/** Cost per attempted sale plus the observed return amortization per successful unit. */
+export function splitExpectedLogistics(totals: HistoricalLogisticsTotals): {
+  base: number;
+  returnBurden: number;
+} {
+  const gross = totals.unitsSold;
+  const net = gross - (totals.unitsReturned ?? 0);
+  if (gross <= 0 || net <= 0) return { base: 0, returnBurden: 0 };
+  const total = totalHistoricalLogistics(totals);
+  const base = total / gross;
+  return { base, returnBurden: total / net - base };
 }
 
 /** @deprecated Use weightedHistoricalLogistics */
@@ -94,12 +113,14 @@ export function buildCategoryLogisticsTotals(
       outboundLogistics: 0,
       rebillLogistics: 0,
       unitsSold: 0,
+      unitsReturned: 0,
     };
 
     byCategory.set(categoryId, {
       outboundLogistics: existing.outboundLogistics + metrics.outboundLogistics,
       rebillLogistics: existing.rebillLogistics + metrics.rebillLogistics,
       unitsSold: existing.unitsSold + metrics.unitsSold,
+      unitsReturned: (existing.unitsReturned ?? 0) + (metrics.unitsReturned ?? 0),
     });
   }
 
@@ -115,6 +136,7 @@ export function buildAccountLogisticsTotals(
     outboundLogistics: 0,
     rebillLogistics: 0,
     unitsSold: 0,
+    unitsReturned: 0,
   };
 
   for (const product of products) {
@@ -127,6 +149,7 @@ export function buildAccountLogisticsTotals(
     totals.outboundLogistics += metrics.outboundLogistics;
     totals.rebillLogistics += metrics.rebillLogistics;
     totals.unitsSold += metrics.unitsSold;
+    totals.unitsReturned = (totals.unitsReturned ?? 0) + (metrics.unitsReturned ?? 0);
   }
 
   return totals;

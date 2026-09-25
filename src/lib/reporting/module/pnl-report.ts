@@ -7,6 +7,7 @@ import { calculateModelBMarginPercent } from "@/lib/financial-engine";
 import { combineNetSalesStatuses, type NetSalesStatus } from "@/lib/sales-revenue-resolution";
 import { combineMarketplaceFeeStatuses, resolveMarketplaceFeeStatus, type MarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
 import type { ModelBProfitMetrics, ProductProfitability } from "@/types/database";
+import type { MarketplaceFeesPresentation } from "@/types/finance";
 
 export type PnLLineId =
   | "grossSales"
@@ -71,8 +72,8 @@ function linesFromAmounts(params: {
     { id: "returnedSales", label: "Returned Sales", amount: params.returnedSales },
     { id: "netSales", label: "Net Sales", amount: params.netSales },
     { id: "revenue", label: "Revenue", amount: params.revenue },
-    { id: "marketplaceFees", label: "Marketplace Fee", amount: params.marketplaceFees },
-    { id: "acquiring", label: "Acquiring", amount: params.acquiring },
+    { id: "marketplaceFees", label: "Marketplace Fees", amount: params.marketplaceFees },
+    { id: "acquiring", label: "Acquiring (informational)", amount: params.acquiring },
     { id: "logistics", label: "Logistics", amount: params.logistics },
     { id: "storage", label: "Storage", amount: params.storage },
     { id: "acceptance", label: "Acceptance", amount: params.acceptance },
@@ -100,7 +101,8 @@ function linesFromAmounts(params: {
 /** Account / brand P&L — identity projection of Dashboard Financial Engine. */
 export function buildPnLFromModelB(
   fe: ModelBProfitMetrics,
-  currency = "RUB"
+  currency = "RUB",
+  fees?: MarketplaceFeesPresentation
 ): PnLReportView {
   const netProfit = fe.finalNetProfit;
   const operatingProfit = fe.operatingProfit ?? fe.netProfit;
@@ -109,7 +111,7 @@ export function buildPnLFromModelB(
     returnedSales: fe.returnedSales,
     netSales: fe.netSales,
     revenue: fe.revenue,
-    marketplaceFees: fe.marketplaceFee ?? fe.commission,
+    marketplaceFees: fees?.marketplaceFees ?? 0,
     acquiring: fe.acquiring,
     logistics: fe.logistics,
     storage: fe.storage,
@@ -127,7 +129,7 @@ export function buildPnLFromModelB(
     currency,
     lines,
     netSalesStatus: fe.netSalesStatus,
-    marketplaceFeeStatus: fe.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(fe.netSalesStatus, fe.marketplaceFee ?? fe.commission),
+    marketplaceFeeStatus: fees ? "ready" : "unavailable",
     netProfit,
     netMarginPercent: calculateModelBMarginPercent(fe.revenue, netProfit),
   };
@@ -238,7 +240,8 @@ export function pnlPeriodRowFromModelB(
   label: string,
   from: string,
   to: string,
-  fe: ModelBProfitMetrics
+  fe: ModelBProfitMetrics,
+  fees?: MarketplaceFeesPresentation
 ): PnLPeriodBreakdownRow {
   return {
     label,
@@ -248,8 +251,8 @@ export function pnlPeriodRowFromModelB(
     returnedSales: fe.returnedSales,
     netSales: fe.netSales,
     revenue: fe.revenue,
-    marketplaceFees: fe.marketplaceFee ?? fe.commission,
-    marketplaceFeeStatus: fe.marketplaceFeeStatus ?? resolveMarketplaceFeeStatus(fe.netSalesStatus, fe.marketplaceFee ?? fe.commission),
+    marketplaceFees: fees?.marketplaceFees ?? 0,
+    marketplaceFeeStatus: fees ? "ready" : "unavailable",
     logistics: fe.logistics,
     storage: fe.storage,
     productCost: fe.productCost,

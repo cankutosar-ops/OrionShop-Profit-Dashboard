@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { getDefaultDateRange } from "@/lib/utils";
 import { MARKETPLACE_TYPES, type CompanyWithAccounts, type MarketplaceType } from "@/types/database";
+import { DEFAULT_TAX_MODEL_FORM, TaxModelFields, type TaxModelForm } from "@/components/tax/tax-model-fields";
 
 type CompanyFormState = {
   name: string;
@@ -57,6 +58,7 @@ export function CompaniesManager() {
   const [companies, setCompanies] = useState<CompanyWithAccounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyForm, setCompanyForm] = useState<CompanyFormState>(emptyCompanyForm);
+  const [taxModel, setTaxModel] = useState<TaxModelForm>(DEFAULT_TAX_MODEL_FORM);
   const [accountForm, setAccountForm] = useState<AccountFormState>(emptyAccountForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
@@ -92,6 +94,7 @@ export function CompaniesManager() {
 
   function resetCompanyForm() {
     setCompanyForm(emptyCompanyForm);
+    setTaxModel(DEFAULT_TAX_MODEL_FORM);
     setEditingCompanyId(null);
   }
 
@@ -117,6 +120,11 @@ export function CompaniesManager() {
         timezone: companyForm.timezone.trim() || "Europe/Moscow",
         language: companyForm.language.trim() || "ru",
         is_default: companyForm.is_default,
+        ...(!editingCompanyId ? {
+          tax_model: taxModel.tax_model,
+          custom_tax_object: taxModel.custom_tax_object,
+          custom_tax_rate: Number(taxModel.custom_tax_rate),
+        } : {}),
       };
 
       const response = await fetch(
@@ -328,6 +336,7 @@ export function CompaniesManager() {
         </p>
 
         <form onSubmit={handleSaveCompany} className="mt-6 grid gap-4 sm:grid-cols-3">
+          {!editingCompanyId ? <TaxModelFields value={taxModel} onChange={setTaxModel} /> : null}
           <label className="space-y-1.5 text-sm sm:col-span-2">
             <span className="font-medium">Company Name</span>
             <input

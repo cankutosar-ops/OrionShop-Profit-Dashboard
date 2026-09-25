@@ -5,6 +5,7 @@ import { sumCompletedSalesRevenue } from "@/lib/smart-pricing-marketplace-fees";
 export type StorageTotals = {
   storage: number;
   unitsSold: number;
+  unitsReturned?: number;
 };
 
 export function sumProductStorage(finance: WbFinance[]): number {
@@ -18,12 +19,14 @@ export function sumProductStorageMetrics(sales: WbSale[], finance: WbFinance[]):
   return {
     storage: sumProductStorage(finance),
     unitsSold,
+    unitsReturned: sales.filter((row) => row.is_return).reduce((sum, row) => sum + row.quantity, 0),
   };
 }
 
 export function weightedStoragePerUnit(totals: StorageTotals): number | null {
-  if (totals.unitsSold <= 0) return null;
-  return totals.storage / totals.unitsSold;
+  const netUnits = totals.unitsSold - (totals.unitsReturned ?? 0);
+  if (netUnits <= 0) return null;
+  return totals.storage / netUnits;
 }
 
 export function buildCategoryStorageTotals(
@@ -46,6 +49,7 @@ export function buildCategoryStorageTotals(
     byCategory.set(categoryId, {
       storage: existing.storage + metrics.storage,
       unitsSold: existing.unitsSold + metrics.unitsSold,
+      unitsReturned: (existing.unitsReturned ?? 0) + (metrics.unitsReturned ?? 0),
     });
   }
 
@@ -68,6 +72,7 @@ export function buildAccountStorageTotals(
 
     totals.storage += metrics.storage;
     totals.unitsSold += metrics.unitsSold;
+    totals.unitsReturned = (totals.unitsReturned ?? 0) + (metrics.unitsReturned ?? 0);
   }
 
   return totals;

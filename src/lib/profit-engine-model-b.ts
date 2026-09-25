@@ -6,6 +6,7 @@ import {
 import { DEFAULT_TAX_PERCENT } from "@/lib/smart-pricing-constants";
 import { calculateEstimatedTax } from "@/lib/financial-engine-tax";
 import { resolveMarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
+import { calculateSalesToSettlementDifference } from "@/lib/marketplace-fees";
 
 /**
  * Commercial Performance Engine V4 (implementation).
@@ -13,14 +14,14 @@ import { resolveMarketplaceFeeStatus } from "@/lib/marketplace-fee-status";
  * Public import surface: `@/lib/financial-engine`
  *
  * Sales              = Σ priceWithDisc
- * Marketplace Fee    = Sales − Sales API forPay
+ * Sales-to-Settlement Difference = Sales − Sales API forPay (reconciliation)
  * Acquiring          = Σ acquiring_fee (display)
  * Revenue            = Σ ppvz_for_pay
  * Estimated Tax      = Tax% × Σ finishedPrice (historical reporting)
  * Net Profit         = Revenue − PC − Logistics − Storage − Acceptance
  *                      − Penalties − Other − Ads − Estimated Tax
  *
- * Smart Pricing uses a separate tax base (Sale − Marketplace Fee).
+ * Smart Pricing uses a separate tax base (Sale − legacy Sales-to-Settlement allowance).
  * See docs/estimated-tax-models.md — do not unify.
  */
 
@@ -28,7 +29,7 @@ export type ModelBTaxParams = {
   taxPercent?: number;
   /**
    * Tax base passed to calculateEstimatedTax.
-   * Reporting: Σ finishedPrice. Smart Pricing unit path: Sale − Marketplace Fee.
+   * Reporting: Σ finishedPrice. Smart Pricing unit path: Sale − legacy Sales-to-Settlement allowance.
    */
   customerPaid?: number;
 };
@@ -61,7 +62,10 @@ export function calculateModelBNetProfit(
       ? params.customerPaid
       : 0;
 
-  const marketplaceFee = params.netSales - params.salesForPay;
+  const salesToSettlementDifference = calculateSalesToSettlementDifference(
+    params.netSales,
+    params.salesForPay
+  );
   const revenue = params.financeNetForPay;
 
   const sellerPayout =
@@ -92,9 +96,13 @@ export function calculateModelBNetProfit(
     returnedSales: params.returnedSales,
     netSales: params.netSales,
     netSalesStatus: params.netSalesStatus,
-    commission: marketplaceFee,
-    marketplaceFee,
-    marketplaceFeeStatus: resolveMarketplaceFeeStatus(params.netSalesStatus, marketplaceFee),
+    commission: salesToSettlementDifference,
+    marketplaceFee: salesToSettlementDifference,
+    salesToSettlementDifference,
+    marketplaceFeeStatus: resolveMarketplaceFeeStatus(
+      params.netSalesStatus,
+      salesToSettlementDifference
+    ),
     acquiring: params.acquiring,
     revenue,
     logistics: params.logistics,
@@ -245,10 +253,10 @@ export function buildModelBBreakdownLines(
       detail: `${metrics.taxPercent}% × Σ finishedPrice (${metrics.customerPaid.toLocaleString("ru-RU")} ₽ customer paid)`,
     },
     {
-      key: "marketplaceFee",
-      label: "Marketplace Fee (informational)",
-      amount: metrics.marketplaceFee ?? metrics.commission,
-      detail: "Sales − Sales API forPay — not deducted again in Net Profit",
+      key: "salesToSettlementDifference",
+      label: "WB Fee (informational)",
+      amount: metrics.salesToSettlementDifference ?? metrics.marketplaceFee ?? metrics.commission,
+      detail: "Net Sales − net Sales API forPay — already reflected before Revenue",
     },
     {
       key: "acquiring",

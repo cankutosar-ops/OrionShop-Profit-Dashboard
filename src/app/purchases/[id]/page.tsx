@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { PurchaseLinesTable } from "@/components/purchases/purchase-lines-table";
+import { PurchasePaymentCard } from "@/components/purchases/purchase-payment-card";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import { scopeParamsToSearchParams, type PageScopeSearchParamsInput } from "@/lib/filter-params";
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -59,7 +60,7 @@ export default async function PurchaseDetailPage({ params, searchParams }: PageP
           Back to purchases
         </Link>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">Purchase Date</p>
             <p className="mt-1 font-medium">{formatDate(purchase.purchase_date)}</p>
@@ -86,7 +87,25 @@ export default async function PurchaseDetailPage({ params, searchParams }: PageP
               {formatCurrency(purchase.total_cost, purchase.currency)}
             </p>
           </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">Payment Status</p>
+            <p className="mt-1 font-medium">{purchase.payment_status.replaceAll("_", " ")}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">Payment Date</p>
+            <p className="mt-1 font-medium">{purchase.payment_date ? formatDate(purchase.payment_date) : "—"}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">Tax Recognition Status</p>
+            <p className="mt-1 font-medium">{purchase.tax_recognition_status.replaceAll("_", " ")}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">Recognized Tax Cost</p>
+            <p className="mt-1 font-medium">{formatCurrency(purchase.recognized_tax_cost, "RUB")}</p>
+          </div>
         </div>
+
+        <PurchasePaymentCard purchase={purchase} scopeQuery={scopeQuery.toString()} />
 
         {purchase.notes && (
           <div className="rounded-2xl border border-border bg-card p-4">

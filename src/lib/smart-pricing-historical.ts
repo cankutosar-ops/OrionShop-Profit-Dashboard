@@ -127,8 +127,13 @@ export function deriveProductPricingInputs(
     currentAvgPrice: sales / q,
     currentNetMarginPercent: calculateNetMarginPercent(revenue, product.finalNetProfit),
     currentOperationalMarginPercent: ops.operationalMarginPercent,
-    /** Marketplace Fee ÷ Sales (priceWithDisc) — V4 fee rate. */
-    commissionRate: sales > 0 ? product.marketplaceFees / sales : 0,
+    /**
+     * Legacy Smart Pricing proxy: Sales-to-Settlement Difference ÷ Sales.
+     * Keep isolated until the canonical Marketplace Fees denominator and
+     * no-double-count backtest are approved.
+     */
+    commissionRate:
+      sales > 0 ? (product.salesToSettlementDifference ?? 0) / sales : 0,
     unitProductCost: product.productCost / q,
     unitPurchaseLogistics: product.purchaseLogistics / q,
     unitTotalLogistics: totalLogistics / q,

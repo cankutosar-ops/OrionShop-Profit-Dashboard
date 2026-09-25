@@ -38,6 +38,8 @@ const hash=data.properties.hashed_token;
 let response=await request(`/auth/confirm?type=invite&token_hash=${encodeURIComponent(hash)}`);
 assert.equal(response.status,307);
 assert.equal(new URL(response.headers.get('location')).pathname,'/auth/password');
+assert.equal(new URL(response.headers.get('location')).search,'?_auth_redirect=1');
+assert.ok(!response.headers.get('location').includes(data.properties.hashed_token));
 assert.equal(response.headers.get('referrer-policy'),'no-referrer');
 assert.equal((await request('/auth/password')).status,200);
 const password=randomBytes(24).toString('base64url');

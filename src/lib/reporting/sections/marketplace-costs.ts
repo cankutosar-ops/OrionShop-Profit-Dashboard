@@ -30,15 +30,14 @@ export function buildMarketplaceCostsSection(
   const rawLines: Array<{ id: string; label: string; amount: number }> = [
     {
       id: "marketplaceFee",
-      label: "Marketplace Fee",
-      amount: fe.marketplaceFee ?? fe.commission,
+      label: "Marketplace Fees",
+      amount: ctx.overview.marketplaceFeesPresentation.marketplaceFees,
     },
     { id: "logistics", label: "Logistics", amount: fe.logistics },
     { id: "storage", label: "Storage", amount: fe.storage },
     { id: "acceptance", label: "Acceptance", amount: fe.acceptance },
     { id: "penalties", label: "Penalties", amount: fe.penalties },
     { id: "adjustments", label: "Adjustments", amount: fe.adjustments },
-    { id: "acquiring", label: "Acquiring", amount: fe.acquiring },
     { id: "estimatedTax", label: "Estimated Tax", amount: fe.estimatedTax },
   ];
 
@@ -55,7 +54,7 @@ export function buildMarketplaceCostsSection(
     title: "Marketplace Cost Analysis",
     description: "Marketplace expense breakdown with share of Revenue (Financial Engine V4)",
     data: {
-      marketplaceFeeStatus: fe.marketplaceFeeStatus ?? "unavailable",
+      marketplaceFeeStatus: "ready",
       revenueBase: revenue,
       lines,
       totalAmount,

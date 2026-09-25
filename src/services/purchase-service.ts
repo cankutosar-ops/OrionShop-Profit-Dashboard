@@ -10,6 +10,7 @@ import type {
   PurchaseLine,
   PurchaseListItem,
   PurchaseListLinePreview,
+  PurchaseTaxRecognitionStatus,
   PurchaseWithLines,
 } from "@/types/database";
 
@@ -40,7 +41,21 @@ function mapPurchase(row: Purchase): Purchase {
       row.invoice_number == null || String(row.invoice_number).trim() === ""
         ? null
         : String(row.invoice_number).trim(),
+    payment_status: row.payment_status ?? "UNPAID",
+    payment_date: row.payment_date ?? null,
+    paid_amount: Number(row.paid_amount ?? 0),
+    payment_reference: row.payment_reference ?? null,
+    payment_fx_rate: row.payment_fx_rate == null ? null : Number(row.payment_fx_rate),
+    payment_fx_reference: row.payment_fx_reference ?? null,
   };
+}
+
+function recognitionStatus(purchase: Purchase, recognized: number): PurchaseTaxRecognitionStatus {
+  if (recognized > 0) return "RECOGNIZED";
+  if (purchase.payment_status !== "PAID") return "UNPAID";
+  if (purchase.currency !== "RUB" &&
+    (!purchase.payment_fx_rate || !purchase.payment_fx_reference)) return "UNVERIFIED_FX";
+  return "PAID_NOT_SOLD";
 }
 
 function mapPurchaseLine(row: PurchaseLine & { product?: { name: string } | null }): PurchaseLine {
@@ -94,6 +109,17 @@ export async function fetchPurchases(
   const linesByPurchase = new Map<string, PurchaseListLinePreview[]>();
   const articlesByPurchase = new Map<string, string[]>();
   const totalByPurchase = new Map<string, number>();
+  const { data: recognitionRows, error: recognitionError } = await supabase
+    .from("tax_purchase_recognition_events")
+    .select("purchase_id,amount_rub")
+    .in("purchase_id", purchaseIds);
+  if (recognitionError) throw new Error(`Failed to fetch purchase recognition: ${recognitionError.message}`);
+  const recognizedByPurchase = new Map<string, number>();
+  for (const event of recognitionRows ?? []) {
+    const purchaseId = String(event.purchase_id);
+    recognizedByPurchase.set(purchaseId,
+      (recognizedByPurchase.get(purchaseId) ?? 0) + Number(event.amount_rub));
+  }
 
   for (const line of lineRows) {
     const purchaseId = String(line.purchase_id);
@@ -126,12 +152,16 @@ export async function fetchPurchases(
 
   return purchaseRows.map((row) => {
     const id = String(row.id);
+    const mappedPurchase = mapPurchase(row as Purchase);
     const mappedLines = linesByPurchase.get(id) ?? [];
+    const recognized = recognizedByPurchase.get(id) ?? 0;
     return {
-      ...mapPurchase(row as Purchase),
+      ...mappedPurchase,
       line_count: mappedLines.length,
       supplierArticles: articlesByPurchase.get(id) ?? [],
       total_cost: totalByPurchase.get(id) ?? 0,
+      recognized_tax_cost: recognized,
+      tax_recognition_status: recognitionStatus(mappedPurchase, recognized),
       lines: mappedLines,
     };
   });
@@ -169,12 +199,23 @@ export async function fetchPurchaseById(
     (sum, line) => sum + lineTotal(line.quantity, line.unit_cost),
     0
   );
+  const { data: recognitionRows, error: recognitionError } = await supabase
+    .from("tax_purchase_recognition_events")
+    .select("amount_rub")
+    .eq("purchase_id", purchaseId);
+  if (recognitionError) throw new Error(`Failed to fetch purchase recognition: ${recognitionError.message}`);
+  const recognized_tax_cost = (recognitionRows ?? []).reduce(
+    (sum, event) => sum + Number(event.amount_rub), 0
+  );
+  const mappedPurchase = mapPurchase(purchase as Purchase);
 
   return {
-    ...mapPurchase(purchase as Purchase),
+    ...mappedPurchase,
     lines: mappedLines,
     line_count: mappedLines.length,
     total_cost,
+    recognized_tax_cost,
+    tax_recognition_status: recognitionStatus(mappedPurchase, recognized_tax_cost),
   };
 }
 

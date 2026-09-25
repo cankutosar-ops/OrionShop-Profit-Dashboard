@@ -77,14 +77,14 @@ export type MarketplaceCostCompositionSlice = {
 };
 
 export function buildMarketplaceCostComposition(totals: {
-  commission: number;
+  marketplaceFees: number;
   logistics: number;
   storage: number;
   advertising: number;
   otherMarketplaceCosts: number;
 }): MarketplaceCostCompositionSlice[] {
   return [
-    { name: "Commission", value: totals.commission },
+    { name: "Marketplace Fees", value: totals.marketplaceFees },
     { name: "Logistics", value: totals.logistics },
     { name: "Storage", value: totals.storage },
     { name: "Advertising", value: totals.advertising },

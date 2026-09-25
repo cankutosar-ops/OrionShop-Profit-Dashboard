@@ -1,10 +1,15 @@
 import {
   effectiveFinanceCategory,
-  isMarketplaceFeeCategory,
+  isInactiveFinanceEvidenceCategory,
   parseWbSourceSuffix,
   profitOperationTypeForRow,
   type FinanceCategory,
 } from "@/lib/finance-category";
+import {
+  calculateMarketplaceFees,
+  calculateSalesToSettlementDifference,
+  calculateWbRemuneration,
+} from "@/lib/marketplace-fees";
 import type { WbFinance } from "@/types/database";
 import type {
   FinanceExpenseTotals,
@@ -28,6 +33,11 @@ function zeroCategorySummary(): FinanceCategorySummary {
     ACQUIRING: 0,
     PPVZ_REWARD: 0,
     PPVZ_VW: 0,
+    PPVZ_VW_NDS: 0,
+    LOYALTY_CASHBACK_EXPENSE: 0,
+    LOYALTY_CASHBACK_PARTICIPATION: 0,
+    FINANCE_SERVICE_FEE: 0,
+    ACQUIRING_COFINANCING_REVIEW: 0,
     LOGISTICS: 0,
     RETURN_LOGISTICS: 0,
     STORAGE: 0,
@@ -53,36 +63,14 @@ export function summarizeFinanceByCategory(finance: WbFinance[]): FinanceCategor
   return summary;
 }
 
-/**
- * Total Marketplace Fees from category summary.
- * Single source of truth: all marketplace costs except reimbursements.
- */
-export function sumMarketplaceFeesFromCategorySummary(summary: FinanceCategorySummary): number {
-  return (
-    summary.COMMISSION +
-    summary.ACQUIRING +
-    summary.PPVZ_REWARD +
-    summary.PPVZ_VW +
-    summary.OTHER
-  );
-}
-
 /** Total Marketplace Fees from finance rows (shared financial engine). */
 export function sumMarketplaceFeesFromFinance(finance: WbFinance[]): number {
-  return finance.reduce((sum, row) => {
-    if (parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay") {
-      return sum;
-    }
-    if (isMarketplaceFeeCategory(effectiveFinanceCategory(row))) {
-      return sum + Math.abs(Number(row.amount));
-    }
-    return sum;
-  }, 0);
+  return calculateMarketplaceFees(finance).marketplaceFees;
 }
 
 /** Per-product marketplace fee parts — account adjustments tracked separately from marketplace fees. */
 export function buildProductMarketplaceFeeParts(finance: WbFinance[]): ProductMarketplaceFeeParts {
-  let marketplaceFees = 0;
+  const marketplaceFees = calculateMarketplaceFees(finance).marketplaceFees;
   let accountAdjustments = 0;
   let reimbursements = 0;
 
@@ -97,9 +85,6 @@ export function buildProductMarketplaceFeeParts(finance: WbFinance[]): ProductMa
     if (category === "ADJUSTMENT") {
       accountAdjustments += amount;
       continue;
-    }
-    if (isMarketplaceFeeCategory(category)) {
-      marketplaceFees += amount;
     }
   }
 
@@ -125,6 +110,9 @@ export function rollupCategoriesToProfitBuckets(finance: WbFinance[]): FinanceEx
     if (parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay") {
       continue;
     }
+    if (isInactiveFinanceEvidenceCategory(effectiveFinanceCategory(row))) {
+      continue;
+    }
     const opType = profitOperationTypeForRow(row);
     const amount = Math.abs(Number(row.amount));
 
@@ -145,25 +133,31 @@ export function sumFinanceByType(
   type: FinanceOperationType
 ): number {
   return financeRecords
-    .filter((row) => row.operation_type === type)
+    .filter(
+      (row) =>
+        row.operation_type === type &&
+        !isInactiveFinanceEvidenceCategory(effectiveFinanceCategory(row))
+    )
     .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
 }
 
 /** Marketplace Fees presentation from persisted categories — single business rule. */
 export function buildMarketplaceFeesPresentationFromFinance(
   finance: WbFinance[],
-  commission: number
+  _legacyCommission: number,
+  netSales = 0,
+  salesForPay = 0
 ): MarketplaceFeesPresentation {
   const categorySummary = summarizeFinanceByCategory(finance);
-  const marketplaceFees = sumMarketplaceFeesFromCategorySummary(categorySummary);
+  const fees = calculateMarketplaceFees(finance);
+  const remuneration = calculateWbRemuneration(finance, netSales);
 
   return {
-    marketplaceFees,
-    commission: categorySummary.COMMISSION || commission,
-    acquiring: categorySummary.ACQUIRING,
-    ppvzReward: categorySummary.PPVZ_REWARD,
-    ppvzVw: categorySummary.PPVZ_VW,
-    otherMarketplaceExpenses: categorySummary.OTHER,
+    ...fees,
+    wbRemuneration: remuneration.value,
+    wbRemunerationPercent: remuneration.percentOfNetSales,
+    wbRemunerationStatus: remuneration.status,
+    salesToSettlementDifference: calculateSalesToSettlementDifference(netSales, salesForPay),
     accountAdjustments: categorySummary.ADJUSTMENT,
     reimbursements: categorySummary.COMPENSATION,
   };

@@ -93,7 +93,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
 
       {settlement.netSalesStatus !== "ready" && (
         <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
-          Sales coverage: {settlement.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+          Sales coverage: {settlement.netSalesStatus}. Net Sales shows observed values only; Marketplace Fees uses stored Finance evidence.
         </p>
       )}
       <MarketplaceFeeStatusNotice status={settlement.marketplaceFeeStatus} />
@@ -132,8 +132,8 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
                 {formatKpiCurrency(ctx.financialEngine.sellerPayout, ctx.tenant.currency)})
               </>
             )}
-            . Marketplace Fee is informational (Sales − Sales API forPay) and is not
-            subtracted again in Net Transfer.{" "}
+            . Marketplace Fees is an informational Finance component total and is not
+            subtracted again in Net Transfer. Sales-to-Settlement Difference remains a separate reconciliation metric.{" "}
             <a href={hubHref} className="text-primary hover:underline">
               Reports hub
             </a>

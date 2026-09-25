@@ -83,6 +83,22 @@ const overview = {
   logistics: 50,
   returnLogistics: 30,
   otherExpenses: 15,
+  marketplaceFeesPresentation: {
+    marketplaceFees: 123,
+    commission: 40,
+    acquiring: 20,
+    ppvzReward: 13,
+    ppvzVw: 42,
+    ppvzVwNds: 8,
+    wbRemuneration: -50,
+    wbRemunerationPercent: -5,
+    wbRemunerationStatus: "AVAILABLE",
+    salesToSettlementDifference: 150,
+    attributedMarketplaceFees: 123,
+    unattributedMarketplaceFees: 0,
+    accountAdjustments: 15,
+    reimbursements: 0,
+  },
 };
 
 const view = buildSettlementFromEngine(fe, overview, "RUB");
@@ -92,7 +108,7 @@ check("Gross Sales from engine", byId.grossSales === 1200);
 check("Returns from engine", byId.returns === 200);
 check("Net Sales from engine", byId.netSales === 1000);
 check("Revenue from engine", byId.revenue === 850);
-check("Marketplace Fee from engine", byId.marketplaceFees === 150 && view.lines.find((l) => l.id === "marketplaceFees")?.label === "Marketplace Fee");
+check("Marketplace Fees from canonical Finance presentation", byId.marketplaceFees === 123 && view.lines.find((l) => l.id === "marketplaceFees")?.label === "Marketplace Fees");
 check("Logistics outbound split", byId.logistics === 50);
 check("Return Logistics split", byId.returnLogistics === 30);
 check("Storage from engine", byId.storage === 25);

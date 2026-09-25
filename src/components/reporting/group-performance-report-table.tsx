@@ -95,7 +95,7 @@ export function GroupPerformanceReportTable({
     },
     {
       key: "marketplaceFees",
-      header: "Marketplace Fee",
+      header: "Marketplace Fees",
       align: "right",
       sortable: true,
       sortValue: (row) => row.marketplaceFees,

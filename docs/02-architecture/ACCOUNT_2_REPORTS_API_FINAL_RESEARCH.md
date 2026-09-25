@@ -316,7 +316,7 @@ Many detailed metadata fields (warehouse, office, promo IDs, KIZ, acquiring bank
 | Product cost | Internal cost history |
 | Advertising spend | Ads APIs / tables |
 | Estimated Tax base `finishedPrice` | **Sales API** (`wb_sales`) — dual tax model unchanged |
-| Marketplace Fee from Sales − Sales forPay | **Sales API**, not Finance Reports |
+| Sales-to-Settlement Difference (historically misnamed Marketplace Fee) | **Sales API**, not Finance Reports |
 
 ---
 
@@ -327,7 +327,8 @@ Canonical Financial Engine V4 (unchanged):
 | Metric | Formula / source | Reports sufficient? |
 |--------|------------------|---------------------|
 | Sales | Σ(`priceWithDisc`) | **No** — Sales API |
-| Marketplace Fee | Sales − Sales API forPay | **No** — Sales API |
+| Marketplace Fees | Explicit Finance `commission`, `acquiring_fee`, `ppvz_reward`, `vw`, and `vw_nds` suffixes | **Yes** — detailed Finance rows |
+| Sales-to-Settlement Difference | Sales − Sales API forPay | **No** — Sales API |
 | **Revenue** | Σ(Finance `ppvz_for_pay`) | **Yes** — detailed `forPay` → `for_pay` lines |
 | Estimated Tax | Tax% × Σ(`finishedPrice`) | **No** — Sales API (intentional dual model) |
 | Logistics / Storage / Acceptance / Penalties / Other | Finance fee lines | **Mostly yes**; **logistics mapping uncertain** until `delivery_*` proven |

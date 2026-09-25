@@ -2,6 +2,7 @@ import {
   resolveAdaptiveHistoricalCosts,
   type HistoricalCostBucket,
 } from "@/lib/smart-pricing-historical-costs";
+import { splitExpectedLogistics, totalHistoricalLogistics, weightedHistoricalLogistics } from "@/lib/smart-pricing-logistics";
 import type {
   CommissionWindowKey,
   ProductSmartPricingInputs,
@@ -10,7 +11,6 @@ import {
   aspWindowDateFrom,
   lookbackDateFrom,
   materializeWindowKeyForFilter,
-  resolvePreferredCostWindow,
   SMART_PRICING_COST_WINDOW_DEFAULT,
 } from "@/lib/smart-pricing-windows";
 
@@ -25,7 +25,7 @@ export const COMMISSION_WINDOW_OPTIONS: { value: CommissionWindowKey; label: str
   { value: "60", label: "60 days" },
   { value: "90", label: "90 days" },
   { value: "180", label: "180 days" },
-  { value: "range", label: "Selected range" },
+  { value: "range", label: "Adaptive (30/60/90 days)" },
 ];
 
 export type SmartPricingCommissionSettings = {
@@ -34,7 +34,7 @@ export type SmartPricingCommissionSettings = {
   commissionWindow: CommissionWindowKey;
 };
 
-/** Sprint 8.1 — default cost window is 90d (preferred band), never dashboard range. */
+/** Default recent-cost source; independent of the dashboard date range. */
 export const DEFAULT_SMART_PRICING_COMMISSION_SETTINGS: SmartPricingCommissionSettings = {
   minProductSales: 20,
   minCategorySales: 50,
@@ -89,12 +89,21 @@ export function resolveCostWindowForSettings(
   input: ProductSmartPricingInputs,
   settings: SmartPricingCommissionSettings
 ): "60" | "90" | "30" | "180" {
-  const preferred = resolvePreferredCostWindow({
-    window: settings.commissionWindow,
-    productUnits60: input.historicalReplay.byWindow["60"]?.productLogistics.unitsSold ?? 0,
-    minProductSales: settings.minProductSales,
-  });
-  return preferred;
+  if (settings.commissionWindow !== "range") return settings.commissionWindow;
+  // Source hierarchy wins over recency: a sufficient SKU 60d sample beats
+  // category 30d. Within a source, choose the shortest sufficient window.
+  for (const source of ["productLogistics", "categoryLogistics"] as const) {
+    const min = source === "productLogistics" ? settings.minProductSales : settings.minCategorySales;
+    for (const window of ["30", "60", "90"] as const) {
+      const totals = input.historicalReplay.byWindow[window][source];
+      if (totals.unitsSold >= min && totalHistoricalLogistics(totals) > 0 && weightedHistoricalLogistics(totals) !== null) return window;
+    }
+  }
+  for (const window of ["30", "60", "90"] as const) {
+    const totals = input.historicalReplay.byWindow[window].accountLogistics;
+    if (totalHistoricalLogistics(totals) > 0 && weightedHistoricalLogistics(totals) !== null) return window;
+  }
+  return "90";
 }
 
 function windowBucketFromTotals(
@@ -138,11 +147,26 @@ export function applySmartPricingCommissionSettings(
     minProductSales: settings.minProductSales,
     minCategorySales: settings.minCategorySales,
   });
+  const selectedLogistics = resolved.resolutionSource === "PRODUCT_HISTORY"
+    ? buckets.product.logistics
+    : resolved.resolutionSource === "CATEGORY_HISTORY"
+      ? buckets.category.logistics
+      : buckets.account.logistics;
+  const split = splitExpectedLogistics(selectedLogistics);
+  const recent = weightedHistoricalLogistics(input.historicalReplay.byWindow["30"].productLogistics);
+  const long = weightedHistoricalLogistics(input.historicalReplay.byWindow["90"].productLogistics);
 
   return {
     ...input,
     resolutionSource: resolved.resolutionSource,
     historicalLogistics: resolved.historicalLogistics,
+    costWindowDays: Number(costWindow) as 30 | 60 | 90 | 180,
+    expectedBaseLogistics: split.base,
+    expectedReturnBurden: split.returnBurden,
+    expectedReturnRatePercent: selectedLogistics.unitsSold > 0
+      ? ((selectedLogistics.unitsReturned ?? 0) / selectedLogistics.unitsSold) * 100 : 0,
+    recentLongLogisticsVariancePercent: recent !== null && long !== null && long > 0
+      ? ((recent - long) / long) * 100 : null,
     effectiveLogistics: resolved.historicalLogistics,
     storagePerUnit: resolved.storagePerUnit,
     historicalCompletedUnits: resolved.completedUnits,

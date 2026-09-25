@@ -743,10 +743,11 @@ async function main() {
   }));
   const v1ServiceStart = syncService.indexOf("async syncFinanceV1Page(");
   const serviceUpsert = syncService.indexOf("const { errors } = await batchUpsertFinance(", v1ServiceStart);
-  const serviceSuccess = syncService.indexOf('if (errors.length === 0) result.v1Outcome = "data"', v1ServiceStart);
-  check("J: upsert success precedes data outcome and persisted cursor advancement",
+  const evidenceUpsert = syncService.indexOf("await persistFinanceTransactionEvidence({", serviceUpsert);
+  const serviceSuccess = syncService.indexOf('if (result.errors.length === 0) result.v1Outcome = "data"', v1ServiceStart);
+  check("J: finance and tax-evidence upserts precede data outcome and persisted cursor advancement",
     sequence.join(",") === "upsert_started,upsert_succeeded,cursor_advanced" &&
-    serviceUpsert > v1ServiceStart && serviceSuccess > serviceUpsert);
+    serviceUpsert > v1ServiceStart && evidenceUpsert > serviceUpsert && serviceSuccess > evidenceUpsert);
   const forbidden = await runExplicitCase(serviceError(await apiError(403)));
   check("HTTP 403 fails and retains cursor", stayedRetryable(forbidden, "failed", 403));
   const transport = await runExplicitCase(serviceError(

@@ -187,6 +187,52 @@ export type FinanceSyncReportRow = {
 
 export type CompanyStatus = "active" | "archived";
 
+export type CompanyTaxObject = "USN_INCOME" | "USN_INCOME_MINUS_EXPENSES";
+export type CompanyVatStatus = "UNKNOWN" | "EXEMPT" | "VAT_APPLICABLE";
+
+export type CompanyTaxProfile = {
+  id: string;
+  company_id: string;
+  tax_system: "USN";
+  tax_object: CompanyTaxObject;
+  tax_rate: number;
+  minimum_tax_rate: number;
+  effective_from: string;
+  effective_to: string | null;
+  region_code: string | null;
+  vat_status: CompanyVatStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompanyExpenseCategory =
+  | "ACCOUNTING" | "RENT" | "SOFTWARE" | "ADVERTISING" | "LOGISTICS"
+  | "BANKING" | "PAYROLL" | "OFFICE" | "PROFESSIONAL_SERVICES"
+  | "TAXES_FEES" | "FINES_PENALTIES" | "PERSONAL_GROCERIES" | "OTHER";
+
+export type CompanyExpense = {
+  id: string;
+  company_id: string;
+  expense_date: string;
+  category: CompanyExpenseCategory;
+  description: string;
+  amount: number;
+  tax_deductible: boolean;
+  category_default: boolean;
+  tax_deductible_origin: "CATEGORY_DEFAULT" | "USER_OVERRIDE";
+  evidence_status: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+  document_reference: string | null;
+  payment_status: "UNVERIFIED" | "UNPAID" | "PARTIALLY_PAID" | "PAID";
+  payment_date: string | null;
+  paid_amount: number;
+  payment_reference: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -347,14 +393,13 @@ export type ModelBProfitMetrics = {
   netSales: number;
   /** When not `ready`, dependent KPIs must not show temporary zero values. */
   netSalesStatus: import("@/lib/sales-revenue-resolution").NetSalesStatus;
-  /**
-   * Marketplace Fee = Sales − Sales API forPay (net).
-   * Not from ppvz_sales_commission / ppvz_reward / ppvz_vw.
-   */
+  /** @deprecated Legacy alias of salesToSettlementDifference. */
   commission: number;
-  /** Alias of commission — Marketplace Fee. */
+  /** @deprecated Legacy alias of salesToSettlementDifference. */
   marketplaceFee?: number;
-  /** Informational fee validity; a negative signed difference is an anomaly only when Sales is complete. */
+  /** Net Sales − Sales API forPay. Reconciliation only. */
+  salesToSettlementDifference?: number;
+  /** @deprecated Status of the legacy signed reconciliation difference. */
   marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   /** Finance acquiring_fee (display; not deducted again in Net Profit). */
   acquiring: number;
@@ -397,7 +442,7 @@ export type ModelBProfitMetrics = {
   /**
    * Net Profit (V4) =
    * Revenue − PC − Logistics − Storage − Acceptance − Penalties − Other − Ads − Tax.
-   * Does not subtract Marketplace Fee or Acquiring again.
+   * Does not subtract Marketplace Fees or Acquiring again.
    */
   finalNetProfit: number;
   /** @deprecated Legacy aggregate — not shown on Commercial Performance dashboard. */
@@ -471,6 +516,8 @@ export type WbFinance = {
   /** Permanent high-level profit bucket — always populated at sync. */
   operation_type: FinanceOperationType;
   amount: number;
+  /** Signed Reports V1 value before legacy absolute-value presentation. */
+  raw_amount?: number | null;
   /** Wildberries line id: rrd:{rrd_id}:{suffix} — unique per report line. */
   source_key: string | null;
   description: string | null;
@@ -488,6 +535,46 @@ export type WbFinance = {
   rrd_id?: number | null;
   /** WB rr_dt when distinct from operation_date. */
   rr_dt?: string | null;
+};
+
+export type WbFinanceTransactionContext =
+  | "SALE" | "RETURN" | "CORRECTION" | "COMPENSATION" | "OTHER";
+export type WbFinanceTaxClassification =
+  | "TAXABLE_SALE" | "TAXABLE_REFUND" | "TAXABLE_COMPENSATION"
+  | "NON_TAXABLE_OPERATION" | "REVIEW";
+
+/** One source row per WB Finance Reports V1 rrdId; never duplicated per fee suffix. */
+export type WbFinanceTransactionEvidence = {
+  id: string;
+  marketplace_account_id: string;
+  report_id: number;
+  rrd_id: number;
+  nm_id: number | null;
+  srid: string | null;
+  sku: string | null;
+  quantity: number | null;
+  retail_price: number | null;
+  retail_amount: number | null;
+  retail_price_with_discount: number | null;
+  for_pay: number | null;
+  additional_payment: number | null;
+  cashback_amount: number | null;
+  cashback_discount: number | null;
+  cashback_commission_change: number | null;
+  doc_type_name: string | null;
+  seller_oper_name: string | null;
+  sale_dt: string | null;
+  rr_date: string | null;
+  economic_event_date: string | null;
+  finance_recognition_date: string | null;
+  operation_context: WbFinanceTransactionContext;
+  tax_classification: WbFinanceTaxClassification;
+  tax_effective_date: string | null;
+  tax_effective_date_status: "UNVERIFIED" | "APPROVED";
+  source_api_version: string;
+  observed_at: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type WbAd = {
@@ -551,6 +638,11 @@ export type CostManagementRow = {
 };
 
 export type PurchaseCurrency = "USD" | "RUB" | "TRY" | "EUR";
+export type PurchasePaymentStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID";
+export type PurchaseTaxRecognitionStatus =
+  | "NO_PURCHASES" | "POLICY_UNCONFIGURED" | "UNPAID" | "UNVERIFIED_FX"
+  | "VAT_BASIS_UNVERIFIED" | "PAID_NOT_SOLD" | "PARTIALLY_RECOGNIZED" | "RECOGNIZED"
+  | "RECONCILIATION_REQUIRED";
 
 export const PURCHASE_CURRENCIES: PurchaseCurrency[] = ["USD", "RUB", "TRY", "EUR"];
 
@@ -563,6 +655,12 @@ export type Purchase = {
   exchange_rate: number | null;
   /** Optional supplier invoice / document number. */
   invoice_number: string | null;
+  payment_status: PurchasePaymentStatus;
+  payment_date: string | null;
+  paid_amount: number;
+  payment_reference: string | null;
+  payment_fx_rate: number | null;
+  payment_fx_reference: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -584,6 +682,8 @@ export type PurchaseWithLines = Purchase & {
   line_count: number;
   /** Σ quantity × unit_cost for this purchase (purchase currency). */
   total_cost: number;
+  recognized_tax_cost: number;
+  tax_recognition_status: PurchaseTaxRecognitionStatus;
 };
 
 export type PurchaseListLinePreview = {
@@ -600,8 +700,45 @@ export type PurchaseListItem = Purchase & {
   supplierArticles: string[];
   /** Σ quantity × unit_cost (purchase currency). */
   total_cost: number;
+  recognized_tax_cost: number;
+  tax_recognition_status: PurchaseTaxRecognitionStatus;
   /** Line previews for inline expansion (cost history ledger). */
   lines: PurchaseListLinePreview[];
+};
+
+export type CompanyPurchaseTaxPolicy = {
+  id: string;
+  company_id: string;
+  allocation_method: "FIFO";
+  payment_policy: "FULL_PAYMENT_ONLY";
+  return_policy: "RETURN_EVENT_DATE";
+  effective_from: string;
+  evidence_reference: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TaxPurchaseRecognitionEvent = {
+  id: string;
+  event_key: string;
+  company_id: string;
+  marketplace_account_id: string;
+  purchase_id: string;
+  purchase_line_id: string;
+  product_id: string;
+  source_sale_row_id: string;
+  source_sale_id: string;
+  source_srid: string;
+  event_type: "RECOGNITION" | "REVERSAL";
+  recognition_date: string;
+  quantity: number;
+  unit_cost_rub: number;
+  amount_rub: number;
+  reversal_of_event_key: string | null;
+  allocation_method: "FIFO";
+  rule_version: string;
+  evidence: Record<string, unknown>;
+  created_at: string;
 };
 
 export type PurchaseImportResult = {
@@ -677,8 +814,10 @@ export type ProductProfitability = ProfitBreakdown & {
    * `netProfit` remains Operating Profit (before tax) for Smart Pricing / ops compatibility.
    */
   finalNetProfit: number;
-  /** Marketplace Fee = Sales − Sales API forPay (Financial Engine V4). */
+  /** Explicit Finance fee/service components attributed to this product. */
   marketplaceFees: number;
+  /** Net Sales − Sales API forPay; reconciliation only. */
+  salesToSettlementDifference?: number;
   marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
   accountAdjustments: number;
@@ -826,6 +965,10 @@ export type ProductAnalyticsTotals = {
   revenue: number;
   productCost: number;
   marketplaceFees: number;
+  /** Full account canonical Marketplace Fees, independent of product allocation. */
+  accountMarketplaceFees: number;
+  /** Account fee rows without defensible product identity. */
+  unallocatedMarketplaceFees: number;
   /** Purchase-only outbound logistics included in net profit. */
   purchaseLogistics: number;
   /** Excluded outbound logistics (not in net profit). */
@@ -992,6 +1135,32 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  company_purchase_tax_policies: {
+    Row: CompanyPurchaseTaxPolicy;
+    Insert: Omit<CompanyPurchaseTaxPolicy, "id" | "created_at" | "updated_at"> & {
+      id?: string; created_at?: string; updated_at?: string;
+    };
+    Update: never;
+    Relationships: NoRelationships;
+  };
+  company_tax_profiles: {
+    Row: CompanyTaxProfile;
+    Insert: Omit<CompanyTaxProfile, "id" | "created_at" | "updated_at" | "minimum_tax_rate" | "tax_system" | "vat_status"> &
+      Partial<Pick<CompanyTaxProfile, "id" | "created_at" | "updated_at" | "minimum_tax_rate" | "tax_system" | "vat_status">>;
+    Update: Partial<CompanyTaxProfile>;
+    Relationships: NoRelationships;
+  };
+  company_expenses: {
+    Row: CompanyExpense;
+    Insert: Omit<CompanyExpense, "id" | "created_at" | "updated_at" | "deleted_at" |
+      "evidence_status" | "document_reference" | "payment_status" | "payment_date" |
+      "paid_amount" | "payment_reference"> & Partial<Pick<CompanyExpense, "id" |
+      "created_at" | "updated_at" | "deleted_at" | "evidence_status" |
+      "document_reference" | "payment_status" | "payment_date" | "paid_amount" |
+      "payment_reference">>;
+    Update: Partial<CompanyExpense>;
+    Relationships: NoRelationships;
+  };
   companies: {
     Row: Company;
     Insert: {
@@ -1067,6 +1236,16 @@ type PublicTables = {
     Update: Partial<WbFinance>;
     Relationships: NoRelationships;
   };
+  wb_finance_transaction_evidence: {
+    Row: WbFinanceTransactionEvidence;
+    Insert: Omit<WbFinanceTransactionEvidence, "id" | "created_at" | "updated_at"> & {
+      id?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+    Update: Partial<WbFinanceTransactionEvidence>;
+    Relationships: NoRelationships;
+  };
   sync_runs: {
     Row: SyncRun;
     Insert: Partial<Omit<SyncRun, "id" | "created_at">> & {
@@ -1129,14 +1308,28 @@ type PublicTables = {
       effective_to?: string | null;
     };
     Update: Partial<ProductCostHistory>;
-    Relationships: NoRelationships;
+    Relationships: [{
+      foreignKeyName: "product_cost_history_product_id_fkey";
+      columns: ["product_id"];
+      isOneToOne: false;
+      referencedRelation: "products";
+      referencedColumns: ["id"];
+    }];
   };
   purchases: {
     Row: Purchase;
-    Insert: Omit<Purchase, "id" | "created_at" | "updated_at"> & {
+    Insert: Omit<Purchase, "id" | "created_at" | "updated_at" | "payment_status" |
+      "payment_date" | "paid_amount" | "payment_reference" | "payment_fx_rate" |
+      "payment_fx_reference"> & {
       id?: string;
       created_at?: string;
       updated_at?: string;
+      payment_status?: PurchasePaymentStatus;
+      payment_date?: string | null;
+      paid_amount?: number;
+      payment_reference?: string | null;
+      payment_fx_rate?: number | null;
+      payment_fx_reference?: string | null;
     };
     Update: Partial<Purchase>;
     Relationships: NoRelationships;
@@ -1148,6 +1341,20 @@ type PublicTables = {
       created_at?: string;
     };
     Update: Partial<PurchaseLine>;
+    Relationships: [{
+      foreignKeyName: "purchase_lines_product_id_fkey";
+      columns: ["product_id"];
+      isOneToOne: false;
+      referencedRelation: "products";
+      referencedColumns: ["id"];
+    }];
+  };
+  tax_purchase_recognition_events: {
+    Row: TaxPurchaseRecognitionEvent;
+    Insert: Omit<TaxPurchaseRecognitionEvent, "id" | "created_at"> & {
+      id?: string; created_at?: string;
+    };
+    Update: never;
     Relationships: NoRelationships;
   };
   product_variants: {
@@ -1319,6 +1526,16 @@ type PublicTables = {
       report_type: number | null;
       retail_amount_sum: number | null;
       for_pay_sum: number | null;
+      delivery_service_sum: number | null;
+      paid_storage_sum: number | null;
+      paid_acceptance_sum: number | null;
+      deduction_sum: number | null;
+      penalty_sum: number | null;
+      additional_payment_sum: number | null;
+      cashback_amount_sum: number | null;
+      cashback_discount_sum: number | null;
+      cashback_commission_change_sum: number | null;
+      payment_schedule: number | null;
       bank_payment_sum: number | null;
       seller_finance_name: string | null;
       observed_at: string;
@@ -1338,6 +1555,16 @@ type PublicTables = {
       report_type?: number | null;
       retail_amount_sum?: number | null;
       for_pay_sum?: number | null;
+      delivery_service_sum?: number | null;
+      paid_storage_sum?: number | null;
+      paid_acceptance_sum?: number | null;
+      deduction_sum?: number | null;
+      penalty_sum?: number | null;
+      additional_payment_sum?: number | null;
+      cashback_amount_sum?: number | null;
+      cashback_discount_sum?: number | null;
+      cashback_commission_change_sum?: number | null;
+      payment_schedule?: number | null;
       bank_payment_sum?: number | null;
       seller_finance_name?: string | null;
       observed_at?: string;
@@ -1666,7 +1893,31 @@ export type Database = {
         Relationships: NoRelationships;
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      orion_admin_rls_status: {
+        Args: Record<string, never>;
+        Returns: Array<Record<string, unknown>>;
+      };
+      orion_append_company_tax_profile: {
+        Args: {
+          p_company_id: string;
+          p_tax_object: CompanyTaxObject;
+          p_tax_rate: number;
+          p_effective_from: string;
+          p_vat_status: CompanyVatStatus;
+        };
+        Returns: CompanyTaxProfile;
+      };
+      orion_create_company_with_tax_profile: {
+        Args: {
+          p_name: string; p_country: string | null; p_currency: string;
+          p_timezone: string; p_language: string; p_is_default: boolean;
+          p_tax_object: CompanyTaxObject; p_tax_rate: number; p_effective_from: string;
+          p_vat_status: CompanyVatStatus;
+        };
+        Returns: Company;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

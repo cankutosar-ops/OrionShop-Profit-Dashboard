@@ -155,6 +155,8 @@ export function buildProductAnalyticsTotals(
     accountLogisticsTotal?: number;
     unallocatedRevenue?: number;
     accountRevenue?: number;
+    accountMarketplaceFees?: number;
+    unallocatedMarketplaceFees?: number;
   }
 ): ProductAnalyticsTotals {
   const financial = sumFinancialTotals(products);
@@ -212,10 +214,13 @@ export function buildProductAnalyticsTotals(
     accountLogisticsTotal: reconciliation?.accountLogisticsTotal ?? 0,
     unallocatedRevenue: reconciliation?.unallocatedRevenue ?? 0,
     accountRevenue: reconciliation?.accountRevenue ?? 0,
+    accountMarketplaceFees:
+      reconciliation?.accountMarketplaceFees ?? financial.marketplaceFees,
+    unallocatedMarketplaceFees: reconciliation?.unallocatedMarketplaceFees ?? 0,
   };
 }
 
-/** Validates Net Profit against Financial Engine V4 (no Marketplace Fee / Acquiring re-deduction). */
+/** Validates Net Profit against Financial Engine V4 (no Marketplace Fees / Acquiring re-deduction). */
 export function verifyProductAnalyticsTotals(
   products: ProductProfitability[],
   totals: ProductAnalyticsTotals

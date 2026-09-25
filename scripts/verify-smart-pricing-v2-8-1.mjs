@@ -63,15 +63,15 @@ console.log("=== Sprint 8.1 — Smart Pricing V2 math ===\n");
 
 // 1. Defaults
 check(
-  "Default cost window is 90 (not range)",
-  DEFAULT_SMART_PRICING_COMMISSION_SETTINGS.commissionWindow === "90" &&
-    SMART_PRICING_COST_WINDOW_DEFAULT === "90"
+  "Default cost window is adaptive",
+  DEFAULT_SMART_PRICING_COMMISSION_SETTINGS.commissionWindow === "range" &&
+    SMART_PRICING_COST_WINDOW_DEFAULT === "range"
 );
 
 // 2. Preferred band mapping
 check("range + enough 60d units → 60", resolvePreferredCostWindow({ window: "range", productUnits60: 25, minProductSales: 20 }) === "60");
 check("range + thin 60d units → 90", resolvePreferredCostWindow({ window: "range", productUnits60: 5, minProductSales: 20 }) === "90");
-check("30 clamps to 60", resolvePreferredCostWindow({ window: "30", productUnits60: 0, minProductSales: 20 }) === "60");
+check("explicit 30 honored", resolvePreferredCostWindow({ window: "30", productUnits60: 0, minProductSales: 20 }) === "30");
 check("180 clamps to 90", resolvePreferredCostWindow({ window: "180", productUnits60: 100, minProductSales: 20 }) === "90");
 check("explicit 60 honored", resolvePreferredCostWindow({ window: "60", productUnits60: 0, minProductSales: 20 }) === "60");
 check("explicit 90 honored", resolvePreferredCostWindow({ window: "90", productUnits60: 100, minProductSales: 20 }) === "90");

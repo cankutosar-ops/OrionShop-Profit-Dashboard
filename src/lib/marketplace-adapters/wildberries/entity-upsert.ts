@@ -26,6 +26,10 @@ import {
   mapApiSaleToDb,
   mapFinanceRowsFromReport,
 } from "@/lib/wildberries/mappers";
+import {
+  mapFinanceTransactionEvidence,
+  persistFinanceTransactionEvidence,
+} from "@/lib/tax-engine/finance-transaction-evidence";
 import { persistSalesEvents } from "@/lib/wildberries/sales-event-persistence";
 import type { SalesEventRow } from "@/lib/wildberries/sales-event-identity";
 import type {
@@ -271,6 +275,8 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
     const result = empty();
     const supabase = createAdminClient();
     const batch: Array<Omit<WbFinance, "id">> = [];
+    const evidenceRows: Array<ReturnType<typeof mapFinanceTransactionEvidence>> = [];
+    const observedAt = new Date().toISOString();
 
     for (const item of items) {
       const row = item.raw as WbApiFinanceRow | undefined;
@@ -282,6 +288,7 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
         ? await this.resolveProductId(row.nm_id, row.sa_name ?? undefined)
         : null;
       const lines = mapFinanceRowsFromReport(row, productId);
+      evidenceRows.push(mapFinanceTransactionEvidence(row, this.marketplaceAccountId, observedAt));
       for (const line of lines) {
         batch.push({
           ...line,
@@ -295,6 +302,12 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
         onConflict: "marketplace_account_id,source_key",
       });
       if (error) throw error;
+      const evidence = await persistFinanceTransactionEvidence({
+        db: supabase,
+        accountId: this.marketplaceAccountId,
+        rows: evidenceRows,
+      });
+      if (evidence.errors.length) throw new Error(evidence.errors.join("; "));
       result.upserted = batch.length;
       result.updated = batch.length;
     }

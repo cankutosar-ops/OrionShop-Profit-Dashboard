@@ -127,7 +127,7 @@ export async function GroupPerformanceReportPage({
 
       {view.netSalesStatus !== "ready" && (
         <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
-          Sales coverage: {view.netSalesStatus}. Net Sales and Marketplace Fee show observed values only.
+          Sales coverage: {view.netSalesStatus}. Net Sales shows observed values only; Marketplace Fees uses stored Finance evidence.
         </p>
       )}
       <MarketplaceFeeStatusNotice status={view.marketplaceFeeStatus} />

@@ -1,17 +1,17 @@
 /**
  * Financial Engine V4 — Commercial Performance / historical reporting.
  *
- * Sales / Marketplace Fee / Revenue / Net Profit for Dashboard, Product Analytics,
+ * Sales / Revenue / Net Profit for Dashboard, Product Analytics,
  * and Reports go through this module.
  *
  * Estimated Tax (REPORTING only):
  *   Tax% × Σ finishedPrice
  *
- * Smart Pricing uses a DIFFERENT tax base (Sale − Marketplace Fee) on purpose.
+ * Smart Pricing uses a DIFFERENT tax base (Sale − legacy Sales-to-Settlement allowance) on purpose.
  * See docs/estimated-tax-models.md and .cursor/rules/estimated-tax-dual-model.mdc.
  *
  * Sales            = Σ priceWithDisc
- * Marketplace Fee  = Sales − Sales API forPay
+ * Sales-to-Settlement Difference = Sales − Sales API forPay (reconciliation only)
  * Acquiring        = Σ acquiring_fee          (display; never deducted after Revenue)
  * Revenue          = Σ ppvz_for_pay
  * Estimated Tax    = Tax% × Σ finishedPrice   (historical reporting)
@@ -48,12 +48,13 @@ import {
 } from "@/lib/wb-settlement";
 import type { WbFinance, WbSale } from "@/types/database";
 import { calculateEstimatedTax } from "@/lib/financial-engine-tax";
+import { calculateSalesToSettlementDifference } from "@/lib/marketplace-fees";
 
 export { calculateEstimatedTax } from "@/lib/financial-engine-tax";
 
-/** Signed Marketplace Fee = Sales − Sales API forPay. Never from ppvz_*. */
+/** @deprecated Use calculateSalesToSettlementDifference. */
 export function marketplaceFeeFromSales(netSales: number, salesForPay: number): number {
-  return netSales - salesForPay;
+  return calculateSalesToSettlementDifference(netSales, salesForPay);
 }
 
 /** Net Σ finishedPrice from persisted sales (wb_sales.revenue = finishedPrice). */
@@ -72,11 +73,12 @@ export function finishedPriceRatioFromSales(sales: WbSale[]): number | null {
   return customerPaid / netSales;
 }
 
-/** Sales + Marketplace Fee + customer paid from a sales set. */
+/** Sales plus the legacy Smart Pricing reconciliation proxy. */
 export function sumSalesAndMarketplaceFee(sales: WbSale[]): {
   netSales: number;
   salesForPay: number;
   marketplaceFee: number;
+  salesToSettlementDifference: number;
   customerPaid: number;
   unitsSold: number;
 } {
@@ -88,7 +90,8 @@ export function sumSalesAndMarketplaceFee(sales: WbSale[]): {
   return {
     netSales,
     salesForPay,
-    marketplaceFee: marketplaceFeeFromSales(netSales, salesForPay),
+    marketplaceFee: calculateSalesToSettlementDifference(netSales, salesForPay),
+    salesToSettlementDifference: calculateSalesToSettlementDifference(netSales, salesForPay),
     customerPaid,
     unitsSold,
   };

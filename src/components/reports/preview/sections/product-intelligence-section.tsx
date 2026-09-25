@@ -231,7 +231,7 @@ export function ProductIntelligenceSection({
             },
             {
               key: "fee",
-              header: "Marketplace Fee",
+              header: "Marketplace Fees",
               align: "right",
               sortable: true,
               sortValue: (r) => r.marketplaceFees,

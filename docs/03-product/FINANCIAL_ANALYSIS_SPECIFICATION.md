@@ -647,7 +647,7 @@ Canonical money rules live in [Accounting Rules](../01-business/ACCOUNTING_RULES
 
 4. **Settlement is adjacent, not substitute.** WB Settlement answers payout/reconciliation questions; it must not replace Commercial Performance Net Profit.
 
-5. **Informational lines stay informational.** Marketplace Fee and Acquiring, when already reflected before Revenue, must not be casually re-subtracted in Net Profit under Commercial Performance.
+5. **Informational lines stay informational.** Marketplace Fees and Acquiring, when already reflected before Revenue, must not be casually re-subtracted in Net Profit under Commercial Performance.
 
 6. **No bookkeeping mode.** The module must not present itself as a statutory ledger, tax filing system, or raw feed browser.
 

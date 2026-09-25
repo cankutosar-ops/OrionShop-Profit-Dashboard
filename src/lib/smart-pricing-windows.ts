@@ -1,7 +1,7 @@
 /**
- * Sprint 8.1 — Smart Pricing V2 dual-window mathematics (locked).
+ * Smart Pricing forward inputs use a recent adaptive cost window.
  *
- * Cost basis (fee / logistics / storage): preferred 60–90 days, Product→Category→Account.
+ * Cost basis (fee / logistics / storage): 30/60/90 days, Product→Category→Account.
  * ASP / market comparison: recent 14–30 days only (fixed at ASP_WINDOW_DAYS).
  * Dashboard reporting date range must never drive recommended price inputs.
  */
@@ -10,12 +10,12 @@ import type { CommissionWindowKey } from "@/lib/smart-pricing-types";
 import { buildInclusiveDateRange } from "@/lib/utils";
 import type { ScopedDateRange } from "@/types/database";
 
-/** Preferred cost-history band (locked). */
-export const SMART_PRICING_COST_WINDOW_MIN_DAYS = 60;
+/** Supported adaptive cost-history band. */
+export const SMART_PRICING_COST_WINDOW_MIN_DAYS = 30;
 export const SMART_PRICING_COST_WINDOW_MAX_DAYS = 90;
 
-/** Default cost window inside the preferred band. */
-export const SMART_PRICING_COST_WINDOW_DEFAULT = "90" as const;
+/** Adaptive 30/60/90-day cost source; explicit replay windows remain available. */
+export const SMART_PRICING_COST_WINDOW_DEFAULT = "range" as const;
 
 /**
  * ASP / live market comparison window (locked: 14–30 days).
@@ -29,7 +29,7 @@ export const SMART_PRICING_ASP_WINDOW_DAYS = 30;
  */
 export const SMART_PRICING_DATA_LOOKBACK_DAYS = 180;
 
-export type PreferredCostWindowKey = "60" | "90";
+export type PreferredCostWindowKey = "30" | "60" | "90";
 
 /**
  * Build the tenant-scoped data range used for Smart Pricing fetches.
@@ -58,10 +58,8 @@ export function aspWindowDateFrom(scopeTo: string): string {
 }
 
 /**
- * Map UI / legacy window keys into the locked 60–90 cost band.
- * - Explicit 60 / 90: honored
- * - 30 → 60, 180 → 90 (clamp into preferred band)
- * - range → adaptive: 60 when product sample is sufficient, else 90
+ * Legacy helper retained for replay compatibility. The runtime adaptive
+ * source/window selection is implemented in smart-pricing-settings.
  */
 export function resolvePreferredCostWindow(params: {
   window: CommissionWindowKey;
@@ -72,20 +70,20 @@ export function resolvePreferredCostWindow(params: {
 
   if (window === "60") return "60";
   if (window === "90") return "90";
-  if (window === "30") return "60";
+  if (window === "30") return "30";
   if (window === "180") return "90";
 
-  // "range" — adaptive inside 60–90 (never the dashboard reporting range)
+  // Legacy helper; the full source-and-window decision lives in settings.
   if (productUnits60 >= minProductSales) return "60";
   return "90";
 }
 
 /**
  * Filter key used when materializing byWindow["range"] aggregates.
- * Always materialize as 90; adaptive pick happens at settings apply time.
+ * Materialize the replay alias as 90; adaptive pick happens at settings apply time.
  */
 export function materializeWindowKeyForFilter(
   window: CommissionWindowKey
 ): Exclude<CommissionWindowKey, "range"> {
-  return window === "range" ? SMART_PRICING_COST_WINDOW_DEFAULT : window;
+  return window === "range" ? "90" : window;
 }

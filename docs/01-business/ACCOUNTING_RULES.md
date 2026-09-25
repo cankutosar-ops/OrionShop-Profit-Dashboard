@@ -173,7 +173,7 @@ The project uses more than one financial model because sellers ask more than one
 
 **When to use.** Only when the question is forward-looking: *What Sale Price is consistent with our target under stated assumptions?*
 
-**Nature.** Simulation. Estimated Tax in this model uses the Smart Pricing base (sale after Marketplace Fee), which intentionally differs from historical reporting.
+**Nature.** Simulation. Estimated Tax in this model currently uses the legacy Sales-to-Settlement allowance as its forward-pricing base. That proxy is not the canonical Finance-based Marketplace Fees metric and remains isolated pending a bounded Smart Pricing backtest.
 
 **Must not be used to.** Rewrite historical Commercial Performance, Net Profit, or period tax estimates.
 
@@ -217,7 +217,7 @@ Those terms have distinct Glossary meanings and must not be used as casual synon
 1. **Recognition follows marketplace commercial reality for the period**, as captured in the Historical Data Warehouse for the scoped Marketplace Account — not a free-form seller wish.
 2. **Sales presentation vs Revenue.** Gross Sales, Returned Sales, and Net Sales tell the merchandise sales story. Revenue tells the seller payable story. Both may appear in one narrative; they remain different concepts.
 3. **Returns affect the sales story and related quantities.** They do not redefine Revenue into Customer Paid or Net Sales.
-4. **Fees already reflected before Revenue.** Marketplace Fee and Acquiring are part of understanding the path to Revenue; they are not casually re-subtracted when computing Net Profit under Commercial Performance (see Cost Categories).
+4. **Fees already reflected before Revenue.** Marketplace Fees describe Finance fee/service burden, including Acquiring. They are informational beside V4 Revenue and are not re-subtracted when computing Net Profit under Commercial Performance (see Cost Categories).
 5. **Scope.** Revenue is always for an explicit Company, Marketplace Account, and Reporting Period.
 6. **No double counting.** A single payable event must not inflate Revenue twice within the same model and period.
 
@@ -235,9 +235,17 @@ Cost categories classify **why** money left (or is reserved against) commercial 
 
 Cost of goods attributed to sold units for the period, derived from maintained Unit Cost. Represents seller merchandise cost, not marketplace logistics.
 
-### 5.2 Marketplace Fee
+### 5.2 Marketplace Fees
 
-The signed informational difference **Net Sales − Sales API forPay**. In Commercial Performance it is shown for understanding; it is not deducted again in Net Profit when already reflected before Revenue. Do not clamp a negative difference to zero. With complete Sales coverage, a negative value is marked as an anomaly because returns or an unusual Sales/forPay relationship can produce it. When Sales coverage is incomplete, the fee remains unavailable rather than being labeled an anomaly.
+The broad WB marketplace fee/service burden from explicit Finance suffixes:
+
+`commission + acquiring_fee + ppvz_reward + ppvz_vw + vw_nds`
+
+The total uses persisted fee magnitudes for presentation. It excludes Logistics, Return Logistics, Storage, Acceptance, Penalties, Adjustments/Deductions, Advertising, Compensation, inactive review evidence, and every generic `OTHER` row. Marketplace Fees are informational beside V4 Revenue and are not re-subtracted in V4 Net Profit.
+
+**WB Remuneration** is the narrower signed metric `raw(vw) + raw(vwNds)`. It is not the broad Marketplace Fees total. Historical periods without `raw_amount` must show `LEGACY_RAW_UNAVAILABLE`; the application must not fabricate signs.
+
+**Sales-to-Settlement Difference** is `Net Sales − Sales API forPay`. It is a reconciliation metric, not Marketplace Fees and not WB Remuneration.
 
 ### 5.3 Logistics
 
@@ -273,14 +281,14 @@ Estimated Tax is not a marketplace invoice line in the same sense as Logistics; 
 
 ### 5.11 Compensation and special reimbursements
 
-Compensation and similar reimbursements are classified separately from Marketplace Fee. They must not be silently netted into Fee or Advertising without an explicit rule.
+Compensation and similar reimbursements are classified separately from Marketplace Fees. They must not be silently netted into Fees or Advertising without an explicit rule.
 
 ### 5.12 Category discipline
 
 1. Do not invent parallel category names for the same meaning.
 2. Do not move spend between categories to make a period “look better.”
 3. If a new cost type appears, name it in the Glossary and place it here before wiring it into reports.
-4. Informational lines (for example Marketplace Fee and Acquiring beside Net Profit) must stay informational unless this framework changes.
+4. Informational lines (for example Marketplace Fees and Acquiring beside Net Profit) must stay informational unless this framework changes.
 
 ---
 
@@ -425,7 +433,7 @@ Financial correctness is evaluated by reconciliation and verification philosophy
 
 1. **Same question, same answer.** Commercial Performance totals for a scope must agree across surfaces that claim that model.
 2. **Different question, explained difference.** WB Settlement vs Commercial Performance differences are expected; they must be reconcilable in narrative (time basis, inclusions) without forcing numeric identity.
-3. **Informational lines.** Marketplace Fee and Acquiring appearing beside Net Profit must not be double-counted in validation scripts as if Net Profit subtracted them again.
+3. **Informational lines.** Marketplace Fees and Acquiring appearing beside Net Profit must not be double-counted in validation scripts as if Net Profit subtracted them again.
 4. **Exports.** Excel Export and on-screen figures for the same model and scope must match within stated rounding policy.
 
 ### Source verification

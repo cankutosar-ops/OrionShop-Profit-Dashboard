@@ -6,7 +6,7 @@ export function MarketplaceFeeStatusNotice({ status }: { status: MarketplaceFeeS
     <p role="status" className="mb-4 rounded-lg border border-amber-500/40 p-3 text-sm">
       {status === "anomaly"
         ? MARKETPLACE_FEE_ANOMALY_MESSAGE
-        : "Marketplace Fee is unavailable until Sales price coverage is complete; any observed value is partial."}
+        : "Marketplace Fees are unavailable because stored Finance fee evidence is not available for this scope."}
     </p>
   );
 }

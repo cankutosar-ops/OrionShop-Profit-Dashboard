@@ -84,7 +84,7 @@ Confidence
 **Question:** How is Net Profit calculated?
 
 **Answer:**  
-Net Profit (Commercial Performance) is after-tax commercial profit derived from Revenue minus product cost, logistics, storage, acceptance, penalties, adjustments, advertising (per engine), and Estimated Tax — as defined by the Financial Engine. Marketplace Fee and Acquiring are not deducted again after Revenue.
+Net Profit (Commercial Performance) is after-tax commercial profit derived from Revenue minus product cost, logistics, storage, acceptance, penalties, adjustments, advertising (per engine), and Estimated Tax — as defined by the Financial Engine. Marketplace Fees and Acquiring are not deducted again after Revenue.
 
 **Why:**  
 The Financial Engine and Accounting / KPI rules define Net Profit (`finalNetProfit`) as the after-tax result of the commercial money-flow. Orion cites those rules; it does not recompute live values.

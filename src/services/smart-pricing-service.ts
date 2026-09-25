@@ -53,11 +53,14 @@ import {
 } from "@/lib/pricing-health";
 import {
   fetchCostHistory,
+  fetchAdsInRange,
   fetchFinanceInRange,
   fetchOrdersInRange,
   fetchProductsWithRelations,
   fetchSalesInRange,
 } from "@/services/persisted-query-service";
+import { applySmartPricingCommissionSettings } from "@/lib/smart-pricing-settings";
+import { resolveRecentAdvertisingPercent } from "@/lib/smart-pricing-advertising";
 import { getInventoryForAccount } from "@/services/inventory-service";
 import { getProductProfitability } from "@/services/dashboard-service";
 import type { ScopedDateRange, WbFinance, WbSale } from "@/types/database";
@@ -224,11 +227,12 @@ export async function getSmartPricingInputs(
     brandId: dataScope.brandId,
   });
   const productIds = products.map((p) => String(p.id));
-  const [costHistory, sales, finance, orders, accountResult, inventoryRows] = await Promise.all([
+  const [costHistory, sales, finance, orders, ads, accountResult, inventoryRows] = await Promise.all([
     fetchCostHistory(dataScope.marketplaceAccountId, client, { productIds }),
     fetchSalesInRange(dataScope, client, { productIds }),
     fetchFinanceInRange(dataScope, client, { productIds }),
     fetchOrdersInRange(dataScope, client, { productIds }),
+    fetchAdsInRange(dataScope, client, { productIds }),
     client.from('marketplace_accounts_public').select('marketplace').eq('id', dataScope.marketplaceAccountId).single(),
     getInventoryForAccount(dataScope.marketplaceAccountId, client),
   ]);
@@ -240,7 +244,13 @@ export async function getSmartPricingInputs(
   const salesByProductId = indexByProductId<WbSale>(sales);
   const financeByProductId = indexByProductId<WbFinance>(finance);
   const ordersByProductId = indexByProductId(orders);
-  const aggregates = buildWindowAggregates(dataScope, products, sales, finance);
+  const adsByProductId = indexByProductId(ads);
+  const latestFinanceDate = finance.reduce((latest, row) => {
+    const date = row.operation_date.slice(0, 10);
+    return date > latest && date <= dataScope.to ? date : latest;
+  }, "");
+  const costScope = { ...dataScope, to: latestFinanceDate || dataScope.to };
+  const aggregates = buildWindowAggregates(costScope, products, sales, finance);
   const defaultSettings = DEFAULT_SMART_PRICING_COMMISSION_SETTINGS;
   const defaultWindow = defaultSettings.commissionWindow;
 
@@ -261,6 +271,7 @@ export async function getSmartPricingInputs(
       const productSales = salesByProductId.get(productId) ?? [];
       const productFinance = financeByProductId.get(productId) ?? [];
       const productOrders = ordersByProductId.get(productId) ?? [];
+      const productAds = adsByProductId.get(productId) ?? [];
 
       // Sprint 8.1 — ASP / market comparison from recent window only (14–30d band).
       const aspSales = filterSalesByAspWindow(productSales, dataScope.to);
@@ -275,16 +286,21 @@ export async function getSmartPricingInputs(
         0
       );
       const hasSalesHistory = unitsSoldAsp > 0 && revenueAsp > 0;
+      const adWindowFrom = aspWindowDateFrom(dataScope.to);
+      const adWindowSales = productSales.filter((sale) => sale.sale_date.slice(0, 10) >= adWindowFrom && sale.sale_date.slice(0, 10) <= dataScope.to);
+      const adWindowMetrics = sumProductMarketplaceFeesMetrics(adWindowSales);
+      const adWindowSpend = productAds.filter((ad) => ad.campaign_date.slice(0, 10) >= adWindowFrom && ad.campaign_date.slice(0, 10) <= dataScope.to)
+        .reduce((sum, ad) => sum + Number(ad.spend), 0);
 
-      // Cost-window product logistics for display splits (default 90d preferred band).
+      // Cost-window product logistics for legacy display splits.
       const costWindowSales = filterSalesByCommissionWindow(
         productSales,
-        dataScope,
+        costScope,
         defaultWindow
       );
       const costWindowFinance = filterFinanceByCommissionWindow(
         productFinance,
-        dataScope,
+        costScope,
         defaultWindow
       );
       const productLogistics = sumProductHistoricalLogisticsMetrics(
@@ -310,7 +326,7 @@ export async function getSmartPricingInputs(
         categoryId,
         aggregates,
         defaultWindow,
-        dataScope
+        costScope
       );
 
       const resolved = resolveAdaptiveHistoricalCosts({
@@ -347,7 +363,7 @@ export async function getSmartPricingInputs(
           categoryId,
           aggregates,
           window,
-          dataScope
+          costScope
         );
       }
 
@@ -358,14 +374,14 @@ export async function getSmartPricingInputs(
       };
 
       for (const window of COMMISSION_WINDOW_KEYS) {
-        const wSales = filterSalesByCommissionWindow(productSales, dataScope, window);
+        const wSales = filterSalesByCommissionWindow(productSales, costScope, window);
         const productTotals = sumCompletedSalesMetrics(wSales);
         commissionReplay.byWindow[window] = {
           productTotals,
           categoryTotals:
             buildCategoryCommissionTotals(
               products,
-              indexByProductId(filterSalesByCommissionWindow(sales, dataScope, window))
+              indexByProductId(filterSalesByCommissionWindow(sales, costScope, window))
             ).get(categoryId) ?? {
               commission: 0,
               revenue: 0,
@@ -399,6 +415,13 @@ export async function getSmartPricingInputs(
         })(),
         resolutionSource: resolved.resolutionSource,
         historicalLogistics: resolved.historicalLogistics,
+        costAsOfDate: costScope.to,
+        recentAdvertisingPercent: resolveRecentAdvertisingPercent({
+          completedUnits: adWindowMetrics.unitsSold,
+          netSales: adWindowMetrics.revenue,
+          spend: adWindowSpend,
+          minimumUnits: defaultSettings.minProductSales,
+        }),
         effectiveLogistics: resolved.historicalLogistics,
         storagePerUnit: resolved.storagePerUnit,
         unitOutboundLogistics,
@@ -442,7 +465,7 @@ export async function getSmartPricingInputs(
         commissionReplay,
       };
 
-      return row;
+      return applySmartPricingCommissionSettings(row, defaultSettings);
     })
     .filter((row) => row.currentStock > 0)
     .sort((a, b) => a.supplierArticle.localeCompare(b.supplierArticle));

@@ -565,12 +565,16 @@ export function PurchasesManager({
                   onClick={() => onSort("created")}
                   className="px-4 py-3"
                 />
+                <th className="px-4 py-3 font-medium">Payment Status</th>
+                <th className="px-4 py-3 font-medium">Payment Date</th>
+                <th className="px-4 py-3 font-medium">Tax Recognition</th>
+                <th className="px-4 py-3 font-medium">Recognized Tax Cost</th>
               </tr>
             </thead>
             <tbody>
               {sortedPurchases.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12">
+                  <td colSpan={12} className="px-6 py-12">
                     {purchases.length === 0 ? (
                       <div className="mx-auto max-w-lg text-left">
                         <p className="text-center text-base font-medium text-foreground">
@@ -631,10 +635,22 @@ export function PurchasesManager({
                         <td className="px-4 py-3.5 text-muted-foreground">
                           {formatDate(purchase.created_at)}
                         </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          {purchase.payment_status.replaceAll("_", " ")}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap text-muted-foreground">
+                          {purchase.payment_date ? formatDate(purchase.payment_date) : "—"}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          {purchase.tax_recognition_status.replaceAll("_", " ")}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap tabular-nums">
+                          {formatCurrency(purchase.recognized_tax_cost, "RUB")}
+                        </td>
                       </tr>
                       {expanded && (
                         <tr className="border-b border-border/50 bg-muted/20">
-                          <td colSpan={8} className="px-4 py-3">
+                          <td colSpan={12} className="px-4 py-3">
                             {purchase.lines.length === 0 ? (
                               <p className="px-2 py-2 text-sm text-muted-foreground">
                                 No product lines on this purchase.

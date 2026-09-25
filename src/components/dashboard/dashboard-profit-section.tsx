@@ -13,6 +13,7 @@ import type {
   OrdersPurchasesKpis,
   QuantityMetrics,
 } from "@/types/database";
+import type { MarketplaceFeesPresentation } from "@/types/finance";
 
 /** Shared expense icon language — never resembles income. */
 const EXPENSE_ICON = "from-rose-500/20 to-rose-500/5 text-rose-400";
@@ -24,6 +25,7 @@ const SIMULATION_CARD =
 
 type DashboardProfitSectionProps = {
   modelB: ModelBProfitMetrics;
+  marketplaceFees: MarketplaceFeesPresentation;
   quantities: QuantityMetrics;
   kpis: OrdersPurchasesKpis;
   totalOrdersCount: number;
@@ -63,6 +65,7 @@ function profitVariant(
 
 export function DashboardProfitSection({
   modelB,
+  marketplaceFees,
   quantities,
   kpis,
   totalOrdersCount,
@@ -81,6 +84,8 @@ export function DashboardProfitSection({
 
   /** Commercial Performance Net Sales (same base as Gross / Returned Sales). */
   const displayNetSales = modelB.netSales;
+  const wbFee =
+    modelB.salesToSettlementDifference ?? modelB.marketplaceFee ?? modelB.commission;
 
   const shareOfEngineSales = (amount: number) => {
     if (isEmptyPeriod || !revenueReady || modelB.netSales <= 0) return emptyValue;
@@ -94,7 +99,7 @@ export function DashboardProfitSection({
 
   const noReturnsScenario = calculatePotentialProfitNoReturns({
     grossSales: modelB.grossSales,
-    marketplaceFee: modelB.marketplaceFee ?? modelB.commission,
+    marketplaceFee: wbFee,
     productCost: modelB.productCost,
     logistics: modelB.logistics,
     storage: modelB.storage,
@@ -161,10 +166,10 @@ export function DashboardProfitSection({
           />
 
           <MetricCard
-            title="Marketplace Fee"
-            value={formatMoneyOrPending(modelB.marketplaceFee ?? modelB.commission)}
-            subtitle={modelB.marketplaceFeeStatus === "anomaly" ? "Anomaly · negative signed difference" : `${shareOfEngineSales(modelB.marketplaceFee ?? modelB.commission)} of sales`}
-            hint="Signed Sales − Sales API forPay. A negative informational value can occur with returns or an unusual Sales/forPay relationship; it is not deducted from Net Profit."
+            title="WB Fee"
+            value={formatMoney(wbFee)}
+            subtitle={`${shareOfEngineSales(wbFee)} of Net Sales`}
+            hint="Net Sales minus net Sales API forPay for the selected period. Calculated from each persisted sale and return. Already reflected before Revenue and not deducted again from Net Profit."
             icon={KPI_ICONS.commission}
             {...expenseProps}
           />
@@ -215,8 +220,8 @@ export function DashboardProfitSection({
           <MetricCard
             title="Acquiring"
             value={formatMoney(modelB.acquiring)}
-            subtitle={`${shareOfEngineSales(modelB.acquiring)} of sales`}
-            hint="Finance acquiring_fee — already reflected before Revenue; not deducted again in Net Profit."
+            subtitle={`${shareOfEngineSales(modelB.acquiring)} of sales · Informational`}
+            hint="Finance acquiring fee. Included in Marketplace Fees and already reflected before Revenue; shown for information only."
             icon={KPI_ICONS.acquiring}
             {...expenseProps}
           />
@@ -253,7 +258,7 @@ export function DashboardProfitSection({
                 ? `${shareOfEngineSales(modelB.finalNetProfit)} of sales · after tax`
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
-            hint="Revenue − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Estimated Tax. Marketplace Fee and Acquiring are not deducted again."
+            hint="Revenue − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Estimated Tax. Marketplace Fees and Acquiring are not deducted again."
             icon={KPI_ICONS.profit}
             className="ring-1 ring-primary/30"
             variant={profitVariant(modelB.finalNetProfit, revenueReady, isEmptyPeriod)}
@@ -295,7 +300,7 @@ export function DashboardProfitSection({
                 sanitizeUnavailableReason(undefined, "Awaiting revenue data")
               )
             }
-            hint="Simulation only. Returns are ignored. This is not an accounting KPI. Gross Sales − Marketplace Fee − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Advertising − Estimated Tax."
+            hint="Simulation only. Returns are ignored. This is not an accounting KPI. Gross Sales − Finance-based Marketplace Fees − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Advertising − Estimated Tax."
             badge="No Returns Scenario"
             icon={KPI_ICONS.profit}
             className={SIMULATION_CARD}

@@ -5,6 +5,7 @@
 import {
   buildModelBUnitMetrics,
   buildSmartPricingAfterTaxMetrics,
+  resolveEffectiveMarketingPercent,
   type SmartPricingComputedRow,
 } from "@/lib/smart-pricing";
 import { buildSolverInputsFromRow } from "@/lib/smart-pricing-simulator";
@@ -34,7 +35,7 @@ function isPresent(amount: number): boolean {
  * Cost lines at current ASP (fallback: recommended price).
  * Amounts come from existing Model B unit metrics (and matching row logistics inputs) only.
  *
- * Smart Pricing Model B folds Sales API marketplace fees into Commission;
+ * Smart Pricing currently uses the legacy Sales-to-Settlement proxy;
  * Acquiring / Penalties / Adjustments are engine fields (usually 0 at unit level).
  * PPVZ Reward / PPVZ VW are not exposed on the unit-level Smart Pricing path — omitted (no assumptions).
  */
@@ -59,13 +60,13 @@ export function buildSmartPricingCostBreakdown(
 
   const modelB = buildModelBUnitMetrics(
     solver,
-    marketingPercent,
+    resolveEffectiveMarketingPercent(marketingPercent, row.recentAdvertisingPercent),
     evalPrice,
     taxPercent
   );
   const afterTax = buildSmartPricingAfterTaxMetrics(
     solver,
-    marketingPercent,
+    resolveEffectiveMarketingPercent(marketingPercent, row.recentAdvertisingPercent),
     taxPercent,
     evalPrice
   );
@@ -84,7 +85,7 @@ export function buildSmartPricingCostBreakdown(
   const rows: CostBreakdownRow[] = [
     {
       key: "commission",
-      label: "Commission",
+      label: "Sales-to-Settlement allowance",
       amount: modelB.commission,
       percent: commissionPercent,
       section: "marketplace",
@@ -101,8 +102,8 @@ export function buildSmartPricingCostBreakdown(
     });
   }
 
-  const forward = row.unitOutboundLogistics;
-  const returnLogistics = row.unitRebillLogistics;
+  const forward = row.expectedBaseLogistics ?? row.unitOutboundLogistics;
+  const returnLogistics = row.expectedReturnBurden ?? row.unitRebillLogistics;
   const logisticsSplitMatchesEngine =
     Number.isFinite(forward) &&
     Number.isFinite(returnLogistics) &&
@@ -111,7 +112,7 @@ export function buildSmartPricingCostBreakdown(
   if (logisticsSplitMatchesEngine) {
     rows.push({
       key: "forwardLogistics",
-      label: "Forward Logistics",
+      label: "Base Logistics",
       amount: forward,
       percent: null,
       section: "logistics",
@@ -119,7 +120,7 @@ export function buildSmartPricingCostBreakdown(
     if (isPresent(returnLogistics)) {
       rows.push({
         key: "returnLogistics",
-        label: "Return Logistics",
+        label: "Expected Return Burden",
         amount: returnLogistics,
         percent: null,
         section: "logistics",

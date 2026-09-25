@@ -10,6 +10,7 @@ import {
 import {
   SMART_PRICING_MIN_CATEGORY_LOGISTICS_SALES,
   SMART_PRICING_MIN_PRODUCT_LOGISTICS_SALES,
+  totalHistoricalLogistics,
   weightedHistoricalLogistics,
   type HistoricalLogisticsTotals,
 } from "@/lib/smart-pricing-logistics";
@@ -29,6 +30,11 @@ export type HistoricalCostBucket = {
   marketplaceFees: MarketplaceFeesTotals;
   storage: StorageTotals;
 };
+
+/** Extension seam for canonical Finance fees; production stays on the named legacy proxy. */
+export type MarketplaceFeePercentResolver = (totals: MarketplaceFeesTotals) => number | null;
+export const SALES_API_SPREAD_FEE_RESOLVER: MarketplaceFeePercentResolver = (totals) =>
+  weightedMarketplaceFeesPercent(totals.marketplaceFees, totals.revenue);
 
 export type ResolvedHistoricalCosts = {
   resolutionSource: SmartPricingHistoricalSource;
@@ -54,6 +60,7 @@ export function resolveAdaptiveHistoricalCosts(params: {
   account: HistoricalCostBucket;
   minProductSales?: number;
   minCategorySales?: number;
+  feeResolver?: MarketplaceFeePercentResolver;
 }): ResolvedHistoricalCosts {
   const minProductSales =
     params.minProductSales ?? SMART_PRICING_MIN_PRODUCT_LOGISTICS_SALES;
@@ -61,23 +68,15 @@ export function resolveAdaptiveHistoricalCosts(params: {
     params.minCategorySales ?? SMART_PRICING_MIN_CATEGORY_LOGISTICS_SALES;
   const marketplaceFallbackPercent =
     DEFAULT_COMMISSION_PERCENT_BY_MARKETPLACE[params.marketplace] ?? 20;
+  const resolveFee = params.feeResolver ?? SALES_API_SPREAD_FEE_RESOLVER;
 
   const productHistoricalLogistics = weightedHistoricalLogistics(params.product.logistics);
   const categoryHistoricalLogistics = weightedHistoricalLogistics(params.category.logistics);
   const accountHistoricalLogistics = weightedHistoricalLogistics(params.account.logistics);
 
-  const productHistoricalMarketplaceFeesPercent = weightedMarketplaceFeesPercent(
-    params.product.marketplaceFees.marketplaceFees,
-    params.product.marketplaceFees.revenue
-  );
-  const categoryHistoricalMarketplaceFeesPercent = weightedMarketplaceFeesPercent(
-    params.category.marketplaceFees.marketplaceFees,
-    params.category.marketplaceFees.revenue
-  );
-  const accountHistoricalMarketplaceFeesPercent = weightedMarketplaceFeesPercent(
-    params.account.marketplaceFees.marketplaceFees,
-    params.account.marketplaceFees.revenue
-  );
+  const productHistoricalMarketplaceFeesPercent = resolveFee(params.product.marketplaceFees);
+  const categoryHistoricalMarketplaceFeesPercent = resolveFee(params.category.marketplaceFees);
+  const accountHistoricalMarketplaceFeesPercent = resolveFee(params.account.marketplaceFees);
 
   const productHistoricalStoragePerUnit = weightedStoragePerUnit(params.product.storage);
   const categoryHistoricalStoragePerUnit = weightedStoragePerUnit(params.category.storage);
@@ -85,6 +84,7 @@ export function resolveAdaptiveHistoricalCosts(params: {
 
   if (
     params.product.logistics.unitsSold >= minProductSales &&
+    totalHistoricalLogistics(params.product.logistics) > 0 &&
     productHistoricalLogistics !== null
   ) {
     return {
@@ -108,6 +108,7 @@ export function resolveAdaptiveHistoricalCosts(params: {
 
   if (
     params.category.logistics.unitsSold >= minCategorySales &&
+    totalHistoricalLogistics(params.category.logistics) > 0 &&
     categoryHistoricalLogistics !== null
   ) {
     return {

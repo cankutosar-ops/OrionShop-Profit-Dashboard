@@ -8,18 +8,21 @@ import {
 import { isNetSalesReady } from "@/lib/sales-revenue-resolution";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 import type { ModelBProfitMetrics } from "@/types/database";
+import type { MarketplaceFeesPresentation } from "@/types/finance";
 
 type ProfitabilityBreakdownProps = {
   modelB: ModelBProfitMetrics;
+  marketplaceFees: MarketplaceFeesPresentation;
   isEmptyPeriod?: boolean;
 };
 
 /**
  * Commercial Performance profitability breakdown — Net Profit matches Dashboard KPI.
- * Marketplace Fee / Acquiring are informational (not deducted again).
+ * WB Fee / Acquiring are informational (not deducted again).
  */
 export function ProfitabilityBreakdown({
   modelB,
+  marketplaceFees,
   isEmptyPeriod = false,
 }: ProfitabilityBreakdownProps) {
   const revenueReady = isNetSalesReady(modelB.netSalesStatus);
@@ -70,7 +73,7 @@ export function ProfitabilityBreakdown({
                 className={cn(
                   "border-b border-border/50",
                   line.isTotal && "bg-primary/5 font-semibold",
-                  (line.key === "marketplaceFee" ||
+                  (line.key === "salesToSettlementDifference" ||
                     line.key === "acquiring" ||
                     line.key === "marketplaceFees") &&
                     "text-muted-foreground"
@@ -100,6 +103,51 @@ export function ProfitabilityBreakdown({
           </tbody>
         </table>
       </div>
+
+      <div className="grid gap-3 border-b border-border bg-muted/20 px-6 py-4 sm:grid-cols-2 lg:grid-cols-4">
+        <FeeItem
+          label="Finance Fee Components"
+          value={marketplaceFees.marketplaceFees}
+          note="Commission + acquiring + reward/service + WB remuneration. Component audit only."
+        />
+        <FeeItem label="WB Commission" value={marketplaceFees.commission} />
+        <FeeItem
+          label="Acquiring (informational)"
+          value={marketplaceFees.acquiring}
+          note="Finance acquiring fee. Included in Marketplace Fees and already reflected before Revenue; shown for information only."
+        />
+        <FeeItem label="WB Reward / Service" value={marketplaceFees.ppvzReward} />
+        <FeeItem label="WB Remuneration base" value={marketplaceFees.ppvzVw} />
+        <FeeItem label="WB Remuneration VAT" value={marketplaceFees.ppvzVwNds} />
+        <FeeItem
+          label="WB Remuneration (signed)"
+          value={marketplaceFees.wbRemuneration}
+          note={
+            marketplaceFees.wbRemunerationStatus === "AVAILABLE"
+              ? `${formatPercent(marketplaceFees.wbRemunerationPercent ?? 0)} of Net Sales`
+              : marketplaceFees.wbRemunerationStatus === "LEGACY_RAW_UNAVAILABLE"
+                ? "Legacy signed raw values unavailable"
+                : "No Finance evidence"
+          }
+        />
+        <FeeItem
+          label="WB Fee (Sales API)"
+          value={marketplaceFees.salesToSettlementDifference}
+          note="Net Sales − net Sales API forPay"
+        />
+      </div>
+    </div>
+  );
+}
+
+function FeeItem({ label, value, note }: { label: string; value: number | null; note?: string }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 font-medium tabular-nums">
+        {value == null ? "Unavailable" : formatCurrency(value)}
+      </div>
+      {note && <div className="mt-1 text-[11px] text-muted-foreground">{note}</div>}
     </div>
   );
 }

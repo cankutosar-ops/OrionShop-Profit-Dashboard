@@ -100,10 +100,10 @@ export const SMART_PRICING_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
   }),
   sp({
     id: "SP-003",
-    title: "Effective Marketplace Cost",
-    aliases: ["Smart Pricing marketplace fees", "Historical marketplace fee percent"],
+    title: "Legacy Sales-to-Settlement Pricing Proxy",
+    aliases: ["Smart Pricing historical spread", "Sales-to-settlement percent"],
     description:
-      "Smart Pricing Effective Marketplace Cost uses weighted historical Marketplace Fee % from Sales API: fee = max(0, Sales − forPay), percent = fee/Sales. Finance COMMISSION category is NOT used for Smart Pricing marketplace fees. Unit-level path may omit PPVZ Reward/VW (documented in smart-pricing-calc-breakdown).",
+      "Smart Pricing currently uses the weighted historical Sales-to-Settlement Difference from Sales API: difference = Sales − forPay, percent = difference/Sales. It is explicitly isolated from canonical Finance-based Marketplace Fees until the denominator and no-double-count backtest are approved.",
     module: "Smart Pricing",
     category: "calculation",
     authority_level: "implementation",
@@ -219,7 +219,7 @@ export const SMART_PRICING_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     title: "Smart Pricing vs Financial Engine",
     aliases: ["Smart Pricing does not modify FE", "SP separate model"],
     description:
-      "Smart Pricing does NOT modify Financial Engine, Dashboard calculations, or historical Commercial Performance. Uses different Estimated Tax base (Sale − Marketplace Fee) per ARCH-001. References FE fee concepts but solves forward prices — not period P&L.",
+      "Smart Pricing does NOT modify Financial Engine, Dashboard calculations, or historical Commercial Performance. Uses a different Estimated Tax base after its legacy Sales-to-Settlement allowance per ARCH-001. References fee concepts but solves forward prices — not period P&L.",
     module: "Smart Pricing",
     category: "comparison",
     authority_level: "business_rule",
@@ -248,7 +248,7 @@ export const SMART_PRICING_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
     title: "Smart Pricing Estimated Tax",
     aliases: ["Simulator tax base"],
     description:
-      "Smart Pricing Estimated Tax = Tax Rate × (Sale Price − Marketplace Fee). Intentionally different from Financial Engine historical tax (Tax% × Σ finishedPrice). Do not unify.",
+      "Smart Pricing Estimated Tax = Tax Rate × (Sale Price − legacy Sales-to-Settlement allowance). Intentionally different from Financial Engine historical tax (Tax% × Σ finishedPrice). Do not unify.",
     module: "Smart Pricing",
     category: "calculation",
     authority_level: "architecture_decision",
@@ -267,6 +267,6 @@ export const SMART_PRICING_KNOWLEDGE_OBJECTS: OrionKnowledgeObject[] = [
       { type: "defined_by", target_id: "ARCH-001" },
       { type: "related_to", target_id: "FE-012" },
     ],
-    formula: "Estimated Tax = Tax Rate × (Sale Price − Marketplace Fee)",
+    formula: "Estimated Tax = Tax Rate × (Sale Price − legacy Sales-to-Settlement allowance)",
   }),
 ];

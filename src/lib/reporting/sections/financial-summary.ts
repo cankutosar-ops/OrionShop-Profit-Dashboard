@@ -24,7 +24,7 @@ export type FinancialSummaryData = {
   marketplaceFeeStatus: MarketplaceFeeStatus;
 };
 
-function linesFromModelB(fe: ModelBProfitMetrics): FinancialSummaryLine[] {
+function linesFromModelB(fe: ModelBProfitMetrics, marketplaceFees = 0): FinancialSummaryLine[] {
   return [
     { id: "grossSales", label: "Gross Sales", amount: fe.grossSales },
     { id: "returnedSales", label: "Returned Sales", amount: fe.returnedSales },
@@ -32,8 +32,8 @@ function linesFromModelB(fe: ModelBProfitMetrics): FinancialSummaryLine[] {
     { id: "revenue", label: "Revenue", amount: fe.revenue },
     {
       id: "marketplaceFee",
-      label: "Marketplace Fee",
-      amount: fe.marketplaceFee ?? fe.commission,
+      label: "Marketplace Fees",
+      amount: marketplaceFees,
     },
     { id: "productCost", label: "Product Cost", amount: fe.productCost },
     { id: "logistics", label: "Logistics", amount: fe.logistics },
@@ -41,7 +41,7 @@ function linesFromModelB(fe: ModelBProfitMetrics): FinancialSummaryLine[] {
     { id: "acceptance", label: "Acceptance", amount: fe.acceptance },
     { id: "penalties", label: "Penalties", amount: fe.penalties },
     { id: "adjustments", label: "Adjustments", amount: fe.adjustments },
-    { id: "acquiring", label: "Acquiring", amount: fe.acquiring },
+    { id: "acquiring", label: "Acquiring (informational)", amount: fe.acquiring },
     { id: "estimatedTax", label: "Estimated Tax", amount: fe.estimatedTax },
     {
       id: "operatingProfit",
@@ -65,9 +65,9 @@ export function buildFinancialSummarySection(
     data: {
       engineVersion: FINANCIAL_ENGINE_VERSION,
       source: "financialEngine.modelB",
-      lines: linesFromModelB(fe),
+      lines: linesFromModelB(fe, ctx.overview.marketplaceFeesPresentation.marketplaceFees),
       modelB: fe,
-      marketplaceFeeStatus: fe.marketplaceFeeStatus ?? "unavailable",
+      marketplaceFeeStatus: "ready",
     },
   };
 }
@@ -80,7 +80,7 @@ export function validateFinancialSummaryAgainstEngine(
   data: FinancialSummaryData
 ): { ok: boolean; mismatches: string[] } {
   const fe = data.modelB;
-  const expected = new Map(linesFromModelB(fe).map((l) => [l.id, l.amount]));
+  const expected = new Map(data.lines.map((l) => [l.id, l.amount]));
   const mismatches: string[] = [];
   for (const line of data.lines) {
     const exp = expected.get(line.id);

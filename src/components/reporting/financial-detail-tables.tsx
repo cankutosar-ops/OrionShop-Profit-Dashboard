@@ -56,7 +56,7 @@ function periodColumns(currency: string) {
     money("revenue", "Revenue"),
     {
       key: "marketplaceFees",
-      header: "Marketplace Fee",
+      header: "Marketplace Fees",
       align: "right" as const,
       cell: (row: PnLPeriodBreakdownRow) => `${formatKpiCurrency(row.marketplaceFees, currency)}${row.marketplaceFeeStatus === "anomaly" ? " · anomaly" : ""}`,
     },

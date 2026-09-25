@@ -44,8 +44,11 @@ export type WbFinanceV1DetailedRow = {
   vendorCode?: string;
   rrDate?: string;
   saleDt?: string;
+  orderDt?: string;
   sellerOperName?: string;
   docTypeName?: string;
+  retailPrice?: string | number | null;
+  retailPriceWithDisc?: string | number | null;
   forPay?: string | number | null;
   ppvzSalesCommission?: string | number | null;
   deliveryService?: string | number | null;
@@ -56,6 +59,12 @@ export type WbFinanceV1DetailedRow = {
   ppvzReward?: string | number | null;
   additionalPayment?: string | number | null;
   vw?: string | number | null;
+  vwNds?: string | null;
+  installmentCofinancingAmount?: string | null;
+  cashbackAmount?: string | null;
+  cashbackDiscount?: string | null;
+  cashbackCommissionChange?: string | null;
+  paymentSchedule?: string | null;
   rebillLogisticCost?: string | number | null;
   deduction?: string | number | null;
   penalty?: string | number | null;
@@ -80,6 +89,11 @@ export const FINANCE_V1_FIELD_DECISIONS: Record<string, FinanceV1MoneyDecision> 
   sale_dt: "direct",
   supplier_oper_name: "direct",
   doc_type_name: "direct",
+  quantity: "direct",
+  retail_price: "direct",
+  retail_amount: "direct",
+  retail_price_withdisc_rub: "direct",
+  sku: "direct",
   ppvz_for_pay: "transform_required",
   ppvz_sales_commission: "transform_required",
   // Proven 2026-09 audit: V1 deliveryService is the money string (ex-v5 delivery_rub);
@@ -91,6 +105,12 @@ export const FINANCE_V1_FIELD_DECISIONS: Record<string, FinanceV1MoneyDecision> 
   ppvz_reward: "transform_required",
   additional_payment: "transform_required",
   ppvz_vw: "transform_required",
+  ppvz_vw_nds: "transform_required",
+  installment_cofinancing: "transform_required",
+  cashback_amount: "transform_required",
+  cashback_discount: "transform_required",
+  cashback_commission_change: "transform_required",
+  payment_schedule: "transform_required",
   rebill_logistic_cost: "transform_required",
   deduction: "transform_required",
   penalty: "transform_required",
@@ -377,8 +397,11 @@ export function normalizeFinanceV1DetailedRow(
     sa_name: row.vendorCode,
     rr_dt: row.rrDate,
     sale_dt: row.saleDt,
+    order_dt: row.orderDt,
     supplier_oper_name: row.sellerOperName,
     doc_type_name: row.docTypeName,
+    quantity: asFiniteNumber(row.quantity),
+    retail_price: parseFinanceV1Money(row.retailPrice),
     ppvz_for_pay: parseFinanceV1Money(row.forPay),
     ppvz_sales_commission: parseFinanceV1Money(row.ppvzSalesCommission),
     delivery_rub: parseFinanceV1Money(row.deliveryService),
@@ -388,13 +411,19 @@ export function normalizeFinanceV1DetailedRow(
     ppvz_reward: parseFinanceV1Money(row.ppvzReward),
     additional_payment: parseFinanceV1Money(row.additionalPayment),
     ppvz_vw: parseFinanceV1Money(row.vw),
+    ppvz_vw_nds: parseFinanceV1Money(row.vwNds),
+    installment_cofinancing: parseFinanceV1Money(row.installmentCofinancingAmount),
+    cashback_amount: parseFinanceV1Money(row.cashbackAmount),
+    cashback_discount: parseFinanceV1Money(row.cashbackDiscount),
+    cashback_commission_change: parseFinanceV1Money(row.cashbackCommissionChange),
+    payment_schedule: parseFinanceV1Money(row.paymentSchedule),
     rebill_logistic_cost: parseFinanceV1Money(row.rebillLogisticCost),
     deduction: parseFinanceV1Money(row.deduction),
     penalty: parseFinanceV1Money(row.penalty),
     srid: row.srid,
-    // sku / quantity / retailAmount are accepted on the V1 type for audit but
-    // are not written onto wb_finance lines by mapFinanceRowsFromReport today.
+    sku: row.sku,
     retail_amount: parseFinanceV1Money(row.retailAmount),
+    retail_price_withdisc_rub: parseFinanceV1Money(row.retailPriceWithDisc),
   };
 }
 

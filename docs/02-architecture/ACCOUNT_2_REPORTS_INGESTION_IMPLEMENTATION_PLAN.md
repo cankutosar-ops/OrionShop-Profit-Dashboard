@@ -26,7 +26,8 @@
 | Complete `wb_finance` Revenue (`for_pay` / `ppvz_for_pay`) + most fee lines | **Yes** — from `sales-reports/detailed` |
 | Guarantee no 429 / no multi-day Reset | **No** — published 1/min; Account 2 already hit finance-api 429; punitive multi-day Reset on V1 is **UNKNOWN** |
 | Logistics (`delivery_rub`) | **UNCERTAIN** — do not invent from `deliveryService` / `deliveryAmount` |
-| Sales, Marketplace Fee, Estimated Tax, Ads, Product Cost | **Other sources** (Sales API, ads, cost tables) — not Reports |
+| Sales, Sales-to-Settlement Difference, Estimated Tax, Ads, Product Cost | **Other sources** (Sales API, ads, cost tables) — not Reports |
+| Marketplace Fees | **Reports detailed** — explicit approved Finance suffixes only |
 
 ---
 
@@ -88,7 +89,8 @@ There is **no** separate public API whose only job is “download the portal Exc
 | Revenue Σ(`ppvz_for_pay`) | **Yes** (`forPay` → `for_pay`) |
 | Storage / Acceptance / Penalties / Deduction / Commission / Acquiring / Rewards / VW / return logistics | **Yes** (mapped suffixes) when non-zero |
 | Logistics | **UNCERTAIN** |
-| Sales / Marketplace Fee | **No** — Sales API |
+| Sales / Sales-to-Settlement Difference | **No** — Sales API |
+| Marketplace Fees | **Yes** — explicit Finance suffixes |
 | Estimated Tax | **No** — Σ(`finishedPrice`) Sales API |
 | Product Cost / Advertising | **No** |
 

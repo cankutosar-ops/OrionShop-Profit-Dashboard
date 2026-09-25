@@ -78,7 +78,7 @@ const STICKY_LEFT: number[] = STICKY_COLS.reduce<number[]>((acc, col, i) => {
 
 const DECISION_MIN_WIDTH = DECISION_COLS.reduce((sum, col) => sum + col.width, 0);
 /** Extra width for scrollable columns after Test Price. */
-const SCROLL_TAIL_MIN = 560;
+const SCROLL_TAIL_MIN = 830;
 
 type PricingSortKey =
   | "model"
@@ -525,7 +525,7 @@ export function SmartPricingPanel({
                   setTaxPercent(Number.isFinite(parsed) && parsed >= 0 ? parsed : 0);
                 }}
                 className={fieldClass}
-                title="Tax = Tax% × (Sale − Marketplace Fee). Default 6%."
+                title="Legacy pricing model: tax uses the amount after the Sales-to-Settlement allowance. Default 6%."
               />
             </label>
             <label className="space-y-1.5">
@@ -619,7 +619,7 @@ export function SmartPricingPanel({
                 />
               </label>
               <label className="space-y-1.5">
-                <span className={labelClass}>Commission History Window</span>
+                <span className={labelClass}>Sales-to-Settlement History Window</span>
                 <select
                   value={commissionSettings.commissionWindow}
                   onChange={(event) =>
@@ -693,7 +693,7 @@ export function SmartPricingPanel({
                   }}
                 />
                 <SortableTh
-                  label="Comm %"
+                  label="Sales→Settlement %"
                   active={isActive("commission")}
                   direction={directionFor("commission")}
                   onClick={() => onSort("commission")}
@@ -718,6 +718,9 @@ export function SmartPricingPanel({
                     width: STICKY_COLS[3].width,
                   }}
                 />
+                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Expected Logistics</th>
+                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Return Burden</th>
+                <th className="whitespace-nowrap px-2 py-2 text-left font-medium">Cost Source</th>
                 <SortableTh
                   label="Final Margin"
                   active={isActive("currentMargin")}
@@ -836,7 +839,7 @@ export function SmartPricingPanel({
             <tbody>
               {sortedFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={19} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={22} className="px-3 py-8 text-center text-muted-foreground">
                     No products match the current filters
                   </td>
                 </tr>
@@ -1065,6 +1068,9 @@ function PricingRow({
           emphasize
         />
       </td>
+      <td className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">{formatCurrency(row.historicalLogistics)}</td>
+      <td className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">{formatCurrency(row.expectedReturnBurden ?? 0)}</td>
+      <td className="whitespace-nowrap px-2 py-1.5 text-xs">{row.resolutionSource === "PRODUCT_HISTORY" ? "SKU" : row.resolutionSource === "CATEGORY_HISTORY" ? "Category" : "Account"} {row.costWindowDays ?? 90}d</td>
       <td
         className={cn(
           "px-1.5 py-1.5 text-right tabular-nums",
@@ -1178,7 +1184,7 @@ function PricingRow({
     </tr>
     {isExpanded ? (
       <tr className="border-b border-border/50 bg-muted/20">
-        <td colSpan={19} className="px-3 py-3 pl-8">
+        <td colSpan={22} className="px-3 py-3 pl-8">
           <SmartPricingCostBreakdownDetail
             row={row}
             marketingPercent={marketing}
