@@ -3,6 +3,10 @@ import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 import { createMarketplaceAccount } from "@/services/marketplace-account-service";
 import { scheduleAccountLifecycle } from "@/services/account-lifecycle-service";
 import type { MarketplaceType } from "@/types/database";
+import {
+  canWriteCompanySettings,
+  companySettingsWriteForbiddenResponse,
+} from "@/lib/security/company-settings-authorization";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -31,6 +35,9 @@ export async function POST(request: Request) {
 
     const authz = await authorize(request, { companyId: company_id });
     if (isAuthzFailure(authz)) return authz;
+    if (!canWriteCompanySettings(authz.user)) {
+      return companySettingsWriteForbiddenResponse();
+    }
 
     const account = await createMarketplaceAccount({
       company_id: authz.companyId!,

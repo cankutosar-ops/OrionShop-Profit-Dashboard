@@ -12,6 +12,10 @@ import {
   scheduleBackgroundDashboardSync,
   SyncAlreadyRunningError,
 } from "@/services/sync-job-service";
+import {
+  canWriteCompanySettings,
+  companySettingsWriteForbiddenResponse,
+} from "@/lib/security/company-settings-authorization";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -43,6 +47,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { id } = await context.params;
     const authz = await authorize(request, { marketplaceAccountId: id });
     if (isAuthzFailure(authz)) return authz;
+    if (!canWriteCompanySettings(authz.user)) {
+      return companySettingsWriteForbiddenResponse();
+    }
 
     const body = await request.json();
     const account = await updateMarketplaceAccount(id, body);
@@ -79,6 +86,9 @@ export async function DELETE(request: Request, context: RouteContext) {
     const { id } = await context.params;
     const authz = await authorize(request, { marketplaceAccountId: id });
     if (isAuthzFailure(authz)) return authz;
+    if (!canWriteCompanySettings(authz.user)) {
+      return companySettingsWriteForbiddenResponse();
+    }
 
     await deleteMarketplaceAccount(id);
     return NextResponse.json({ success: true });

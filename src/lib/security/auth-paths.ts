@@ -4,6 +4,7 @@
 
 export const AUTH_PUBLIC_PATHS = [
   "/login",
+  "/signup",
   "/auth/callback",
   "/auth/confirm",
   "/auth/logout",
@@ -11,7 +12,9 @@ export const AUTH_PUBLIC_PATHS = [
 
 export const AUTH_PUBLIC_API_PREFIXES = [
   "/api/auth/login",
+  "/api/auth/signup",
   "/api/auth/callback",
+  "/api/auth/password-reset",
 ] as const;
 
 export function isAuthPublicPath(pathname: string): boolean {

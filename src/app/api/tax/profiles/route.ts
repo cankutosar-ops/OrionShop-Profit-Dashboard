@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 import { appendCompanyTaxProfile, listCompanyTaxProfiles, moscowToday } from "@/services/tax-profile-service";
+import {
+  canWriteCompanySettings,
+  companySettingsWriteForbiddenResponse,
+} from "@/lib/security/company-settings-authorization";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +25,9 @@ export async function POST(request: Request) {
   if (!body || typeof body.companyId !== "string") return NextResponse.json({ error: "companyId is required" }, { status: 400 });
   const authz = await authorize(request, { companyId: body.companyId });
   if (isAuthzFailure(authz)) return authz;
+  if (!canWriteCompanySettings(authz.user)) {
+    return companySettingsWriteForbiddenResponse();
+  }
   try {
     const profile = await appendCompanyTaxProfile({
       companyId: body.companyId, model: body.model,

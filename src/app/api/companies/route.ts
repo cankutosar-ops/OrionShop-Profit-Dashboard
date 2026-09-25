@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { authorize, isAuthzFailure } from "@/lib/security/authorize";
 import { requireAuth, isAuthFailure } from "@/lib/security/require-auth";
-import { grantCompanyToUser } from "@/lib/security/tenant-membership";
+import { readTenantClaims, setUserTenantClaims } from "@/lib/security/tenant-membership";
+import {
+  canWriteCompanySettings,
+  companySettingsWriteForbiddenResponse,
+} from "@/lib/security/company-settings-authorization";
 import {
   ensureDefaultTenant,
   listCompanies,
@@ -39,6 +43,11 @@ export async function POST(request: Request) {
   try {
     const auth = await requireAuth(request);
     if (isAuthFailure(auth)) return auth;
+    const claims = readTenantClaims(auth);
+    const isBootstrap = auth.id !== "service:internal" && claims.company_ids.length === 0;
+    if (!isBootstrap && !canWriteCompanySettings(auth)) {
+      return companySettingsWriteForbiddenResponse();
+    }
 
     const body = await request.json();
     const { name, country, currency, timezone, language, is_default, tax_model,
@@ -78,7 +87,11 @@ export async function POST(request: Request) {
     });
 
     if (auth.id !== "service:internal") {
-      await grantCompanyToUser(auth.id, company.id);
+      await setUserTenantClaims(auth.id, {
+        company_ids: [...new Set([...claims.company_ids, String(company.id)])],
+        marketplace_account_ids: claims.marketplace_account_ids,
+        role: claims.role ?? "manager",
+      });
     }
 
     return NextResponse.json({ company }, { status: 201 });

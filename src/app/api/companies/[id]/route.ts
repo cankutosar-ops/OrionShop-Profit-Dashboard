@@ -11,6 +11,10 @@ import {
   getCompanyById,
   updateCompany,
 } from "@/services/marketplace-account-service";
+import {
+  canWriteCompanySettings,
+  companySettingsWriteForbiddenResponse,
+} from "@/lib/security/company-settings-authorization";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -38,6 +42,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   try {
     const authz = await authorize(request);
     if (isAuthzFailure(authz)) return authz;
+    if (!canWriteCompanySettings(authz.user)) return companySettingsWriteForbiddenResponse();
 
     const { id } = await context.params;
     const forbidden = assertCompanyInAuthz(authz, id);
@@ -56,6 +61,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   try {
     const authz = await authorize(request);
     if (isAuthzFailure(authz)) return authz;
+    if (!canWriteCompanySettings(authz.user)) return companySettingsWriteForbiddenResponse();
 
     const { id } = await context.params;
     const forbidden = assertCompanyInAuthz(authz, id);

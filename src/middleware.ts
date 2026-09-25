@@ -121,8 +121,8 @@ export async function middleware(request: NextRequest) {
     return applyContainmentCookie(redirect, request);
   }
 
-  // Authenticated user on /login → home
-  if (userId && pathname === "/login") {
+  // Authenticated user on a guest-only auth screen → home
+  if (userId && (pathname === "/login" || pathname === "/signup")) {
     const home = request.nextUrl.clone();
     home.pathname = "/";
     home.search = "";

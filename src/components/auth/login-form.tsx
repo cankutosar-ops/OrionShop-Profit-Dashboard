@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { safeAuthRedirect } from "@/lib/security/safe-auth-redirect";
 
 export function LoginForm() {
@@ -13,6 +14,8 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -42,6 +45,40 @@ export function LoginForm() {
     }
   }
 
+  async function requestPasswordReset() {
+    const normalizedEmail = email.trim();
+    setError(null);
+    setResetMessage(null);
+    if (!normalizedEmail) {
+      setError("Enter your email address first.");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const response = await fetch("/api/auth/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!response.ok) {
+        setError(payload.message || payload.error || "Password reset request failed.");
+        return;
+      }
+      setResetMessage(
+        payload.message || "If an account exists for this email, a password reset link has been sent."
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Password reset request failed.");
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   return (
     <form
       method="post"
@@ -65,9 +102,19 @@ export function LoginForm() {
         />
       </div>
       <div className="space-y-1">
-        <label htmlFor="password" className="text-sm font-medium text-foreground">
-          Password
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="password" className="text-sm font-medium text-foreground">
+            Password
+          </label>
+          <button
+            type="button"
+            onClick={requestPasswordReset}
+            disabled={loading || resetLoading}
+            className="text-sm font-medium text-primary hover:underline disabled:opacity-60"
+          >
+            {resetLoading ? "Sending…" : "Forgot password?"}
+          </button>
+        </div>
         <input
           id="password"
           name="password"
@@ -84,6 +131,11 @@ export function LoginForm() {
           {error}
         </p>
       ) : null}
+      {resetMessage ? (
+        <p className="text-sm text-success" role="status">
+          {resetMessage}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={loading}
@@ -91,6 +143,12 @@ export function LoginForm() {
       >
         {loading ? "Signing in…" : "Sign in"}
       </button>
+      <p className="text-center text-sm text-muted-foreground">
+        New to OrionShop?{" "}
+        <Link href="/signup" className="font-medium text-primary hover:underline">
+          Create an account
+        </Link>
+      </p>
     </form>
   );
 }
