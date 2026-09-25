@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
-const AUTH_SHELL_PREFIXES = ["/login", "/auth"];
+const AUTH_SHELL_PREFIXES = ["/login", "/signup", "/auth"];
 
 function isAuthShellPath(pathname: string | null): boolean {
   if (!pathname) return false;
