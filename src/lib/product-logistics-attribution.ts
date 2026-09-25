@@ -5,8 +5,9 @@
  * products using SRID → wb_sales, then unambiguous nm_id → products — never by
  * revenue/unit percentage allocation.
  *
- * Eligibility for Net Profit is unchanged: only logistics whose SRID matches a
- * completed (non-return) purchase SRID for that product are deducted.
+ * Every logistics row that can be resolved to a product is a real product cost.
+ * Purchase-SRID matching remains an audit signal, but is not an eligibility
+ * gate: cancelled and failed-delivery logistics must also reduce profitability.
  */
 
 import { rowMatchesFinanceCategory } from "@/lib/finance-category";
@@ -15,7 +16,7 @@ import type { WbFinance, WbSale } from "@/types/database";
 export type ProductLogisticsAttribution = {
   purchaseLogisticsRows: number;
   excludedLogisticsRows: number;
-  /** Sum of excluded outbound logistics — visibility only, not in net profit. */
+  /** Unresolved outbound logistics only; resolved rows are always in net profit. */
   excludedLogistics: number;
 };
 
@@ -24,11 +25,11 @@ export type LogisticsResolveMethod = "existing_product_id" | "srid" | "nm_id" | 
 export type ProductLogisticsReconciliation = {
   /** Account Σ |amount| for LOGISTICS category in the loaded finance set. */
   accountLogisticsTotal: number;
-  /** Σ product purchaseLogistics (eligible, in Net Profit). */
+  /** Σ product-attributed outbound logistics included in Net Profit. */
   attributedProductLogistics: number;
   /**
-   * Account total − attributed. Includes unresolved rows and rows that resolved
-   * to a product but failed the purchase-SRID eligibility gate.
+   * Account total − attributed. Contains only rows that could not be resolved
+   * to a product.
    */
   unallocatedLogistics: number;
   resolvedViaSridAbs: number;
@@ -192,8 +193,9 @@ export function stampLogisticsProductIds(
 }
 
 /**
- * Product profitability: outbound logistics only when SRID matches a completed purchase.
- * Return logistics and all other finance types are passed through unchanged.
+ * Product profitability: every outbound LOGISTICS row in this already
+ * product-scoped collection is included. Purchase-SRID matching is retained
+ * only as audit metadata.
  */
 export function attributeProductFinance(
   finance: WbFinance[],
@@ -201,8 +203,8 @@ export function attributeProductFinance(
 ): { financeForBreakdown: WbFinance[] } & ProductLogisticsAttribution {
   const financeForBreakdown: WbFinance[] = [];
   let purchaseLogisticsRows = 0;
-  let excludedLogisticsRows = 0;
-  let excludedLogistics = 0;
+  const excludedLogisticsRows = 0;
+  const excludedLogistics = 0;
 
   for (const row of finance) {
     if (!rowMatchesFinanceCategory(row, "LOGISTICS")) {
@@ -210,13 +212,8 @@ export function attributeProductFinance(
       continue;
     }
 
-    if (row.srid && purchaseSrids.has(row.srid)) {
-      financeForBreakdown.push(row);
-      purchaseLogisticsRows += 1;
-    } else {
-      excludedLogisticsRows += 1;
-      excludedLogistics += Math.abs(Number(row.amount));
-    }
+    financeForBreakdown.push(row);
+    if (row.srid && purchaseSrids.has(row.srid)) purchaseLogisticsRows += 1;
   }
 
   return {
@@ -227,7 +224,7 @@ export function attributeProductFinance(
   };
 }
 
-/** Unit logistics = Product Total Logistics (eligible) ÷ Net Units. */
+/** Unit logistics = all product-attributed outbound logistics ÷ Net Units. */
 export function calculateUnitLogisticsCost(
   productTotalLogistics: number,
   netUnits: number

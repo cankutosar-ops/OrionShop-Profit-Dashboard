@@ -25,7 +25,7 @@ export function LogisticsBreakdownHint({
         <span className="block font-medium text-foreground">Logistics (in Net Profit)</span>
         <span className="mt-1.5 block space-y-1 text-muted-foreground">
           <span className="flex justify-between gap-2">
-            <span>Attributed (eligible)</span>
+            <span>All attributed outbound</span>
             <span className="tabular-nums text-foreground">{formatCurrency(totalLogistics)}</span>
           </span>
           <span className="flex justify-between gap-2">
@@ -33,7 +33,7 @@ export function LogisticsBreakdownHint({
             <span className="tabular-nums">{formatCurrency(purchaseLogistics)}</span>
           </span>
           <span className="flex justify-between gap-2">
-            <span>Excluded (not in NP)</span>
+            <span>Unresolved (not in NP)</span>
             <span className="tabular-nums">{formatCurrency(excludedLogistics)}</span>
           </span>
           <span className="flex justify-between gap-2">

@@ -71,7 +71,7 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
   return (
     <SectionShell
       title="Product P&L (attributed)"
-      description="V4 Net Profit per SKU — Marketplace Fees informational only; unmatched logistics stay Unallocated"
+      description="Fully loaded SKU profit — all product-attributed WB logistics is deducted; Marketplace Fees is informational"
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
         <MetricCard
@@ -88,16 +88,16 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
         />
         <MetricCard
           size="compact"
-          title="Marketplace Fees"
-          value={formatKpiCurrency(totals.marketplaceFees)}
-          subtitle={`Attributed · ${formatKpiCurrency(totals.unallocatedMarketplaceFees)} unallocated · ${formatKpiCurrency(totals.accountMarketplaceFees)} account total`}
+          title="WB Fee (Sales API)"
+          value={formatKpiCurrency(totals.salesApiWbFee)}
+          subtitle={`Net Sales − Sales API forPay · ${formatKpiCurrency(totals.marketplaceFees)} canonical platform components`}
           icon={KPI_ICONS.commission}
         />
         <MetricCard
           size="compact"
-          title="Attributed Logistics"
+          title="Product Logistics"
           value={formatKpiCurrency(totals.totalLogistics)}
-          subtitle={`Unallocated ${formatKpiCurrency(totals.unallocatedLogistics)}`}
+          subtitle={`Truly unresolved ${formatKpiCurrency(totals.unallocatedLogistics)}`}
           icon={KPI_ICONS.logistics}
         />
         <MetricCard
@@ -148,12 +148,12 @@ function ProductAnalyticsFinancialSection({ totals }: { totals: ProductAnalytics
   return (
     <SectionShell
       title="Attribution reconciliation"
-      description="Attributed + Unallocated logistics must equal account logistics · Dashboard V4 account P&L is unchanged"
+      description="Product-attributed + unresolved logistics must equal account logistics"
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           size="compact"
-          title="Σ Product Net Profit"
+          title="Σ Fully Loaded Product Profit"
           value={formatKpiCurrency(totals.netProfit)}
           subtitle="Attributed SKUs only · not full account P&L"
           icon={KPI_ICONS.profit}
@@ -172,17 +172,17 @@ function ProductAnalyticsFinancialSection({ totals }: { totals: ProductAnalytics
         />
         <MetricCard
           size="compact"
-          title="Unallocated Logistics"
+          title="Unresolved Logistics"
           value={formatKpiCurrency(totals.unallocatedLogistics)}
-          subtitle="Not in product Net Profit"
+          subtitle="No reliable product match"
           icon={KPI_ICONS.cost}
           variant="muted"
         />
         <MetricCard
           size="compact"
-          title="Purchase Logistics (detail)"
+          title="Product Logistics (detail)"
           value={formatKpiCurrency(totals.purchaseLogistics)}
-          subtitle={`${purchaseRows.toLocaleString("ru-RU")} rows · ${excludedRows.toLocaleString("ru-RU")} excluded`}
+          subtitle={`${purchaseRows.toLocaleString("ru-RU")} purchase-SRID rows · ${excludedRows.toLocaleString("ru-RU")} unresolved`}
           icon={KPI_ICONS.logistics}
           variant="muted"
         />

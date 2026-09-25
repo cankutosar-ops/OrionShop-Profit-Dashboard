@@ -37,6 +37,44 @@ const emptyForm = (): Form => ({ expenseDate: today(), category: "ACCOUNTING", d
   paymentDate: "", paidAmount: "0", paymentReference: "" });
 const rub = (kopeks: number) => `${(kopeks / 100).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
 
+const MARKETPLACE_CATEGORY_LABELS: Record<string, string> = {
+  ACCEPTANCE: "Acceptance",
+  ACQUIRING: "Acquiring",
+  ADJUSTMENT: "Adjustments",
+  ADVERTISING: "WB advertising",
+  COMMISSION: "Commission",
+  COMPENSATION: "Compensation",
+  LOGISTICS: "Logistics",
+  PENALTY: "Penalties",
+  PLATFORM_FEE: "Platform fee / WB remuneration",
+  RETURN_LOGISTICS: "Return logistics",
+  SETTLEMENT: "Settlement (not an expense)",
+  STORAGE: "Storage",
+};
+
+function downloadFile(contents: BlobPart, fileName: string, type: string) {
+  const url = URL.createObjectURL(new Blob([contents], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function csvCell(value: unknown): string {
+  const text = String(value ?? "");
+  return /[",\n;]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function downloadCsv(rows: Array<Record<string, string | number>>, fileName: string) {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [headers, ...rows.map((row) => headers.map((header) => row[header]))]
+    .map((row) => row.map(csvCell).join(";"))
+    .join("\n");
+  downloadFile(`\uFEFF${csv}`, fileName, "text/csv;charset=utf-8");
+}
+
 export function ExpensesWorkspace() {
   const [companies, setCompanies] = useState<CompanyWithAccounts[]>([]);
   const [companyId, setCompanyId] = useState("");
@@ -105,6 +143,38 @@ export function ExpensesWorkspace() {
   }
 
   const company = companies.find((c) => c.id === companyId);
+  const operatingExportRows = expenses.map((expense) => ({
+    Date: expense.expense_date,
+    Source: "Manual / non-WB",
+    Category: companyExpenseRule(expense.category)?.label ?? expense.category,
+    Description: expense.description,
+    "Amount (RUB)": Number(expense.amount),
+    "Tax claim": expense.tax_deductible ? "Claimed" : "No",
+    "Document status": expense.evidence_status,
+    "Payment status": expense.payment_status,
+    "Document reference": expense.document_reference ?? "",
+    "Payment reference": expense.payment_reference ?? "",
+  }));
+  const marketplaceExportRows = (overview?.marketplace.categories ?? []).map((row) => ({
+    From: from,
+    To: to,
+    Source: "Wildberries Finance API",
+    Category: MARKETPLACE_CATEGORY_LABELS[row.category] ?? row.category,
+    "Business amount (RUB)": row.businessKopeks / 100,
+    "Tax recognized (RUB)": row.recognizedKopeks / 100,
+    "Tax review (RUB)": row.reviewKopeks / 100,
+    "Unverified (RUB)": row.unverifiedKopeks / 100,
+    "Excluded (RUB)": row.excludedKopeks / 100,
+  }));
+
+  async function downloadWorkbook() {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(operatingExportRows), "Manual expenses");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(marketplaceExportRows), "WB expenses");
+    XLSX.writeFile(workbook, `expenses-${from}-${to}.xlsx`);
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-3">
@@ -120,6 +190,17 @@ export function ExpensesWorkspace() {
           <button key={key} type="button" onClick={() => setTab(key)} aria-current={tab === key ? "page" : undefined}
             className={`rounded-xl px-4 py-2 text-sm ${tab === key ? "bg-primary text-primary-foreground" : "border border-border"}`}>{label}</button>)}
       </nav>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
+        <div>
+          <p className="text-sm font-medium">Expense export</p>
+          <p className="text-xs text-muted-foreground">Current company and date range · WB and manual expenses remain separate.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => downloadCsv(operatingExportRows, `manual-expenses-${from}-${to}.csv`)} disabled={!operatingExportRows.length} className="rounded-xl border border-border px-3 py-2 text-sm disabled:opacity-50">Manual CSV</button>
+          <button type="button" onClick={() => downloadCsv(marketplaceExportRows, `wb-expenses-${from}-${to}.csv`)} disabled={!marketplaceExportRows.length} className="rounded-xl border border-border px-3 py-2 text-sm disabled:opacity-50">WB CSV</button>
+          <button type="button" onClick={() => void downloadWorkbook()} disabled={!operatingExportRows.length && !marketplaceExportRows.length} className="rounded-xl bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50">Excel workbook</button>
+        </div>
+      </div>
       {overview ? <div className="rounded-2xl border border-border bg-card p-4 text-sm">
         <strong>Taxable Income: Unverified</strong> · {overview.calculation.readiness}.
         {overview.taxableRevenueEvidence?.reasons.length ? (
@@ -139,6 +220,10 @@ export function ExpensesWorkspace() {
           : <p className="text-sm text-muted-foreground">Connect a marketplace account to enter purchases.</p>}
       </section> : null}
       {tab === "operating" ? <div className="space-y-5">
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+          <p className="text-sm font-medium">Manual entry is only for expenses paid outside Wildberries.</p>
+          <p className="mt-1 text-xs text-muted-foreground">WB commission, acquiring, logistics, storage, acceptance, penalties and WB advertising are imported automatically and cannot be entered here.</p>
+        </div>
         <div className="rounded-2xl border border-border bg-card p-4 text-sm">
           Total {rub(overview?.operating.totalKopeks ?? 0)} · Claimed {rub(overview?.operating.claimedDeductibleKopeks ?? 0)} · Recognized {rub(overview?.operating.recognizedKopeks ?? 0)} · Review {rub(overview?.operating.reviewKopeks ?? 0)} · Unverified {rub(overview?.operating.unverifiedKopeks ?? 0)}
         </div>
@@ -182,12 +267,40 @@ export function ExpensesWorkspace() {
           </table>
         </div>
       </div> : null}
-      {tab === "marketplace" ? <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
-        <h2 className="font-semibold">Marketplace Expenses · read only</h2>
-        <p className="text-sm">Business expense components {rub(overview?.marketplace.totalBusinessKopeks ?? 0)} · Recognized {rub(overview?.marketplace.recognizedKopeks ?? 0)} · Review {rub(overview?.marketplace.reviewKopeks ?? 0)} · Unverified {rub(overview?.marketplace.unverifiedKopeks ?? 0)} · Excluded {rub(overview?.marketplace.excludedKopeks ?? 0)}</p>
-        <p className="text-xs text-muted-foreground">{overview?.marketplace.warning}</p>
-        <ul className="space-y-2 text-sm">{overview?.marketplace.categories.map((row) =>
-          <li key={row.category} className="border-t border-border pt-2">{row.category}: business {rub(row.businessKopeks)} · recognized {rub(row.recognizedKopeks)} · review {rub(row.reviewKopeks)} · unverified {rub(row.unverifiedKopeks)} · excluded {rub(row.excludedKopeks)}</li>)}</ul>
+      {tab === "marketplace" ? <section className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-border bg-card p-5">
+          <div>
+            <h2 className="font-semibold">Wildberries expenses</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Automatically imported from WB Finance · read only</p>
+          </div>
+          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-600 dark:text-emerald-400">Automatic source</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ["WB business expenses", overview?.marketplace.totalBusinessKopeks ?? 0],
+            ["Tax recognized", overview?.marketplace.recognizedKopeks ?? 0],
+            ["Needs review", overview?.marketplace.reviewKopeks ?? 0],
+            ["Excluded / settlement", overview?.marketplace.excludedKopeks ?? 0],
+          ].map(([label, value]) => <div key={String(label)} className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="mt-2 text-xl font-semibold tabular-nums">{rub(Number(value))}</p>
+          </div>)}
+        </div>
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card p-5">
+          <table className="w-full min-w-[820px] text-left text-sm">
+            <thead><tr className="text-muted-foreground"><th className="pb-3">WB expense</th><th className="pb-3 text-right">Business amount</th><th className="pb-3 text-right">Recognized</th><th className="pb-3 text-right">Review</th><th className="pb-3 text-right">Unverified</th><th className="pb-3 text-right">Excluded</th><th className="pb-3 pl-5">Source</th></tr></thead>
+            <tbody>{overview?.marketplace.categories.map((row) => <tr key={row.category} className="border-t border-border">
+              <td className="py-3 font-medium">{MARKETPLACE_CATEGORY_LABELS[row.category] ?? row.category}</td>
+              <td className="py-3 text-right tabular-nums">{rub(row.businessKopeks)}</td>
+              <td className="py-3 text-right tabular-nums">{rub(row.recognizedKopeks)}</td>
+              <td className="py-3 text-right tabular-nums">{rub(row.reviewKopeks)}</td>
+              <td className="py-3 text-right tabular-nums">{rub(row.unverifiedKopeks)}</td>
+              <td className="py-3 text-right tabular-nums">{rub(row.excludedKopeks)}</td>
+              <td className="py-3 pl-5 text-muted-foreground">WB Finance API</td>
+            </tr>)}</tbody>
+          </table>
+          <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">Tax recognition remains conservative until supporting evidence is verified. Settlement is displayed for reconciliation and is not treated as an expense.</p>
+        </div>
       </section> : null}
     </div>
   );

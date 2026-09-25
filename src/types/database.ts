@@ -833,13 +833,13 @@ export type ProductProfitability = ProfitBreakdown & {
   cancelled: number;
   /** Cancelled ÷ orders × 100. */
   cancellationPercent: number;
-  /** Outbound logistics matched to a completed purchase SRID (same as `logistics`). */
+  /** All product-attributed outbound logistics included in Net Profit. */
   purchaseLogistics: number;
-  /** Outbound logistics excluded from net profit (cancelled / unknown / missing SRID). */
+  /** Unresolved outbound logistics excluded from this product (normally zero). */
   excludedLogistics: number;
-  /** Logistics rows matched to a completed purchase SRID. */
+  /** Product logistics rows also matched to a completed purchase SRID (audit only). */
   purchaseLogisticsRows: number;
-  /** Logistics rows excluded (cancelled / unknown / missing SRID). */
+  /** Unresolved logistics rows excluded from this product. */
   excludedLogisticsRows: number;
   /** Sold units − returned units for the period. */
   netUnits: number;
@@ -893,6 +893,8 @@ export type ProductAnalyticsV3Row = {
   cancellationPercent: number;
   revenue: number;
   marketplaceFees: number;
+  /** Sales API WB Fee = Net Sales − Sales API forPay. */
+  salesApiWbFee?: number;
   marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
   commission: number;
   /** All outbound logistics (purchase + excluded). */
@@ -965,13 +967,15 @@ export type ProductAnalyticsTotals = {
   revenue: number;
   productCost: number;
   marketplaceFees: number;
+  /** Σ(Net Sales − Sales API forPay) across product rows. */
+  salesApiWbFee: number;
   /** Full account canonical Marketplace Fees, independent of product allocation. */
   accountMarketplaceFees: number;
   /** Account fee rows without defensible product identity. */
   unallocatedMarketplaceFees: number;
-  /** Purchase-only outbound logistics included in net profit. */
+  /** All product-attributed outbound logistics included in net profit. */
   purchaseLogistics: number;
-  /** Excluded outbound logistics (not in net profit). */
+  /** Unresolved outbound logistics (not in product net profit). */
   excludedLogistics: number;
   returnLogistics: number;
   /** Financial net profit (dashboard engine). */
@@ -994,7 +998,7 @@ export type ProductAnalyticsTotals = {
   commission: number;
   marketing: number;
   marginPercent: number;
-  /** Account logistics not in any product's eligible Net Profit logistics. */
+  /** Account logistics without a reliable product match. */
   unallocatedLogistics: number;
   /** Account Σ LOGISTICS |amount| for the period finance set. */
   accountLogisticsTotal: number;

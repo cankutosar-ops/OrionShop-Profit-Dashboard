@@ -52,6 +52,7 @@ export function toProductAnalyticsV3Row(product: ProductProfitability): ProductA
     cancellationPercent: product.cancellationPercent,
     revenue: product.revenue,
     marketplaceFees: ops.marketplaceFees,
+    salesApiWbFee: product.salesToSettlementDifference ?? 0,
     marketplaceFeeStatus: product.marketplaceFeeStatus,
     commission: product.commission,
     totalLogistics: ops.totalLogistics,
@@ -124,6 +125,7 @@ function sumFinancialTotals(products: ProductProfitability[]) {
         acc.revenue += product.revenue;
         acc.productCost += product.productCost;
         acc.marketplaceFees += product.marketplaceFees;
+        acc.salesApiWbFee += product.salesToSettlementDifference ?? 0;
         acc.purchaseLogistics += product.purchaseLogistics;
         acc.excludedLogistics += product.excludedLogistics;
         acc.returnLogistics += product.returnLogistics;
@@ -137,6 +139,7 @@ function sumFinancialTotals(products: ProductProfitability[]) {
         revenue: 0,
         productCost: 0,
         marketplaceFees: 0,
+        salesApiWbFee: 0,
         purchaseLogistics: 0,
         excludedLogistics: 0,
         returnLogistics: 0,

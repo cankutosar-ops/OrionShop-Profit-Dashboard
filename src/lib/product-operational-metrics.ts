@@ -3,12 +3,11 @@ import type { ProductProfitability } from "@/types/database";
 
 /**
  * Product Total Logistics for Net Profit / Unit Logistics Cost.
- * Eligible purchase-SRID logistics only (excluded is visibility, not NP).
+ * All product-attributed outbound logistics are included.
  */
 export function calculateTotalLogistics(
   product: Pick<ProductProfitability, "purchaseLogistics" | "excludedLogistics">
 ): number {
-  void product.excludedLogistics;
   return product.purchaseLogistics;
 }
 

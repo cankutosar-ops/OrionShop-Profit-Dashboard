@@ -48,6 +48,7 @@ type MainSortKey =
   | "conversion"
   | "revenue"
   | "marketplaceFees"
+  | "salesApiWbFee"
   | "totalLogistics"
   | "unitLogisticsCost"
   | "productCost"
@@ -84,6 +85,8 @@ function mainSortValue(row: ProductAnalyticsV3Row, key: MainSortKey): SortValue 
       return row.revenue;
     case "marketplaceFees":
       return row.marketplaceFees;
+    case "salesApiWbFee":
+      return row.salesApiWbFee ?? 0;
     case "totalLogistics":
       return row.totalLogistics;
     case "unitLogisticsCost":
@@ -435,10 +438,10 @@ export function ProductAnalyticsV8Table({
                 className="px-3 py-2"
               />
               <SortableTh
-                label="Marketplace Fees"
-                active={isActive("marketplaceFees")}
-                direction={directionFor("marketplaceFees")}
-                onClick={() => onSort("marketplaceFees")}
+                label="WB Fee (Sales API)"
+                active={isActive("salesApiWbFee")}
+                direction={directionFor("salesApiWbFee")}
+                onClick={() => onSort("salesApiWbFee")}
                 align="right"
                 className="px-3 py-2"
               />
@@ -549,15 +552,10 @@ export function ProductAnalyticsV8Table({
                         {formatCurrency(row.revenue)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                        <MarketplaceFeeValue value={formatCurrency(row.marketplaceFees)} status={row.marketplaceFeeStatus} />
+                        <MarketplaceFeeValue value={formatCurrency(row.salesApiWbFee ?? 0)} status={row.marketplaceFeeStatus} />
                         <div className="text-[10px] leading-tight text-muted-foreground/80">
-                          {row.marketplaceFeesPctOfNetSales != null
-                            ? `${formatPercent(row.marketplaceFeesPctOfNetSales)} of Net Sales`
-                            : "— of Net Sales"}
-                          {" · "}
-                          {row.marketplaceFeesPctOfRevenue != null
-                            ? `${formatPercent(row.marketplaceFeesPctOfRevenue)} of Revenue`
-                            : "— of Revenue"}
+                          Net Sales − Sales API forPay
+                          {" · "}{formatCurrency(row.marketplaceFees)} platform components
                         </div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">

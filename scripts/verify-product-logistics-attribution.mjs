@@ -67,6 +67,7 @@ function check(name, ok, detail = "") {
     calculateNetUnits,
     buildUnambiguousNmIdToProductIdMap,
     buildProductLogisticsReconciliation,
+    attributeProductFinance,
   } = await import("../src/lib/product-logistics-attribution.ts");
 
   check("Net Units = sold − returned", calculateNetUnits(100, 20) === 80);
@@ -151,6 +152,17 @@ function check(name, ok, detail = "") {
     `unresolvedAbs=${stamped.unresolvedAbs}`
   );
   check("Account logistics total abs", stamped.accountLogisticsTotal === 800);
+
+  const productScoped = attributeProductFinance(
+    stamped.finance.filter((row) => row.product_id === "pB"),
+    new Set()
+  );
+  check(
+    "Product-attributed logistics is included without purchase SRID",
+    productScoped.financeForBreakdown.length === 1 &&
+      productScoped.excludedLogistics === 0 &&
+      productScoped.excludedLogisticsRows === 0
+  );
 
   const recon = buildProductLogisticsReconciliation({
     accountLogisticsTotal: 800,
