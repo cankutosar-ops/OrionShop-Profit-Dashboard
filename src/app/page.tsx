@@ -152,9 +152,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     resolveScopedDateRange(params)
   );
 
-  // Prefetch independent persisted reads so they overlap critical-path SQL.
-  void prefetchDashboardBackground(scope);
-
   return (
     <>
       <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
@@ -171,26 +168,4 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </Suspense>
     </>
   );
-}
-
-/** Start cached SQL + warehouse KPI work so Suspense children share warm results. */
-async function prefetchDashboardBackground(scope: ScopedDateRange) {
-  const [
-    { getCachedDashboardSql },
-    { loadWbWeeklySalesReports },
-    { getWbBalanceMetrics },
-  ] = await Promise.all([
-    import("@/services/dashboard-service"),
-    import("@/services/wb-sales-reports-service"),
-    import("@/services/wb-balance-service"),
-  ]);
-  void getCachedDashboardSql(
-    scope.marketplaceAccountId,
-    scope.companyId,
-    scope.from,
-    scope.to,
-    scope.brandId ?? ""
-  );
-  void loadWbWeeklySalesReports(scope);
-  void getWbBalanceMetrics(scope.marketplaceAccountId);
 }

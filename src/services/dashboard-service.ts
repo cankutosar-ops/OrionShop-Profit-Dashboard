@@ -158,13 +158,18 @@ async function fetchScopedDashboardSql(
   });
   const productIds = products.map((product) => String(product.id));
   const supplierArticles = products.map((product) => product.supplier_article);
+  // Account-wide dashboard reads are already isolated by marketplace_account_id.
+  // Adding every catalogue product to an `in (...)` filter creates extremely
+  // large URLs (hundreds of IDs on established stores) on every paginated
+  // request. Keep the product filter only when a brand drill-down requires it.
+  const scopedProductIds = scope.brandId ? productIds : undefined;
 
   const [sales, finance, ads, costHistory, orders] = await Promise.all([
-    fetchSalesInRange(scope, client, { productIds }),
-    fetchFinanceInRange(scope, client, { productIds }),
+    fetchSalesInRange(scope, client, { productIds: scopedProductIds }),
+    fetchFinanceInRange(scope, client, { productIds: scopedProductIds }),
     fetchAdsInRange(scope, client, { productIds, supplierArticles }),
     fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
-    fetchOrdersInRange(scope, client, { productIds }),
+    fetchOrdersInRange(scope, client, { productIds: scopedProductIds }),
   ]);
 
   return {
