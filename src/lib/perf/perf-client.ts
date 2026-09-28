@@ -15,7 +15,10 @@ type ClientPerfPayload = {
 
 export function recordClientPerf(event: ClientPerfPayload): void {
   if (typeof window === "undefined") return;
-  if (process.env.NEXT_PUBLIC_PERF_AUDIT === "0") return;
+  // Production middleware deliberately hides /api/perf/* with a 404. Keep
+  // browser instrumentation opt-in so a normal production build never posts
+  // to an endpoint that is unavailable there.
+  if (process.env.NEXT_PUBLIC_PERF_AUDIT !== "1") return;
 
   const body = JSON.stringify({
     ...event,

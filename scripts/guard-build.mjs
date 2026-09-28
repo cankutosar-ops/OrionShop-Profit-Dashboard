@@ -20,6 +20,29 @@ function isPidAlive(pid) {
 }
 
 async function main() {
+  // Production intentionally returns 404 for /api/perf/*. Browser telemetry
+  // must therefore remain explicitly opt-in. Fail the build if a future edit
+  // re-enables client posts by default and recreates a production request loop.
+  const [middlewareSource, perfClientSource] = await Promise.all([
+    readFile(resolve(process.cwd(), "src/middleware.ts"), "utf8"),
+    readFile(resolve(process.cwd(), "src/lib/perf/perf-client.ts"), "utf8"),
+  ]);
+  const perfApiHiddenInProduction =
+    middlewareSource.includes('process.env.NODE_ENV === "production"') &&
+    middlewareSource.includes('pathname.startsWith("/api/perf/")');
+  const clientPerfExplicitlyOptIn = perfClientSource.includes(
+    'process.env.NEXT_PUBLIC_PERF_AUDIT !== "1"'
+  );
+  if (perfApiHiddenInProduction && !clientPerfExplicitlyOptIn) {
+    console.error(
+      "✗ Build blocked: browser performance telemetry can call a production-disabled /api/perf endpoint."
+    );
+    console.error(
+      'Keep client telemetry opt-in with NEXT_PUBLIC_PERF_AUDIT="1", or change the production API policy together.'
+    );
+    process.exit(1);
+  }
+
   let lock = null;
   try {
     lock = JSON.parse(await readFile(lockFile, "utf8"));
