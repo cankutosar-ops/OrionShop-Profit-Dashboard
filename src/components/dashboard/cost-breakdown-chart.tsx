@@ -16,9 +16,9 @@ export function CostBreakdownChart({ data }: CostBreakdownChartProps) {
       centerLabel="Total costs"
       centerValue={formatChartValue(total, "currency")}
       valueFormat="currency"
-      height={220}
+      height={200}
       emptyMessage="No cost data available"
-      legendPlacement="side"
+      legendPlacement="below"
     />
   );
 }
