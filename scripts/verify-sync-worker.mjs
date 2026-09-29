@@ -383,6 +383,7 @@ const {
 console.log("\n--- A. Single-account success ---");
 {
   const { logger, lines } = collectingLogger();
+  let onboardingCalls = 0;
   const result = await runSyncWorkerTick({
     tasks: ["commercial"],
     accountIds: ["1"],
@@ -392,11 +393,20 @@ console.log("\n--- A. Single-account success ---");
       commercial: {
         runTick: async () => tickResult([account("1", "Account 1", [ok("orders"), ok("sales"), ok("finance")])]),
         readCursor: async () => ({ rrdId: 500, weekFrom: null, weekTo: null, weekStatus: null, blockedUntil: null }),
+        advanceOnboarding: async ({ accountIds }) => {
+          onboardingCalls += 1;
+          return [{ marketplaceAccountId: accountIds[0], lifecycle: "HEALTHY", orders: "partial", sales: "partial" }];
+        },
       },
     },
   });
 
   check("A  exit code is 0", result.exitCode === WORKER_EXIT_OK, `exit=${result.exitCode}`);
+  check(
+    "A  commercial tick advances durable account onboarding first",
+    onboardingCalls === 1 && lines.some((l) => l.event === "task.onboarding"),
+    `${onboardingCalls} onboarding call(s)`
+  );
   check(
     "A  account result recorded as success",
     result.results.length === 1 && result.results[0].outcome === "success",

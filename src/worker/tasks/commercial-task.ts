@@ -18,6 +18,7 @@ import { readFinanceCursor } from "../finance-cursor";
 export type CommercialTaskDeps = {
   runTick: typeof import("@/services/commercial-continuity-service").runCommercialContinuityTick;
   readCursor: typeof readFinanceCursor;
+  advanceOnboarding: typeof import("@/services/account-onboarding-continuity-service").advanceAutomaticAccountOnboarding;
 };
 
 export type CommercialTaskInput = {
@@ -38,6 +39,28 @@ export async function runCommercialWorkerTask(
     (await import("@/services/commercial-continuity-service"))
       .runCommercialContinuityTick;
   const readCursor = input.deps?.readCursor ?? readFinanceCursor;
+  const advanceOnboarding =
+    input.deps?.advanceOnboarding ??
+    (input.deps
+      ? null
+      : (await import("@/services/account-onboarding-continuity-service"))
+          .advanceAutomaticAccountOnboarding);
+
+  if (advanceOnboarding && Date.now() < input.deadlineMs) {
+    try {
+      const onboarding = await advanceOnboarding({
+        accountIds: input.accountIds,
+        deadlineMs: input.deadlineMs,
+      });
+      if (onboarding.length > 0) {
+        input.logger.info("task.onboarding", { accounts: onboarding });
+      }
+    } catch (err) {
+      input.logger.warn("task.onboarding_retry", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
 
   const targets: Array<string | null> =
     input.accountIds && input.accountIds.length > 0

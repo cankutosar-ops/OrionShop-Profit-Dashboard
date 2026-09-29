@@ -14,8 +14,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const { financeV1AllowlistedAccountIds, isFinanceV1AllowlistedAccount } =
-  await import("../src/lib/wildberries/finance-v1.ts");
 const { planFinanceIncrementalWork, emptyFinanceIncrementalState } = await import(
   "../src/lib/finance-incremental/week-planner.ts"
 );
@@ -39,7 +37,6 @@ const read = (rel) => readFileSync(resolve(rel), "utf8");
 
 const A1 = "1";
 const A2 = "2";
-const A3 = "3";
 const ANCHOR = { from: "2026-08-24", to: "2026-08-30" };
 const ANCHOR_KEY = `${ANCHOR.from}:${ANCHOR.to}`;
 const TODAY = "2026-09-09";
@@ -114,31 +111,34 @@ console.log("=== Account 1 → Reports/V1 migration ===\n");
 // ---------------------------------------------------------------- A, B, C
 console.log("--- gate selection ---");
 {
-  const env = { FINANCE_V1_ACCOUNT_IDS: "1", FINANCE_V1_LIVE_REQUESTS_ENABLED: "true" };
-  check(
-    "A. Account 1 is selected for Reports/V1 when allowlisted",
-    isFinanceV1AllowlistedAccount(A1, env)
+  const src = read("src/lib/wildberries/finance-sync-v2.ts");
+  const fn = src.slice(
+    src.indexOf("function shouldUseReportsV1Detail"),
+    src.indexOf("function shouldUseReportsV1Detail") + 700
   );
   check(
-    "C. a non-enabled account does not silently switch",
-    !isFinanceV1AllowlistedAccount(A3, env),
-    "account 3 absent from FINANCE_V1_ACCOUNT_IDS"
+    "A. operational accounts select Reports/V1 from the global live gate",
+    fn.includes("isFinanceV1LiveRequestsEnabled()")
   );
   check(
-    "C. empty allowlist migrates nobody",
-    financeV1AllowlistedAccountIds({}).size === 0 &&
-      !isFinanceV1AllowlistedAccount(A1, {}),
-    "unset FINANCE_V1_ACCOUNT_IDS -> no account switches"
+    "C. token Finance permission is still verified before Reports/V1",
+    fn.includes("assertFinanceV1TokenReady(apiKey)")
   );
   check(
-    "C. malformed ids are ignored rather than coerced",
-    financeV1AllowlistedAccountIds({ FINANCE_V1_ACCOUNT_IDS: "0,-1,abc, 1 " }).size === 1 &&
-      isFinanceV1AllowlistedAccount(A1, { FINANCE_V1_ACCOUNT_IDS: "0,-1,abc, 1 " })
+    "C. account-id allowlist is no longer an onboarding dependency",
+    !fn.includes("isFinanceV1AllowlistedAccount") &&
+      !read(".github/workflows/sync-worker.yml").includes("FINANCE_V1_ACCOUNT_IDS:")
+  );
+  check(
+    "C. lifecycle seeds a real Reports/V1 week before HEALTHY",
+    read("src/services/account-lifecycle-service.ts").includes(
+      "await ensureNewAccountFinanceIncrementalSeed(accountId)"
+    )
   );
 }
 
 // Account 2 must keep selecting V1 through its own unconditional path, i.e.
-// independently of the allowlist and of the live flag.
+// independently of the global live flag.
 {
   const src = read("src/lib/wildberries/finance-sync-v2.ts");
   const fn = src.slice(
@@ -147,16 +147,16 @@ console.log("--- gate selection ---");
   );
   const a2First =
     fn.indexOf("isAccount2FinanceV1Only") > -1 &&
-    fn.indexOf("isAccount2FinanceV1Only") < fn.indexOf("isFinanceV1AllowlistedAccount");
+    fn.indexOf("isAccount2FinanceV1Only") < fn.indexOf("isFinanceV1LiveRequestsEnabled");
   check(
-    "B. Account 2 still selects Reports/V1 before any allowlist check",
+    "B. Account 2 still selects Reports/V1 before the global gate",
     a2First,
     "isAccount2FinanceV1Only short-circuits first"
   );
   check(
-    "B. Account 2 selection does not depend on the allowlist env",
-    !isFinanceV1AllowlistedAccount(A2, {}) && a2First,
-    "unconditional path, so an empty allowlist cannot demote it"
+    "B. Account 2 selection remains unconditional",
+    a2First,
+    "the global live flag cannot demote it"
   );
 }
 

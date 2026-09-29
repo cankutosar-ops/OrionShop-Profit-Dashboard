@@ -73,7 +73,8 @@ jobs:
       # Account 1 needs both switches for Reports/V1; Account 2 is V1-only and
       # still requires the live-requests switch before any Reports HTTP.
       FINANCE_V1_LIVE_REQUESTS_ENABLED: ${{ vars.FINANCE_V1_LIVE_REQUESTS_ENABLED }}
-      FINANCE_V1_ACCOUNT_IDS: ${{ vars.FINANCE_V1_ACCOUNT_IDS }}
+      # New WB accounts are selected automatically after token verification and
+      # durable lifecycle initialization; no account-id allowlist is required.
       # Never start the in-process inventory timer inside a worker run.
       INVENTORY_SNAPSHOT_SCHEDULER: "0"
       # tsx discovers the tsconfig that defines the `@/*` path alias through the

@@ -472,7 +472,6 @@ console.log("\n--- 6/7. Workflow contract ---");
     const REQUIRED_WORKFLOW_VARIABLES = [
       "ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE",
       "FINANCE_V1_LIVE_REQUESTS_ENABLED",
-      "FINANCE_V1_ACCOUNT_IDS",
     ];
     const unwiredVars = REQUIRED_WORKFLOW_VARIABLES.filter(
       (name) => !new RegExp(`^\\s*${name}:\\s*\\$\\{\\{\\s*vars\\.${name}\\s*\\}\\}`, "m").test(wf)

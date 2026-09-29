@@ -31,6 +31,8 @@ import {
   startWarehouseImportAudit,
 } from "@/services/warehouse-import-audit-service";
 import { getAccountLifecycleState } from "@/services/account-lifecycle-service";
+import { createWbSyncService } from "@/lib/wildberries/sync-service";
+import { buildFinanceBackfillWindows } from "@/lib/wildberries/finance-history-backfill";
 import { resolve } from "path";
 
 export type WarehouseFoundationStatus = {
@@ -119,8 +121,9 @@ export type WarehouseBackfillResult = {
 };
 
 /**
- * Run historical backfill for one warehouse entity (idempotent).
- * Inventory: archive CSV import. Other entities: not yet implemented (returns skipped).
+ * Run one bounded historical-backfill step for a warehouse entity (idempotent).
+ * Orders and sales advance one monthly window per call so the hourly worker can
+ * resume safely without exceeding its execution budget.
  */
 export async function runWarehouseEntityHistoricalBackfill(params: {
   marketplaceAccountId: string;
@@ -157,6 +160,129 @@ export async function runWarehouseEntityHistoricalBackfill(params: {
       auditId: null,
       recordsRead: 0,
       rowsUpserted: 0,
+    };
+  }
+
+  if (entity === "orders" || entity === "sales") {
+    const state = await getWarehouseEntityState(marketplaceAccountId, entity);
+    const progress = state?.progress ?? {};
+    if (progress.autoOnboarding !== true) {
+      return {
+        marketplaceAccountId,
+        entity,
+        status: "skipped",
+        message: `${entity} automatic history is not enabled for this existing account.`,
+        auditId: null,
+        recordsRead: 0,
+        rowsUpserted: 0,
+      };
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const from = progress.from ?? `${today.slice(0, 4)}-01-01`;
+    const to = progress.to ?? today;
+    const completed = { ...(progress.completedWindows ?? {}) };
+    const failed = { ...(progress.failedWindows ?? {}) };
+    const windows = buildFinanceBackfillWindows(from, to, "monthly");
+    const pending = windows.filter((window) => !completed[`${window.from}:${window.to}`]);
+
+    if (pending.length === 0) {
+      await updateWarehouseEntityState({
+        marketplaceAccountId,
+        entity,
+        stage: "healthy",
+        progress: { ...progress, completedWindows: completed, failedWindows: {}, pendingWindows: [] },
+        markCompleted: true,
+        markSuccessfulSync: true,
+        errorMessage: null,
+      });
+      return {
+        marketplaceAccountId,
+        entity,
+        status: "success",
+        message: `${entity} historical backfill complete.`,
+        auditId: null,
+        recordsRead: 0,
+        rowsUpserted: 0,
+      };
+    }
+
+    const window = pending[0];
+    const key = `${window.from}:${window.to}`;
+    await updateWarehouseEntityState({
+      marketplaceAccountId,
+      entity,
+      stage: "historical_backfill_running",
+      progress: { ...progress, completedWindows: completed, failedWindows: failed },
+      currentDataset: key,
+      currentPage: windows.findIndex((candidate) => candidate === window) + 1,
+      markStarted: true,
+      errorMessage: null,
+    });
+
+    const syncService = await createWbSyncService(marketplaceAccountId);
+    const result =
+      entity === "orders"
+        ? await syncService.syncOrders(window.from, window.to)
+        : await syncService.syncSales(window.from, window.to);
+
+    if (result.errors.length > 0) {
+      failed[key] = result.errors.join("; ");
+      await updateWarehouseEntityState({
+        marketplaceAccountId,
+        entity,
+        stage: "failed",
+        progress: {
+          ...progress,
+          completedWindows: completed,
+          failedWindows: failed,
+          pendingWindows: pending.map((item) => `${item.from}:${item.to}`),
+          lastWindow: key,
+        },
+        errorMessage: failed[key],
+        markFailedSync: true,
+        bumpRetry: true,
+      });
+      return {
+        marketplaceAccountId,
+        entity,
+        status: "failed",
+        message: failed[key],
+        auditId: null,
+        recordsRead: result.recordsProcessed,
+        rowsUpserted: result.recordsUpdated,
+      };
+    }
+
+    completed[key] = true;
+    delete failed[key];
+    const remaining = windows.filter((item) => !completed[`${item.from}:${item.to}`]);
+    const done = remaining.length === 0;
+    await updateWarehouseEntityState({
+      marketplaceAccountId,
+      entity,
+      stage: done ? "healthy" : "historical_backfill_running",
+      progress: {
+        ...progress,
+        completedWindows: completed,
+        failedWindows: failed,
+        pendingWindows: remaining.map((item) => `${item.from}:${item.to}`),
+        lastWindow: key,
+      },
+      errorMessage: null,
+      markCompleted: done,
+      markSuccessfulSync: true,
+    });
+    return {
+      marketplaceAccountId,
+      entity,
+      status: done ? "success" : "partial",
+      message: done
+        ? `${entity} historical backfill complete.`
+        : `${entity} historical window complete; ${remaining.length} remaining.`,
+      auditId: null,
+      recordsRead: result.recordsProcessed,
+      rowsUpserted: result.recordsUpdated,
     };
   }
 

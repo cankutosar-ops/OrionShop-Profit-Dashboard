@@ -59,6 +59,11 @@ if (!/sellerPayout\s*=/.test(modelB) || !/estimatedTax\s*=/.test(modelB)) {
 // --- Client / nav ---
 mustInclude("src/lib/perf/perf-client.ts", "markNavigationStart");
 mustInclude("src/lib/perf/perf-client.ts", "markNavigationComplete");
+mustInclude(
+  "src/lib/perf/perf-client.ts",
+  'process.env.NEXT_PUBLIC_PERF_AUDIT !== "1"',
+  "client performance telemetry must be explicitly opt-in"
+);
 mustInclude("src/components/perf/perf-page-probe.tsx", "page.dashboard.ready");
 mustInclude("src/components/perf/perf-page-probe.tsx", "page.smart_pricing.ready");
 mustInclude("src/components/layout/dashboard-layout.tsx", "PerfPageProbe");

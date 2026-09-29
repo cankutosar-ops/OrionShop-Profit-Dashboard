@@ -161,8 +161,7 @@ requires operator authorization. This variable is worker-only, not a web setting
 | Variable | Contract |
 |---|---|
 | `ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE` | Explicit boolean; keep the recovery reservation aligned with the web host. Unset/invalid fails closed for Account 2. |
-| `FINANCE_V1_LIVE_REQUESTS_ENABLED` | Explicit live-HTTP opt-in. Account 2 remains Reports/V1-only even when this is off; HTTP then fails closed. |
-| `FINANCE_V1_ACCOUNT_IDS` | Comma-separated, seeded account IDs opted into Reports/V1. Account 1 requires both this allowlist and the live switch; Account 2 is V1-only regardless of the allowlist. |
+| `FINANCE_V1_LIVE_REQUESTS_ENABLED` | Explicit live-HTTP opt-in. Operational WB accounts with a Finance-capable token are selected automatically; Account 2 remains Reports/V1-only and fails closed when live HTTP is off. |
 
 These are names and routing rules, not production values. Confirm the active
 web-host variables and GitHub Actions variables agree before scheduling finance.
@@ -175,7 +174,8 @@ Notes:
 
 - **Per-account WB API keys are never stored in GitHub.** They stay encrypted in
   `marketplace_accounts.api_key_encrypted` and are decrypted at runtime with
-  `MARKETPLACE_CREDENTIALS_KEY`. Adding an account requires no workflow change.
+  `MARKETPLACE_CREDENTIALS_KEY`. Adding an account requires no workflow change
+  or account-id variable; lifecycle initialization seeds its durable cursor.
 - **`INTERNAL_API_SECRET` is not needed.** The worker calls domain modules
   directly and never makes an HTTP request to its own application.
 - **No `NEXT_PUBLIC_` naming is required.** `src/worker/env.ts` accepts the

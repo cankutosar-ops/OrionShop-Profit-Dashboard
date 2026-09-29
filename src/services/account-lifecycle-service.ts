@@ -26,6 +26,7 @@ import type {
   SyncLifecycleStatus,
   WbFinance,
 } from "@/types/database";
+import { addIsoDays, utcMondayOf } from "@/lib/finance-incremental/week-planner";
 
 export const INCREMENTAL_READY_STATUSES: ReadonlySet<SyncLifecycleStatus> = new Set([
   "INCREMENTAL_SYNC_ACTIVE",
@@ -225,6 +226,32 @@ export async function initializeNewAccountLifecycle(
       "@/services/historical-warehouse-orchestrator"
     );
     await initializeWarehouseFoundationForAccount(accountId);
+    const { updateWarehouseEntityState } = await import(
+      "@/services/warehouse-entity-sync-state-service"
+    );
+    const eventProgress = {
+      autoOnboarding: true,
+      from,
+      to: today,
+      strategy: "monthly",
+      completedWindows: {},
+      failedWindows: {},
+      pendingWindows: buildFinanceBackfillWindows(from, today, "monthly").map((window) =>
+        windowKey(window.from, window.to)
+      ),
+      lastWindow: null,
+    };
+    await Promise.all(
+      (["orders", "sales"] as const).map((entity) =>
+        updateWarehouseEntityState({
+          marketplaceAccountId: accountId,
+          entity,
+          stage: "pending",
+          progress: eventProgress,
+          errorMessage: null,
+        })
+      )
+    );
   } catch (err) {
     syncLog("account-lifecycle", "warehouse foundation init skipped", {
       accountId,
@@ -545,6 +572,59 @@ async function promoteVerifiedToHealthy(accountId: string): Promise<void> {
   }
 }
 
+/**
+ * Seed Reports/V1 with a real week to process. The lease RPC can create an
+ * empty state row, but an empty row intentionally has no catch-up anchor and
+ * therefore remains idle. New accounts must never depend on an operator adding
+ * their id to CI configuration or running a separate seed script.
+ */
+export async function ensureNewAccountFinanceIncrementalSeed(
+  accountId: string,
+  today = new Date().toISOString().slice(0, 10)
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("finance_incremental_sync_state")
+    .select("marketplace_account_id,active_week_from,completed_weeks")
+    .eq("marketplace_account_id", accountId)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Finance incremental seed read failed: ${error.message}`);
+  }
+
+  const completedWeeks = (data?.completed_weeks ?? {}) as Record<string, unknown>;
+  if (data?.active_week_from || Object.keys(completedWeeks).length > 0) return;
+
+  const thisMonday = utcMondayOf(today);
+  const latestCompletedTo = addIsoDays(thisMonday, -1);
+  const latestCompletedFrom = addIsoDays(latestCompletedTo, -6);
+  const seed = {
+    marketplace_account_id: String(accountId),
+    mode: "current_week" as const,
+    week_status: "in_progress" as const,
+    active_week_from: latestCompletedFrom,
+    active_week_to: latestCompletedTo,
+    last_persisted_rrd_id: 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: writeError } = data
+    ? await supabase
+        .from("finance_incremental_sync_state")
+        .update(seed)
+        .eq("marketplace_account_id", accountId)
+        .is("active_week_from", null)
+    : await supabase.from("finance_incremental_sync_state").insert(seed);
+  if (writeError) {
+    throw new Error(`Finance incremental seed write failed: ${writeError.message}`);
+  }
+  syncLog("account-lifecycle", "Reports/V1 incremental seed ready", {
+    accountId,
+    weekFrom: latestCompletedFrom,
+    weekTo: latestCompletedTo,
+  });
+}
+
 async function runAccountVerificationPhase(
   accountId: string,
   state: AccountLifecycleState
@@ -596,6 +676,7 @@ async function activateIncrementalSync(accountId: string): Promise<void> {
     finance_backfill_completed_at: now,
     finance_backfill_error: null,
   });
+  await ensureNewAccountFinanceIncrementalSeed(accountId);
   await promoteVerifiedToHealthy(accountId);
 }
 

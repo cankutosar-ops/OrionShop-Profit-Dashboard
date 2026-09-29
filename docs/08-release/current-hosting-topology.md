@@ -22,7 +22,7 @@ Netlify is named in the worker architecture as an intended host; this is design 
 
 ## GitHub configuration
 
-Authenticated name-only APIs return zero repository secrets, variables and environments. The owner is a personal GitHub User; organization secret inheritance is not applicable. Required secrets are SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY and MARKETPLACE_CREDENTIALS_KEY. Required variables are FINANCE_V1_LIVE_REQUESTS_ENABLED, FINANCE_V1_ACCOUNT_IDS and ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE. All are missing. Never put values in this document.
+Authenticated name-only APIs return zero repository secrets, variables and environments. The owner is a personal GitHub User; organization secret inheritance is not applicable. Required secrets are SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY and MARKETPLACE_CREDENTIALS_KEY. Required variables are FINANCE_V1_LIVE_REQUESTS_ENABLED and ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE. New account IDs are discovered from the database. Never put values in this document.
 
 ## Recommended beta architecture
 

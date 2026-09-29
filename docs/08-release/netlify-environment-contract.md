@@ -28,7 +28,6 @@ All names below are configuration contracts, not credentials. Keep runtime value
 | ORION_CURRENT_STOCK_SOURCE | Required initial value legacy | Not required | Server-only web read switch |
 | INVENTORY_SNAPSHOT_SCHEDULER | Required value 0 in runtime | Workflow fixes 0 | Server-only; prevent process timers |
 | FINANCE_V1_LIVE_REQUESTS_ENABLED | Required intended true | Required repository variable true | Server-only; same routing policy; activate only in approved window |
-| FINANCE_V1_ACCOUNT_IDS | Required intended 1 | Required repository variable 1 | Server-only; same numeric marketplace account ID |
 | ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE | Required intended false | Required repository variable false | Server-only; same quota ownership policy; fresh pre-activation check |
 | SYNC_WORKER_SCHEDULE_ENABLED | Not used | Required activation control; absent/false through acceptance; true only after separate recurring-activation approval | WORKER_ONLY; scheduled jobs fail closed; manual dispatch remains explicit |
 | CRON_SECRET | Not required; omit | Not required | Dormant Vercel cron; no live cron owner |
@@ -68,7 +67,7 @@ The intended routing values above are configuration targets, not proof of produc
 ## Single setup procedure (execute only in the approved configuration window)
 
 1. GitHub repository Settings → Secrets and variables → Actions → Secrets: add SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY and MARKETPLACE_CREDENTIALS_KEY from the trusted existing project configuration. Never paste credentials into chat or use an encryption key different from the one protecting account tokens.
-2. On the Variables tab, add FINANCE_V1_LIVE_REQUESTS_ENABLED=true, FINANCE_V1_ACCOUNT_IDS=1 and ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE=false after the fresh ownership check.
+2. On the Variables tab, add FINANCE_V1_LIVE_REQUESTS_ENABLED=true and ACCOUNT2_FINANCE_RECOVERY_CAMPAIGN_ACTIVE=false after the fresh ownership check. New account IDs are discovered and seeded automatically.
 3. In Netlify, configure the production-only matrix and select Node 22 / npm run build / .next. Keep automatic publish and previews disconnected from production until the approved release. Do not trigger an initial deploy merely to create a hostname.
 4. Before merging the scheduled workflow, hold scheduling. Validate the six separate task/account dispatches in the execution package under approval; enable hourly scheduling only after a separate recurring-activation decision. GitHub schedule activation after merge is itself a production action.
 5. After hostname assignment, complete Auth URLs, callback/cookie checks and beta access verification. Keep canonical stock reads disabled until their separate reconciliation gate passes.
