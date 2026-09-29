@@ -64,9 +64,9 @@ export function OrdersPurchasesChart({ data }: OrdersPurchasesChartProps) {
   }
 
   return (
-    <div>
-      <div className="h-[240px] sm:h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="min-w-0 w-full overflow-hidden">
+      <div className="h-[240px] min-w-0 w-full sm:h-[300px]">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <ComposedChart data={data} margin={CHART_MARGIN.default}>
           <CartesianGrid
             strokeDasharray={CHART_GRID.strokeDasharray}
