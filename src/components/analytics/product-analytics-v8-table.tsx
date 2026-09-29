@@ -369,7 +369,7 @@ export function ProductAnalyticsV8Table({
   const parentColSpan = 14;
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-4 py-2.5">
         <h3 className="text-base font-semibold">{title}</h3>
         {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
@@ -410,7 +410,7 @@ export function ProductAnalyticsV8Table({
           <span className="text-xs tabular-nums text-muted-foreground">{displayRows.length} products</span>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
         <table className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
