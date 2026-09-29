@@ -34,7 +34,7 @@ export default async function ProductAnalyticsPage({ searchParams }: PageProps) 
           Supabase is not configured. Add credentials to .env.local to view product analytics.
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
           {report.v3All.some((row) => row.marketplaceFeeStatus === "anomaly") && (
             <p role="status" className="rounded-lg border border-amber-500/40 p-3 text-sm">
               {MARKETPLACE_FEE_ANOMALY_MESSAGE}
