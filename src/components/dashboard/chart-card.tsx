@@ -33,13 +33,13 @@ export function ChartCard({ title, description, children, className, action }: C
   return (
     <div
       className={cn(
-        "border border-border bg-card p-6 transition-ui hover:border-border/80",
+        "min-w-0 overflow-hidden border border-border bg-card p-4 transition-ui hover:border-border/80 sm:p-6",
         "rounded-[var(--radius-card)] shadow-[var(--shadow-card)]",
         className
       )}
     >
       <ChartHeader title={title} description={description} action={action} />
-      {children}
+      <div className="min-w-0 w-full">{children}</div>
     </div>
   );
 }
