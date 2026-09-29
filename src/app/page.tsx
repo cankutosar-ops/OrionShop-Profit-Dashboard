@@ -97,21 +97,21 @@ async function DashboardCoreSection({
         />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+      <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-3">
         <ChartCard
           title="Sales & Profit Trend"
           description="Daily merchandise sales (Gross Sales base) over selected period"
-          className="lg:col-span-2"
+          className="min-w-0 xl:col-span-2"
         >
           <RevenueChartLazy data={overview.dailyRevenue} />
         </ChartCard>
 
-        <ChartCard title="Cost Breakdown" description="Where your commercial costs go">
+        <ChartCard className="min-w-0" title="Cost Breakdown" description="Where your commercial costs go">
           <CostBreakdownChartLazy data={overview.costBreakdown} />
         </ChartCard>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 min-w-0">
         <ChartCard
           title="Orders vs Buyout"
           description="Order and completed-buyout quantities (bars); monetary values (lines)"
