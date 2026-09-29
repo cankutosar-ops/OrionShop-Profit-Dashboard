@@ -18,12 +18,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       </div>
       <main
         className={cn(
-          "min-h-screen transition-[padding] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
+          "min-h-screen min-w-0 overflow-x-hidden transition-[padding] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
           hydrated ? (collapsed ? "pl-16" : "pl-16 md:pl-64") : "pl-16 md:pl-64",
           "print:pl-0"
         )}
       >
-        <div className="w-full max-w-none px-3 py-4 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 print:px-0 print:py-0">
+        <div className="min-w-0 w-full max-w-none px-3 py-4 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 print:px-0 print:py-0">
           <Suspense fallback={null}>
             <PerfPageProbe />
           </Suspense>
