@@ -64,9 +64,9 @@ export function RevenueChart({ data }: RevenueChartProps) {
   }
 
   return (
-    <div>
-      <div className="h-[240px] sm:h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="min-w-0 w-full overflow-hidden">
+      <div className="h-[240px] min-w-0 w-full sm:h-[300px]">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart data={data} margin={CHART_MARGIN.default}>
           <defs>
             <linearGradient id="chartRevenueFill" x1="0" y1="0" x2="0" y2="1">
