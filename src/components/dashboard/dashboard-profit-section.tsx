@@ -230,10 +230,16 @@ export function DashboardProfitSection({
             value={formatMoneyOrPending(modelB.estimatedTax)}
             subtitle={
               revenueReady
-                ? `${modelB.taxPercent}% of finishedPrice`
+                ? modelB.taxCalculationStatus === "READY"
+                  ? modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
+                    ? `${modelB.taxPercent}% of income − verified deductible expenses`
+                    : `${modelB.taxPercent}% of taxable income`
+                  : "Tax Engine profile/source unavailable · legacy estimate shown"
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
-            hint="Estimated Tax = Tax% × Σ Sales API finishedPrice (customer paid to Wildberries)."
+            hint={modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
+              ? `Tax Engine: max(0, income − verified deductible expenses) × ${modelB.taxPercent}%. Current base: ${formatMoney(modelB.taxBase ?? 0)}; deductible expenses: ${formatMoney(modelB.taxDeductibleExpenses ?? 0)}.`
+              : `Tax Engine: taxable income × ${modelB.taxPercent}%. Dashboard income source is persisted Sales API finishedPrice.`}
             icon={KPI_ICONS.tax}
             {...expenseProps}
           />

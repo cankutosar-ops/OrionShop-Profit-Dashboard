@@ -65,7 +65,8 @@ export function OrdersPurchasesChart({ data }: OrdersPurchasesChartProps) {
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="h-[240px] sm:h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={CHART_MARGIN.default}>
           <CartesianGrid
             strokeDasharray={CHART_GRID.strokeDasharray}
@@ -124,7 +125,7 @@ export function OrdersPurchasesChart({ data }: OrdersPurchasesChartProps) {
           />
           <Line
             yAxisId="amount"
-            type="monotone"
+            type="linear"
             dataKey="ordersAmount"
             stroke={palette.series.secondary}
             strokeWidth={CHART_STROKE_WIDTH}
@@ -133,7 +134,7 @@ export function OrdersPurchasesChart({ data }: OrdersPurchasesChartProps) {
           />
           <Line
             yAxisId="amount"
-            type="monotone"
+            type="linear"
             dataKey="purchasesAmount"
             stroke={palette.series.info}
             strokeWidth={CHART_STROKE_WIDTH}
@@ -142,6 +143,7 @@ export function OrdersPurchasesChart({ data }: OrdersPurchasesChartProps) {
           />
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
       <ChartLegend
         className="mt-4"
         items={[

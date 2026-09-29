@@ -430,6 +430,14 @@ export type ModelBProfitMetrics = {
   operatingProfit: number;
   /** Tax rate % applied to Σ finishedPrice (customer paid). */
   taxPercent: number;
+  /** Tax Engine regime selected by the effective company profile. */
+  taxObject?: CompanyTaxObject;
+  /** Whether the Dashboard tax amount came from the effective Tax Engine profile. */
+  taxCalculationStatus?: "READY" | "PROFILE_MISSING" | "SOURCE_UNAVAILABLE";
+  /** Taxable base used by the Dashboard Tax Engine estimate. */
+  taxBase?: number;
+  /** Verified deductible expenses used by USN income-minus-expenses. */
+  taxDeductibleExpenses?: number;
   /** Σ Sales API finishedPrice (net) — Estimated Tax base. */
   customerPaid: number;
   /**

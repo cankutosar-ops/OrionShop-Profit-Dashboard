@@ -43,6 +43,8 @@ import {
   type WbSalesReportsLoadResult,
 } from "@/services/wb-sales-reports-service";
 import { getWbBalanceMetrics } from "@/services/wb-balance-service";
+import { getCompanyTaxFoundation } from "@/services/company-tax-service";
+import { calculateTaxYtd } from "@/lib/tax-engine/calculator";
 import {
   getSampleDashboard,
   getEmptyPeriodDashboard,
@@ -349,6 +351,50 @@ async function buildOverviewMetricsFromRaw(
   const financeNetForPay = sumNetForPayFromFinance(raw.finance);
   const acceptance = sumAcceptanceFromFinance(raw.finance);
   const customerPaid = buildNetFinishedPriceFromDb(raw.sales);
+  let dashboardTax: {
+    taxPercent: number;
+    taxObject?: ModelBProfitMetrics["taxObject"];
+    taxCalculationStatus: NonNullable<ModelBProfitMetrics["taxCalculationStatus"]>;
+    taxBase?: number;
+    taxDeductibleExpenses?: number;
+    estimatedTaxOverride?: number;
+  } = { taxPercent: 6, taxCalculationStatus: "PROFILE_MISSING" };
+  try {
+    const foundation = await getCompanyTaxFoundation(scope.companyId, scope.from, scope.to);
+    const profile = foundation.profile;
+    if (profile) {
+      const deductibleExpenses = foundation.recognizedExpensesKopeks / 100;
+      const calculation = calculateTaxYtd({
+        profile,
+        // Dashboard reporting already uses persisted Sales API finishedPrice as its
+        // explicit estimated-tax income source. The Tax workspace keeps its stricter
+        // statutory evidence gate; this estimate is labelled separately in the UI.
+        income: {
+          status: "VERIFIED",
+          amountKopeks: Math.round(Math.max(0, customerPaid) * 100),
+          sourceVersion: "DASHBOARD_FINISHED_PRICE_V1",
+        },
+        deductibleExpensesKopeks: foundation.recognizedExpensesKopeks,
+        // The estimate uses only recognized expenses. Pending/review rows remain
+        // excluded, exactly as in the Tax workspace, rather than blocking the
+        // entire Dashboard estimate.
+        expensesReady: true,
+        isFinalAnnualPeriod: false,
+      });
+      dashboardTax = {
+        taxPercent: profile.tax_rate,
+        taxObject: profile.tax_object,
+        taxCalculationStatus: calculation.estimatedTaxYtdKopeks === null
+          ? "SOURCE_UNAVAILABLE" : "READY",
+        taxBase: calculation.taxBaseKopeks == null ? undefined : calculation.taxBaseKopeks / 100,
+        taxDeductibleExpenses: deductibleExpenses,
+        estimatedTaxOverride: calculation.estimatedTaxYtdKopeks == null
+          ? undefined : calculation.estimatedTaxYtdKopeks / 100,
+      };
+    }
+  } catch {
+    dashboardTax = { taxPercent: 6, taxCalculationStatus: "SOURCE_UNAVAILABLE" };
+  }
   const modelBProfit = measureSync("model_b.calculateModelBNetProfit", "model_b", () =>
     buildModelBProfitMetrics(netSalesResolution, {
       salesForPay,
@@ -362,6 +408,7 @@ async function buildOverviewMetricsFromRaw(
       productCost,
       advertising,
       customerPaid,
+      ...dashboardTax,
     })
   );
 

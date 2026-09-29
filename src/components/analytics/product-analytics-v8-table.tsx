@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, Search, X } from "lucide-react";
 import { LogisticsBreakdownHint } from "@/components/analytics/logistics-breakdown-hint";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
@@ -306,6 +306,8 @@ export function ProductAnalyticsV8Table({
   rangeTo,
 }: ProductAnalyticsV8TableProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [query, setQuery] = useState("");
+  const [profitFilter, setProfitFilter] = useState<"all" | "profit" | "loss">("all");
   const searchParams = useSearchParams();
 
   const skuParam = searchParams.get(PRODUCT_INTEL_NAV_PARAMS.sku)?.trim() ?? "";
@@ -322,10 +324,18 @@ export function ProductAnalyticsV8Table({
     (row: ProductAnalyticsV3Row, key: MainSortKey) => mainSortValue(row, key),
     []
   );
-  const displayRows = useMemo(
-    () => sortRowsBySpec(filteredRows, sort, getMainValue),
-    [filteredRows, sort, getMainValue]
-  );
+  const displayRows = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase("ru-RU");
+    const visible = filteredRows.filter((row) => {
+      const matchesQuery = !normalized ||
+        row.supplierArticle.toLocaleLowerCase("ru-RU").includes(normalized) ||
+        row.productName.toLocaleLowerCase("ru-RU").includes(normalized);
+      const matchesProfit = profitFilter === "all" ||
+        (profitFilter === "profit" ? row.operationalProfit >= 0 : row.operationalProfit < 0);
+      return matchesQuery && matchesProfit;
+    });
+    return sortRowsBySpec(visible, sort, getMainValue);
+  }, [filteredRows, sort, getMainValue, query, profitFilter]);
 
   const deepLinkExpandProductId = useMemo(
     () => resolveDeepLinkExpandProductId(displayRows, productParam, skuParam),
@@ -375,6 +385,30 @@ export function ProductAnalyticsV8Table({
             {expandedCount} model(s) expanded · SKU data cached via React Query
           </p>
         )}
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="relative min-w-0 flex-1 sm:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search model or product"
+              className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-9 text-sm outline-none focus:border-primary"
+            />
+            {query && (
+              <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </label>
+          <div className="flex rounded-lg border border-border bg-background p-0.5" aria-label="Profit filter">
+            {(["all", "profit", "loss"] as const).map((filter) => (
+              <button key={filter} type="button" onClick={() => setProfitFilter(filter)} className={cn("rounded-md px-3 py-1.5 text-xs capitalize", profitFilter === filter ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                {filter}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs tabular-nums text-muted-foreground">{displayRows.length} products</span>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] text-sm">
@@ -553,9 +587,8 @@ export function ProductAnalyticsV8Table({
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         <MarketplaceFeeValue value={formatCurrency(row.salesApiWbFee ?? 0)} status={row.marketplaceFeeStatus} />
-                        <div className="text-[10px] leading-tight text-muted-foreground/80">
-                          Net Sales − Sales API forPay
-                          {" · "}{formatCurrency(row.marketplaceFees)} platform components
+                        <div className="text-[10px] leading-tight text-muted-foreground/80" title={`Net Sales − Sales API forPay · ${formatCurrency(row.marketplaceFees)} platform components`}>
+                          Fee gap · details on hover
                         </div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">

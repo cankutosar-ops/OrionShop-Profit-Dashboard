@@ -27,6 +27,11 @@ import { calculateSalesToSettlementDifference } from "@/lib/marketplace-fees";
 
 export type ModelBTaxParams = {
   taxPercent?: number;
+  taxObject?: ModelBProfitMetrics["taxObject"];
+  taxCalculationStatus?: ModelBProfitMetrics["taxCalculationStatus"];
+  taxBase?: number;
+  taxDeductibleExpenses?: number;
+  estimatedTaxOverride?: number;
   /**
    * Tax base passed to calculateEstimatedTax.
    * Reporting: Σ finishedPrice. Smart Pricing unit path: Sale − legacy Sales-to-Settlement allowance.
@@ -76,7 +81,10 @@ export function calculateModelBNetProfit(
     params.penalties -
     params.adjustments;
 
-  const estimatedTax = calculateEstimatedTax(customerPaid, taxPercent);
+  const estimatedTax =
+    params.estimatedTaxOverride !== undefined && Number.isFinite(params.estimatedTaxOverride)
+      ? Math.max(0, params.estimatedTaxOverride)
+      : calculateEstimatedTax(customerPaid, taxPercent);
   const afterTaxPayout = sellerPayout - estimatedTax;
 
   const operatingProfit =
@@ -116,6 +124,10 @@ export function calculateModelBNetProfit(
     sellerPayout,
     operatingProfit,
     taxPercent,
+    taxObject: params.taxObject,
+    taxCalculationStatus: params.taxCalculationStatus,
+    taxBase: params.taxBase,
+    taxDeductibleExpenses: params.taxDeductibleExpenses,
     customerPaid,
     estimatedTax,
     afterTaxPayout,
@@ -138,6 +150,11 @@ export function buildModelBProfitMetrics(
     advertising: number;
     customerPaid: number;
     taxPercent?: number;
+    taxObject?: ModelBProfitMetrics["taxObject"];
+    taxCalculationStatus?: ModelBProfitMetrics["taxCalculationStatus"];
+    taxBase?: number;
+    taxDeductibleExpenses?: number;
+    estimatedTaxOverride?: number;
   }
 ): ModelBProfitMetrics {
   const resolved =
@@ -167,6 +184,11 @@ export function buildModelBProfitMetrics(
     advertising: components.advertising,
     customerPaid: components.customerPaid,
     taxPercent: components.taxPercent,
+    taxObject: components.taxObject,
+    taxCalculationStatus: components.taxCalculationStatus,
+    taxBase: components.taxBase,
+    taxDeductibleExpenses: components.taxDeductibleExpenses,
+    estimatedTaxOverride: components.estimatedTaxOverride,
   });
 }
 
@@ -250,7 +272,10 @@ export function buildModelBBreakdownLines(
       label: "Estimated Tax",
       amount: metrics.estimatedTax,
       isDeduction: true,
-      detail: `${metrics.taxPercent}% × Σ finishedPrice (${metrics.customerPaid.toLocaleString("ru-RU")} ₽ customer paid)`,
+      detail: metrics.taxCalculationStatus === "READY" &&
+        metrics.taxObject === "USN_INCOME_MINUS_EXPENSES"
+        ? `${metrics.taxPercent}% × (${(metrics.customerPaid ?? 0).toLocaleString("ru-RU")} ₽ income − ${(metrics.taxDeductibleExpenses ?? 0).toLocaleString("ru-RU")} ₽ verified deductible expenses)`
+        : `${metrics.taxPercent}% × Σ finishedPrice (${metrics.customerPaid.toLocaleString("ru-RU")} ₽ customer paid)`,
     },
     {
       key: "salesToSettlementDifference",

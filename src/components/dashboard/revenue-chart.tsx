@@ -65,7 +65,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="h-[240px] sm:h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={CHART_MARGIN.default}>
           <defs>
             <linearGradient id="chartRevenueFill" x1="0" y1="0" x2="0" y2="1">
@@ -109,7 +110,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             }
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="revenue"
             stroke={revenueColor}
             strokeWidth={CHART_STROKE_WIDTH}
@@ -117,7 +118,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             animationDuration={CHART_ANIMATION_MS}
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="profit"
             stroke={profitColor}
             strokeWidth={CHART_STROKE_WIDTH}
@@ -126,6 +127,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           />
         </AreaChart>
       </ResponsiveContainer>
+      </div>
       <ChartLegend
         className="mt-4"
         items={[

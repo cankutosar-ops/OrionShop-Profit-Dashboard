@@ -90,15 +90,6 @@ async function DashboardCoreSection({
       </div>
 
       <div className="mt-8">
-        <ChartCard
-          title="Orders vs Buyout"
-          description="Demand (orders) vs completed buyout — quantity (bars) and amount (lines)"
-        >
-          <OrdersPurchasesChartLazy data={kpis.dailyOrdersPurchases} />
-        </ChartCard>
-      </div>
-
-      <div className="mt-8">
         <ProfitabilityBreakdown
           modelB={overview.modelBProfit}
           marketplaceFees={overview.marketplaceFeesPresentation}
@@ -117,6 +108,15 @@ async function DashboardCoreSection({
 
         <ChartCard title="Cost Breakdown" description="Where your commercial costs go">
           <CostBreakdownChartLazy data={overview.costBreakdown} />
+        </ChartCard>
+      </div>
+
+      <div className="mt-8">
+        <ChartCard
+          title="Orders vs Buyout"
+          description="Order and completed-buyout quantities (bars); monetary values (lines)"
+        >
+          <OrdersPurchasesChartLazy data={kpis.dailyOrdersPurchases} />
         </ChartCard>
       </div>
 

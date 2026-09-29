@@ -47,7 +47,15 @@ function resolveAllowedDevOrigins(): string[] {
   }
 
   const addresses = new Set<string>();
-  for (const entries of Object.values(networkInterfaces())) {
+  // Some containers and locked-down CI runners deny the OS interface probe.
+  // allowedDevOrigins is optional, so a failed probe must never block a build.
+  let interfaces: ReturnType<typeof networkInterfaces> = {};
+  try {
+    interfaces = networkInterfaces();
+  } catch {
+    return [];
+  }
+  for (const entries of Object.values(interfaces)) {
     for (const entry of entries ?? []) {
       const family = entry.family as string | number;
       const isV4 = family === "IPv4" || family === 4;

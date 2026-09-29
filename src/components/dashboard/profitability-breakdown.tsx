@@ -55,6 +55,11 @@ export function ProfitabilityBreakdown({
         <p className="mt-1 text-sm text-muted-foreground">
           Commercial Performance V4 — Revenue = Finance ppvz_for_pay
         </p>
+        {modelB.taxCalculationStatus === "READY" && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Tax Engine: {modelB.taxObject === "USN_INCOME_MINUS_EXPENSES" ? "USN Income − Expenses" : "USN Income"} · {modelB.taxPercent}%
+          </p>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -104,7 +109,17 @@ export function ProfitabilityBreakdown({
         </table>
       </div>
 
-      <div className="grid gap-3 border-b border-border bg-muted/20 px-6 py-4 sm:grid-cols-2 lg:grid-cols-4">
+      <details className="group border-b border-border bg-muted/20">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm font-medium hover:bg-muted/30 sm:px-6">
+          <span>Fee calculation details</span>
+          <span className="text-xs font-normal text-muted-foreground group-open:hidden">
+            Expand component audit
+          </span>
+          <span className="hidden text-xs font-normal text-muted-foreground group-open:inline">
+            Collapse
+          </span>
+        </summary>
+        <div className="grid gap-3 border-t border-border/60 px-4 py-4 sm:grid-cols-2 sm:px-6 xl:grid-cols-4">
         <FeeItem
           label="Finance Fee Components"
           value={marketplaceFees.marketplaceFees}
@@ -135,7 +150,8 @@ export function ProfitabilityBreakdown({
           value={marketplaceFees.salesToSettlementDifference}
           note="Net Sales − net Sales API forPay"
         />
-      </div>
+        </div>
+      </details>
     </div>
   );
 }
