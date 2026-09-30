@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/security/require-auth";
 import { hasAdministrationRole } from "@/lib/security/admin-authorization";
+import { canWriteCompanySettings } from "@/lib/security/company-settings-authorization";
+import { readTenantClaims } from "@/lib/security/tenant-membership";
 import { AuthServiceUnavailable } from "@/lib/security/auth-unavailable";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +17,17 @@ export async function GET() {
         { status: 401 }
       );
     }
+    const claims = readTenantClaims(user);
     return NextResponse.json({
       authenticated: true,
-      permissions: { administration: hasAdministrationRole(user) },
+      permissions: {
+        administration: hasAdministrationRole(user),
+        companySettings: canWriteCompanySettings(user),
+      },
       user: {
         id: user.id,
         email: user.email ?? null,
+        role: claims.role ?? null,
       },
     });
   } catch (error) {

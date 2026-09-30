@@ -14,7 +14,9 @@ export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
 export const PLATFORM_ROLE_LABEL: Record<PlatformRole, string> = {
   administrator: "Administrator",
-  manager: "Manager",
+  // A manager is the administrator of the companies in their tenant claim.
+  // Keep the stored value for backwards compatibility; use the clearer product label.
+  manager: "Company Administrator",
   operator: "Operator",
   viewer: "Viewer",
 };

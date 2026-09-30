@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/layout/sidebar-context";
+import { ThemeSelector } from "@/components/theme/theme-selector";
 import { markNavigationStart } from "@/lib/perf/perf-client";
 import { buildNavHrefWithContext } from "@/lib/product-context";
 import { cn } from "@/lib/utils";
@@ -144,11 +145,20 @@ function SidebarNavLinks({
   collapsed: boolean;
 }) {
   const [canAdmin, setCanAdmin] = useState(false);
+  const [canManageCompany, setCanManageCompany] = useState(false);
   useEffect(() => {
     let active = true;
     fetch('/api/auth/session').then(r => r.ok ? r.json() : null)
-      .then(data => { if (active) setCanAdmin(data?.permissions?.administration === true); })
-      .catch(() => { if (active) setCanAdmin(false); });
+      .then(data => {
+        if (!active) return;
+        setCanAdmin(data?.permissions?.administration === true);
+        setCanManageCompany(data?.permissions?.companySettings === true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setCanAdmin(false);
+        setCanManageCompany(false);
+      });
     return () => { active = false; };
   }, []);
   return (
@@ -185,7 +195,11 @@ function SidebarNavLinks({
       {SIDEBAR_SETTINGS_NAVIGATION.filter(item => item.href !== '/administration' || canAdmin).map((item) => (
         <SidebarNavItemLink
           key={item.name}
-          item={item}
+          item={
+            item.href === "/settings/companies" && canManageCompany
+              ? { ...item, name: "Company Administration" }
+              : item
+          }
           pathname={pathname}
           hrefForItem={hrefForItem}
           collapsed={collapsed}
@@ -333,6 +347,12 @@ export function Sidebar() {
       </nav>
 
       <div className={cn("space-y-1 border-t border-border", collapsed ? "p-2" : "p-3")}>
+        {!collapsed ? (
+          <div className="flex items-center justify-between gap-2 px-1 pb-1">
+            <span className="text-xs font-medium text-muted-foreground">Appearance</span>
+            <ThemeSelector />
+          </div>
+        ) : null}
         <Suspense fallback={<SidebarFooterLink href="/settings/companies" collapsed={collapsed} />}>
           <SidebarFooterWithScope collapsed={collapsed} />
         </Suspense>

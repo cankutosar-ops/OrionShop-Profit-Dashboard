@@ -19,7 +19,7 @@ export function companySettingsWriteForbiddenResponse(): NextResponse {
     {
       error: "Forbidden",
       code: "AUTHZ_COMPANY_SETTINGS_WRITE_REQUIRED",
-      message: "Company tax and marketplace settings require an administrator or manager role.",
+      message: "Company tax and marketplace settings require a company administrator role.",
     },
     { status: 403 }
   );

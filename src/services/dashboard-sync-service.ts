@@ -11,6 +11,7 @@ import {
 import {
   allowsIncrementalFinanceSync,
   getAccountLifecycleState,
+  scheduleAccountLifecycle,
 } from "@/services/account-lifecycle-service";
 import {
   financeStatusToAccountSyncStatus,
@@ -103,6 +104,9 @@ export async function executeDashboardSync(
         !lifecycle?.schemaAvailable || allowsIncrementalFinanceSync(lifecycleStatus);
 
       if (!incrementalAllowed) {
+        // Manual sync is also a recovery entry point for interrupted new-account
+        // onboarding. The scheduler is idempotent within this process.
+        scheduleAccountLifecycle(marketplaceAccountId);
         syncLog("dashboard-sync", "finance incremental blocked — historical backfill incomplete", {
           marketplaceAccountId,
           lifecycleStatus,
