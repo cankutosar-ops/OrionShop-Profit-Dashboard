@@ -35,10 +35,12 @@ export async function buildReportIdentity(input: {
   generatedAt: string;
   periodPreset?: ReportPeriodPreset;
 }): Promise<ReportIdentity> {
-  const company = await getCompanyById(input.scope.companyId);
+  const [company, syncState] = await Promise.all([
+    getCompanyById(input.scope.companyId),
+    getMarketplaceAccountSyncState(input.scope.marketplaceAccountId),
+  ]);
   const account =
     company?.accounts.find((a) => a.id === input.scope.marketplaceAccountId) ?? null;
-  const syncState = await getMarketplaceAccountSyncState(input.scope.marketplaceAccountId);
 
   const marketplaceKey = account?.marketplace ?? "wildberries";
   const currency = company?.currency?.trim() || "RUB";

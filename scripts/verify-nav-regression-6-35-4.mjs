@@ -36,8 +36,11 @@ if (switchCtx.includes("Account and data are in sync")) {
 if (!switchCtx.includes("finishTimeout") && !/phase === \"timeout\"/.test(switchCtx)) {
   fails.push("Max-lock must use timeout path, not false success");
 }
-if (!page.includes("marketplaceAccountId}:${scope.from}")) {
-  fails.push("Dashboard Suspense must key on scope so RSC remounts");
+if (!page.includes("const content = await DashboardCoreSection")) {
+  fails.push("Dashboard must resolve the selected scope before returning markup");
+}
+if (page.includes("<Suspense")) {
+  fails.push("Dashboard must not leave a scope change in an open RSC stream");
 }
 
 // No financial math touched by this sprint's nav files

@@ -566,7 +566,9 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
         { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
       )
     ));
-    return await withDashboardDeadline(request, 7_000);
+    // Leave enough time for large tenants while still returning a controlled
+    // fallback before the hosting function's hard execution ceiling.
+    return await withDashboardDeadline(request, 45_000);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Dashboard request timed out";
     return getSampleDashboard(
@@ -588,7 +590,7 @@ export type DashboardWbStripPayload = {
  * a pending React chunk surfaces in the browser as the fatal
  * "Connection closed" client exception.
  */
-export const DASHBOARD_WB_STRIP_DEADLINE_MS = 3_500;
+export const DASHBOARD_WB_STRIP_DEADLINE_MS = 15_000;
 
 export async function withDashboardDeadline<T>(
   operation: Promise<T>,

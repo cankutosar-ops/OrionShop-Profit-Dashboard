@@ -24,14 +24,13 @@ export default async function ProductionHealthPage({ searchParams }: PageProps) 
   const scope = await resolveScopedDateRange(params);
   const env = getSupabaseEnv();
 
-  const report = env.isConfigured
-    ? await getProductionHealthReport(scope.marketplaceAccountId)
-    : null;
-
-  const latestVerification =
-    env.isConfigured
-      ? (await listVerificationReports(scope.marketplaceAccountId, 1))[0] ?? null
-      : null;
+  const [report, latestVerificationRows] = env.isConfigured
+    ? await Promise.all([
+        getProductionHealthReport(scope.marketplaceAccountId),
+        listVerificationReports(scope.marketplaceAccountId, 1),
+      ])
+    : [null, []];
+  const latestVerification = latestVerificationRows[0] ?? null;
 
   return (
     <>

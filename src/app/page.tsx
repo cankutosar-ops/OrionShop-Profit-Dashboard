@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   CostBreakdownChartLazy,
@@ -8,7 +7,6 @@ import {
 import { DashboardProfitSection } from "@/components/dashboard/dashboard-profit-section";
 import {
   DashboardWbSection,
-  DashboardWbSectionFallback,
 } from "@/components/dashboard/dashboard-wb-deferred-section";
 import { DataBanner } from "@/components/dashboard/data-banner";
 import { ProfitabilityBreakdown } from "@/components/dashboard/profitability-breakdown";
@@ -132,41 +130,24 @@ async function DashboardCoreSection({
   );
 }
 
-function DashboardCoreFallback() {
-  return (
-    <div className="space-y-8">
-      <div className="h-16 animate-pulse rounded-xl bg-muted/30" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="h-28 animate-pulse rounded-xl bg-muted/40" />
-        <div className="h-28 animate-pulse rounded-xl bg-muted/40" />
-        <div className="h-28 animate-pulse rounded-xl bg-muted/40" />
-        <div className="h-28 animate-pulse rounded-xl bg-muted/40" />
-      </div>
-      <DashboardWbSectionFallback />
-    </div>
-  );
-}
-
 export default async function DashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await measureAsync("server.resolveScopedDateRange", "server", () =>
     resolveScopedDateRange(params)
   );
+  // Resolve the complete server payload before returning markup. This avoids
+  // leaving an RSC stream open while the database is still responding.
+  const content = await DashboardCoreSection({
+    scope,
+    syncAdjusted: params.syncAdjusted,
+    dateManual: params.dateManual,
+  });
 
   return (
     <>
       <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
 
-      <Suspense
-        key={`${scope.marketplaceAccountId}:${scope.from}:${scope.to}:${scope.brandId ?? ""}:${scope.companyId}`}
-        fallback={<DashboardCoreFallback />}
-      >
-        <DashboardCoreSection
-          scope={scope}
-          syncAdjusted={params.syncAdjusted}
-          dateManual={params.dateManual}
-        />
-      </Suspense>
+      {content}
     </>
   );
 }

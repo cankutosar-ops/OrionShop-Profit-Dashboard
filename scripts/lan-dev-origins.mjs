@@ -29,7 +29,14 @@ export function parseAllowedDevOriginsEnv(value) {
 /** IPv4 addresses on non-internal interfaces (excludes localhost / link-local). */
 export function discoverLanIpv4Addresses() {
   const addresses = new Set();
-  const nets = os.networkInterfaces();
+  // Some containers deny the underlying uv_interface_addresses syscall.
+  // LAN discovery is optional; localhost development must still start.
+  let nets;
+  try {
+    nets = os.networkInterfaces();
+  } catch {
+    return [];
+  }
 
   for (const entries of Object.values(nets)) {
     for (const entry of entries ?? []) {

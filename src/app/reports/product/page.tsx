@@ -35,10 +35,11 @@ export default async function ProductReportPreviewPage({
   const scopeQuery = scopeParamsToSearchParams(params).toString();
   const backHref = scopeQuery ? `/reports?${scopeQuery}` : "/reports";
   const scope = await resolveScopedDateRange(params);
-  const company = await getCompanyById(scope.companyId);
+  const [company, sections] = await Promise.all([
+    getCompanyById(scope.companyId),
+    provideProductReportSections(scope),
+  ]);
   const currency = company?.currency?.trim() || "RUB";
-
-  const sections = await provideProductReportSections(scope);
   const executive = sections.find((s) => s.id === "product-executive-summary")
     ?.data as ProductReportExecutiveData | undefined;
   const performance = sections.find((s) => s.id === "product-performance")
