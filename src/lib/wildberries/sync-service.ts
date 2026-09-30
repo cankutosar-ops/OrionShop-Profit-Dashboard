@@ -853,7 +853,8 @@ export class WbSyncService {
     dateTo: string,
     currentRrdId: number,
     period: WbFinanceV1Period = "weekly",
-    leaseOwner?: string
+    leaseOwner?: string,
+    reportId?: number
   ): Promise<WbFinanceV1PageSyncResult> {
     const result: WbFinanceV1PageSyncResult = {
       ...this.emptyResult("finance"),
@@ -881,7 +882,8 @@ export class WbSyncService {
         dateFrom,
         dateTo,
         currentRrdId,
-        period
+        period,
+        reportId
       );
       const { rows, ...page } = fetched;
       result.page = page;

@@ -23,8 +23,11 @@ import { recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { redactSecrets } from "@/lib/security/secrets";
 import {
   assertFinanceV1LiveAllowed,
+  assertFinanceV1PeriodTokenReady,
   assertFinanceV1TokenReady,
   buildFinanceV1DetailedRequest,
+  buildFinanceV1DetailedByReportIdRequest,
+  financeV1DetailedByReportIdPath,
   isFinanceV1DetailedEmpty,
   nextFinanceV1Cursor,
   normalizeFinanceV1DetailedRow,
@@ -91,6 +94,7 @@ export type WbFinanceReportPage = {
 
 export type WbFinanceV1ReportPage = WbFinanceReportPage & {
   responseKind: "data" | "terminal";
+  reportTypes: number[];
 };
 
 export class WbApiError extends Error {
@@ -545,7 +549,9 @@ export class WbApiClient {
 
   /**
    * Finance V1 detailed page (sales-reports/detailed).
-   * Fail-closed before HTTP unless live env opt-in + Personal/Service+Finance token.
+   * Fail-closed before HTTP unless live env opt-in and endpoint-appropriate token:
+   * period detail accepts Base/Personal/Service + Finance; detail-by-ID requires
+   * Personal/Service + Finance.
    * 204 / empty body → isEmpty; cursor advances only via caller after UPSERT.
    *
    * Rate-limit headers on HTTP 200:
@@ -560,28 +566,37 @@ export class WbApiClient {
     dateFrom: string,
     dateTo: string,
     currentRrdId: number,
-    period: WbFinanceV1Period = "weekly"
+    period: WbFinanceV1Period = "weekly",
+    reportId?: number
   ): Promise<WbFinanceV1ReportPage> {
     assertFinanceV1LiveAllowed();
-    assertFinanceV1TokenReady(this.token);
 
-    const body = buildFinanceV1DetailedRequest({
-      dateFrom,
-      dateTo,
-      rrdId: currentRrdId,
-      period,
-    });
+    const byReportId = reportId != null;
+    if (byReportId) assertFinanceV1TokenReady(this.token);
+    else assertFinanceV1PeriodTokenReady(this.token);
+    const path = byReportId
+      ? financeV1DetailedByReportIdPath(reportId)
+      : WB_FINANCE_V1_DETAILED_PATH;
+    const body = byReportId
+      ? buildFinanceV1DetailedByReportIdRequest({ rrdId: currentRrdId })
+      : buildFinanceV1DetailedRequest({
+          dateFrom,
+          dateTo,
+          rrdId: currentRrdId,
+          period,
+        });
 
     syncLog("wb-api", "Finance V1 detailed page START", {
       currentRrdId,
-      period: body.period,
-      path: WB_FINANCE_V1_DETAILED_PATH,
+      period,
+      reportId: reportId ?? null,
+      path,
     });
 
     let responseStatus: number | null = null;
     const raw = await this.request<unknown>(
       WB_FINANCE_API,
-      WB_FINANCE_V1_DETAILED_PATH,
+      path,
       {
         method: "POST",
         body: JSON.stringify(body),
@@ -592,14 +607,14 @@ export class WbApiClient {
       throw new WbApiError(
         "Finance V1 detailed returned unexpected HTTP " + String(responseStatus ?? "unknown"),
         responseStatus ?? undefined,
-        WB_FINANCE_V1_DETAILED_PATH
+        path
       );
     }
     if (responseStatus === 200 && (!Array.isArray(raw) || raw.length === 0)) {
       throw new WbApiError(
         "Finance V1 detailed HTTP 200 must contain a non-empty array; only HTTP 204 is terminal",
         200,
-        WB_FINANCE_V1_DETAILED_PATH,
+        path,
         "FINANCE_V1_INVALID_BODY"
       );
     }
@@ -619,6 +634,13 @@ export class WbApiClient {
 
     const responseKind = responseStatus === 204 ? "terminal" : "data";
     const v1Rows = (responseKind === "terminal" ? [] : raw) as WbFinanceV1DetailedRow[];
+    const reportTypes = [
+      ...new Set(
+        v1Rows
+          .map((row) => Number(row.reportType))
+          .filter((value) => Number.isSafeInteger(value))
+      ),
+    ].sort((a, b) => a - b);
     const isEmpty = responseKind === "terminal";
     const cursor = nextFinanceV1Cursor({
       rows: v1Rows,
@@ -652,6 +674,7 @@ export class WbApiClient {
       hasMore: cursor.hasMore,
       rateLimit,
       responseKind,
+      reportTypes,
     };
   }
 

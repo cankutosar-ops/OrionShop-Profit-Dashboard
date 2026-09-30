@@ -1,0 +1,65 @@
+name: Account 6 Finance 2026 Backfill
+
+on:
+  push:
+    branches:
+      - ops/account6-finance-backfill-20260930
+    paths:
+      - .github/workflows/account6-finance-backfill.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: account6-finance-2026-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: Weekly Finance backfill
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MARKETPLACE_CREDENTIALS_KEY: ${{ secrets.MARKETPLACE_CREDENTIALS_KEY }}
+      FINANCE_V1_LIVE_REQUESTS_ENABLED: "true"
+      TSX_TSCONFIG_PATH: ${{ github.workspace }}/tsconfig.json
+
+    steps:
+      - name: Check out operation branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify weekly windows and bounded retry
+        run: npm run verify:finance-2026-weekly
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Backfill Account 6 in weekly windows
+        run: >-
+          npm run backfill:finance-2026-weekly --
+          --account 6
+          --from 2026-01-01
+          --to 2026-09-30
+          --apply
+
+      - name: Upload resumable progress
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-6-finance-2026-progress
+          path: exports/finance-backfill/account-6-2026-weekly-period.json
+          if-no-files-found: ignore
+          retention-days: 14

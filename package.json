@@ -44,6 +44,8 @@
     "sprint:sales-persistence": "npx tsx scripts/run-sales-persistence-sprint.mjs",
     "report:sales-persistence": "npx tsx scripts/sales-persistence-sprint-report.mjs",
     "backfill:finance-for-pay": "npx tsx scripts/backfill-finance-for-pay.mjs",
+    "backfill:finance-2026-weekly": "node --import tsx scripts/run-finance-2026-weekly-backfill.mjs",
+    "verify:finance-2026-weekly": "node --import tsx scripts/verify-finance-2026-weekly-backfill.mjs",
     "recover:account2-finance": "npx tsx scripts/run-account2-finance-chunked-recovery.mjs",
     "recover:account2-finance:resume": "npx tsx scripts/run-account2-finance-chunked-recovery.mjs --resume",
     "probe:account2-finance": "npx tsx scripts/run-account2-finance-chunked-recovery.mjs --probe-only",
