@@ -1,7 +1,64 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordPerfEvent } from "@/lib/perf/perf-recorder";
+import { getReadBudgetRequestId } from "./read-budget";
 
 const PAGE_SIZE = 1000;
+const PAGE_CONCURRENCY = 4;
+const SLOW_QUERY_MS = 3_000;
+
+type Page<T> = { data: T[] | null; count: number | null; error: { message: string } | null };
+
+async function readPages<T>(table: string, query: (offset: number, size: number, count?: boolean) => PromiseLike<Page<T>>) {
+  const first = await query(0, PAGE_SIZE, true);
+  if (first.error) throw new Error(`Failed to fetch ${table}: ${first.error.message}`);
+  const rows = [...(first.data ?? [])];
+  const total = first.count !== null && Number.isFinite(first.count) ? first.count : null;
+  // Respect a lower PostgREST row cap instead of skipping to offset 1,000.
+  const size = rows.length;
+  let pages = 1;
+  if (total !== null) {
+    if (size === 0 && total > 0) throw new Error(`Incomplete result for ${table}`);
+    for (let offset = size; offset < total; offset += size * PAGE_CONCURRENCY) {
+      const batchOffsets = Array.from({ length: Math.min(PAGE_CONCURRENCY, Math.ceil((total - offset) / size)) }, (_, index) => offset + index * size);
+      const batch = await Promise.all(batchOffsets.map((start) => query(start, Math.min(size, total - start))));
+      for (let index = 0; index < batch.length; index++) {
+        const result = batch[index];
+        if (result.error) throw new Error(`Failed to fetch ${table}: ${result.error.message}`);
+        const page = result.data ?? [];
+        if (page.length !== Math.min(size, total - batchOffsets[index])) {
+          throw new Error(`Incomplete result for ${table}; data changed while loading`);
+        }
+        rows.push(...page);
+        pages++;
+      }
+    }
+    if (rows.length !== total) throw new Error(`Incomplete result for ${table}`);
+  } else if (size > 0) {
+    // Without a count, read through an empty/short page even with a lower cap.
+    let offset = size;
+    while (true) {
+      const result = await query(offset, size);
+      if (result.error) throw new Error(`Failed to fetch ${table}: ${result.error.message}`);
+      const page = result.data ?? [];
+      rows.push(...page);
+      pages++;
+      if (page.length < size) break;
+      offset += size;
+    }
+  }
+  return { rows, pages };
+}
+
+function logSlowQuery(table: string, durationMs: number, rows: number, pages: number): void {
+  if (durationMs < SLOW_QUERY_MS) return;
+  console.warn("[db-performance] slow paginated query", {
+    requestId: getReadBudgetRequestId(),
+    table,
+    durationMs,
+    rows,
+    pages,
+  });
+}
 
 type RangeFilter = {
   column: string;
@@ -34,14 +91,10 @@ export async function fetchAllInDateRange<T>(
     return [];
   }
 
-  const rows: T[] = [];
-  let offset = 0;
-  let pages = 0;
-
-  while (true) {
+  const buildQuery = (offset: number, size: number, withCount = false) => {
     let query = supabase
       .from(table)
-      .select(filter.selectColumns ?? "*")
+      .select(filter.selectColumns ?? "*", withCount ? { count: "exact" } : undefined)
       .gte(filter.column, filter.from)
       .lte(filter.column, filter.to);
 
@@ -61,24 +114,16 @@ export async function fetchAllInDateRange<T>(
       query = query.order("id", { ascending: true });
     }
 
-    const { data, error } = await query.range(offset, offset + PAGE_SIZE - 1);
+    return query.range(offset, offset + size - 1);
+  };
 
-    if (error) {
-      throw new Error(`Failed to fetch ${table}: ${error.message}`);
-    }
+  const { rows, pages } = await readPages<T>(table, buildQuery as (offset: number, size: number, count?: boolean) => PromiseLike<Page<T>>);
 
-    const page = (data ?? []) as T[];
-    rows.push(...page);
-    pages += 1;
-
-    if (page.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
+  const durationMs = Date.now() - started;
   recordPerfEvent({
     category: "sql",
     name: `sql.${table}.date_range`,
-    durationMs: Date.now() - started,
+    durationMs,
     meta: {
       table,
       rows: rows.length,
@@ -88,6 +133,7 @@ export async function fetchAllInDateRange<T>(
       to: filter.to,
     },
   });
+  logSlowQuery(table, durationMs, rows.length, pages);
 
   return rows;
 }
@@ -115,15 +161,11 @@ export async function fetchAllRows<T>(
     return [];
   }
 
-  const rows: T[] = [];
-  let offset = 0;
-  let pages = 0;
-
-  while (true) {
+  const buildQuery = (offset: number, size: number, withCount = false) => {
     let query = supabase
       .from(table)
-      .select(options?.selectColumns ?? "*")
-      .range(offset, offset + PAGE_SIZE - 1);
+      .select(options?.selectColumns ?? "*", withCount ? { count: "exact" } : undefined)
+      .range(offset, offset + size - 1);
     if (options?.marketplaceAccountId) {
       query = query.eq("marketplace_account_id", options.marketplaceAccountId);
     }
@@ -142,25 +184,19 @@ export async function fetchAllRows<T>(
       query = query.order("id", { ascending: true });
     }
 
-    const { data, error } = await query;
-    if (error) {
-      throw new Error(`Failed to fetch ${table}: ${error.message}`);
-    }
+    return query;
+  };
 
-    const page = (data ?? []) as T[];
-    rows.push(...page);
-    pages += 1;
+  const { rows, pages } = await readPages<T>(table, buildQuery as (offset: number, size: number, count?: boolean) => PromiseLike<Page<T>>);
 
-    if (page.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
+  const durationMs = Date.now() - started;
   recordPerfEvent({
     category: "sql",
     name: `sql.${table}.all_rows`,
-    durationMs: Date.now() - started,
+    durationMs,
     meta: { table, rows: rows.length, pages, queryName: `${table}.all` },
   });
+  logSlowQuery(table, durationMs, rows.length, pages);
 
   return rows;
 }

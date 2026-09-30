@@ -18,6 +18,10 @@ import type { DashboardPageSearchParamsInput } from "@/lib/filter-params";
 import { measureAsync, recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { getDashboardCoreData, loadDashboardWbStrip } from "@/services/dashboard-service";
 import type { ScopedDateRange } from "@/types/database";
+import { ReadBudgetExceeded, withReadBudget } from "@/lib/supabase/read-budget";
+import { DashboardLoadError } from "@/components/dashboard/dashboard-load-error";
+import { AuthServiceUnavailable } from "@/lib/security/auth-unavailable";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +135,25 @@ async function DashboardCoreSection({
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
+  const requestId = (await headers()).get("x-orion-request-id") ?? undefined;
+  const started = Date.now();
+  try {
+    // Includes authorization, SQL, tax inputs and optional KPIs in one budget.
+    // Leave time for rendering before the host terminates the response.
+    const page = await withReadBudget(() => loadDashboardPage({ searchParams }), 40_000, requestId);
+    console.info("[dashboard-load]", { requestId, status: "ready", durationMs: Date.now() - started });
+    return page;
+  } catch (error) {
+    // Authorization redirects are successful control flow, not load failures.
+    if (error && typeof error === "object" && "digest" in error &&
+      typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT;")) throw error;
+    console.error("[dashboard-load]", { requestId, status: "failed", durationMs: Date.now() - started, kind: error instanceof Error ? error.name : "unknown" });
+    if (!(error instanceof ReadBudgetExceeded) && !(error instanceof AuthServiceUnavailable)) throw error;
+    return <DashboardLoadError />;
+  }
+}
+
+async function loadDashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await measureAsync("server.resolveScopedDateRange", "server", () =>
     resolveScopedDateRange(params)

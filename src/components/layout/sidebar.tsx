@@ -110,7 +110,7 @@ function SidebarNavItemLink({
   return (
     <Link
       href={hrefForItem(item.href)}
-      prefetch
+      prefetch={false}
       title={collapsed ? item.name : undefined}
       onClick={() => markSidebarNav(item.href)}
       className={cn(
@@ -233,7 +233,7 @@ function SidebarFooterLink({ href, collapsed }: { href: string; collapsed: boole
   return (
     <Link
       href={href}
-      prefetch
+      prefetch={false}
       title={collapsed ? "Marketplaces" : undefined}
       className={cn(
         "flex items-center transition-ui hover:bg-card-hover/80",

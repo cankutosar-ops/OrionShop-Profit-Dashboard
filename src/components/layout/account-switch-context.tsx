@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,6 @@ const MAX_LOCK_MS = 8_000;
 
 export function AccountSwitchProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<AccountSwitchPhase>("idle");
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const accountId = searchParams.get("account");
@@ -53,7 +52,6 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
   const switchActiveRef = useRef(false);
   const targetRef = useRef<SwitchTarget | null>(null);
   const pendingStartedAt = useRef<number>(0);
-  const refreshOnMatchRef = useRef(false);
   const matchHandledRef = useRef(false);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadingHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,7 +78,6 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
     setPhase("success");
     switchActiveRef.current = false;
     targetRef.current = null;
-    refreshOnMatchRef.current = false;
     matchHandledRef.current = false;
     successTimer.current = setTimeout(() => {
       setPhase("idle");
@@ -94,7 +91,6 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
     setPhase("timeout");
     switchActiveRef.current = false;
     targetRef.current = null;
-    refreshOnMatchRef.current = false;
     matchHandledRef.current = false;
     successTimer.current = setTimeout(() => {
       setPhase("idle");
@@ -109,7 +105,6 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
       clearTimers();
       switchActiveRef.current = true;
       targetRef.current = target;
-      refreshOnMatchRef.current = false;
       matchHandledRef.current = false;
       pendingStartedAt.current = Date.now();
       setPhase("switching");
@@ -146,11 +141,6 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
     if (matchHandledRef.current) return true;
     matchHandledRef.current = true;
 
-    if (!refreshOnMatchRef.current) {
-      refreshOnMatchRef.current = true;
-      router.refresh();
-    }
-
     setPhase("finalizing");
     const elapsed = Date.now() - pendingStartedAt.current;
     const wait = Math.max(0, FINALIZING_MIN_MS - elapsed);
@@ -159,7 +149,7 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
       successTimer.current = null;
     }, wait);
     return true;
-  }, [finishSuccess, router]);
+  }, [finishSuccess]);
 
   const isBusy = phase === "switching" || phase === "loading" || phase === "finalizing";
 
@@ -169,26 +159,6 @@ export function AccountSwitchProvider({ children }: { children: ReactNode }) {
     if (!targetMatchesParams(accountId, companyId)) return;
     completeOnUrlMatch();
   }, [accountId, companyId, pathname, targetMatchesParams, completeOnUrlMatch]);
-
-  // Backup: poll window.location while busy — useSearchParams can lag the
-  // committed browser URL after soft-nav (or after hard-assign fallback).
-  useEffect(() => {
-    if (!isBusy) return;
-
-    const poll = window.setInterval(() => {
-      if (!switchActiveRef.current || !targetRef.current) return;
-      try {
-        const params = new URLSearchParams(window.location.search);
-        if (targetMatchesParams(params.get("account"), params.get("company"))) {
-          completeOnUrlMatch();
-        }
-      } catch {
-        // ignore
-      }
-    }, 100);
-
-    return () => clearInterval(poll);
-  }, [isBusy, targetMatchesParams, completeOnUrlMatch]);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
 

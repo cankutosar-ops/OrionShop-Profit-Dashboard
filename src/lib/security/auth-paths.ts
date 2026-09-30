@@ -8,6 +8,7 @@ export const AUTH_PUBLIC_PATHS = [
   "/auth/callback",
   "/auth/confirm",
   "/auth/logout",
+  "/service-unavailable",
 ] as const;
 
 export const AUTH_PUBLIC_API_PREFIXES = [

@@ -5,17 +5,19 @@
  * hosting platform closes the response. When that render is streaming, React
  * surfaces the abrupt close in the browser as `Connection closed`.
  */
+import { getReadBudgetSignal } from "./read-budget";
+import { fetchWithSignal } from "./fetch-with-signal";
+
 export const SUPABASE_REQUEST_TIMEOUT_MS = 20_000;
 
-function requestSignal(signal?: AbortSignal | null): AbortSignal {
+function requestSignals(): AbortSignal[] {
   const timeout = AbortSignal.timeout(SUPABASE_REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const signals = [timeout];
+  const budget = getReadBudgetSignal();
+  if (budget) signals.push(budget);
+  return signals;
 }
 
 export function supabaseFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  return fetch(input, {
-    ...init,
-    cache: "no-store",
-    signal: requestSignal(init?.signal),
-  });
+  return fetchWithSignal(input, init, requestSignals());
 }

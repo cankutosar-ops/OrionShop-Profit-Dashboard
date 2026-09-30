@@ -14,6 +14,9 @@ import {
 import { isAuthPublicPath } from "@/lib/security/auth-paths";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { authCookieOptions } from "@/lib/supabase/auth-cookie-options";
+import { fetchWithSignal } from "@/lib/supabase/fetch-with-signal";
+import { withOperationTimeout } from "@/lib/operation-timeout";
+import { AUTH_CHECK_TIMEOUT_MS, isAuthServiceFailure } from "@/lib/security/auth-unavailable";
 import {
   isCommercialContinuityCronRequest,
   tryResolveInternalApiSecret,
@@ -31,6 +34,7 @@ function isInternalBearer(request: NextRequest): boolean {
 async function withAuthSession(request: NextRequest): Promise<{
   response: NextResponse;
   userId: string | null;
+  unavailable?: boolean;
 }> {
   let response = NextResponse.next({
     request: { headers: request.headers },
@@ -41,46 +45,83 @@ async function withAuthSession(request: NextRequest): Promise<{
     return { response, userId: null };
   }
 
-  const supabase = createServerClient(env.url, env.anonKey, {
-    cookieOptions: authCookieOptions(),
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-        for (const { name, value } of cookiesToSet) {
-          request.cookies.set(name, value);
-        }
-        response = NextResponse.next({
-          request: { headers: request.headers },
-        });
-        for (const { name, value, options } of cookiesToSet) {
-          response.cookies.set(name, value, options);
-        }
-      },
-    },
-  });
+  try {
+    return await withOperationTimeout(async (signal) => {
+      const supabase = createServerClient(env.url, env.anonKey, {
+        global: { fetch: (input: RequestInfo | URL, init?: RequestInit) => fetchWithSignal(input, init, [signal]) },
+        cookieOptions: authCookieOptions(),
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+            for (const { name, value } of cookiesToSet) {
+              request.cookies.set(name, value);
+            }
+            response = NextResponse.next({
+              request: { headers: request.headers },
+            });
+            for (const { name, value, options } of cookiesToSet) {
+              response.cookies.set(name, value, options);
+            }
+          },
+        },
+      });
 
-  // getUser() validates JWT with the Auth server (rejects tampered/expired sessions).
-  const { data } = await supabase.auth.getUser();
-  return { response, userId: data.user?.id ?? null };
+      // getUser() validates JWT with the Auth server (rejects tampered/expired sessions).
+      const { data, error } = await supabase.auth.getUser();
+      if (isAuthServiceFailure(error)) return { response, userId: null, unavailable: true };
+      return { response, userId: data.user?.id ?? null };
+    }, AUTH_CHECK_TIMEOUT_MS);
+  } catch {
+    return { response, userId: null, unavailable: true };
+  }
 }
 
 export async function middleware(request: NextRequest) {
+  const requestId = crypto.randomUUID();
+  request.headers.set("x-orion-request-id", requestId);
+  const result = await handleMiddleware(request);
+  result.headers.set("x-orion-request-id", requestId);
+  return result;
+}
+
+async function handleMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
     pathname.startsWith("/_next") ||
+    pathname === "/service-unavailable" ||
     pathname.startsWith("/favicon") ||
     pathname.match(/\.(?:ico|png|jpg|jpeg|svg|webp|css|js|map|txt)$/)
   ) {
     return NextResponse.next();
   }
 
-  const { response, userId } = await withAuthSession(request);
+  const { response, userId, unavailable } = await withAuthSession(request);
   const isPublic = isAuthPublicPath(pathname);
   const internal = isInternalBearer(request);
   const commercialCron = isCommercialContinuityCronRequest(request);
+
+  // A temporary Auth failure is not evidence that the user signed out.
+  // Never allow tenant data through, or redirect a valid session into a loop.
+  if (unavailable && !internal && !commercialCron) {
+    console.warn("[auth-unavailable]", { requestId: request.headers.get("x-orion-request-id"), stage: "middleware" });
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Service unavailable", code: "AUTH_UNAVAILABLE" }, {
+        status: 503, headers: { "Cache-Control": "private, no-store", "Retry-After": "10" },
+      });
+    }
+    const target = request.nextUrl.clone();
+    target.pathname = "/service-unavailable";
+    target.search = "";
+    // Preserve a valid Flight response on soft navigation. The error page
+    // resolves normally; API clients receive a 503 above.
+    const result = NextResponse.rewrite(target, { request: { headers: request.headers } });
+    result.headers.set("Cache-Control", "private, no-store");
+    result.headers.set("Retry-After", "10");
+    return result;
+  }
 
   if (pathname.startsWith("/api/")) {
     if (

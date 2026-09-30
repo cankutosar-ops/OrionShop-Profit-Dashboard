@@ -12,6 +12,8 @@ import {
   enterUserDbContext,
 } from "@/lib/supabase/request-db-context";
 import { tryResolveInternalApiSecret } from "@/lib/security/secrets";
+import { withReadBudget, ReadBudgetExceeded } from "@/lib/supabase/read-budget";
+import { AUTH_CHECK_TIMEOUT_MS, AuthServiceUnavailable, isAuthServiceFailure } from "./auth-unavailable";
 
 export type AuthUser = User;
 
@@ -43,11 +45,15 @@ export function isInternalServiceRequest(request: Request): boolean {
 /** Read the authenticated user from HttpOnly Supabase Auth cookies. Never trust the body. */
 export async function getAuthUser(): Promise<AuthUser | null> {
   try {
-    const supabase = await createAuthServerClient();
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await withReadBudget(async () => {
+      const supabase = await createAuthServerClient();
+      return supabase.auth.getUser();
+    }, AUTH_CHECK_TIMEOUT_MS);
+    if (isAuthServiceFailure(error)) throw new AuthServiceUnavailable();
     if (error || !data.user) return null;
     return data.user;
-  } catch {
+  } catch (error) {
+    if (error instanceof AuthServiceUnavailable || error instanceof ReadBudgetExceeded) throw new AuthServiceUnavailable();
     return null;
   }
 }
@@ -72,18 +78,25 @@ export async function requireAuth(request: Request): Promise<AuthUser | NextResp
   }
 
   try {
-    const supabase = await createAuthServerClient();
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error, accessToken } = await withReadBudget(async () => {
+      const supabase = await createAuthServerClient();
+      const result = await supabase.auth.getUser();
+      if (result.error || !result.data.user) return { ...result, accessToken: undefined };
+      const { data: sessionData } = await supabase.auth.getSession();
+      return { ...result, accessToken: sessionData.session?.access_token };
+    }, AUTH_CHECK_TIMEOUT_MS);
+    if (isAuthServiceFailure(error)) throw new AuthServiceUnavailable();
     if (error || !data.user) return authUnauthorizedResponse();
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
     if (accessToken) {
       enterUserDbContext(accessToken);
     }
 
     return data.user;
-  } catch {
+  } catch (error) {
+    if (error instanceof AuthServiceUnavailable || error instanceof ReadBudgetExceeded) {
+      return NextResponse.json({ error: "Service unavailable", code: "AUTH_UNAVAILABLE" }, { status: 503 });
+    }
     return authUnauthorizedResponse();
   }
 }

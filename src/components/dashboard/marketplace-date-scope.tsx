@@ -13,7 +13,7 @@ import { getDefaultDateRange } from "@/lib/utils";
 /**
  * Legacy safety net for URLs that still carry accountSwitched=1.
  * Clears the flag (and clamps dates if needed) with replaceUrlIfChanged
- * (URL update + router.refresh for RSC sync).
+ * (App Router navigation with the adjusted scope).
  *
  * New switches clamp dates in TenantSelectors and do not set accountSwitched.
  */

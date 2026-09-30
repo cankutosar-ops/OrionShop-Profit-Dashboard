@@ -7,8 +7,6 @@ type AppErrorProps = {
   reset: () => void;
 };
 
-const RETRY_KEY = "orionshop.route-recovery";
-
 function isTransientConnectionError(error: Error): boolean {
   const message = error.message.toLowerCase();
   return (
@@ -18,21 +16,13 @@ function isTransientConnectionError(error: Error): boolean {
   );
 }
 
-export default function AppError({ error, reset }: AppErrorProps) {
+export default function AppError({ error }: AppErrorProps) {
   const transient = isTransientConnectionError(error);
 
   useEffect(() => {
     console.error("[app-error]", error);
 
-    if (!transient) return;
-    const lastRetry = Number(window.sessionStorage.getItem(RETRY_KEY) ?? "0");
-    const now = Date.now();
-    if (now - lastRetry < 30_000) return;
-
-    window.sessionStorage.setItem(RETRY_KEY, String(now));
-    const timer = window.setTimeout(() => reset(), 700);
-    return () => window.clearTimeout(timer);
-  }, [error, reset, transient]);
+  }, [error]);
 
   return (
     <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
@@ -45,7 +35,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {transient
-            ? "Your data is safe. OrionShop will retry once automatically; you can also retry now."
+            ? "The connection closed before loading finished. Reload this page to try again."
             : "The rest of the application is still available. Try loading this page again."}
         </p>
         {error.digest ? (
@@ -54,7 +44,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
         <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
           <button
             type="button"
-            onClick={reset}
+            onClick={() => window.location.reload()}
             className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-ui hover:bg-primary/90"
           >
             Try again

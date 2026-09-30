@@ -47,10 +47,10 @@ if (!tenant.includes("applyDashboardDateScopeForAccount")) {
 if (/params\.set\(\s*SYNC_DATE_PARAM\.accountSwitched/.test(tenant) || /params\.set\(\s*["']accountSwitched["']/.test(tenant)) {
   fails.push("TenantSelectors still sets accountSwitched (causes 2nd reload)");
 }
-// 6.35.4: scope navigation must refresh after push/replace (via navigateScope)
+// App Router navigation owns the render; extra refreshes duplicate its work.
 const scopeNav = read("src/lib/scope-navigation.ts");
-if (!scopeNav.includes("router.refresh()")) {
-  fails.push("scope-navigation must call router.refresh() after URL update");
+if (scopeNav.includes("router.refresh()") || switchCtx.includes("router.refresh()")) {
+  fails.push("Account navigation must not duplicate requests with a refresh");
 }
 if (!tenant.includes("navigateScope") && !read("src/components/dashboard/date-range-picker.tsx").includes("navigateScope")) {
   fails.push("Account/date navigation must use navigateScope");

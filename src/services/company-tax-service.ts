@@ -9,15 +9,19 @@ import type { WbAd, WbFinance } from "@/types/database";
 import { loadCompanyFinanceTaxableRevenueEvidence } from "@/lib/tax-engine/finance-transaction-evidence";
 import { getCompanyPurchaseRecognition } from "@/services/purchase-tax-recognition-service";
 import { summarizeOperatingExpenses } from "@/lib/tax-engine/operating-expenses";
+import { fetchAllInDateRange } from "@/lib/supabase/paginate";
 
-async function allPages<T>(queryForPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
-  const result: T[] = [];
-  for (let offset = 0; ; offset += 500) {
-    const { data, error } = await queryForPage(offset, offset + 499);
-    if (error) throw new Error(`Tax source read failed: ${error.message}`);
-    result.push(...(data ?? []));
-    if ((data?.length ?? 0) < 500) return result;
+/** The dashboard's income-only estimate needs the profile, not an expense audit. */
+export async function getDashboardTaxInputs(companyId: string, from: string, to: string) {
+  const profiles = await listCompanyTaxProfiles(companyId);
+  const profile = resolveTaxProfile(profiles, to);
+  if (profile?.tax_object !== "USN_INCOME_MINUS_EXPENSES") {
+    return { profile, recognizedExpensesKopeks: 0 };
   }
+  // Preserve the existing company-wide, evidence-checked deduction calculation
+  // for income-minus-expenses profiles, including other accounts and purchases.
+  const foundation = await getCompanyTaxFoundation(companyId, from, to);
+  return { profile: foundation.profile, recognizedExpensesKopeks: foundation.recognizedExpensesKopeks };
 }
 
 export async function getCompanyTaxFoundation(companyId: string, from: string, to: string) {
@@ -34,12 +38,12 @@ export async function getCompanyTaxFoundation(companyId: string, from: string, t
   let purchaseCount = 0;
   for (const accountId of accountIds) {
     const [financeRows, adRows, purchases] = await Promise.all([
-      allPages<WbFinance>((start, end) => db.from("wb_finance").select("*")
-        .eq("marketplace_account_id", accountId).gte("operation_date", from).lte("operation_date", to)
-        .order("id").range(start, end)),
-      allPages<WbAd>((start, end) => db.from("wb_ads").select("*")
-        .eq("marketplace_account_id", accountId).gte("campaign_date", from).lte("campaign_date", to)
-        .order("id").range(start, end)),
+      fetchAllInDateRange<WbFinance>(db, "wb_finance", {
+        marketplaceAccountId: accountId, column: "operation_date", from, to,
+      }),
+      fetchAllInDateRange<WbAd>(db, "wb_ads", {
+        marketplaceAccountId: accountId, column: "campaign_date", from, to,
+      }),
       db.from("purchases").select("id", { count: "exact", head: true })
         .eq("marketplace_account_id", accountId).gte("purchase_date", from).lte("purchase_date", to),
     ]);

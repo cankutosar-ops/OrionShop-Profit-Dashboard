@@ -18,8 +18,11 @@ const lifecycle = read("src/lib/dashboard-lifecycle.ts");
 const switchCtx = read("src/components/layout/account-switch-context.tsx");
 const page = read("src/app/page.tsx");
 
-if (!scopeNav.includes("router.refresh()")) {
-  fails.push("scope-navigation must refresh after URL change");
+if (scopeNav.includes("router.refresh()") || switchCtx.includes("router.refresh()")) {
+  fails.push("scope navigation must not duplicate the render with a refresh");
+}
+if (/location.assign|setTimeout/.test(scopeNav)) {
+  fails.push("scope navigation must not interrupt legitimate slow loads");
 }
 if (!tenant.includes("navigateScope")) {
   fails.push("tenant-selectors must use navigateScope");

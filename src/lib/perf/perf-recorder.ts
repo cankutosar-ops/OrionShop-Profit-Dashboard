@@ -1,6 +1,6 @@
 /**
  * Sprint 6.35.2+ — Performance recorder.
- * Enabled unless PERF_AUDIT=0.
+ * Production is opt-in (PERF_AUDIT=1); development remains enabled by default.
  * Server-only: uses Node builtins (async_hooks, fs). Do not import from client modules.
  */
 import { AsyncLocalStorage } from "async_hooks";
@@ -14,7 +14,8 @@ const perfStore = new AsyncLocalStorage<{ requestId: string; route?: string }>()
 type DupKey = string;
 
 function isEnabled(): boolean {
-  return process.env.PERF_AUDIT !== "0";
+  if (process.env.PERF_AUDIT === "0") return false;
+  return process.env.PERF_AUDIT === "1" || process.env.NODE_ENV !== "production";
 }
 
 function perfDir(): string {
@@ -48,14 +49,19 @@ export function runWithPerfRequest<T>(
   const requestId = randomUUID();
   requestFingerprints.set(requestId, new Map());
   return perfStore.run({ requestId, route }, () => {
-    const result = fn();
-    if (result && typeof (result as Promise<T>).then === "function") {
-      return (result as Promise<T>).finally(() => {
-        requestFingerprints.delete(requestId);
-      });
+    try {
+      const result = fn();
+      if (result && typeof (result as Promise<T>).then === "function") {
+        return (result as Promise<T>).finally(() => {
+          requestFingerprints.delete(requestId);
+        });
+      }
+      requestFingerprints.delete(requestId);
+      return result;
+    } catch (error) {
+      requestFingerprints.delete(requestId);
+      throw error;
     }
-    requestFingerprints.delete(requestId);
-    return result;
   });
 }
 
@@ -94,7 +100,9 @@ export function recordPerfEvent(
       event.category === "sql"
         ? `sql:${String(event.meta?.table ?? event.name)}`
         : `wb:${String(event.meta?.endpoint ?? event.name)}`;
-    const map = requestFingerprints.get(event.requestId) ?? new Map();
+    const map = requestFingerprints.get(event.requestId);
+    // Late work after a deadline must not recreate a completed request's map.
+    if (!map) return;
     const next = (map.get(fp) ?? 0) + 1;
     map.set(fp, next);
     requestFingerprints.set(event.requestId, map);

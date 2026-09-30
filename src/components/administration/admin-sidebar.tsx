@@ -29,7 +29,7 @@ export function AdminSidebar() {
         <div className="mb-3">
           <Link
             href={DASHBOARD_HREF}
-            prefetch
+            prefetch={false}
             aria-label="Back to Dashboard"
             className={cn(
               "relative flex items-center rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium transition-ui",
@@ -59,7 +59,7 @@ export function AdminSidebar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      prefetch
+                      prefetch={false}
                       className={cn(
                         "relative flex items-center rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium transition-ui",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

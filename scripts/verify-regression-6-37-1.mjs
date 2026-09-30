@@ -60,28 +60,15 @@ if (!legacy.includes('marginSafe === null ? "—"')) {
   fails.push("CategoryProfitabilityTable must render — when margin is null");
 }
 
-// --- Issue #2: navigateScope must refresh only after URL commit ---
+// --- Issue #2: one server navigation per scope selection ---
 const scopeNav = read("src/lib/scope-navigation.ts");
-if (!scopeNav.includes("router.refresh()")) {
-  fails.push("navigateScope must still call router.refresh()");
-}
-if (!scopeNav.includes("URL_COMMIT_WAIT_MS") || !scopeNav.includes("locationMatchesHref")) {
-  fails.push("navigateScope must wait for URL commit before refresh (not bare setTimeout(0))");
-}
-if (!scopeNav.includes("location.assign")) {
-  fails.push("navigateScope must hard-assign if soft-nav never commits");
-}
-// Bare setTimeout(0) refresh alone is the premature 6.37.1 fix — reject it.
-if (/setTimeout\(\s*\(\)\s*=>\s*\{\s*router\.refresh\(\)/.test(scopeNav) && !scopeNav.includes("locationMatchesHref")) {
-  fails.push("navigateScope must not refresh on setTimeout(0) without URL match");
+if (/router\.refresh\(\)|location.assign|setTimeout/.test(scopeNav)) {
+  fails.push("navigateScope must not refresh twice or interrupt a pending render");
 }
 
 const switchCtx = read("src/components/layout/account-switch-context.tsx");
-if (!switchCtx.includes("router.refresh()")) {
-  fails.push("Account switch must refresh after URL match");
-}
-if (!switchCtx.includes("refreshOnMatchRef")) {
-  fails.push("Account switch must refresh-on-match at most once per switch");
+if (switchCtx.includes("router.refresh()")) {
+  fails.push("Account switch overlay must not trigger another data request");
 }
 if (!switchCtx.includes("completeOnUrlMatch") || !switchCtx.includes("targetMatchesParams")) {
   fails.push("Account switch must complete on confirmed URL match");

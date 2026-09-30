@@ -39,6 +39,7 @@ async function accessTokenFromCookies(): Promise<string | null> {
   const { url, anonKey } = requireSupabaseEnv();
   const cookieStore = await cookies();
   const ssr = createSsrServerClient(url, anonKey, {
+    global: { fetch: supabaseFetch },
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -48,7 +48,11 @@ export function DashboardWbSection({
 }: DashboardWbSectionProps) {
   const emptyValue = "—";
   const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiCurrency(value));
-  if (!strip) return null;
+  if (!strip) return (
+    <div className="surface-card p-4 text-sm text-muted-foreground" role="status">
+      Settlement and wallet data are temporarily unavailable. Main dashboard figures remain available.
+    </div>
+  );
 
   const expectedWbPayout = strip.expectedWbPayout;
   const expectedWbPayoutValue = isEmptyPeriod || expectedWbPayout.amount === null

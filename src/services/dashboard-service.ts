@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { withReadBudget } from "@/lib/supabase/read-budget";
 import { buildLatestCostByProductId } from "@/lib/cost-history-resolution";
 import { buildCostBreakdown } from "@/lib/cost-breakdown-chart";
 import { groupSalesByDate } from "@/lib/daily-revenue-series";
@@ -43,7 +44,7 @@ import {
   type WbSalesReportsLoadResult,
 } from "@/services/wb-sales-reports-service";
 import { getWbBalanceMetrics } from "@/services/wb-balance-service";
-import { getCompanyTaxFoundation } from "@/services/company-tax-service";
+import { getDashboardTaxInputs } from "@/services/company-tax-service";
 import { calculateTaxYtd } from "@/lib/tax-engine/calculator";
 import {
   getSampleDashboard,
@@ -106,6 +107,21 @@ type ScopedDashboardRaw = ScopedDashboardSqlRaw & {
   wbBalance: WbBalanceMetrics;
 };
 
+function hasDashboardActivity(raw: ScopedDashboardSqlRaw): boolean {
+  return raw.orders.length > 0 || raw.sales.length > 0 ||
+    raw.finance.length > 0 || raw.ads.length > 0;
+}
+
+// Keep dashboard payloads narrow. The fact tables also contain ingestion and
+// audit metadata that is not used by Financial Engine calculations; selecting
+// `*` multiplied transfer size and JSON parsing time on established accounts.
+const DASHBOARD_ORDER_COLUMNS =
+  "product_id, order_date, price, price_with_disc, quantity, status";
+const DASHBOARD_SALES_COLUMNS =
+  "srid, nm_id, product_id, sale_date, revenue, price_with_disc, for_pay, quantity, is_return";
+const DASHBOARD_FINANCE_COLUMNS =
+  "id, product_id, nm_id, operation_type, amount, raw_amount, source_key, description, srid, finance_category, wb_source_suffix, supplier_oper_name";
+
 async function isDatabaseEmpty(
   client: SupabaseClient,
   marketplaceAccountId: string
@@ -157,14 +173,19 @@ async function fetchScopedDashboardSql(
 ): Promise<ScopedDashboardSqlRaw> {
   const productsPromise = fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
+    columns:
+      "id, marketplace_account_id, supplier_article, nm_id, name, brand_id, category_id, brand:brands(id,name), category:categories(id,name)",
   });
   const accountRangePromise = scope.brandId
     ? null
     : Promise.all([
-        fetchSalesInRange(scope, client),
-        fetchFinanceInRange(scope, client),
-        fetchOrdersInRange(scope, client),
+        fetchSalesInRange(scope, client, { columns: DASHBOARD_SALES_COLUMNS }),
+        fetchFinanceInRange(scope, client, { columns: DASHBOARD_FINANCE_COLUMNS }),
+        fetchOrdersInRange(scope, client, { columns: DASHBOARD_ORDER_COLUMNS }),
       ]);
+  // Products may fail before the concurrently started range queries settle.
+  // Handle that rejection immediately; the awaited promise below still fails.
+  void accountRangePromise?.catch(() => {});
   const products = await productsPromise;
   const productIds = products.map((product) => String(product.id));
   const supplierArticles = products.map((product) => product.supplier_article);
@@ -176,12 +197,19 @@ async function fetchScopedDashboardSql(
 
   const [rangeRows, ads, costHistory] = await Promise.all([
     accountRangePromise ?? Promise.all([
-      fetchSalesInRange(scope, client, { productIds: scopedProductIds }),
-      fetchFinanceInRange(scope, client, { productIds: scopedProductIds }),
-      fetchOrdersInRange(scope, client, { productIds: scopedProductIds }),
+      fetchSalesInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_SALES_COLUMNS }),
+      fetchFinanceInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_FINANCE_COLUMNS }),
+      fetchOrdersInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_ORDER_COLUMNS }),
     ]),
-    fetchAdsInRange(scope, client, { productIds, supplierArticles }),
-    fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
+    fetchAdsInRange(scope, client, {
+      productIds,
+      supplierArticles,
+      columns: "product_id, campaign_date, spend",
+    }),
+    fetchCostHistory(scope.marketplaceAccountId, client, {
+      productIds,
+      columns: "id, product_id, cost, effective_from, effective_to, created_at",
+    }),
   ]);
   const [sales, finance, orders] = rangeRows;
 
@@ -371,7 +399,7 @@ async function buildOverviewMetricsFromRaw(
     estimatedTaxOverride?: number;
   } = { taxPercent: 6, taxCalculationStatus: "PROFILE_MISSING" };
   try {
-    const foundation = await getCompanyTaxFoundation(scope.companyId, scope.from, scope.to);
+    const foundation = await getDashboardTaxInputs(scope.companyId, scope.from, scope.to);
     const profile = foundation.profile;
     if (profile) {
       const deductibleExpenses = foundation.recognizedExpensesKopeks / 100;
@@ -503,7 +531,7 @@ async function buildOverviewMetricsFromRaw(
  */
 export async function getDashboardCoreData(scope: ScopedDateRange): Promise<DashboardPayload> {
   try {
-    const request = Promise.resolve(runWithPerfRequest("/", async () =>
+    const request = () => Promise.resolve(runWithPerfRequest("/", async () =>
       measureAsync(
         "server.getDashboardCoreData",
         "server",
@@ -538,10 +566,7 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
           });
           const { categories, brands } = buildGroupedViews(products, overview.modelBProfit);
 
-          const hasActivity =
-            overview.modelBProfit.netSales > 0 ||
-            overview.modelBProfit.advertising > 0 ||
-            products.length > 0;
+          const hasActivity = hasDashboardActivity(sql);
 
           if (!hasActivity) {
             return getEmptyPeriodDashboard(lastSyncAt);
@@ -558,9 +583,8 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Failed to connect to Supabase";
-          return getSampleDashboard(
-            `Could not load live data: ${message}. Showing sample placeholders.`
-          );
+          console.error("[dashboard] live data unavailable", message);
+          throw error;
         }
       },
         { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
@@ -568,12 +592,11 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
     ));
     // Leave enough time for large tenants while still returning a controlled
     // fallback before the hosting function's hard execution ceiling.
-    return await withDashboardDeadline(request, 45_000);
+    return await withReadBudget(request, 45_000);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Dashboard request timed out";
-    return getSampleDashboard(
-      `Live data could not finish loading: ${message}. Showing sample placeholders; retry to load live data.`
-    );
+    console.error("[dashboard] core data unavailable", message);
+    throw error;
   }
 }
 
@@ -590,23 +613,7 @@ export type DashboardWbStripPayload = {
  * a pending React chunk surfaces in the browser as the fatal
  * "Connection closed" client exception.
  */
-export const DASHBOARD_WB_STRIP_DEADLINE_MS = 15_000;
-
-export async function withDashboardDeadline<T>(
-  operation: Promise<T>,
-  timeoutMs = DASHBOARD_WB_STRIP_DEADLINE_MS
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const deadline = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("Dashboard optional data timed out")), timeoutMs);
-  });
-
-  try {
-    return await Promise.race([operation, deadline]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
+export const DASHBOARD_WB_STRIP_DEADLINE_MS = 5_000;
 
 /** Deferred warehouse KPI strip — shares SQL via react.cache. No marketplace HTTP. */
 export const getDashboardWbStripData = cache(
@@ -619,13 +626,17 @@ export const getDashboardWbStripData = cache(
       try {
         await createServerClient();
 
-        const [sql, salesReports, wbBalance] = await withDashboardDeadline(
-          Promise.all([
-            loadSqlForScope(scope),
+        // Isolate the optional budget from the SQL promise shared with Core.
+        // Starting a cached SQL query under this shorter budget could cancel
+        // the main dashboard when only the optional snapshots timed out.
+        const [salesReports, wbBalance] = await withReadBudget(
+          () => Promise.all([
             loadWbWeeklySalesReports(scope),
             getWbBalanceMetrics(scope.marketplaceAccountId),
-          ])
+          ]),
+          DASHBOARD_WB_STRIP_DEADLINE_MS
         );
+        const sql = await loadSqlForScope(scope);
 
         const expectedWbPayout = buildExpectedWbPayoutMetricsFromReports(scope, salesReports);
         const ordersValueResolution = await resolveOrdersValue(scope, sql.orders);
@@ -846,10 +857,7 @@ export async function getDashboardData(scope: ScopedDateRange): Promise<Dashboar
           });
           const { categories, brands } = buildGroupedViews(products, overview.modelBProfit);
 
-          const hasActivity =
-            overview.modelBProfit.netSales > 0 ||
-            overview.modelBProfit.advertising > 0 ||
-            products.length > 0;
+          const hasActivity = hasDashboardActivity(raw);
 
           if (!hasActivity) {
             const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);

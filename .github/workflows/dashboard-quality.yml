@@ -1,0 +1,39 @@
+name: Dashboard quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Data and error behavior
+        run: |
+          npm run verify:dashboard-loading-behavior
+          npm run verify:dashboard-connection-recovery
+          npm run verify:server-loading-guards
+          npm run verify:dashboard-tax
+          npm run verify:marketplace-fees
+          node --import tsx scripts/verify-tenant-authorization-p0.mjs
+          node scripts/verify-nav-regression-6-35-4.mjs
+          node scripts/verify-account-switch-ux-6-35-1.mjs
+      - name: Production build
+        run: npm run build
+      - name: Compiled app, middleware and HTTP failure paths
+        run: npm run verify:dashboard-production
