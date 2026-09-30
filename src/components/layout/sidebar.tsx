@@ -62,6 +62,13 @@ export const SIDEBAR_PRIMARY_NAVIGATION: SidebarNavItem[] = [
   { name: "Production Health", href: "/monitoring", icon: Activity },
 ];
 
+const SIDEBAR_PRIMARY_SECTIONS = [
+  { label: "Overview", items: SIDEBAR_PRIMARY_NAVIGATION.slice(0, 1) },
+  { label: "Intelligence", items: SIDEBAR_PRIMARY_NAVIGATION.slice(1, 3) },
+  { label: "Operations", items: SIDEBAR_PRIMARY_NAVIGATION.slice(3, 8) },
+  { label: "Insights", items: SIDEBAR_PRIMARY_NAVIGATION.slice(8) },
+] as const;
+
 /** Settings stays separated from operational workflow. */
 export const SIDEBAR_SETTINGS_NAVIGATION: SidebarNavItem[] = [
   { name: "Administration", href: "/administration", icon: Shield },
@@ -146,14 +153,25 @@ function SidebarNavLinks({
   }, []);
   return (
     <>
-      {SIDEBAR_PRIMARY_NAVIGATION.map((item) => (
-        <SidebarNavItemLink
-          key={item.name}
-          item={item}
-          pathname={pathname}
-          hrefForItem={hrefForItem}
-          collapsed={collapsed}
-        />
+      {SIDEBAR_PRIMARY_SECTIONS.map((section, sectionIndex) => (
+        <div key={section.label} className={cn(sectionIndex > 0 && "mt-3")}>
+          {!collapsed ? (
+            <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80">
+              {section.label}
+            </p>
+          ) : null}
+          <div className="space-y-0.5">
+            {section.items.map((item) => (
+              <SidebarNavItemLink
+                key={item.name}
+                item={item}
+                pathname={pathname}
+                hrefForItem={hrefForItem}
+                collapsed={collapsed}
+              />
+            ))}
+          </div>
+        </div>
       ))}
 
       <div
@@ -254,12 +272,21 @@ export function Sidebar() {
   const { collapsed, toggle, hydrated } = useSidebar();
 
   return (
-    <aside
+    <>
+      {!collapsed ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-20 bg-slate-950/25 backdrop-blur-[2px] md:hidden"
+          onClick={toggle}
+          aria-label="Close navigation"
+        />
+      ) : null}
+      <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border bg-card",
-        "transition-[width] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
-        collapsed ? "w-16" : "w-64",
-        !hydrated && "w-64"
+        "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border/80 bg-card/95 shadow-[var(--shadow-elevated)] backdrop-blur-xl",
+        "transition-[width,transform] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
+        collapsed ? "-translate-x-full md:w-16 md:translate-x-0" : "translate-x-0",
+        !hydrated && "-translate-x-full md:w-64 md:translate-x-0"
       )}
     >
       <div
@@ -299,7 +326,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className={cn("flex-1 space-y-1 py-3", collapsed ? "px-2" : "px-3")}>
+      <nav className={cn("flex-1 space-y-1 overflow-y-auto py-3", collapsed ? "px-2" : "px-3")}>
         <Suspense fallback={<SidebarNavFallback pathname={pathname} collapsed={collapsed} />}>
           <SidebarNavWithScope pathname={pathname} collapsed={collapsed} />
         </Suspense>
@@ -322,7 +349,8 @@ export function Sidebar() {
           {!collapsed && <span>Sign out</span>}
         </a>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 

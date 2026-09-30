@@ -11,12 +11,12 @@ type ChartHeaderProps = {
 /** Shared chart header — typography and spacing for ChartCard family. */
 export function ChartHeader({ title, description, action, className }: ChartHeaderProps) {
   return (
-    <div className={cn("mb-6 flex items-start justify-between gap-3", className)}>
-      <div>
+    <div className={cn("mb-5 flex flex-col items-start justify-between gap-3 sm:mb-6 sm:flex-row", className)}>
+      <div className="min-w-0">
         <h3 className="text-card-title">{title}</h3>
         {description ? <p className="text-kpi-label mt-1">{description}</p> : null}
       </div>
-      {action}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }

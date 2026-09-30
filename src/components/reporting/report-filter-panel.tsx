@@ -56,7 +56,7 @@ export function ReportFilterPanel({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-3",
+        "surface-card flex flex-col items-stretch gap-2 p-3 sm:flex-row sm:items-center sm:gap-3",
         pending && "opacity-70"
       )}
     >
@@ -64,7 +64,7 @@ export function ReportFilterPanel({
         Category
       </label>
       <select
-        className="h-10 min-w-[12rem] rounded-xl border border-border bg-card px-3 text-sm"
+        className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-background px-3 text-sm sm:max-w-xs"
         value={selectedCategory ?? ""}
         onChange={(e) => onCategoryChange(e.target.value)}
         aria-label="Filter report by category"

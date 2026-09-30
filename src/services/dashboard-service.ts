@@ -572,6 +572,30 @@ export type DashboardWbStripPayload = {
   wbSettlement: WbSettlementMetrics;
 };
 
+/**
+ * Keep an optional streamed dashboard segment from holding the complete RSC
+ * response open until the hosting platform closes it. A closed response with
+ * a pending React chunk surfaces in the browser as the fatal
+ * "Connection closed" client exception.
+ */
+export const DASHBOARD_WB_STRIP_DEADLINE_MS = 4_500;
+
+export async function withDashboardDeadline<T>(
+  operation: Promise<T>,
+  timeoutMs = DASHBOARD_WB_STRIP_DEADLINE_MS
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Dashboard optional data timed out")), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([operation, deadline]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 /** Deferred warehouse KPI strip — shares SQL via react.cache. No marketplace HTTP. */
 export const getDashboardWbStripData = cache(
   async (scopeKey: string, scopeJson: string): Promise<DashboardWbStripPayload | null> => {
@@ -585,11 +609,13 @@ export const getDashboardWbStripData = cache(
         const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
         if (empty) return null;
 
-        const [sql, salesReports, wbBalance] = await Promise.all([
-          loadSqlForScope(scope),
-          loadWbWeeklySalesReports(scope),
-          getWbBalanceMetrics(scope.marketplaceAccountId),
-        ]);
+        const [sql, salesReports, wbBalance] = await withDashboardDeadline(
+          Promise.all([
+            loadSqlForScope(scope),
+            loadWbWeeklySalesReports(scope),
+            getWbBalanceMetrics(scope.marketplaceAccountId),
+          ])
+        );
 
         const expectedWbPayout = buildExpectedWbPayoutMetricsFromReports(scope, salesReports);
         const ordersValueResolution = await resolveOrdersValue(scope, sql.orders);

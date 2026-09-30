@@ -54,6 +54,7 @@
     "verify:finance-recovery-campaign": "npx tsx scripts/verify-finance-recovery-campaign.mjs",
     "verify:revenue-models": "npx tsx scripts/verify-model-c-profit.mjs",
     "verify:dashboard-v3-refinement": "npx tsx scripts/verify-dashboard-v3-refinement.mjs",
+    "verify:dashboard-connection-recovery": "node --import tsx scripts/verify-dashboard-connection-recovery.mjs",
     "verify:finance-schema": "node scripts/verify-finance-schema.mjs",
     "verify:finance-sync-v2": "npx tsx scripts/verify-finance-sync-v2.mjs",
     "verify:finance-v1-migration": "npx tsx scripts/verify-finance-v1-migration.mjs",
