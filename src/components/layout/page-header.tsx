@@ -31,7 +31,7 @@ function HeaderGroup({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 max-w-full flex-wrap items-center gap-2 xl:shrink-0 xl:flex-nowrap", className)}>{children}</div>
+    <div className={cn("flex min-w-0 max-w-full flex-wrap items-center gap-2", className)}>{children}</div>
   );
 }
 
@@ -54,10 +54,10 @@ export function PageHeader({
   if (variant === "toolbar") {
     return (
       <div className={shellClass}>
-        <div className="flex flex-wrap items-start gap-3 xl:h-11 xl:flex-nowrap xl:items-center">
+        <div className="flex flex-wrap items-start gap-3">
           <SidebarMenuButton className="shrink-0" />
           {showFilters && (
-            <div className="scroll-tabs flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-x-auto pb-1 xl:w-auto xl:flex-1 xl:justify-between xl:gap-4 xl:overflow-visible xl:pb-0">
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-3 2xl:w-auto 2xl:flex-1">
               <HeaderGroup className="min-w-0 xl:flex-1">
                 <Suspense
                   fallback={<div className="h-9 w-44 shrink-0 animate-pulse rounded-lg bg-card" />}
@@ -118,7 +118,7 @@ export function PageHeader({
           )}
         </div>
         {showFilters && (
-          <div className="scroll-tabs flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 lg:justify-end lg:overflow-visible lg:pb-0">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <Suspense fallback={<div className="h-9 w-44 shrink-0 animate-pulse rounded-lg bg-card" />}>
               <TenantSelectors />
             </Suspense>

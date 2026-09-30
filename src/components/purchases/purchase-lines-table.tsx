@@ -63,7 +63,7 @@ export function PurchaseLinesTable({ lines, currency }: PurchaseLinesTableProps)
                 active={isActive("article")}
                 direction={directionFor("article")}
                 onClick={() => onSort("article")}
-                className="px-6 py-3"
+                className="sticky left-0 z-20 bg-card px-4 py-3 border-r border-border"
               />
               <SortableTh
                 label="Product Name"
@@ -105,7 +105,7 @@ export function PurchaseLinesTable({ lines, currency }: PurchaseLinesTableProps)
             ) : (
               sorted.map((line) => (
                 <tr key={line.id} className="border-b border-border/50">
-                  <td className="px-6 py-3.5 font-mono text-xs font-medium text-primary">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3.5 border-r border-border font-mono text-xs font-medium text-primary whitespace-nowrap">
                     {line.supplier_article}
                   </td>
                   <td className="px-6 py-3.5">{line.product_name ?? "—"}</td>

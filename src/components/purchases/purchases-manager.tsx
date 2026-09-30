@@ -660,7 +660,7 @@ export function PurchasesManager({
                                 <table className="w-full text-xs sm:text-sm">
                                   <thead>
                                     <tr className="border-b border-border text-left text-muted-foreground">
-                                      <th className="px-4 py-2 font-medium">SKU</th>
+                                      <th className="sticky left-0 z-20 bg-card px-4 py-2 font-medium border-r border-border">SKU</th>
                                       <th className="px-4 py-2 font-medium">Product Name</th>
                                       <th className="px-4 py-2 font-medium">Quantity</th>
                                       <th className="px-4 py-2 font-medium">Unit Cost</th>
@@ -673,7 +673,7 @@ export function PurchasesManager({
                                         key={line.id}
                                         className="border-b border-border/40 last:border-0"
                                       >
-                                        <td className="px-4 py-2 font-mono text-xs text-primary">
+                                        <td className="sticky left-0 z-10 bg-card px-4 py-2 font-mono text-xs text-primary whitespace-nowrap border-r border-border">
                                           {line.supplier_article}
                                         </td>
                                         <td className="px-4 py-2">

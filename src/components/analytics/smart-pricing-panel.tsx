@@ -168,7 +168,8 @@ const labelClass = "block text-[11px] font-medium leading-none text-muted-foregr
 function stickyHeader(index: number): string {
   const isLast = index === STICKY_COLS.length - 1;
   return cn(
-    "sticky top-0 z-30 bg-card px-1.5 py-2 text-right text-[11px] font-medium",
+    "top-0 z-30 bg-card px-1.5 py-2 text-right text-[11px] font-medium",
+    index === 0 ? "sticky" : "static sm:sticky",
     index === 0 && "text-left",
     isLast && "border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]"
   );
@@ -177,7 +178,8 @@ function stickyHeader(index: number): string {
 function stickyCell(index: number, highlight: boolean): string {
   const isLast = index === STICKY_COLS.length - 1;
   return cn(
-    "sticky z-10 px-1.5 py-1.5 text-right tabular-nums",
+    "z-10 px-1.5 py-1.5 text-right tabular-nums",
+    index === 0 ? "sticky" : "static sm:sticky",
     index === 0 && "text-left",
     isLast && "border-r border-border/60 shadow-[4px_0_8px_-4px_hsl(var(--border))]",
     highlight

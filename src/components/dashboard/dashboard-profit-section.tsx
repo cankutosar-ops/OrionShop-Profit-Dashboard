@@ -16,8 +16,8 @@ import type {
 import type { MarketplaceFeesPresentation } from "@/types/finance";
 
 /** Shared expense icon language — never resembles income. */
-const EXPENSE_ICON = "from-rose-500/20 to-rose-500/5 text-rose-400";
-const EXPENSE_VALUE = "text-rose-300";
+const EXPENSE_ICON = "from-rose-500/20 to-rose-500/5 text-rose-700 dark:text-rose-400";
+const EXPENSE_VALUE = "text-rose-700 dark:text-rose-300";
 
 /** Distinct treatment for analytical scenario cards (not accounting KPIs). */
 const SIMULATION_CARD =

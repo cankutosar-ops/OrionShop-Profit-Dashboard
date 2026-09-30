@@ -230,7 +230,12 @@ export async function getSmartPricingInputs(
   const [costHistory, sales, finance, orders, ads, accountResult, inventoryRows] = await Promise.all([
     fetchCostHistory(dataScope.marketplaceAccountId, client, { productIds }),
     fetchSalesInRange(dataScope, client, { productIds }),
-    fetchFinanceInRange(dataScope, client, { productIds }),
+    fetchFinanceInRange(dataScope, client, {
+      productIds,
+      // Pricing reads six months: omit raw marketplace payloads, retaining
+      // dates and every field consumed by the financial classifiers.
+      columns: "id, product_id, nm_id, operation_date, operation_type, amount, raw_amount, source_key, description, srid, finance_category, wb_source_suffix, supplier_oper_name",
+    }),
     fetchOrdersInRange(dataScope, client, { productIds }),
     fetchAdsInRange(dataScope, client, { productIds }),
     client.from('marketplace_accounts_public').select('marketplace').eq('id', dataScope.marketplaceAccountId).single(),

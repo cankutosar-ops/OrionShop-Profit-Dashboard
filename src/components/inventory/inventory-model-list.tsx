@@ -122,7 +122,7 @@ export function InventoryModelList({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
@@ -131,7 +131,7 @@ export function InventoryModelList({
                 active={isActive("model")}
                 direction={directionFor("model")}
                 onClick={() => onSort("model")}
-                className="px-4 py-2"
+                className="sticky left-0 z-20 bg-card px-4 py-2 border-r border-border"
               />
               <SortableTh
                 label="Current Stock"
@@ -177,7 +177,7 @@ export function InventoryModelList({
                       isSelected && "bg-primary/5"
                     )}
                   >
-                    <td className="px-4 py-3">
+                    <td className="sticky left-0 z-10 bg-card px-4 py-3 border-r border-border">
                       <p className="font-mono text-xs font-medium text-primary">
                         {model.supplierArticle}
                       </p>

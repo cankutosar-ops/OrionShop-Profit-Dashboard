@@ -275,7 +275,7 @@ export function CostManagementTable({ rows, scopeQuery, onRowUpdated }: CostMana
                   active={isActive("supplierArticle")}
                   direction={directionFor("supplierArticle")}
                   onClick={() => onSort("supplierArticle")}
-                  className="px-4 py-2.5"
+                  className="sticky left-0 z-20 bg-card px-4 py-2.5 border-r border-border"
                 />
                 <SortableTh
                   label="Product Name"
@@ -323,7 +323,7 @@ export function CostManagementTable({ rows, scopeQuery, onRowUpdated }: CostMana
                     key={row.productId}
                     className="border-b border-border/60 hover:bg-card-hover/40"
                   >
-                    <td className="px-4 py-2 font-medium">{row.supplierArticle}</td>
+                    <td className="sticky left-0 z-10 bg-card px-4 py-2 font-medium whitespace-nowrap border-r border-border">{row.supplierArticle}</td>
                     <td className="max-w-[16rem] px-3 py-2">
                       <span className="block truncate" title={row.productName}>
                         {row.productName}

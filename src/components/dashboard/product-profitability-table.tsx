@@ -78,7 +78,7 @@ export function ProductProfitabilityTable({
                 active={isActive("modelCode")}
                 direction={directionFor("modelCode")}
                 onClick={() => onSort("modelCode")}
-                className="px-6 py-3"
+                className="sticky left-0 z-20 bg-card px-4 py-3 border-r border-border"
               />
               <SortableTh
                 label="Product"
@@ -149,7 +149,7 @@ export function ProductProfitabilityTable({
                   key={product.productId}
                   className="border-b border-border/50 transition-colors hover:bg-card-hover"
                 >
-                  <td className="px-6 py-3.5 font-mono text-xs font-medium text-primary">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3.5 font-mono text-xs font-medium text-primary whitespace-nowrap border-r border-border">
                     {product.modelCode}
                   </td>
                   <td className="px-6 py-3.5">{product.productName}</td>

@@ -276,14 +276,14 @@ export function Sidebar() {
       {!collapsed ? (
         <button
           type="button"
-          className="fixed inset-0 z-20 bg-slate-950/25 backdrop-blur-[2px] md:hidden"
+          className="fixed inset-0 z-50 bg-slate-950/25 backdrop-blur-[2px] md:hidden"
           onClick={toggle}
           aria-label="Close navigation"
         />
       ) : null}
       <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border/80 bg-card/95 shadow-[var(--shadow-elevated)] backdrop-blur-xl",
+        "fixed inset-y-0 left-0 z-[60] md:z-30 flex w-64 flex-col border-r border-border/80 bg-card/95 shadow-[var(--shadow-elevated)] backdrop-blur-xl",
         "transition-[width,transform] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
         collapsed ? "-translate-x-full md:w-16 md:translate-x-0" : "translate-x-0",
         !hydrated && "-translate-x-full md:w-64 md:translate-x-0"

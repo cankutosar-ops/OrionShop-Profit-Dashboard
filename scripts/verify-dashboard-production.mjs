@@ -48,6 +48,7 @@ const fixture = http.createServer(async (request, response) => {
   const product = { id: accountId, marketplace_account_id: accountId, supplier_article: `SKU-${accountId}`, nm_id: Number(accountId), name: `Fixture Product ${accountId}`, brand_id: "1", category_id: "1", brand: { id: "1", name: "Fixture Brand" }, category: { id: "1", name: "Fixture Category" } };
   const data = {
     marketplace_accounts: accounts,
+    marketplace_accounts_public: accounts,
     companies: [{ id: "1", name: "Fixture Company", is_default: true, currency: "RUB" }],
     products: [product],
     wb_sales: [{ id: "1", marketplace_account_id: accountId, srid: "s1", nm_id: Number(accountId), product_id: accountId, sale_date: date, revenue: 100, price_with_disc: 100, for_pay: 80, quantity: 1, is_return: false }],
@@ -174,6 +175,24 @@ try {
   const badFinance = await load(scopeUrl(1), { rsc: true });
   assert.match(badFinance.body, /:E\{/);
   assert.doesNotMatch(badFinance.body, /Showing sample placeholders|"modelB"/);
+  financeMode = "ready";
+  const pricingUrl = "/analytics/pricing?company=1&account=2";
+  calls.length = 0;
+  const pricing = await load(pricingUrl);
+  assert.equal(pricing.response.status, 200);
+  assert.doesNotMatch(pricing.body, /Smart Pricing could not finish loading/);
+  assert.match(pricing.body, /Forward-looking target price/);
+  const pricingFinanceReads = calls.filter(call => call.table === "wb_finance");
+  assert.ok(pricingFinanceReads.length > 1);
+  for (const call of pricingFinanceReads) {
+    const columns = new URLSearchParams(call.query).get("select");
+    assert.ok(columns && columns !== "*" && columns.includes("operation_date"));
+  }
+  financeMode = "error";
+  const pricingFailure = await load(pricingUrl, { rsc: true });
+  assert.match(pricingFailure.body, /DashboardLoadError/);
+  assert.match(pricingFailure.body, /"pageName":"Smart Pricing"/);
+  assert.doesNotMatch(pricingFailure.body, /:E\{/);
   financeMode = "ready";
   snapshotsMode = "hang";
   const slowOptional = await load(scopeUrl(1));

@@ -325,7 +325,7 @@ export function InventoryIntelligenceTable({
                 active={isActive("sku")}
                 direction={directionFor("sku")}
                 onClick={() => onSort("sku")}
-                className="px-3 py-3 font-medium"
+                className="sticky left-0 z-20 bg-card px-3 py-3 font-medium border-r border-border"
               />
               <SortableTh
                 label="Current Stock"
@@ -434,7 +434,7 @@ export function InventoryIntelligenceTable({
                           <span className="inline-block w-6" aria-hidden />
                         )}
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="sticky left-0 z-10 bg-card px-3 py-2.5 border-r border-border">
                         <div className="flex min-w-0 items-center gap-2.5">
                           <ProductThumbnail
                             key={row.productId}
@@ -445,7 +445,7 @@ export function InventoryIntelligenceTable({
                           <div className="min-w-0">
                             <p className="font-mono text-xs font-medium">{row.sku}</p>
                             <p
-                              className="max-w-[240px] truncate text-xs text-muted-foreground"
+                              className="max-w-[120px] sm:max-w-[240px] truncate text-xs text-muted-foreground"
                               title={row.productName}
                             >
                               {row.productName || "—"}
