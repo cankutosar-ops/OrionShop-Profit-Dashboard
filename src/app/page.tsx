@@ -7,7 +7,7 @@ import {
 } from "@/components/dashboard/dashboard-charts-lazy";
 import { DashboardProfitSection } from "@/components/dashboard/dashboard-profit-section";
 import {
-  DashboardWbDeferredSection,
+  DashboardWbSection,
   DashboardWbSectionFallback,
 } from "@/components/dashboard/dashboard-wb-deferred-section";
 import { DataBanner } from "@/components/dashboard/data-banner";
@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { resolveScopedDateRange } from "@/lib/marketplace-scope";
 import type { DashboardPageSearchParamsInput } from "@/lib/filter-params";
 import { measureAsync, recordPerfEvent } from "@/lib/perf/perf-recorder";
-import { getDashboardCoreData } from "@/services/dashboard-service";
+import { getDashboardCoreData, loadDashboardWbStrip } from "@/services/dashboard-service";
 import type { ScopedDateRange } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -37,8 +37,11 @@ async function DashboardCoreSection({
   dateManual?: string;
 }) {
   const started = Date.now();
-  const { overview, categories, brands, isSampleData, isEmptyPeriod, lastSyncAt, message } =
-    await getDashboardCoreData(scope);
+  const [dashboard, wbStrip] = await Promise.all([
+    getDashboardCoreData(scope),
+    loadDashboardWbStrip(scope),
+  ]);
+  const { overview, categories, brands, isSampleData, isEmptyPeriod, lastSyncAt, message } = dashboard;
   recordPerfEvent({
     category: "server",
     name: "server.DashboardPage.critical",
@@ -76,17 +79,15 @@ async function DashboardCoreSection({
           isEmptyPeriod={Boolean(isEmptyPeriod)}
         />
 
-        <Suspense fallback={<DashboardWbSectionFallback />}>
-          <DashboardWbDeferredSection
-            scope={scope}
-            isEmptyPeriod={Boolean(isEmptyPeriod)}
-            totalOrdersCount={totalOrdersCount}
-            ordersCount={kpis.ordersCount}
-            ordersValueCount={kpis.ordersValueCount}
-            estimatedTax={overview.modelBProfit.estimatedTax}
-            taxPercent={overview.modelBProfit.taxPercent}
-          />
-        </Suspense>
+        <DashboardWbSection
+          strip={wbStrip}
+          isEmptyPeriod={Boolean(isEmptyPeriod)}
+          totalOrdersCount={totalOrdersCount}
+          ordersCount={kpis.ordersCount}
+          ordersValueCount={kpis.ordersValueCount}
+          estimatedTax={overview.modelBProfit.estimatedTax}
+          taxPercent={overview.modelBProfit.taxPercent}
+        />
       </div>
 
       <div className="mt-8">

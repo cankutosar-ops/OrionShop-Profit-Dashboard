@@ -25,4 +25,23 @@ assert.match(errorBoundary, /connection closed/i);
 assert.match(errorBoundary, /sessionStorage/);
 assert.match(errorBoundary, /reset\(\)/);
 
+const dashboardPage = await readFile(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+assert.match(
+  dashboardPage,
+  /Promise\.all\(\[\s*getDashboardCoreData\(scope\),\s*loadDashboardWbStrip\(scope\)/,
+  "core and optional WB data must start in parallel"
+);
+assert.doesNotMatch(
+  dashboardPage,
+  /<DashboardWbDeferredSection/,
+  "dashboard must not leave a nested server Suspense stream open"
+);
+
+const dashboardService = await readFile(
+  new URL("../src/services/dashboard-service.ts", import.meta.url),
+  "utf8"
+);
+assert.match(dashboardService, /withDashboardDeadline\(request, 7_000\)/);
+assert.match(dashboardService, /const accountRangePromise = scope\.brandId/);
+
 console.log("PASS — dashboard connection recovery is bounded and recoverable");

@@ -155,9 +155,17 @@ async function fetchScopedDashboardSql(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<ScopedDashboardSqlRaw> {
-  const products = await fetchProductsWithRelations(scope.marketplaceAccountId, client, {
+  const productsPromise = fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
   });
+  const accountRangePromise = scope.brandId
+    ? null
+    : Promise.all([
+        fetchSalesInRange(scope, client),
+        fetchFinanceInRange(scope, client),
+        fetchOrdersInRange(scope, client),
+      ]);
+  const products = await productsPromise;
   const productIds = products.map((product) => String(product.id));
   const supplierArticles = products.map((product) => product.supplier_article);
   // Account-wide dashboard reads are already isolated by marketplace_account_id.
@@ -166,13 +174,16 @@ async function fetchScopedDashboardSql(
   // request. Keep the product filter only when a brand drill-down requires it.
   const scopedProductIds = scope.brandId ? productIds : undefined;
 
-  const [sales, finance, ads, costHistory, orders] = await Promise.all([
-    fetchSalesInRange(scope, client, { productIds: scopedProductIds }),
-    fetchFinanceInRange(scope, client, { productIds: scopedProductIds }),
+  const [rangeRows, ads, costHistory] = await Promise.all([
+    accountRangePromise ?? Promise.all([
+      fetchSalesInRange(scope, client, { productIds: scopedProductIds }),
+      fetchFinanceInRange(scope, client, { productIds: scopedProductIds }),
+      fetchOrdersInRange(scope, client, { productIds: scopedProductIds }),
+    ]),
     fetchAdsInRange(scope, client, { productIds, supplierArticles }),
     fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
-    fetchOrdersInRange(scope, client, { productIds: scopedProductIds }),
   ]);
+  const [sales, finance, orders] = rangeRows;
 
   return {
     products,
@@ -488,14 +499,15 @@ async function buildOverviewMetricsFromRaw(
 
 /**
  * Core dashboard payload from SQL only (Model B + charts). No WB API wait.
- * Used for critical-path streaming; WB strip loads in a sibling Suspense.
+ * Bounded so a slow database response cannot leave the RSC stream incomplete.
  */
 export async function getDashboardCoreData(scope: ScopedDateRange): Promise<DashboardPayload> {
-  return runWithPerfRequest("/", async () =>
-    measureAsync(
-      "server.getDashboardCoreData",
-      "server",
-      async () => {
+  try {
+    const request = Promise.resolve(runWithPerfRequest("/", async () =>
+      measureAsync(
+        "server.getDashboardCoreData",
+        "server",
+        async () => {
         const env = getSupabaseEnv();
         if (!env.isConfigured) {
           return getSampleDashboard(
@@ -505,17 +517,10 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
 
         try {
           const client = await createServerClient();
-          const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
-          if (empty) {
-            return getSampleDashboard(
-              "Database tables are empty. Showing sample data until Wildberries data is synced."
-            );
-          }
-
-          const sql = await measureAsync("server.fetchScopedDashboardSql", "server", () =>
-            // No client arg — use react.cache so WB strip shares this SQL result.
-            loadSqlForScope(scope)
-          );
+          const [sql, lastSyncAt] = await Promise.all([
+            measureAsync("server.fetchScopedDashboardSql", "server", () => loadSqlForScope(scope)),
+            fetchAccountLastSync(client, scope.marketplaceAccountId),
+          ]);
 
           const raw = buildSqlOnlyRaw(sql);
 
@@ -538,8 +543,6 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
             overview.modelBProfit.advertising > 0 ||
             products.length > 0;
 
-          const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
-
           if (!hasActivity) {
             return getEmptyPeriodDashboard(lastSyncAt);
           }
@@ -560,9 +563,16 @@ export async function getDashboardCoreData(scope: ScopedDateRange): Promise<Dash
           );
         }
       },
-      { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
-    )
-  );
+        { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
+      )
+    ));
+    return await withDashboardDeadline(request, 7_000);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Dashboard request timed out";
+    return getSampleDashboard(
+      `Live data could not finish loading: ${message}. Showing sample placeholders; retry to load live data.`
+    );
+  }
 }
 
 export type DashboardWbStripPayload = {
@@ -578,7 +588,7 @@ export type DashboardWbStripPayload = {
  * a pending React chunk surfaces in the browser as the fatal
  * "Connection closed" client exception.
  */
-export const DASHBOARD_WB_STRIP_DEADLINE_MS = 4_500;
+export const DASHBOARD_WB_STRIP_DEADLINE_MS = 3_500;
 
 export async function withDashboardDeadline<T>(
   operation: Promise<T>,
@@ -605,9 +615,7 @@ export const getDashboardWbStripData = cache(
       if (!env.isConfigured) return null;
 
       try {
-        const client = await createServerClient();
-        const empty = await isDatabaseEmpty(client, scope.marketplaceAccountId);
-        if (empty) return null;
+        await createServerClient();
 
         const [sql, salesReports, wbBalance] = await withDashboardDeadline(
           Promise.all([
