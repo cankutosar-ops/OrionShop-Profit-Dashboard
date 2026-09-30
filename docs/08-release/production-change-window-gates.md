@@ -41,7 +41,7 @@ Apply `20260917140000_wb_canonical_current_stocks.sql` by itself. Verify the can
 
 ## First scheduler activation after all gates
 
-GitHub Actions is the intended first production scheduler, hourly at minute 20 (`20 * * * *`). No Vercel deployment or cron is evidenced and no handover is required. Keep `vercel.json` dormant. Before merging the workflow onto the default branch, hold automatic scheduling so it cannot run before the bounded manual acceptance tick. Under explicit approval, verify that tick and data freshness, then enable the scheduled owner. Keep local development timers and web-host inventory timers off during this transition. Advertising cadence is a separate decision.
+GitHub Actions is the intended first production scheduler, daily at 00:20 UTC / 03:20 Moscow (`20 0 * * *`). No Vercel deployment or cron is evidenced and no handover is required. Keep `vercel.json` dormant. Before merging the workflow onto the default branch, hold automatic scheduling so it cannot run before the bounded manual acceptance tick. Under explicit approval, verify that tick and data freshness, then enable the scheduled owner. Keep local development timers and web-host inventory timers off during this transition. Advertising cadence is a separate decision.
 
 ## Stop and rollback conditions
 
