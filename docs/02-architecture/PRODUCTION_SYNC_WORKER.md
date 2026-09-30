@@ -35,7 +35,7 @@ and rate-limit-fragile, so the boundary is enforced by
 | Logging | `src/worker/logger.ts` | JSON lines with secret redaction |
 | Environment | `src/worker/env.ts` | Required secrets, server-shaped aliases |
 | CLI entrypoint | `scripts/run-sync-worker.mjs` | Arg parsing and exit-code mapping only |
-| Scheduler | `.github/workflows/sync-worker.yml` | Hourly trigger and concurrency |
+| Scheduler | `.github/workflows/sync-worker.yml` | Daily trigger and concurrency |
 
 The worker owns **no sync logic**. Every task delegates to a kernel that already
 existed and is already covered by its own verification script:
@@ -93,7 +93,7 @@ this case and exits `20` with that instruction instead of a bare
 ## Running it
 
 ```bash
-# Default hourly tick: orders, sales, finance (1 page/account), inventory
+# Default scheduled tick: orders, sales, finance (1 page/account), inventory
 npm run worker:sync
 
 # One account only
@@ -124,8 +124,8 @@ not a broken data plane.
 
 ## Scheduling
 
-GitHub Actions, hourly at `:20`. Configured in
-`.github/workflows/sync-worker.yml`.
+GitHub Actions, daily at `00:20 UTC` / `03:20 Moscow`. Configured in
+`.github/workflows/sync-worker.yml`. User-triggered dashboard sync remains available.
 
 Two safeguards prevent overlap:
 
@@ -219,7 +219,7 @@ any point; all progress lives in Supabase:
 | Account lock | `marketplace_accounts.sync_lock_expires_at` |
 | Inventory snapshots | `historical_inventory_snapshots` |
 
-No new lock table was added. Existing protection is sufficient for an hourly
+No new lock table was added. Existing protection is sufficient for a daily
 single-runner schedule: the Actions concurrency group serialises runs, and inside
 a run `assertSyncNotRunning` plus the finance state lock prevent double
 execution.
@@ -323,13 +323,13 @@ HTTP" means.
 
 ## Cost
 
-Hourly runs are 24/day, about 730/month. Billable minutes are rounded up per job.
+Daily runs are about 30/month. Billable minutes are rounded up per job.
 
 | Case | Minutes per run | Per month |
 |---|---|---|
-| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~4 | ~2,900 |
-| Worker uses its full 25-minute budget | ~28 | ~20,400 |
-| Job hits the 35-minute timeout every run | 35 | ~25,600 |
+| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~4 | ~120 |
+| Worker uses its full 25-minute budget | ~28 | ~840 |
+| Job hits the 35-minute timeout every run | 35 | ~1,050 |
 
 Assumptions: `ubuntu-latest` standard runner, ~3 minutes of setup overhead per
 run, no matrix. Whether these fit at no cost depends on repository visibility and

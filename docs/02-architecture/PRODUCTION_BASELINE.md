@@ -747,7 +747,7 @@ hand before each release.
 
 | Property | Value | Rationale |
 |---|---|---|
-| Schedule | `20 * * * *` | offset off the hour |
+| Schedule | `20 0 * * *` | daily at 00:20 UTC / 03:20 Moscow |
 | Concurrency | group `sync-worker`, `cancel-in-progress: false` | cancelling mid-page abandons a held DB lock instead of releasing it; the cursor only advances after a successful persist, so waiting is always safer |
 | Job timeout | 35 min | backstop above the 25-min worker budget |
 | Worker budget | `--budget-ms 1500000` | bounded tick |

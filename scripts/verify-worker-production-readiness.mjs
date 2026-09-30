@@ -550,8 +550,8 @@ console.log("\n--- 6/7. Workflow contract ---");
       const on = doc.on ?? doc[true];
       const crons = (on?.schedule ?? []).map((s) => s.cron);
       check(
-        "7  schedule is hourly",
-        crons.length === 1 && /^\d+\s+\*\s+\*\s+\*\s+\*$/.test(crons[0] ?? ""),
+        "7  schedule is daily at 00:20 UTC",
+        crons.length === 1 && crons[0] === "20 0 * * *",
         crons.join(", ") || "no schedule"
       );
       check(
@@ -608,11 +608,11 @@ console.log("\n--- 6/7. Workflow contract ---");
         budgetMs < timeoutMin * 60_000,
       `budget ${budgetMs / 60000} min < timeout ${timeoutMin} min`
     );
-    // And smaller than the schedule interval, or runs would queue every hour.
+    // And smaller than the schedule interval, or daily runs would queue.
     check(
-      "7  worker budget fits inside the hourly interval",
-      Number.isFinite(budgetMs) && budgetMs < 60 * 60_000,
-      `${budgetMs / 60000} min < 60 min`
+      "7  worker budget fits inside the daily interval",
+      Number.isFinite(budgetMs) && budgetMs < 24 * 60 * 60_000,
+      `${budgetMs / 60000} min < 1440 min`
     );
   }
 }
@@ -677,7 +677,7 @@ console.log("\n--- 11. Page-load WB boundary ---");
 {
   // Targeted graph walk: dashboard plus every reports page. The exhaustive
   // 92-entrypoint sweep lives in verify:production-data-plane; this preflight
-  // keeps the hourly cost low while still measuring real imports.
+  // keeps the scheduled-run cost low while still measuring real imports.
   const dashboard = path.join(SRC, "app/page.tsx");
   const reportPages = walkFiles(path.join(SRC, "app/reports")).filter((f) =>
     /[\\/]page\.tsx$/.test(f)

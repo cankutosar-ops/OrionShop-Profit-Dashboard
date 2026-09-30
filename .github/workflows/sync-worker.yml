@@ -9,9 +9,9 @@ name: Sync Worker
 
 on:
   schedule:
-    # Hourly, offset off the hour so it does not collide with WB's own
-    # top-of-hour load or with any remaining platform cron.
-    - cron: "20 * * * *"
+    # Daily at 00:20 UTC / 03:20 Moscow. Manual user sync remains available.
+    # Offset from the top of the hour to avoid WB's peak cron traffic.
+    - cron: "20 0 * * *"
   workflow_dispatch:
     inputs:
       tasks:
