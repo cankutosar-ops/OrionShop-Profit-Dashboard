@@ -9,7 +9,7 @@
 
 /* Runtime theme variables — light defaults on :root */
 :root {
-  --app-background: #f8fafc;
+  --app-background: #f7f8fc;
   --app-surface: #ffffff;
   --app-foreground: #0f172a;
   --app-card: #ffffff;
@@ -30,8 +30,8 @@
   --app-chart-4: #f59e0b;
   --app-chart-5: #e11d48;
   --app-chart-6: #0ea5e9;
-  --app-shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
-  --app-shadow-elevated: 0 4px 16px rgb(15 23 42 / 0.08);
+  --app-shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.035);
+  --app-shadow-elevated: 0 16px 40px rgb(15 23 42 / 0.10);
   color-scheme: light;
 }
 
@@ -118,6 +118,10 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    background-image:
+      radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--color-primary) 7%, transparent) 0, transparent 25rem),
+      linear-gradient(180deg, color-mix(in srgb, var(--color-card) 55%, transparent), transparent 22rem);
+    background-attachment: fixed;
   }
 
   /* Focus ring — shared across interactive controls */
@@ -173,10 +177,44 @@
 
   /* Shared surface / interaction helpers */
   .surface-card {
-    background-color: var(--color-card);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--color-card) 98%, white), var(--color-card));
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
+  }
+
+  .app-header-surface {
+    background: color-mix(in srgb, var(--color-background) 86%, transparent);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--color-border) 65%, transparent);
+  }
+
+  .scroll-tabs {
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .auth-card {
+    background: color-mix(in srgb, var(--color-card) 94%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-elevated);
+    backdrop-filter: blur(18px);
+  }
+
+  .auth-card input {
+    min-height: 2.75rem;
+    background: color-mix(in srgb, var(--color-background) 72%, var(--color-card));
+    transition: border-color var(--duration-fast), box-shadow var(--duration-fast), background-color var(--duration-fast);
+  }
+
+  .auth-card input:focus {
+    background: var(--color-card);
+    border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
   }
 
   .transition-ui {

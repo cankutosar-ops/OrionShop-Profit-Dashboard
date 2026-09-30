@@ -23,7 +23,7 @@ export function ReportNav() {
   return (
     <nav
       aria-label="Reporting module"
-      className="flex flex-wrap gap-2 border-b border-border pb-3"
+      className="scroll-tabs flex max-w-full flex-nowrap gap-1 overflow-x-auto rounded-xl border border-border/80 bg-card/75 p-1 shadow-[var(--shadow-card)]"
     >
       {REPORTING_CATALOG.map((report) => {
         const active =
@@ -33,7 +33,7 @@ export function ReportNav() {
             key={report.id}
             href={hrefFor(report.href)}
             className={cn(
-              "rounded-[var(--radius-control)] px-3 py-1.5 text-sm font-medium transition-ui",
+              "shrink-0 whitespace-nowrap rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium transition-ui",
               active
                 ? "bg-primary/12 text-primary"
                 : "text-muted-foreground hover:bg-card-hover hover:text-foreground"

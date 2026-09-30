@@ -15,7 +15,7 @@ export function AdminSidebar() {
   const pathname = usePathname() ?? "/administration";
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-background">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border/80 bg-card/95 shadow-[var(--shadow-card)] backdrop-blur-xl lg:flex">
       <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
         <Link
           href="/administration"

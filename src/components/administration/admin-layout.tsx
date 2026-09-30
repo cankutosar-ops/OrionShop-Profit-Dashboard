@@ -23,9 +23,9 @@ export function AdminLayout({
   showHeader = true,
 }: AdminLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <AdminSidebar />
-      <main className="min-h-screen pl-64">
+      <main className="min-h-screen min-w-0 pl-0 lg:pl-64">
         <div className="w-full max-w-none px-3 py-4 sm:px-4 lg:px-5 xl:px-6 2xl:px-8">
           {showHeader ? <AdminHeader title={title} description={description} /> : null}
           <div className="pb-8">{children}</div>

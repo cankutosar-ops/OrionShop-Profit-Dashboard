@@ -48,7 +48,7 @@ export function PageHeader({
   variant = "default",
 }: PageHeaderProps) {
   const shellClass = sticky
-    ? "relative md:sticky top-0 z-40 -mx-3 mb-4 border-b border-border/80 bg-background/95 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:-mx-4 sm:px-4 lg:-mx-5 lg:px-5 xl:-mx-6 xl:px-6 2xl:-mx-8 2xl:px-8"
+    ? "app-header-surface relative md:sticky top-0 z-40 -mx-3 mb-5 border-b border-border/70 px-3 py-3 backdrop-blur-xl sm:-mx-4 sm:px-4 lg:-mx-5 lg:px-5 xl:-mx-6 xl:px-6 2xl:-mx-8 2xl:px-8"
     : "mb-6";
 
   if (variant === "toolbar") {
@@ -112,7 +112,7 @@ export function PageHeader({
             <div className="min-w-0">
               {title ? <h1 className="text-page-title">{title}</h1> : null}
               {description ? (
-                <p className="text-kpi-label mt-0.5 truncate">{description}</p>
+                <p className="text-kpi-label mt-1 max-w-2xl leading-relaxed">{description}</p>
               ) : null}
             </div>
           )}

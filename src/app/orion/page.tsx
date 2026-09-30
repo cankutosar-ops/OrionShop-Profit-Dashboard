@@ -1,4 +1,5 @@
 import { OrionAssistantPanel } from "@/components/orion/orion-assistant-panel";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const metadata = {
   title: "Orion Assistant",
@@ -7,13 +8,12 @@ export const metadata = {
 
 export default function OrionPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Orion</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Read-only knowledge plane — Business Rules, Financial Engine, and verified sources.
-        </p>
-      </div>
+    <div className="mx-auto max-w-4xl">
+      <PageHeader
+        title="Orion"
+        description="Read-only knowledge plane — Business Rules, Financial Engine, and verified sources."
+        showFilters={false}
+      />
       <OrionAssistantPanel />
     </div>
   );

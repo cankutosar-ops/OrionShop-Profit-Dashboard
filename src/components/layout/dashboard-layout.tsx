@@ -12,7 +12,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const { collapsed, hydrated } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-background print:bg-white">
+    <div className="relative min-h-screen print:bg-white">
       <div className="print:hidden">
         <Sidebar />
       </div>
@@ -23,7 +23,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           "print:pl-0"
         )}
       >
-        <div className="min-w-0 w-full max-w-none px-3 py-4 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 print:px-0 print:py-0">
+        <div className="relative min-w-0 w-full max-w-none px-3 py-4 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 print:px-0 print:py-0">
           <Suspense fallback={null}>
             <PerfPageProbe />
           </Suspense>

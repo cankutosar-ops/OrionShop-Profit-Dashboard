@@ -97,12 +97,13 @@ export function MetricCard({
     <div
       title={hint}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden border border-border bg-card transition-ui hover:border-primary/30 hover:bg-card-hover",
+        "group relative flex h-full flex-col overflow-hidden border border-border/90 bg-card shadow-[var(--shadow-card)] transition-ui hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[var(--shadow-elevated)]",
         "rounded-[var(--radius-card)]",
         compact ? "p-3" : "p-5",
         className
       )}
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="flex flex-1 items-start justify-between gap-3">
         <div className={cn("min-w-0 flex-1", compact ? "space-y-1" : "space-y-2")}>
           <div className="flex flex-wrap items-center gap-2">

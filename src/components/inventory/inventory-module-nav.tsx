@@ -40,7 +40,7 @@ export function InventoryModuleNav() {
 
   return (
     <nav
-      className="flex flex-wrap gap-1 rounded-2xl border border-border bg-card p-1"
+      className="scroll-tabs flex max-w-full flex-nowrap gap-1 overflow-x-auto rounded-2xl border border-border/80 bg-card/80 p-1 shadow-[var(--shadow-card)]"
       aria-label="Inventory module"
     >
       {MODULE_TABS.map((tab) => {
@@ -54,7 +54,7 @@ export function InventoryModuleNav() {
             key={tab.id}
             href={hrefWithScope(tab.href)}
             className={cn(
-              "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+              "shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               active
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-card-hover hover:text-foreground"
