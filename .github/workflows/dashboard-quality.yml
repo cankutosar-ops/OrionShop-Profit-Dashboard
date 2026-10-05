@@ -25,6 +25,7 @@ jobs:
       - run: npm ci
       - name: Data and error behavior
         run: |
+          node scripts/verify-password-reset-offline.mjs
           npm run verify:dashboard-loading-behavior
           npm run verify:dashboard-connection-recovery
           npm run verify:server-loading-guards

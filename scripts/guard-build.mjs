@@ -21,7 +21,11 @@ function isPidAlive(pid) {
 
 async function main() {
   // Production must compile its browser-visible Supabase configuration.
-  // Credential-free deploy previews remain deliberately isolated.
+  // Ignore commands skip previews; also stop forced preview builds here.
+  if (process.env.NETLIFY === "true" && ["deploy-preview", "branch-deploy"].includes(process.env.CONTEXT)) {
+    console.error("Build blocked: publish this dashboard only from main in the Netlify Production context.");
+    process.exit(1);
+  }
   if (process.env.NETLIFY === "true" && process.env.CONTEXT === "production") {
     const required = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"];
     const missing = required.filter((name) => !process.env[name]?.trim());

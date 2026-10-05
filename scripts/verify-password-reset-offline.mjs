@@ -83,7 +83,14 @@ let guard = spawnSync(process.execPath, ['scripts/guard-build.mjs'], { env: base
 assert.equal(guard.status, 1);
 assert.ok(guard.stderr.includes('NEXT_PUBLIC_SUPABASE_URL'));
 guard = spawnSync(process.execPath, ['scripts/guard-build.mjs'], { env: { ...baseEnv, CONTEXT: 'deploy-preview' }, encoding: 'utf8' });
-assert.equal(guard.status, 0, guard.stderr);
+assert.equal(guard.status, 1, 'preview artifacts must not be publishable without Production configuration');
+assert.ok(guard.stderr.includes('Production context'));
+guard = spawnSync(process.execPath, ['scripts/guard-build.mjs'], { env: { ...baseEnv, CONTEXT: 'branch-deploy' }, encoding: 'utf8' });
+assert.equal(guard.status, 1, 'branch artifacts must not replace production');
 guard = spawnSync(process.execPath, ['scripts/guard-build.mjs'], { env: { ...baseEnv, NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'offline-only' }, encoding: 'utf8' });
 assert.equal(guard.status, 0, guard.stderr);
-console.log('PASS: reset validation, error privacy, reference IDs, no retries, OTP/PKCE redirects, production build config and isolated previews');
+const config = readFileSync('netlify.toml', 'utf8').replace(/\r\n/g, '\n');
+for (const context of ['deploy-preview', 'branch-deploy']) {
+  assert.ok(config.includes(`[context.${context}]\n  ignore = "exit 0"`), `${context} builds should be skipped`);
+}
+console.log('PASS: reset validation, error privacy, reference IDs, no retries, OTP/PKCE redirects, Production configuration and blocked Preview artifacts');

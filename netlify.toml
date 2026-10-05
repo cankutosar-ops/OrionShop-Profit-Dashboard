@@ -7,5 +7,14 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# This authenticated dashboard is published manually from main/Production.
+# Preview contexts have no production credentials; do not create promotable
+# artifacts that can replace production with an unconfigured login page.
+[context.deploy-preview]
+  ignore = "exit 0"
+
+[context.branch-deploy]
+  ignore = "exit 0"
+
 # Set production runtime secrets/flags in Netlify's UI with Functions scope
 # (and Builds where required), never in this tracked file.
