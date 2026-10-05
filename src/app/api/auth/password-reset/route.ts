@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAuthServerClient } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function sameOriginFromRequest(request: Request): string | null {
   const origin = request.headers.get("origin");
@@ -23,20 +24,37 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as { email?: unknown } | null;
   const email = typeof body?.email === "string" ? body.email.trim() : "";
-  if (!email || email.length > 320 || !email.includes("@")) {
+  if (!email || email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
-  const supabase = await createAuthServerClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/confirm`,
-  });
+  const requestId = crypto.randomUUID();
+  let stage = "client_configuration";
+  const unavailable = () => NextResponse.json(
+    { error: "Password reset is temporarily unavailable. Please contact support with the reference below.", requestId },
+    { status: 503, headers: { "Cache-Control": "no-store", "X-Request-Id": requestId } }
+  );
+  try {
+    const supabase = await createAuthServerClient();
+    stage = "recovery_request";
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/auth/confirm`,
+    });
 
-  if (error?.status === 429) {
-    return NextResponse.json(
-      { error: "Too many reset requests. Please wait and try again." },
-      { status: 429, headers: { "Cache-Control": "no-store" } }
-    );
+    if (error?.status === 429) {
+      return NextResponse.json(
+        { error: "Too many reset requests. Please wait and try again." },
+        { status: 429, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+    if (error) {
+      console.error("[auth/password-reset] unavailable", { requestId, stage, status: error.status });
+      return unavailable();
+    }
+  } catch {
+    // Never log email addresses, provider messages, headers or credentials.
+    console.error("[auth/password-reset] unavailable", { requestId, stage });
+    return unavailable();
   }
 
   // Keep account existence private. Supabase sends mail only for eligible users.

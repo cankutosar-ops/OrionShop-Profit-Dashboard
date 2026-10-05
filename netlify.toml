@@ -1,7 +1,7 @@
 # OpenNext is automatically selected by Netlify for this Next.js application.
 # Do not replace this with a static export or add an SPA catch-all redirect.
 [build]
-  command = "npm run verify:dashboard-loading-behavior && npm run verify:server-loading-guards && npm run verify:dashboard-connection-recovery && npm run build"
+  command = "node scripts/verify-password-reset-offline.mjs && npm run verify:dashboard-loading-behavior && npm run verify:server-loading-guards && npm run verify:dashboard-connection-recovery && npm run build"
   publish = ".next"
 
 [build.environment]

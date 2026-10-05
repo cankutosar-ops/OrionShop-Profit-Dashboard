@@ -64,9 +64,11 @@ export function LoginForm() {
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
         message?: string;
+        requestId?: string;
       };
       if (!response.ok) {
-        setError(payload.message || payload.error || "Password reset request failed.");
+        const message = payload.message || payload.error || "Password reset request failed.";
+        setError(payload.requestId ? `${message} Reference: ${payload.requestId}` : message);
         return;
       }
       setResetMessage(

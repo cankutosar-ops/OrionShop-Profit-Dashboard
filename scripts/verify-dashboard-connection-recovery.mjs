@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { pathToFileURL } from "node:url";
-
-const serviceUrl = pathToFileURL(
-  new URL("../src/lib/supabase/read-budget.ts", import.meta.url).pathname
-);
+const serviceUrl = new URL("../src/lib/supabase/read-budget.ts", import.meta.url);
 const { withReadBudget } = await import(serviceUrl.href);
 
 const fast = await withReadBudget(() => Promise.resolve("ready"), 50);

@@ -20,6 +20,16 @@ function isPidAlive(pid) {
 }
 
 async function main() {
+  // Production must compile its browser-visible Supabase configuration.
+  // Credential-free deploy previews remain deliberately isolated.
+  if (process.env.NETLIFY === "true" && process.env.CONTEXT === "production") {
+    const required = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"];
+    const missing = required.filter((name) => !process.env[name]?.trim());
+    if (missing.length) {
+      console.error(`Build blocked: missing Netlify Production configuration: ${missing.join(", ")}`);
+      process.exit(1);
+    }
+  }
   // Production intentionally returns 404 for /api/perf/*. Browser telemetry
   // must therefore remain explicitly opt-in. Fail the build if a future edit
   // re-enables client posts by default and recreates a production request loop.

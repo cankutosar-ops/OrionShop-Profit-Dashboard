@@ -9,10 +9,16 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const tokenHash = url.searchParams.get('token_hash');
   const type = url.searchParams.get('type');
+  const code = url.searchParams.get('code');
   let destination = '/login?error=confirmation_failed';
   if (tokenHash && (type === 'invite' || type === 'recovery')) {
     const supabase = await createAuthServerClient();
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    if (!error) destination = '/auth/password';
+  } else if (code && !tokenHash) {
+    // Standard PKCE recovery links require the original browser's verifier.
+    const supabase = await createAuthServerClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) destination = '/auth/password';
   }
   const response = NextResponse.redirect(authRedirectUrl(destination, url.origin));
