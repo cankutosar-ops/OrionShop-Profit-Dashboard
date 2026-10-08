@@ -16,6 +16,11 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54329
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: fixture-anon
+      SUPABASE_SERVICE_ROLE_KEY: fixture-service
+      INVENTORY_SNAPSHOT_SCHEDULER: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,7 +39,22 @@ jobs:
           node --import tsx scripts/verify-tenant-authorization-p0.mjs
           node scripts/verify-nav-regression-6-35-4.mjs
           node scripts/verify-account-switch-ux-6-35-1.mjs
+      - name: Marketplace and finance release regressions
+        run: |
+          node --import tsx scripts/verify-dashboard-brand-finance.mjs
+          node --import tsx scripts/verify-finance-2026-weekly-backfill.mjs
+          node --import tsx scripts/verify-finance-excel-import.mjs
+          node --import tsx scripts/verify-sync-worker.mjs
+          node --import tsx scripts/verify-warehouse-sales-reconciliation.mjs
+          node --import tsx scripts/verify-warehouse-sales-export.mjs
+          node --import tsx scripts/verify-fbs-warehouse-attribution.mjs
+          for test in scripts/verify-ozon-*.mjs; do
+            case "$test" in *docker*|*source-schema*) continue ;; esac
+            node --import tsx "$test"
+          done
       - name: Production build
         run: npm run build
       - name: Compiled app, middleware and HTTP failure paths
         run: npm run verify:dashboard-production
+      - name: Single-company Gunay read paths
+        run: npm run verify:gunay-release

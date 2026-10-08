@@ -4,7 +4,10 @@ import { recordPerfEvent } from "@/lib/perf/perf-recorder";
 import { logScopeAudit } from "@/lib/scope-audit-log";
 import {
   aggregateWarehouseProductSales,
+  aggregateWarehouseProductReport,
+  type WarehouseProductReportRow,
   aggregateWarehouseSales,
+  warehousePeriodEndExclusive,
   type WarehouseOrderInput,
   type WarehouseProductSalesRow,
   type WarehouseSaleInput,
@@ -15,14 +18,17 @@ import type { WarehouseLocation } from "@/lib/warehouse-locations";
 import { buildWarehouseLocations, mergeWarehouseNameLists } from "@/lib/warehouse-locations";
 import { fetchProductsWithRelations } from "@/services/persisted-query-service";
 import { listWarehouseLocations } from "@/services/warehouse-location-service";
+import { readSellerWarehouses } from "@/services/wb-seller-warehouse-service";
+import { readFbsOrderEvidence } from "@/services/wb-fbs-evidence-service";
+import { attributeFbsWarehouses } from "@/lib/fbs-warehouse-attribution";
 import type { ScopedDateRange } from "@/types/database";
 
 const PAGE_SIZE = 1000;
 
 const SALE_COLUMNS =
-  "warehouse, quantity, price_with_disc, is_return, product_id, nm_id";
+  "srid, warehouse, quantity, price_with_disc, is_return, product_id, nm_id";
 
-const ORDER_COLUMNS = "warehouse, product_id, quantity, price_with_disc, price";
+const ORDER_COLUMNS = "srid, warehouse, product_id, nm_id, quantity, price_with_disc, price";
 
 export type WarehouseSalesAnalyticsReport = {
   range: ScopedDateRange;
@@ -31,6 +37,8 @@ export type WarehouseSalesAnalyticsReport = {
   /** Product breakdown when a warehouse was requested; otherwise null. */
   drillDownWarehouse: string | null;
   products: WarehouseProductSalesRow[] | null;
+  warehouseProducts?: WarehouseProductReportRow[];
+  fbsAttribution: { available: boolean; evidenceRows: number; attributedOrders: number; attributedSales: number };
   /** Account Warehouse Locations (WB + FBS peers) — name is the filter key. */
   locations: WarehouseLocation[];
   loadTimeMs: number;
@@ -68,7 +76,7 @@ async function fetchOrdersForWarehouseAnalytics(
       .select(ORDER_COLUMNS)
       .eq("marketplace_account_id", scope.marketplaceAccountId)
       .gte("order_date", scope.from)
-      .lte("order_date", scope.to)
+      .lt("order_date", warehousePeriodEndExclusive(scope.to))
       .order("order_date", { ascending: true })
       .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
@@ -129,7 +137,7 @@ async function fetchCompletedSalesForWarehouseAnalytics(
       .select(SALE_COLUMNS)
       .eq("marketplace_account_id", scope.marketplaceAccountId)
       .gte("sale_date", scope.from)
-      .lte("sale_date", scope.to)
+      .lt("sale_date", warehousePeriodEndExclusive(scope.to))
       .eq("is_return", false)
       .order("sale_date", { ascending: true })
       .order("id", { ascending: true })
@@ -171,7 +179,7 @@ async function fetchCompletedSalesForWarehouseAnalytics(
 
 export async function getWarehouseSalesAnalytics(
   scope: ScopedDateRange,
-  options?: { warehouse?: string | null; client?: SupabaseClient }
+  options?: { warehouse?: string | null; client?: SupabaseClient; includeAllProducts?: boolean }
 ): Promise<WarehouseSalesAnalyticsReport | null> {
   const env = getSupabaseEnv();
   if (!env.isConfigured) return null;
@@ -185,14 +193,21 @@ export async function getWarehouseSalesAnalytics(
   });
 
   const productIds = scope.brandId ? products.map((p) => String(p.id)) : undefined;
-  const [orders, sales, catalogLocations] = await Promise.all([
+  const [sourceOrders, sourceSales, catalogLocations, sellerWarehouses, evidence] = await Promise.all([
     fetchOrdersForWarehouseAnalytics(scope, client, productIds),
     fetchCompletedSalesForWarehouseAnalytics(scope, client, productIds),
     listWarehouseLocations(scope.marketplaceAccountId, {
       activeOnly: true,
       client,
     }).catch(() => [] as WarehouseLocation[]),
+    readSellerWarehouses(scope.marketplaceAccountId, client),
+    readFbsOrderEvidence(scope.marketplaceAccountId, client),
   ]);
+
+  // Read projection only. Account-scoped RID + nm_id proof; stored business history is untouched.
+  const orderAttribution = attributeFbsWarehouses(sourceOrders, evidence.rows, sellerWarehouses);
+  const saleAttribution = attributeFbsWarehouses(sourceSales, evidence.rows, sellerWarehouses);
+  const orders = orderAttribution.rows, sales = saleAttribution.rows;
 
   const { rows, totals } = aggregateWarehouseSales({ orders, sales });
 
@@ -206,7 +221,7 @@ export async function getWarehouseSalesAnalytics(
   const drillDownWarehouse = options?.warehouse?.trim() || null;
   let productRows: WarehouseProductSalesRow[] | null = null;
   if (drillDownWarehouse) {
-    productRows = aggregateWarehouseProductSales(sales, drillDownWarehouse, productLookup);
+    productRows = aggregateWarehouseProductSales({ orders, sales }, drillDownWarehouse, productLookup);
   }
 
   const periodNames = mergeWarehouseNameLists(
@@ -215,7 +230,7 @@ export async function getWarehouseSalesAnalytics(
   );
   const locations = buildWarehouseLocations(
     periodNames.map((name) => ({ name, active: true }))
-  );
+  ).map(location => catalogLocations.find(row => row.name === location.name) ?? location);
 
   logScopeAudit("Warehouse Sales Analytics", scope, scope, {
     orders: orders.length,
@@ -225,10 +240,13 @@ export async function getWarehouseSalesAnalytics(
 
   return {
     range: scope,
+    fbsAttribution: { available: evidence.available, evidenceRows: evidence.rows.length,
+      attributedOrders: orderAttribution.attributed, attributedSales: saleAttribution.attributed },
     rows,
     totals,
     drillDownWarehouse,
     products: productRows,
+    ...(options?.includeAllProducts ? { warehouseProducts: aggregateWarehouseProductReport(sales, productLookup) } : {}),
     locations,
     loadTimeMs: Date.now() - started,
     sourceSaleCount: sales.length,

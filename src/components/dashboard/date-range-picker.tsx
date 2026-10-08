@@ -145,6 +145,7 @@ export function DateRangePicker() {
   const defaults = getDefaultDateRange();
   const containerRef = useRef<HTMLDivElement>(null);
   const defaultDatesSeededRef = useRef(false);
+  const applyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const from = searchParams.get("from") ?? defaults.from;
   const to = searchParams.get("to") ?? defaults.to;
@@ -152,17 +153,25 @@ export function DateRangePicker() {
 
   const [open, setOpen] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [loadWarning, setLoadWarning] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
   const [draftTo, setDraftTo] = useState(to);
   const [activeField, setActiveField] = useState<ActiveField>("from");
   const [viewMonth, setViewMonth] = useState(() => parseISO(from));
 
   useEffect(() => {
+    if (applyTimerRef.current) clearTimeout(applyTimerRef.current);
+    applyTimerRef.current = null;
     setDraftFrom(from);
     setDraftTo(to);
     setViewMonth(parseISO(from));
     setApplying(false);
-  }, [from, to]);
+    setLoadWarning(false);
+  }, [from, to, currentQuery]);
+
+  useEffect(() => () => {
+    if (applyTimerRef.current) clearTimeout(applyTimerRef.current);
+  }, []);
 
   useEffect(() => {
     const fromParam = searchParams.get("from");
@@ -205,6 +214,12 @@ export function DateRangePicker() {
 
   function applyRange(nextFrom: string, nextTo: string) {
     const normalized = normalizeRange(nextFrom, nextTo);
+    // An unchanged selection cannot trigger the date-change effect that
+    // releases the control. Do not start another navigation for it.
+    if (normalized.from === from && normalized.to === to) {
+      setOpen(false);
+      return;
+    }
     const params = new URLSearchParams(searchParams.toString());
     params.set("from", normalized.from);
     params.set("to", normalized.to);
@@ -225,6 +240,15 @@ export function DateRangePicker() {
     }
     // Push URL then refresh so Server Components refetch (push alone can leave stale RSC).
     setApplying(true);
+    setLoadWarning(false);
+    if (applyTimerRef.current) clearTimeout(applyTimerRef.current);
+    // This only unlocks the control; it never claims the new data loaded.
+    // Do not retry/refresh automatically or interrupt a pending server read.
+    applyTimerRef.current = setTimeout(() => {
+      applyTimerRef.current = null;
+      setApplying(false);
+      setLoadWarning(true);
+    }, 45_000);
     navigateScope(router, `${pathname}?${params.toString()}`, "push");
     setOpen(false);
   }
@@ -275,6 +299,12 @@ export function DateRangePicker() {
           {applying ? "Updating…" : `${formatDate(from)} — ${formatDate(to)}`}
         </span>
       </button>
+
+      {loadWarning && (
+        <div role="alert" className="mt-2 max-w-xs rounded-xl border border-warning/30 bg-card px-3 py-2 text-xs text-warning">
+          The selected period has not finished loading. These figures are not verified for the requested period. Reload the page before using them.
+        </div>
+      )}
 
       {open && (
         <div

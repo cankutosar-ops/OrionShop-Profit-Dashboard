@@ -1,4 +1,7 @@
 import { ReportShell } from "@/components/reporting/report-shell";
+import { createServerClient } from '@/lib/supabase/server';
+import { isScopedOzonAccount } from '@/services/scoped-marketplace-service';
+import { OzonFinanceReport } from '@/components/reporting/ozon-finance-report';
 import { ReportSummaryCards } from "@/components/reporting/report-summary-cards";
 import { SettlementLinesTable } from "@/components/reporting/financial-detail-tables";
 import { ReportEmptyState } from "@/components/reporting/report-empty-state";
@@ -30,6 +33,7 @@ export default async function SettlementReportPage({ searchParams }: PageProps) 
   const params = await searchParams;
   const report = getReportDefinition("settlement")!;
   const scope = await resolveScopedDateRange(params);
+  if (await isScopedOzonAccount(await createServerClient(), scope)) return <OzonFinanceReport scope={scope}/>;
   const category = parseReportCategory(params);
   const scopeQuery = scopeParamsToSearchParams(params).toString();
   const hubHref = scopeQuery ? `/reports?${scopeQuery}` : "/reports";

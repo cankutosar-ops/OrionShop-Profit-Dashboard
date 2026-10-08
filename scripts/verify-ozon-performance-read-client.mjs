@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {createOzonPerformanceReadClient} from '../src/lib/ozon/performance-read-client.ts';
+const calls=[];let now=Date.parse('2026-10-06T00:00:00Z');
+const client=createOzonPerformanceReadClient({clientId:'fixture-performance-client',clientSecret:'private-secret',now:()=>now,fetch:async(url,init)=>{calls.push({url,method:init.method});return new Response(JSON.stringify(url.endsWith('/token')?{access_token:'private-token',token_type:'Bearer',expires_in:1800}:{report:[]}),{status:200})}});
+const report=await client.captureReport('daily','2026-10-01','2026-10-05');assert.equal(report.accountingComplete,false);assert.ok(!JSON.stringify(client).includes('private-secret'));assert.ok(!JSON.stringify(report).includes('private-token'));
+await client.captureReport('expense','2026-10-01','2026-10-05');assert.equal(calls.filter(c=>c.url.endsWith('/token')).length,1);now+=1800000;await client.captureReport('daily','2026-10-01','2026-10-05');assert.equal(calls.filter(c=>c.url.endsWith('/token')).length,2);
+assert.ok(calls.every(c=>c.url.startsWith('https://api-performance.ozon.ru/')));assert.ok(calls.filter(c=>!c.url.endsWith('/token')).every(c=>c.method==='GET'));
+await assert.rejects(client.captureReport('activate','2026-10-01','2026-10-05'),/invalid_performance_window/);await assert.rejects(client.captureReport('daily','2026-01-01','2026-10-05'),/invalid_performance_window/);
+let count=0;const bad=createOzonPerformanceReadClient({clientId:'fixture',clientSecret:'secret',fetch:async()=>{count++;return new Response('private-body',{status:401})}});await assert.rejects(bad.captureReport('daily','2026-10-01','2026-10-05'),e=>!e.message.includes('private-body'));assert.equal(count,1);
+console.log('PASS: separate Performance credential contract, fixed origin/read-only methods, bounded explicit dates, private expiring token, redaction and no retry; spend remains un-reconciled source evidence');

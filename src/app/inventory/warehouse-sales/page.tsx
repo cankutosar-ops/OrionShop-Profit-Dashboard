@@ -34,7 +34,7 @@ export default async function WarehouseSalesAnalyticsPage({ searchParams }: Page
     <>
       <PageHeader
         title="Warehouse Sales Analytics"
-        description="Orders from wb_orders · Units and Revenue from completed wb_sales"
+        description="Compare warehouse orders and completed purchases"
       />
 
       <div className="mb-4">
@@ -56,22 +56,24 @@ export default async function WarehouseSalesAnalyticsPage({ searchParams }: Page
                 {formatDate(scope.from)} → {formatDate(scope.to)}
               </span>
               {" · "}
-              {report.rows.length} warehouses
+              {report.locations.length} known warehouses
               {" · "}
               {report.sourceOrderCount.toLocaleString("ru-RU")} orders
               {" · "}
               {report.sourceSaleCount.toLocaleString("ru-RU")} completed sales
-              {" · "}
-              loaded in {report.loadTimeMs} ms
             </p>
             <p className="mt-1.5 text-xs leading-relaxed">
-              Orders = COUNT(wb_orders) · Orders Amount = Σ order value (price_with_disc) · Units /
-              Revenue = completed wb_sales · NULL warehouse → Unknown Warehouse · Order Share =
-              orders ÷ total orders
+              Orders and completed purchases are separate stages. Units show completed purchases,
+              not current stock. Locations without period activity can be hidden below.
             </p>
           </div>
 
           <Suspense fallback={<TableFallback />}>
+            <p className="text-xs text-muted-foreground">
+              {report.fbsAttribution.available && report.fbsAttribution.evidenceRows > 0
+                ? `FBS source evidence: ${report.fbsAttribution.attributedOrders} orders and ${report.fbsAttribution.attributedSales} completed sales matched. Unmatched rows retain their stored WB location; FBS attribution may be incomplete.`
+                : "FBS warehouse attribution is not loaded yet. Generic WB locations do not establish seller-warehouse activity; missing FBS figures are not zero sales."}
+            </p>
             <WarehouseSalesAnalyticsTable
               rows={report.rows}
               totals={report.totals}
@@ -80,6 +82,8 @@ export default async function WarehouseSalesAnalyticsPage({ searchParams }: Page
               locations={report.locations}
               rangeFrom={scope.from}
               rangeTo={scope.to}
+              marketplaceAccountId={scope.marketplaceAccountId}
+              companyId={scope.companyId}
             />
           </Suspense>
         </div>

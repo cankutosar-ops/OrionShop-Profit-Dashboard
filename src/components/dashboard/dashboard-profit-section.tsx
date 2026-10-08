@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { BrandFinanceNotice } from "@/lib/dashboard-finance-scope";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { formatKpiCount, formatKpiCurrency, formatKpiPercent } from "@/lib/kpi-format";
 import { KPI_ICONS } from "@/lib/kpi-icons";
@@ -24,6 +25,7 @@ const SIMULATION_CARD =
   "border-dashed border-amber-500/35 bg-amber-500/[0.04] ring-1 ring-amber-500/20";
 
 type DashboardProfitSectionProps = {
+  brandFinanceNotice?: BrandFinanceNotice;
   modelB: ModelBProfitMetrics;
   marketplaceFees: MarketplaceFeesPresentation;
   quantities: QuantityMetrics;
@@ -64,6 +66,7 @@ function profitVariant(
 }
 
 export function DashboardProfitSection({
+  brandFinanceNotice,
   modelB,
   marketplaceFees,
   quantities,
@@ -99,7 +102,9 @@ export function DashboardProfitSection({
 
   const noReturnsScenario = calculatePotentialProfitNoReturns({
     grossSales: modelB.grossSales,
-    marketplaceFee: wbFee,
+    // Keep the actual Finance Revenue basis. Sales API forPay is a
+    // reconciliation source, not the basis for a returns-only scenario.
+    marketplaceFee: modelB.netSales - modelB.revenue,
     productCost: modelB.productCost,
     logistics: modelB.logistics,
     storage: modelB.storage,
@@ -117,6 +122,16 @@ export function DashboardProfitSection({
       title="Commercial Performance"
       description="Gross → returns → net sales → revenue → expenses → profit for the selected date range"
     >
+      {brandFinanceNotice && (
+        <div className="rounded-xl border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Brand profit before unallocated account costs</p>
+          <p>Finance records without a product link are excluded from this brand. Full account totals retain them; no costs are allocated automatically.</p>
+          <details className="mt-2">
+            <summary className="cursor-pointer">Unallocated account costs · {brandFinanceNotice.rows} records</summary>
+            <p className="mt-2">Logistics: {formatKpiCurrency(brandFinanceNotice.logistics)} · Storage: {formatKpiCurrency(brandFinanceNotice.storage)} · Penalties: {formatKpiCurrency(brandFinanceNotice.penalties)} · Adjustments: {formatKpiCurrency(brandFinanceNotice.adjustments)}</p>
+          </details>
+        </div>
+      )}
       <div className="space-y-4">
         {/* Continuous money-flow story — one grid, equal card language */}
         <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -278,7 +293,7 @@ export function DashboardProfitSection({
                 ? "Potential Profit − Net Profit"
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
-            hint="Simulation only. Positive value = profit lost because of returns. Not an accounting KPI."
+            hint="Sales-only simulation: add Returned Sales to current Net Profit, holding settlement deductions, costs and tax unchanged. Not a verified return expense or an accounting KPI."
             badge="Simulation"
             icon={KPI_ICONS.returns}
             className={SIMULATION_CARD}
@@ -294,7 +309,7 @@ export function DashboardProfitSection({
             subtitle={
               revenueReady ? (
                 <div className="space-y-0.5">
-                  <div>Estimated profit assuming all returned orders were completed.</div>
+                  <div>Returned Sales restored; costs and tax unchanged.</div>
                   <div className="tabular-nums text-foreground/80">
                     {isEmptyPeriod
                       ? emptyValue
@@ -306,7 +321,7 @@ export function DashboardProfitSection({
                 sanitizeUnavailableReason(undefined, "Awaiting revenue data")
               )
             }
-            hint="Simulation only. Returns are ignored. This is not an accounting KPI. Gross Sales − Finance-based Marketplace Fees − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Advertising − Estimated Tax."
+            hint="Sales-only simulation: current Net Profit + Returned Sales. Uses the same Finance Revenue basis as actual profit. Settlement deductions, Product Cost, logistics, advertising and tax remain unchanged; this is not a forecast of fully recalculated profit."
             badge="No Returns Scenario"
             icon={KPI_ICONS.profit}
             className={SIMULATION_CARD}

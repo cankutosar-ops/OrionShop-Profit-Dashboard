@@ -650,6 +650,10 @@ export async function getMarketplaceAccountForSync(
     if (error) throw new Error(`Failed to fetch marketplace account: ${error.message}`);
     if (!data) throw new Error(`Marketplace account not found: ${accountId}`);
 
+    if (data.marketplace !== "wildberries") {
+      throw new Error("This synchronization operation supports Wildberries accounts only");
+    }
+
     if (data.sync_enabled === false) {
       throw new Error(`Sync is disabled for account "${data.account_name}"`);
     }
@@ -731,6 +735,8 @@ export async function createMarketplaceAccount(input: {
   const supabase = createAdminClient();
   const isDefault = input.is_default ?? false;
 
+  if (input.marketplace === 'ozon') throw new Error('Use the Ozon connection form with Client ID and API key');
+
   const baseInsert = {
     company_id: input.company_id,
     marketplace: input.marketplace,
@@ -795,6 +801,14 @@ export async function updateMarketplaceAccount(
   }>
 ): Promise<MarketplaceAccountPublic> {
   const supabase = createAdminClient();
+  const current = await supabase.from('marketplace_accounts').select('marketplace').eq('id', accountId).single();
+  if (current.error || !current.data) throw new Error('Marketplace account unavailable');
+  if (input.marketplace !== undefined && input.marketplace !== current.data.marketplace) {
+    throw new Error('Marketplace identity cannot be changed');
+  }
+  if (current.data.marketplace === 'ozon' && input.api_key?.trim()) {
+    throw new Error('Use the Ozon reconnect form with Client ID and API key');
+  }
   const patch: {
     updated_at: string;
     account_name?: string;
@@ -859,6 +873,15 @@ export async function testMarketplaceAccountConnection(
   const testedAt = new Date().toISOString();
   const started = Date.now();
   try {
+    const metadata = await createAdminClient().from('marketplace_accounts').select('company_id,marketplace').eq('id', accountId).single();
+    if (metadata.error || !metadata.data) throw new Error('Marketplace account unavailable');
+    if (metadata.data.marketplace === 'ozon') {
+      const { loadOzonAccountReaders } = await import('@/services/ozon-account-readers');
+      const readers = await loadOzonAccountReaders({ accountId, companyId: String(metadata.data.company_id) });
+      await readers.readPage('products', '', 1);
+      return { ok: true, message: 'Connected to Ozon; empty finance does not invalidate the connection',
+        healthy: true, latencyMs: Date.now() - started, testedAt, failureReason: null };
+    }
     const account = await getMarketplaceAccountForSync(accountId);
 
     if (account.marketplace === "wildberries") {

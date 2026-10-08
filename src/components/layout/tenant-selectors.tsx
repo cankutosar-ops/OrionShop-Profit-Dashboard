@@ -1,5 +1,7 @@
 "use client";
 
+import { clearMarketplaceSpecificFilters } from "@/lib/marketplace-content-scope";
+
 import { Building2, ChevronDown, Store } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -22,7 +24,7 @@ function clearSyncDateParams(params: URLSearchParams) {
   params.delete(SYNC_DATE_PARAM.manual);
   params.delete(SYNC_DATE_PARAM.adjusted);
   params.delete(SYNC_DATE_PARAM.accountSwitched);
-  params.delete(FILTER_PARAMS.brand);
+  clearMarketplaceSpecificFilters(params);
 }
 
 /**

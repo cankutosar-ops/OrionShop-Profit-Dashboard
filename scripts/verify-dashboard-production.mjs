@@ -79,7 +79,7 @@ const fixture = http.createServer(async (request, response) => {
   if (request.method === "HEAD") return response.end();
   send(rows);
 });
-await new Promise((resolve, reject) => { fixture.once("error", reject); fixture.listen(0, "127.0.0.1", resolve); });
+await new Promise((resolve, reject) => { fixture.once("error", reject); fixture.listen(Number(process.env.ORION_FIXTURE_PORT ?? 54329), "127.0.0.1", resolve); });
 const fixtureUrl = `http://127.0.0.1:${fixture.address().port}`;
 const portServer = http.createServer();
 await new Promise(resolve => portServer.listen(0, "127.0.0.1", resolve));
@@ -218,5 +218,5 @@ try {
   if (child.exitCode === null) child.kill("SIGKILL");
   fixture.closeAllConnections();
   await new Promise(resolve => fixture.close(resolve));
-  await writeFile("/tmp/orion-production-fixture.log", output);
+  await writeFile(resolve(".orion-production-fixture.log"), output);
 }

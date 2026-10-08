@@ -11,7 +11,7 @@ export type MarketplaceType = "wildberries" | "ozon" | "lamoda";
 export const MARKETPLACE_TYPES: MarketplaceType[] = ["wildberries", "ozon", "lamoda"];
 
 /** Platforms that can be connected today (others show Coming Soon). */
-export const MARKETPLACE_CONNECTABLE: MarketplaceType[] = ["wildberries"];
+export const MARKETPLACE_CONNECTABLE: MarketplaceType[] = ["wildberries", "ozon"];
 
 export type SyncStatus = "idle" | "running" | "success" | "partial" | "failed" | "warning";
 
@@ -1130,6 +1130,7 @@ export type WbBalanceMetrics = {
 };
 
 export type OverviewMetrics = ProfitBreakdown & {
+  brandFinanceNotice?: import("@/lib/dashboard-finance-scope").BrandFinanceNotice;
   dailyRevenue: { date: string; revenue: number; profit: number }[];
   costBreakdown: { name: string; value: number; color: string }[];
   ordersPurchases: OrdersPurchasesKpis;
@@ -1147,6 +1148,13 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  wb_fbs_order_warehouse_evidence: {
+    Row: { marketplace_account_id: string; rid: string; assembly_order_id: number; seller_warehouse_id: number;
+      nm_id: number; chrt_id: number; created_at: string; observed_at: string };
+    Insert: Database["public"]["Tables"]["wb_fbs_order_warehouse_evidence"]["Row"];
+    Update: Partial<Database["public"]["Tables"]["wb_fbs_order_warehouse_evidence"]["Row"]>;
+    Relationships: NoRelationships;
+  };
   company_purchase_tax_policies: {
     Row: CompanyPurchaseTaxPolicy;
     Insert: Omit<CompanyPurchaseTaxPolicy, "id" | "created_at" | "updated_at"> & {
@@ -1424,6 +1432,21 @@ type PublicTables = {
       observed_at: string;
       updated_at: string;
     }>;
+    Relationships: NoRelationships;
+  };
+  wb_seller_warehouses: {
+    Row: {
+      marketplace_account_id: string;
+      seller_warehouse_id: number;
+      name: string;
+      wb_office_id: number;
+      delivery_type: number;
+      is_deleting: boolean | null;
+      is_processing: boolean | null;
+      observed_at: string;
+    };
+    Insert: Database["public"]["Tables"]["wb_seller_warehouses"]["Row"];
+    Update: Partial<Database["public"]["Tables"]["wb_seller_warehouses"]["Row"]>;
     Relationships: NoRelationships;
   };
   historical_inventory_snapshots: {
@@ -1906,6 +1929,10 @@ export type Database = {
       };
     };
     Functions: {
+      orion_publish_ozon_financial_reference: { Args: { p_account_id: string; p_token: string; p_kind: string; p_period_key: string; p_snapshot_id: string; p_observed_at: string; p_payload: OzonCaptureJson }; Returns: number };
+      orion_acquire_ozon_sync: { Args: { p_account_id: string; p_token: string }; Returns: boolean };
+      orion_release_ozon_sync: { Args: { p_account_id: string; p_token: string }; Returns: boolean };
+      orion_publish_ozon_fenced_capture: { Args: { p_account_id: string; p_token: string; p_kind: string; p_capture: OzonCaptureJson }; Returns: number };
       orion_admin_rls_status: {
         Args: Record<string, never>;
         Returns: Array<Record<string, unknown>>;
@@ -1934,3 +1961,5 @@ export type Database = {
     CompositeTypes: Record<string, never>;
   };
 };
+
+export type OzonCaptureJson = string | number | boolean | null | { [key: string]: OzonCaptureJson | undefined } | OzonCaptureJson[];

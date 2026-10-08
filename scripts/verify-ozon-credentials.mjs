@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+import {encryptOzonCredentials,decryptOzonCredentials,decryptOzonPerformanceCredentials} from '../src/lib/ozon/credentials.ts';
+process.env.MARKETPLACE_CREDENTIALS_KEY='fixture-ozon-encryption-key-not-production';
+const scope={accountId:'17',companyId:'2'},pair={clientId:'fixture-client',apiKey:'fixture-secret-key'};
+const encrypted=encryptOzonCredentials({...scope,...pair});
+assert.ok(!encrypted.includes(pair.apiKey));assert.deepEqual(decryptOzonCredentials(encrypted,scope),pair);
+assert.throws(()=>decryptOzonCredentials(encrypted,{accountId:'18',companyId:'2'}),/scope_mismatch/);
+assert.throws(()=>decryptOzonCredentials(encrypted,{accountId:'17',companyId:'1'}),/scope_mismatch/);
+assert.throws(()=>decryptOzonCredentials('invalid-private-data',scope),error=>!error.message.includes('invalid-private-data'));
+const compile=s=>ts.transpileModule(s,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const modules=[['@/lib/ozon/credentials','credentials.ts'],['@/lib/ozon/read-client','read-client.ts'],['@/lib/ozon/posting-read-client','posting-read-client.ts'],['@/lib/ozon/finance-read-client','finance-read-client.ts'],['@/lib/ozon/financial-reference-client','financial-reference-client.ts'],['@/lib/ozon/performance-read-client','performance-read-client.ts']];
+let source=readFileSync('src/services/ozon-account-readers.ts','utf8').replace("import 'server-only';",'').replace("import {createAdminClient} from '@/lib/supabase/admin';",'');
+// Preserve actual credential codec via an explicit test shim; all transport factories are real TS modules.
+source=source.replace("import {decryptOzonCredentials,decryptOzonPerformanceCredentials} from '@/lib/ozon/credentials';",'const decryptOzonCredentials = globalThis.__testOzonDecode; const decryptOzonPerformanceCredentials=globalThis.__testOzonPerformanceDecode;');
+globalThis.__testOzonDecode=decryptOzonCredentials;
+globalThis.__testOzonPerformanceDecode=decryptOzonPerformanceCredentials;
+const perf={clientId:'fixture-performance',clientSecret:'private-performance-secret'};
+const full=encryptOzonCredentials({...scope,...pair,performance:perf});
+assert.deepEqual(decryptOzonCredentials(full,scope),pair);assert.deepEqual(decryptOzonPerformanceCredentials(full,scope),perf);
+assert.equal(decryptOzonPerformanceCredentials(encrypted,scope),null);
+assert.throws(()=>decryptOzonPerformanceCredentials(full,{...scope,accountId:'18'}),/scope_mismatch/);
+// Imported module URLs resolve their real relative dependencies through tsx.
+for(const [alias,file] of modules.filter(([name])=>name!=='@/lib/ozon/credentials'))source=source.replace(JSON.stringify(alias).replaceAll('"',"'"),JSON.stringify(new URL(`../src/lib/ozon/${file}`,import.meta.url).href));
+const {loadOzonAccountReaders}=await import(`data:text/javascript;base64,${Buffer.from(compile(source)).toString('base64')}`);
+const account={id:'17',company_id:'2',marketplace:'ozon',is_active:true,sync_enabled:true,api_key_encrypted:encrypted};
+const client=row=>({from(table){assert.equal(table,'marketplace_accounts');const filters={};return {select(columns){assert.ok(columns.includes('api_key_encrypted'));return this},eq(key,value){filters[key]=value;return this},async maybeSingle(){assert.deepEqual(filters,{id:'17',company_id:'2'});return {data:row,error:null}}}}});
+const readers=await loadOzonAccountReaders({...scope,client:client(account)});
+assert.ok(!JSON.stringify(readers).includes(pair.apiKey));assert.ok(!JSON.stringify(readers).includes(encrypted));
+for(const row of [{...account,marketplace:'wildberries'},{...account,company_id:'1'},{...account,sync_enabled:false},{...account,is_active:false}])await assert.rejects(loadOzonAccountReaders({...scope,client:client(row)}),/not_available/);
+delete globalThis.__testOzonDecode;
+delete globalThis.__testOzonPerformanceDecode;
+const wb=readFileSync('src/services/marketplace-account-service.ts','utf8');
+const functionStart=wb.indexOf('export async function getMarketplaceAccountForSync');
+assert.ok(wb.indexOf('data.marketplace !== "wildberries"',functionStart)<wb.indexOf('apiKey = decryptCredential(encrypted)',functionStart));
+console.log('PASS: encrypted Ozon Client ID/API key pair, explicit versioned account/company binding, tamper rejection, no credential properties, foreign/disabled account denial and WB path rejects Ozon before decryption');

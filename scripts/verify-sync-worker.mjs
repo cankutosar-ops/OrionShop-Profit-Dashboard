@@ -249,8 +249,8 @@ console.log("\n--- GitHub Actions workflow ---");
     const y = read(".github/workflows/sync-worker.yml");
     check("workflow runs on a schedule", /on:[\s\S]*schedule:/.test(y), "cron trigger present");
     check(
-      "workflow is hourly",
-      /cron:\s*["']\d+\s+\*\s+\*\s+\*\s+\*["']/.test(y),
+      "workflow retains the approved daily schedule",
+      /cron:\s*["']20\s+0\s+\*\s+\*\s+\*["']/.test(y),
       (y.match(/cron:\s*["'][^"']+["']/) ?? ["?"])[0]
     );
     check(

@@ -153,7 +153,11 @@
     "grant:tenant-access": "node scripts/grant-tenant-access.mjs",
     "grant:platform-role": "node scripts/grant-platform-role.mjs",
     "verify:tenant-authorization-p0": "npx tsx scripts/verify-tenant-authorization-p0.mjs",
-    "verify:worker-readiness": "tsx scripts/verify-worker-production-readiness.mjs"
+    "verify:worker-readiness": "tsx scripts/verify-worker-production-readiness.mjs",
+    "backfill:finance-2026-weekly": "node --import tsx scripts/run-finance-2026-weekly-backfill.mjs",
+    "verify:finance-2026-weekly": "node --import tsx scripts/verify-finance-2026-weekly-backfill.mjs",
+    "verify:dashboard-brand-finance": "node --import tsx scripts/verify-dashboard-brand-finance.mjs",
+    "verify:gunay-release": "node scripts/verify-gunay-release.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

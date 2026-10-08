@@ -3,7 +3,8 @@
  *
  * Live Wildberries HTTP must only run after:
  * - FINANCE_V1_LIVE_REQUESTS_ENABLED=true
- * - Personal/Service token with Finance category (bit 13)
+ * - period detail: Base/Personal/Service token with Finance category (bit 13)
+ * - list / detail-by-report-id: Personal/Service token with Finance category
  * - Account 2 recovery reservation / wake preflight
  *
  * Statistics v5 reportDetailByPeriod is not used for Account 2 recovery.
@@ -36,10 +37,16 @@ export type WbFinanceV1DetailedRequest = {
   fields?: string[];
 };
 
+export type WbFinanceV1DetailedByReportIdRequest = {
+  limit: number;
+  rrdId: number;
+};
+
 /** Official camelCase detailed row. Money fields may be string or number. */
 export type WbFinanceV1DetailedRow = {
   rrdId?: number | string;
   reportId?: number | string;
+  reportType?: number | string;
   nmId?: number | string;
   vendorCode?: string;
   rrDate?: string;
@@ -238,6 +245,30 @@ export function assertFinanceV1TokenReady(token: string): WbTokenAccessClaims {
   return claims;
 }
 
+/**
+ * Period detail is the V5 replacement and is available to any production token
+ * carrying the Finance category. Unlike list/detail-by-ID, WB does not require
+ * a Personal or Service token for this endpoint.
+ */
+export function assertFinanceV1PeriodTokenReady(token: string): WbTokenAccessClaims {
+  const payload = decodeWbJwtPayload(token);
+  if (!payload) {
+    throw new Error("Finance V1 period token JWT payload could not be decoded — fail closed, no HTTP");
+  }
+  const claims = inspectWbTokenAccessClaims(payload);
+  if (claims.tokenType === "test" || claims.tokenType === "unknown") {
+    throw new Error(
+      `Finance V1 period rejected: token type=${claims.tokenType} is not a production token — no HTTP`
+    );
+  }
+  if (claims.hasFinanceCategory !== true) {
+    throw new Error(
+      "Finance V1 period rejected: Finance category (bit 13) not proven on token — no HTTP"
+    );
+  }
+  return claims;
+}
+
 export type FinanceV1ListRequest = {
   dateFrom: string;
   dateTo: string;
@@ -314,6 +345,29 @@ export function buildFinanceV1DetailedRequest(input: {
     rrdId,
     period: input.period ?? "weekly",
   };
+}
+
+/** Request body for one concrete weekly General/Purchase report. */
+export function buildFinanceV1DetailedByReportIdRequest(input: {
+  rrdId?: number;
+  limit?: number;
+}): WbFinanceV1DetailedByReportIdRequest {
+  const rrdId = input.rrdId ?? 0;
+  const limit = input.limit ?? WB_FINANCE_V1_DEFAULT_LIMIT;
+  if (!Number.isSafeInteger(rrdId) || rrdId < 0) {
+    throw new Error(`Invalid Finance V1 rrdId: ${String(input.rrdId)}`);
+  }
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > WB_FINANCE_V1_MAX_LIMIT) {
+    throw new Error(`Invalid Finance V1 limit: ${String(input.limit)}`);
+  }
+  return { limit, rrdId };
+}
+
+export function financeV1DetailedByReportIdPath(reportId: number): string {
+  if (!Number.isSafeInteger(reportId) || reportId <= 0) {
+    throw new Error(`Invalid Finance V1 reportId: ${String(reportId)}`);
+  }
+  return `${WB_FINANCE_V1_DETAILED_PATH}/${reportId}`;
 }
 
 /** 204 / empty page: official “repeat until 204” / no data. */

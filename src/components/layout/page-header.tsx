@@ -12,6 +12,8 @@ type PageHeaderProps = {
   title?: string;
   description?: string;
   showFilters?: boolean;
+  /** Account/date controls remain available while marketplace-specific actions are withheld. */
+  showWbControls?: boolean;
   /** Optional slot for page-specific controls (mounted, may be invisible). */
   headerExtras?: ReactNode;
   /** When true, header sticks under the top of the scroll viewport. */
@@ -31,7 +33,7 @@ function HeaderGroup({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 max-w-full flex-wrap items-center gap-2", className)}>{children}</div>
+    <div className={cn("flex min-w-0 max-w-full flex-wrap items-center gap-2 xl:shrink-0 xl:flex-nowrap", className)}>{children}</div>
   );
 }
 
@@ -43,32 +45,33 @@ export function PageHeader({
   title,
   description,
   showFilters = true,
+  showWbControls = true,
   headerExtras,
   sticky = true,
   variant = "default",
 }: PageHeaderProps) {
   const shellClass = sticky
-    ? "app-header-surface relative md:sticky top-0 z-40 -mx-3 mb-5 border-b border-border/70 px-3 py-3 backdrop-blur-xl sm:-mx-4 sm:px-4 lg:-mx-5 lg:px-5 xl:-mx-6 xl:px-6 2xl:-mx-8 2xl:px-8"
+    ? "relative md:sticky top-0 z-40 -mx-3 mb-4 border-b border-border/80 bg-background/95 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:-mx-4 sm:px-4 lg:-mx-5 lg:px-5 xl:-mx-6 xl:px-6 2xl:-mx-8 2xl:px-8"
     : "mb-6";
 
   if (variant === "toolbar") {
     return (
       <div className={shellClass}>
-        <div className="flex flex-wrap items-start gap-3">
+        <div className="flex flex-wrap items-start gap-3 xl:h-11 xl:flex-nowrap xl:items-center">
           <SidebarMenuButton className="shrink-0" />
           {showFilters && (
-            <div className="flex w-full min-w-0 flex-wrap items-center gap-3 2xl:w-auto 2xl:flex-1">
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-3 xl:w-auto xl:flex-1 xl:flex-nowrap xl:justify-between xl:gap-4">
               <HeaderGroup className="min-w-0 xl:flex-1">
                 <Suspense
                   fallback={<div className="h-9 w-44 shrink-0 animate-pulse rounded-lg bg-card" />}
                 >
                   <TenantSelectors />
                 </Suspense>
-                <Suspense
+                {showWbControls && <Suspense
                   fallback={<div className="h-9 w-40 shrink-0 animate-pulse rounded-lg bg-card" />}
                 >
                   <BrandSelector />
-                </Suspense>
+                </Suspense>}
               </HeaderGroup>
 
               <GroupDivider />
@@ -85,16 +88,16 @@ export function PageHeader({
 
               <HeaderGroup>
                 {headerExtras}
-                <Suspense
+                {showWbControls && <Suspense
                   fallback={<div className="h-9 w-28 shrink-0 animate-pulse rounded-lg bg-card" />}
                 >
                   <SyncVerificationPanel />
-                </Suspense>
-                <Suspense
+                </Suspense>}
+                {showWbControls && <Suspense
                   fallback={<div className="h-9 w-36 shrink-0 animate-pulse rounded-lg bg-card" />}
                 >
                   <SyncButton />
-                </Suspense>
+                </Suspense>}
               </HeaderGroup>
             </div>
           )}
@@ -112,29 +115,29 @@ export function PageHeader({
             <div className="min-w-0">
               {title ? <h1 className="text-page-title">{title}</h1> : null}
               {description ? (
-                <p className="text-kpi-label mt-1 max-w-2xl leading-relaxed">{description}</p>
+                <p className="text-kpi-label mt-0.5 truncate">{description}</p>
               ) : null}
             </div>
           )}
         </div>
         {showFilters && (
-          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 xl:flex-nowrap">
             <Suspense fallback={<div className="h-9 w-44 shrink-0 animate-pulse rounded-lg bg-card" />}>
               <TenantSelectors />
             </Suspense>
-            <Suspense fallback={<div className="h-9 w-40 shrink-0 animate-pulse rounded-lg bg-card" />}>
+            {showWbControls && <Suspense fallback={<div className="h-9 w-40 shrink-0 animate-pulse rounded-lg bg-card" />}>
               <BrandSelector />
-            </Suspense>
+            </Suspense>}
             {headerExtras}
             <Suspense fallback={<div className="h-9 w-56 shrink-0 animate-pulse rounded-lg bg-card" />}>
               <DateRangePicker />
             </Suspense>
-            <Suspense fallback={<div className="h-9 w-28 shrink-0 animate-pulse rounded-lg bg-card" />}>
+            {showWbControls && <Suspense fallback={<div className="h-9 w-28 shrink-0 animate-pulse rounded-lg bg-card" />}>
               <SyncVerificationPanel />
-            </Suspense>
-            <Suspense fallback={<div className="h-9 w-32 shrink-0 animate-pulse rounded-lg bg-card" />}>
+            </Suspense>}
+            {showWbControls && <Suspense fallback={<div className="h-9 w-32 shrink-0 animate-pulse rounded-lg bg-card" />}>
               <SyncButton />
-            </Suspense>
+            </Suspense>}
           </div>
         )}
       </div>

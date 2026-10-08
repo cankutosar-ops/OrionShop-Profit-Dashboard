@@ -3,14 +3,14 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Download, Search } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { WarehouseLocationSelect } from "@/components/inventory/warehouse-location-select";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
-import { FILTER_PARAMS } from "@/lib/filter-params";
+import { copyScopeQueryParams, FILTER_PARAMS } from "@/lib/filter-params";
 import {
-  isEmptyWarehouseName,
+  includeCatalogWarehouses,
   sumRoundedShares,
   type WarehouseProductSalesRow,
   type WarehouseSalesRow,
@@ -33,6 +33,8 @@ type WarehouseSalesAnalyticsTableProps = {
   locations?: WarehouseLocation[];
   rangeFrom: string;
   rangeTo: string;
+  marketplaceAccountId?: string;
+  companyId?: string;
 };
 
 type WarehouseSortKey =
@@ -104,19 +106,23 @@ function productSortValue(row: WarehouseProductSalesRow, key: ProductSortKey): S
 }
 
 export function WarehouseSalesAnalyticsTable({
-  rows,
+  rows: periodRows,
   totals,
   drillDownWarehouse,
   products,
   locations = [],
   rangeFrom,
   rangeTo,
+  marketplaceAccountId,
+  companyId,
 }: WarehouseSalesAnalyticsTableProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
-  const [hideEmpty, setHideEmpty] = useState(true);
+  const [hideEmpty, setHideEmpty] = useState(false);
+  // Catalog visibility is presentation-only; reporting keeps its period-activity rows.
+  const rows = useMemo(() => includeCatalogWarehouses(periodRows, locations.map(l => l.name)), [periodRows, locations]);
 
   const locationOptions = useMemo(() => {
     if (locations.length > 0) return locations;
@@ -160,7 +166,7 @@ export function WarehouseSalesAnalyticsTable({
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return rows.filter((row) => {
-      if (hideEmpty && isEmptyWarehouseName(row.warehouse)) return false;
+      if (hideEmpty && row.orders === 0 && row.units === 0 && row.revenue === 0) return false;
       if (!normalized) return true;
       const raw = row.warehouse || "";
       const latin = formatWarehouseName(raw);
@@ -177,17 +183,45 @@ export function WarehouseSalesAnalyticsTable({
   );
 
   const sortedProducts = useMemo(
-    () => sortRowsBySpec(products ?? [], productSort, getProductValue),
-    [products, productSort, getProductValue]
+    () => sortRowsBySpec((products ?? []).filter(row => {
+      const term = query.trim().toLowerCase();
+      return !term || `${row.sku} ${row.productName}`.toLowerCase().includes(term);
+    }), productSort, getProductValue),
+    [products, query, productSort, getProductValue]
   );
 
   /** Shares are vs full cohort (including Unknown Warehouse); must total ~100%. */
   const orderShareTotal = sumRoundedShares(rows.map((r) => r.orderSharePercent));
   const revenueShareTotal = sumRoundedShares(rows.map((r) => r.revenueSharePercent));
 
+  const exportControls = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-muted-foreground">Product sales report · {drillDownWarehouse ? "Selected warehouse" : "All warehouses"} · completed purchases only</p>
+      <div className="flex flex-wrap gap-2">
+        {(["xlsx", "csv"] as const).map(format => {
+          const params = new URLSearchParams();
+          copyScopeQueryParams(params, searchParams);
+          params.set("from", rangeFrom); params.set("to", rangeTo);
+          if (marketplaceAccountId) params.set("account", marketplaceAccountId);
+          if (companyId) params.set("company", companyId);
+          if (drillDownWarehouse) params.set("warehouse", drillDownWarehouse);
+          if (drillDownWarehouse && query.trim()) params.set("q", query.trim());
+          params.set("format", format);
+          return <a key={format} href={`/api/inventory/warehouse-sales/export?${params}`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-card-hover">
+            <Download className="h-4 w-4" />{format === "xlsx" ? "Download Excel" : "Download CSV"}
+          </a>;
+        })}
+      </div>
+    </div>
+  );
+
   if (drillDownWarehouse) {
+    const selected = rows.find(row => row.warehouse === drillDownWarehouse.trim());
+    const sellerLocation = locations.find(row => row.name === drillDownWarehouse.trim() && row.sellerWarehouseId != null);
     return (
       <div className="space-y-4">
+        {exportControls}
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href={backHref(pathname, new URLSearchParams(searchParams.toString()))}
@@ -206,6 +240,23 @@ export function WarehouseSalesAnalyticsTable({
             </p>
           </div>
         </div>
+
+        {sellerLocation ? <p className="rounded-xl border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
+          FBS seller warehouse #{sellerLocation.sellerWarehouseId} · linked WB office #{sellerLocation.wbOfficeId}.
+          Metrics use persisted FBS order RID matched to sales/orders SRID and WB product identity. Unmatched records keep their original WB location.
+        </p> : null}
+
+        <div className="grid gap-3 sm:grid-cols-3" aria-label="Selected warehouse summary">
+          <MetricCard title="Orders" value={formatKpiCount(selected?.orders ?? 0)} icon={KPI_ICONS.orders} />
+          <MetricCard title="Units sold" value={formatKpiCount(selected?.units ?? 0)} icon={KPI_ICONS.units} />
+          <MetricCard title="Sales" value={formatKpiCurrency(selected?.revenue ?? 0)} icon={KPI_ICONS.revenue} />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Orders are placed in this period. Units are completed purchases in this period; they may relate to earlier orders. Warehouse names follow stored WB data.
+        </p>
+        <input type="search" value={query} onChange={event => setQuery(event.target.value)}
+          placeholder="Search SKU or product…" aria-label="Search warehouse products"
+          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm sm:max-w-sm" />
 
         <div className="overflow-x-auto rounded-2xl border border-border bg-card">
           <table className="w-full min-w-[640px] text-sm">
@@ -234,7 +285,7 @@ export function WarehouseSalesAnalyticsTable({
                   className="px-4 py-3"
                 />
                 <SortableTh
-                  label="Units"
+                  label="Units sold"
                   active={productActive("units")}
                   direction={productDir("units")}
                   onClick={() => onProductSort("units")}
@@ -255,7 +306,7 @@ export function WarehouseSalesAnalyticsTable({
               {sortedProducts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
-                    No completed sales for this warehouse in the selected period.
+                    No matching orders or completed sales for this warehouse in the selected period.
                   </td>
                 </tr>
               ) : (
@@ -279,6 +330,14 @@ export function WarehouseSalesAnalyticsTable({
                 ))
               )}
             </tbody>
+            <tfoot className="border-t border-border bg-background/30 font-medium">
+              <tr>
+                <td colSpan={2} className="px-4 py-3">{query ? "Filtered products" : "Warehouse total"}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{formatNumber(sortedProducts.reduce((n,row) => n + row.orders, 0))}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{formatNumber(sortedProducts.reduce((n,row) => n + row.units, 0))}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sortedProducts.reduce((n,row) => n + row.revenue, 0))}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -287,6 +346,7 @@ export function WarehouseSalesAnalyticsTable({
 
   return (
     <div className="space-y-4">
+      {exportControls}
       <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="relative min-w-0 flex-1 sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -316,10 +376,19 @@ export function WarehouseSalesAnalyticsTable({
               onChange={(event) => setHideEmpty(event.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            Hide empty warehouses
+            Hide warehouses without period activity
           </label>
         </div>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        Known stock and shipping locations are included. Zero activity means no stored orders or completed sales for this period, not zero inventory.
+      </p>
+      {rows.some(row => row.warehouse === "Склад WB РФ" && (row.orders > 0 || row.units > 0)) ? (
+        <p className="rounded-xl border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
+          WB records include the generic location “Sklad WB RF”. These records cannot be assigned to Kazan or another specific warehouse without source evidence.
+        </p>
+      ) : null}
 
       <div
         className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7"

@@ -1,3 +1,6 @@
+import { MarketplaceContentBoundary } from "@/components/dashboard/marketplace-content-boundary";
+import { createServerClient } from "@/lib/supabase/server";
+import { DashboardOzonSection } from "@/components/dashboard/dashboard-ozon-section";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   CostBreakdownChartLazy,
@@ -74,6 +77,7 @@ async function DashboardCoreSection({
       <div className="space-y-8">
         <DashboardProfitSection
           modelB={overview.modelBProfit}
+          brandFinanceNotice={overview.brandFinanceNotice}
           marketplaceFees={overview.marketplaceFeesPresentation}
           quantities={quantities}
           kpis={kpis}
@@ -158,6 +162,19 @@ async function loadDashboardPage({ searchParams }: PageProps) {
   const scope = await measureAsync("server.resolveScopedDateRange", "server", () =>
     resolveScopedDateRange(params)
   );
+  const client = await createServerClient();
+  const account = await client.from("marketplace_accounts_public").select("marketplace")
+    .eq("id", scope.marketplaceAccountId).eq("company_id", scope.companyId).single();
+  if (account.error || !account.data) throw new Error("dashboard_account_unavailable");
+  if (account.data.marketplace !== "wildberries") {
+    return <>
+      <PageHeader variant="toolbar" showWbControls={false} />
+      <MarketplaceContentBoundary accountId={scope.marketplaceAccountId} companyId={scope.companyId}>
+        {account.data.marketplace === "ozon" ? <DashboardOzonSection scope={scope} />
+          : <p className="text-sm text-muted-foreground">Dashboard reporting is unavailable for this marketplace.</p>}
+      </MarketplaceContentBoundary>
+    </>;
+  }
   // Resolve the complete server payload before returning markup. This avoids
   // leaving an RSC stream open while the database is still responding.
   const content = await DashboardCoreSection({
@@ -170,7 +187,7 @@ async function loadDashboardPage({ searchParams }: PageProps) {
     <>
       <PageHeader variant="toolbar" headerExtras={<DashboardHeaderExtras />} />
 
-      {content}
+      <MarketplaceContentBoundary accountId={scope.marketplaceAccountId} companyId={scope.companyId}>{content}</MarketplaceContentBoundary>
     </>
   );
 }

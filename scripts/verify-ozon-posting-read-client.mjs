@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {createOzonPostingReadClient,projectOzonPosting} from '../src/lib/ozon/posting-read-client.ts';
+const source={posting_number:'fixture-1',order_id:10,order_number:'order-1',status:'delivered',products:[{sku:11,offer_id:'test',quantity:2,name:'Test',price:{amount:'123.4500',currency:'RUB'}}],customer:{phone:'private'},addressee:{name:'private'},legal_info:{inn:'private'},financial_data:{payout:999}};
+const projected=projectOzonPosting(source);assert.equal(JSON.stringify(projected).includes('private'),false);assert.equal('financial_data' in projected,false);assert.equal(projected.products[0].price.amount,'123.4500');
+const calls=[];const client=createOzonPostingReadClient({clientId:'fixture',apiKey:'secret',fetch:async(url,options)=>{calls.push({url,body:JSON.parse(options.body)});return new Response(JSON.stringify({cursor:'',has_next:false,postings:[source]}),{status:200})}});
+const result=await client.capture('fbs','2026-09-28T00:00:00Z','2026-10-04T23:59:59Z');assert.equal(result.postings.length,1);assert.ok(calls[0].url.endsWith('/v4/posting/fbs/list'));assert.equal(calls[0].body.with.legal_info,false);
+let count=0;const errorClient=createOzonPostingReadClient({clientId:'fixture',apiKey:'secret',fetch:async()=>{count++;return new Response('private',{status:429})}});
+await assert.rejects(errorClient.capture('fbo','2026-09-28','2026-10-04'),error=>error.httpStatus===429&&!error.message.includes('private')&&!error.message.includes('secret'));assert.equal(count,1);
+const endless=createOzonPostingReadClient({clientId:'fixture',apiKey:'secret',fetch:async()=>new Response(JSON.stringify({cursor:'repeat',has_next:true,postings:[source]}))});
+await assert.rejects(endless.capture('fbo','2026-09-28','2026-10-04',1),/budget/);
+assert.throws(()=>projectOzonPosting({...source,products:[{sku:11,offer_id:'test',quantity:-1}]}),/product_invalid/);
+const unsafe=createOzonPostingReadClient({clientId:'fixture',apiKey:'secret',fetch:async()=>new Response(JSON.stringify({cursor:'',has_next:false,postings:[source]}).replace('"order_id":10','"order_id":9007199254740993'))});
+assert.equal((await unsafe.capture('fbo','2026-09-28','2026-10-04')).postings[0].order_id,'9007199254740993');
+let clock=Date.parse('2026-10-06T00:00:00Z');
+const slower=createOzonPostingReadClient({clientId:'fixture',apiKey:'secret',now:()=>clock,fetch:async()=>{clock+=60000;return new Response(JSON.stringify({cursor:'',has_next:false,postings:[source]}))}});
+assert.equal((await slower.capture('fbs','2026-09-28','2026-10-04')).observedAt,'2026-10-06T00:00:00.000Z');
+console.log('PASS: current FBO/FBS endpoints, explicit has_next completion, lossless order IDs, privacy allowlist, source prices, bounded pagination, strict quantities, safe errors and no retry');

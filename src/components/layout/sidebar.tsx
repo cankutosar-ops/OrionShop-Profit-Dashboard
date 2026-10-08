@@ -348,7 +348,7 @@ export function Sidebar() {
 
       <div className={cn("space-y-1 border-t border-border", collapsed ? "p-2" : "p-3")}>
         {!collapsed ? (
-          <div className="flex items-center justify-between gap-2 px-1 pb-1">
+          <div className="flex min-w-0 flex-col items-start gap-2 px-1 pb-1">
             <span className="text-xs font-medium text-muted-foreground">Appearance</span>
             <ThemeSelector />
           </div>

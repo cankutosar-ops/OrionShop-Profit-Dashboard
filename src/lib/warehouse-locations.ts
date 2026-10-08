@@ -11,6 +11,9 @@ import { formatWarehouseName } from "@/lib/warehouse-name-aliases";
 export type WarehouseLocationType = "wb" | "fbs";
 
 export type WarehouseLocation = {
+  /** Seller identity; distinct from WB distribution office ID. Catalog metadata only. */
+  sellerWarehouseId?: number;
+  wbOfficeId?: number;
   /** Canonical DB / API warehouse name (aggregation key). */
   name: string;
   /** Localized label for selectors and tables. */

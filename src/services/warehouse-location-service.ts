@@ -10,6 +10,8 @@ import {
   type WarehouseLocation,
 } from "@/lib/warehouse-locations";
 import { readCurrentStockWarehouseNames } from "@/services/current-stock-repository";
+import { readSellerWarehouses } from "@/services/wb-seller-warehouse-service";
+import { fbsWarehouseLabel } from "@/lib/fbs-warehouse-attribution";
 
 const PAGE_SIZE = 1000;
 
@@ -70,10 +72,11 @@ export async function listWarehouseLocations(
   } = {}
 ): Promise<WarehouseLocation[]> {
   const client = await getClient(options.client);
-  const [stock, sales, orders] = await Promise.all([
+  const [stock, sales, orders, sellerWarehouses] = await Promise.all([
     readCurrentStockWarehouseNames(marketplaceAccountId, client),
     collectDistinctWarehouseColumn(client, "wb_sales", marketplaceAccountId),
     collectDistinctWarehouseColumn(client, "wb_orders", marketplaceAccountId),
+    readSellerWarehouses(marketplaceAccountId, client),
   ]);
 
   const stockSet = new Set(stock);
@@ -93,7 +96,16 @@ export async function listWarehouseLocations(
   // stockSet reserved for future inactive/seed rules.
   void stockSet;
 
-  const locations = buildWarehouseLocations(entries);
+  const fbs = sellerWarehouses.filter(row => row.delivery_type === 1 && row.is_deleting !== true);
+  const locations = buildWarehouseLocations([
+    ...entries, ...fbs.map(row => ({ name: fbsWarehouseLabel(row.name, row.seller_warehouse_id), active: true })),
+  ]).map(location => {
+    const matching = fbs.filter(row => fbsWarehouseLabel(row.name, row.seller_warehouse_id) === location.name);
+    // Equal names do not prove equal identities. Avoid attributing a name bucket to one of several IDs.
+    const seller = matching.length === 1 ? matching[0] : undefined;
+    return matching.length ? { ...location, type: "fbs" as const, sellerWarehouseId: seller?.seller_warehouse_id,
+      wbOfficeId: seller?.wb_office_id } : location;
+  });
   if (options.activeOnly) {
     return locations.filter((loc) => loc.active);
   }

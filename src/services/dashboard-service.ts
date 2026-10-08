@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { partitionDashboardFinance, summarizeUnallocatedDashboardFinance } from "@/lib/dashboard-finance-scope";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { withReadBudget } from "@/lib/supabase/read-budget";
@@ -90,6 +91,7 @@ export {
 } from "@/services/persisted-query-service";
 
 type ScopedDashboardSqlRaw = {
+  unallocatedFinance?: WbFinance[];
   products: ProductWithRelations[];
   productIds: string[];
   supplierArticles: string[];
@@ -218,7 +220,7 @@ async function fetchScopedDashboardSql(
     productIds,
     supplierArticles,
     sales,
-    finance,
+    ...partitionDashboardFinance(finance, Boolean(scope.brandId)),
     ads,
     costHistory,
     orders,
@@ -496,6 +498,7 @@ async function buildOverviewMetricsFromRaw(
 
   return {
     /** Commercial Performance Revenue = Finance ppvz_for_pay. */
+    ...(scope.brandId ? { brandFinanceNotice: summarizeUnallocatedDashboardFinance(raw.unallocatedFinance ?? []) } : {}),
     revenue: modelBProfit.revenue,
     productCost,
     /** Finance commission component; broad fees live in marketplaceFeesPresentation. */

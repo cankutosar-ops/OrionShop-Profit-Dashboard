@@ -95,9 +95,14 @@ export async function loadReportContext(
   const generatedAt = new Date().toISOString();
   const warnings: string[] = [];
 
-  const [company, syncState, overview, products, listData, inventory] =
+  const company = await getCompanyById(scope.companyId);
+  const account = company?.accounts.find((row) => row.id === scope.marketplaceAccountId) ?? null;
+  if (!account || account.marketplace !== 'wildberries') {
+    throw new Error('This report requires Wildberries data. Use the Ozon financial breakdown for an Ozon account.');
+  }
+
+  const [syncState, overview, products, listData, inventory] =
     await Promise.all([
-      getCompanyById(scope.companyId),
       getMarketplaceAccountSyncState(scope.marketplaceAccountId),
       getOverviewMetrics(scope),
       getProductProfitability(scope),
@@ -112,8 +117,6 @@ export async function loadReportContext(
           }),
     ]);
 
-  const account =
-    company?.accounts.find((row) => row.id === scope.marketplaceAccountId) ?? null;
   const marketplaceKey = account?.marketplace ?? "wildberries";
 
   let brandName: string | null = null;

@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {canShowMarketplaceContent,clearMarketplaceSpecificFilters} from '../src/lib/marketplace-content-scope.ts';
+const scope={accountId:'2',companyId:'2',urlAccount:'2',urlCompany:'2',busy:false};
+assert.equal(canShowMarketplaceContent(scope),true);
+assert.equal(canShowMarketplaceContent({...scope,busy:true}),false);
+assert.equal(canShowMarketplaceContent({...scope,urlAccount:'17'}),false);
+assert.equal(canShowMarketplaceContent({...scope,urlCompany:'1'}),false);
+assert.equal(canShowMarketplaceContent({...scope,urlAccount:null,urlCompany:null}),true);
+const params=new URLSearchParams('account=2&company=2&from=2026-09-28&to=2026-10-04&brand=wb-brand&product=wb-product&warehouse=Kazan');
+clearMarketplaceSpecificFilters(params);
+for(const key of ['brand','product','warehouse'])assert.equal(params.has(key),false);
+assert.equal(params.get('from'),'2026-09-28');assert.equal(params.get('account'),'2');
+for(const file of ['src/components/layout/tenant-selectors.tsx','src/components/dashboard/marketplace-content-boundary.tsx'])assert.ok(readFileSync(file,'utf8').trimStart().startsWith('"use client";'),'client directive must precede imports');
+console.log('PASS: WB/Ozon account transition hides prior content, URL/account and company mismatch blocked, resolved default scope retained');

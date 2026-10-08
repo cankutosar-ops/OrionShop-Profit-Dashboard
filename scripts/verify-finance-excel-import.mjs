@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {buildWbExcelReportPlan} from '../src/lib/wildberries/finance-excel-import.ts';
+const products=[{id:'test-product',nm_id:123}];
+const row={targetAccountId:6,targetCompanyId:3,reportId:'999999001',fileSha256:'a'.repeat(64),sourceOrdinal:'1',fields:{'Дата продажи':'2026-10-04','Код номенклатуры':'123','Тип документа':'Продажа','Обоснование для оплаты':'Продажа','К перечислению Продавцу за реализованный Товар':'100,25','Услуги по доставке товара покупателю':'10,50'}};
+const plan=buildWbExcelReportPlan([row],6,3,products);
+assert.deepEqual(plan,buildWbExcelReportPlan([row],6,3,products));
+assert.equal(plan.report.dateBasis,'SOURCE_SALE_DATE');
+assert.equal(plan.lines.length,2);
+for(const line of plan.lines){assert.equal(line.marketplace_account_id,'6');assert.equal(line.product_id,'test-product');assert.equal(line.rrd_id,null);assert.equal(line.rr_dt,null);assert.match(line.source_key,/^xlsx:999999001:1:/);}
+assert.equal(plan.lines.find(l=>l.wb_source_suffix==='for_pay').amount,100.25);
+assert.throws(()=>buildWbExcelReportPlan([row],1,1,products),/SCOPE/);
+assert.throws(()=>buildWbExcelReportPlan([row],6,3,[]),/PRODUCT/);
+assert.throws(()=>buildWbExcelReportPlan([row,row],6,3,products),/DUPLICATE/);
+assert.throws(()=>buildWbExcelReportPlan([{...row,fields:{...row.fields,'Дата продажи':'2026-02-30'}}],6,3,products),/DATE/);
+assert.throws(()=>buildWbExcelReportPlan([{...row,fields:{...row.fields,'К перечислению Продавцу за реализованный Товар':'NaN'}}],6,3,products),/MONEY/);
+const returned=buildWbExcelReportPlan([{...row,fields:{...row.fields,'Тип документа':'Возврат','Обоснование для оплаты':'Возврат'}}],6,3,products);
+assert.equal(returned.lines.find(l=>l.wb_source_suffix==='for_pay').amount,-100.25);
+assert.equal(returned.lines.find(l=>l.wb_source_suffix==='logistics').amount,10.50);
+assert.equal(new Set(plan.lines.map(l=>l.source_key)).size,plan.lines.length);
+console.log('PASS: XLSX source identity, replay stability, scope, product isolation, signed returns, strict date/money validation; no DB/API writes');

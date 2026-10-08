@@ -71,6 +71,10 @@ const allowedDevOrigins = resolveAllowedDevOrigins();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Keep the read-only knowledge registry in the server deployment artifact.
+  outputFileTracingIncludes: {
+    "/api/orion/**": ["./data/orion/objects/*.json", "./data/orion/registry/index.json"],
+  },
   distDir,
   // Dev-only. Enables App Router soft navigation from phones / LAN devices.
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),

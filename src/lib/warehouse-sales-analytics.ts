@@ -9,6 +9,9 @@
 export const UNKNOWN_WAREHOUSE_LABEL = "Unknown Warehouse";
 
 export type WarehouseOrderInput = {
+  srid?: string | null;
+  product_id?: string | null;
+  nm_id?: number | null;
   warehouse?: string | null;
   quantity?: number | null;
   price_with_disc?: number | null;
@@ -16,6 +19,7 @@ export type WarehouseOrderInput = {
 };
 
 export type WarehouseSaleInput = {
+  srid?: string | null;
   warehouse?: string | null;
   quantity: number;
   price_with_disc?: number | null;
@@ -168,12 +172,12 @@ export function aggregateWarehouseSales(input: {
 }
 
 /**
- * Product breakdown for one warehouse (completed sales only).
+ * Product breakdown for one warehouse, using the same independent sources as its summary.
  * SKU / name resolved via productLookup; falls back to nm_id / product_id.
- * `orders` here = completed sale row count within the warehouse (product drill-down).
+ * Orders count demand rows; units count completed sale quantities. Never infer orders from sales.
  */
 export function aggregateWarehouseProductSales(
-  sales: WarehouseSaleInput[],
+  input: { orders: WarehouseOrderInput[]; sales: WarehouseSaleInput[] },
   warehouse: string,
   productLookup: Map<string, { sku: string; productName: string }>
 ): WarehouseProductSalesRow[] {
@@ -181,20 +185,31 @@ export function aggregateWarehouseProductSales(
 
   const byProduct = new Map<string, Acc & { nmId: number | null }>();
 
-  for (const sale of sales) {
+  const ensure = (row: WarehouseOrderInput | WarehouseSaleInput) => {
+    // Keep unlinked source rows in an explicit bucket so detail reconciles to the summary.
+    const productId = row.product_id ? String(row.product_id) : row.nm_id != null ? `nm:${row.nm_id}` : "unlinked";
+    let acc = byProduct.get(productId);
+    if (!acc) {
+      acc = { ...emptyAcc(), nmId: row.nm_id ?? null };
+      byProduct.set(productId, acc);
+    }
+    if (acc.nmId == null && row.nm_id != null) acc.nmId = row.nm_id;
+    return acc;
+  };
+
+  for (const order of input.orders) {
+    if (resolveWarehouseGroupKey(order.warehouse) !== targetKey) continue;
+    const acc = ensure(order);
+    acc.orders += 1;
+    acc.ordersAmount += orderLineAmount(order);
+  }
+
+  for (const sale of input.sales) {
     if (!isCompletedWarehouseSale(sale)) continue;
     const key = resolveWarehouseGroupKey(sale.warehouse);
     if (key !== targetKey) continue;
 
-    const productId = sale.product_id ? String(sale.product_id) : "";
-    if (!productId) continue;
-
-    let acc = byProduct.get(productId);
-    if (!acc) {
-      acc = { ...emptyAcc(), nmId: sale.nm_id ?? null };
-      byProduct.set(productId, acc);
-    }
-    acc.orders += 1;
+    const acc = ensure(sale);
     acc.units += Number(sale.quantity) || 0;
     acc.revenue += salePriceWithDiscAmount(sale);
     if (acc.nmId == null && sale.nm_id != null) acc.nmId = sale.nm_id;
@@ -205,7 +220,7 @@ export function aggregateWarehouseProductSales(
     return {
       productId,
       sku: meta?.sku || (acc.nmId != null ? String(acc.nmId) : productId),
-      productName: meta?.productName || "Unknown product",
+      productName: meta?.productName || "Unlinked product",
       nmId: acc.nmId,
       orders: acc.orders,
       units: acc.units,
@@ -215,6 +230,44 @@ export function aggregateWarehouseProductSales(
 
   rows.sort((a, b) => b.revenue - a.revenue || a.sku.localeCompare(b.sku));
   return rows;
+}
+
+/** Catalog-only locations remain visible with zero period activity; totals never change. */
+export function includeCatalogWarehouses(rows: WarehouseSalesRow[], names: Iterable<string>): WarehouseSalesRow[] {
+  const byName = new Map(rows.map(row => [row.warehouse, row]));
+  for (const name of names) {
+    const warehouse = resolveWarehouseGroupKey(name);
+    if (!byName.has(warehouse)) byName.set(warehouse, {
+      warehouse, ...emptyAcc(), orderSharePercent: 0, revenueSharePercent: 0,
+    });
+  }
+  return [...byName.values()].sort((a,b) => b.revenue - a.revenue || a.warehouse.localeCompare(b.warehouse));
+}
+
+export function warehousePeriodEndExclusive(to: string): string {
+  return new Date(Date.parse(`${to}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
+}
+
+export type WarehouseProductReportRow = WarehouseProductSalesRow & { warehouse: string };
+
+/** Sales report only: keep warehouse/product identities and exclude returns and order-only products. */
+export function aggregateWarehouseProductReport(
+  sales: WarehouseSaleInput[],
+  productLookup: Map<string, { sku: string; productName: string }>
+): WarehouseProductReportRow[] {
+  const groups = new Map<string, WarehouseSaleInput[]>();
+  for (const sale of sales) {
+    if (!isCompletedWarehouseSale(sale)) continue;
+    const key = resolveWarehouseGroupKey(sale.warehouse);
+    const bucket = groups.get(key) ?? [];
+    bucket.push(sale);
+    groups.set(key, bucket);
+  }
+  return [...groups.entries()].flatMap(([warehouse, bucket]) =>
+    aggregateWarehouseProductSales({ orders: [], sales: bucket }, warehouse, productLookup)
+      .filter(row => row.units > 0)
+      .map(row => ({ ...row, warehouse }))
+  ).sort((a, b) => a.warehouse.localeCompare(b.warehouse) || b.revenue - a.revenue || a.sku.localeCompare(b.sku));
 }
 
 /** Sum of rounded one-decimal shares (for validation; may be 99.9–100.1). */
