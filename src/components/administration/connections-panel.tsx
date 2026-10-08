@@ -148,11 +148,12 @@ export function ConnectionsPanel() {
               />
             </div>
           ))}
+          <ComingSoonPlatformCard name="Ozon" />
           <ComingSoonPlatformCard name="Lamoda" />
           <ComingSoonPlatformCard name="Shopify" />
           {!rows.length ? (
             <p className="text-sm text-muted-foreground lg:col-span-2">
-              No connections yet. Open a company workspace to connect Wildberries or Ozon.
+              No connections yet. Open a company workspace to connect Wildberries.
             </p>
           ) : null}
         </div>

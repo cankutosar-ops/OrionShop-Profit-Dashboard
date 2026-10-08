@@ -1929,10 +1929,6 @@ export type Database = {
       };
     };
     Functions: {
-      orion_publish_ozon_financial_reference: { Args: { p_account_id: string; p_token: string; p_kind: string; p_period_key: string; p_snapshot_id: string; p_observed_at: string; p_payload: OzonCaptureJson }; Returns: number };
-      orion_acquire_ozon_sync: { Args: { p_account_id: string; p_token: string }; Returns: boolean };
-      orion_release_ozon_sync: { Args: { p_account_id: string; p_token: string }; Returns: boolean };
-      orion_publish_ozon_fenced_capture: { Args: { p_account_id: string; p_token: string; p_kind: string; p_capture: OzonCaptureJson }; Returns: number };
       orion_admin_rls_status: {
         Args: Record<string, never>;
         Returns: Array<Record<string, unknown>>;
@@ -1962,4 +1958,3 @@ export type Database = {
   };
 };
 
-export type OzonCaptureJson = string | number | boolean | null | { [key: string]: OzonCaptureJson | undefined } | OzonCaptureJson[];

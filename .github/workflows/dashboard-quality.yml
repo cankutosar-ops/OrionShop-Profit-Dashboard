@@ -48,10 +48,6 @@ jobs:
           node --import tsx scripts/verify-warehouse-sales-reconciliation.mjs
           node --import tsx scripts/verify-warehouse-sales-export.mjs
           node --import tsx scripts/verify-fbs-warehouse-attribution.mjs
-          for test in scripts/verify-ozon-*.mjs; do
-            case "$test" in *docker*|*source-schema*) continue ;; esac
-            node --import tsx "$test"
-          done
       - name: Production build
         run: npm run build
       - name: Compiled app, middleware and HTTP failure paths

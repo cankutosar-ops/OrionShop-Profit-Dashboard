@@ -24,9 +24,6 @@ import { MarketplaceFeeStatusNotice } from "@/components/reporting/marketplace-f
 import { combineMarketplaceFeeStatuses } from "@/lib/marketplace-fee-status";
 import { buildPeriodChunks } from "@/lib/reporting/weekly-business/period-chunks";
 import type { ScopedDateRange } from "@/types/database";
-import { createServerClient } from '@/lib/supabase/server';
-import { isScopedOzonAccount } from '@/services/scoped-marketplace-service';
-import { OzonFinanceReport } from '@/components/reporting/ozon-finance-report';
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +70,6 @@ async function loadPeriodBreakdown(
 export default async function ProfitLossReportPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
-  if (await isScopedOzonAccount(await createServerClient(), scope)) return <OzonFinanceReport scope={scope}/>;
   const category = parseReportCategory(params);
   const scopeQuery = scopeParamsToSearchParams(params).toString();
   const hubHref = scopeQuery ? `/reports?${scopeQuery}` : "/reports";

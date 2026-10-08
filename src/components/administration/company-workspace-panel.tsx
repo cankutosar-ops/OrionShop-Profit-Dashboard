@@ -9,19 +9,12 @@ type CompanyWorkspacePanelProps = {
 };
 
 type ConnectForm = {
-  marketplace: 'wildberries' | 'ozon';
-  client_id: string;
-  performance_client_id: string;
-  performance_client_secret: string;
   account_name: string;
   api_key: string;
   seller_id: string;
 };
 
 const emptyConnect: ConnectForm = {
-  marketplace: 'wildberries',
-  client_id: '',
-  performance_client_id: '', performance_client_secret: '',
   account_name: "",
   api_key: "",
   seller_id: "",
@@ -100,16 +93,7 @@ export function CompanyWorkspacePanel({ companyId }: CompanyWorkspacePanelProps)
     setBusy(true);
     setError(null);
     try {
-      if (connectForm.marketplace === 'ozon') {
-        const res = await fetch('/api/ozon/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ companyId, accountId: reconnectId ?? undefined,
-            accountName: connectForm.account_name, clientId: connectForm.client_id, apiKey: connectForm.api_key,
-            performance: connectForm.performance_client_id || connectForm.performance_client_secret ? {
-              clientId: connectForm.performance_client_id,clientSecret: connectForm.performance_client_secret,
-            } : undefined }) });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Ozon connection failed');
-      } else if (reconnectId) {
+      if (reconnectId) {
         const res = await fetch(`/api/marketplace-accounts/${reconnectId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -154,9 +138,6 @@ export function CompanyWorkspacePanel({ companyId }: CompanyWorkspacePanelProps)
   function openReconnect(account: MarketplaceAccountPublic) {
     setReconnectId(account.id);
     setConnectForm({
-      marketplace: account.marketplace === 'ozon' ? 'ozon' : 'wildberries',
-      client_id: '',
-      performance_client_id: '', performance_client_secret: '',
       account_name: account.account_name,
       api_key: "",
       seller_id: account.seller_id ?? "",
@@ -235,19 +216,12 @@ export function CompanyWorkspacePanel({ companyId }: CompanyWorkspacePanelProps)
           className="rounded-2xl border border-border bg-card p-4 sm:p-5"
         >
           <h3 className="text-sm font-semibold">
-            {reconnectId ? 'Reconnect marketplace' : 'Connect marketplace'}
+            {reconnectId ? "Reconnect Wildberries" : "Connect Wildberries"}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
             API key is write-only and never displayed after save.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="text-xs">Marketplace<select disabled={!!reconnectId} value={connectForm.marketplace}
-              onChange={e => setConnectForm(f => ({ ...f, marketplace: e.target.value as 'wildberries' | 'ozon', api_key: '', client_id: '' }))}
-              className="mt-1 w-full rounded border bg-background px-3 py-2 text-sm">
-              <option value="wildberries">Wildberries</option><option value="ozon">Ozon</option>
-            </select></label>
-            {connectForm.marketplace === 'ozon' && <label className="text-xs">Ozon Client ID<input required autoComplete="off" value={connectForm.client_id}
-              onChange={e => setConnectForm(f => ({ ...f, client_id: e.target.value }))} className="mt-1 w-full rounded border bg-background px-3 py-2 text-sm"/></label>}
             <label className="text-xs sm:col-span-2">
               <span className="text-muted-foreground">Account Name</span>
               <input
@@ -261,10 +235,10 @@ export function CompanyWorkspacePanel({ companyId }: CompanyWorkspacePanelProps)
             </label>
             <label className="text-xs sm:col-span-2">
               <span className="text-muted-foreground">
-                API Key {reconnectId && connectForm.marketplace !== 'ozon' ? "(leave blank to keep existing)" : ""}
+                API Key {reconnectId ? "(leave blank to keep existing)" : ""}
               </span>
               <input
-                required={!reconnectId || connectForm.marketplace === 'ozon'}
+                required={!reconnectId}
                 type="password"
                 autoComplete="off"
                 value={connectForm.api_key}
@@ -274,7 +248,7 @@ export function CompanyWorkspacePanel({ companyId }: CompanyWorkspacePanelProps)
                 className="mt-1 w-full rounded-[var(--radius-control)] border border-border bg-background px-3 py-2 text-sm"
               />
             </label>
-            {connectForm.marketplace !== 'ozon' && <label className="text-xs">
+            <label className="text-xs">
               <span className="text-muted-foreground">Seller ID (optional)</span>
               <input
                 value={connectForm.seller_id}
@@ -283,13 +257,7 @@ export function CompanyWorkspacePanel({ companyId }: CompanyWorkspacePanelProps)
                 }
                 className="mt-1 w-full rounded-[var(--radius-control)] border border-border bg-background px-3 py-2 text-sm"
               />
-            </label>}
-            {connectForm.marketplace === 'ozon' && <details className="sm:col-span-2 rounded border p-3">
-              <summary className="text-sm">Advertising API credentials (optional)</summary>
-              <p className="mt-2 text-xs text-muted-foreground">Performance API uses separate credentials. Leave both blank to retain existing advertising credentials. Stored Seller advertising charges already appear in Finance.</p>
-              <label className="mt-3 block text-xs">Performance Client ID<input autoComplete="off" value={connectForm.performance_client_id} onChange={e=>setConnectForm(f=>({...f,performance_client_id:e.target.value}))} className="mt-1 w-full rounded border bg-background p-2"/></label>
-              <label className="mt-3 block text-xs">Performance Client Secret<input type="password" autoComplete="off" value={connectForm.performance_client_secret} onChange={e=>setConnectForm(f=>({...f,performance_client_secret:e.target.value}))} className="mt-1 w-full rounded border bg-background p-2"/></label>
-            </details>}
+            </label>
           </div>
           <div className="mt-4 flex gap-2">
             <button

@@ -17,7 +17,6 @@ type CompanyFormState = {
 };
 
 type AccountFormState = {
-  client_id: string;
   company_id: string;
   marketplace: MarketplaceType;
   account_name: string;
@@ -38,7 +37,6 @@ const emptyCompanyForm: CompanyFormState = {
 };
 
 const emptyAccountForm: AccountFormState = {
-  client_id: '',
   company_id: "",
   marketplace: "wildberries",
   account_name: "",
@@ -172,16 +170,13 @@ export function CompaniesManager() {
       };
 
       const response = await fetch(
-        accountForm.marketplace === 'ozon' ? '/api/ozon/connect' : editingAccountId
+        editingAccountId
           ? `/api/marketplace-accounts/${editingAccountId}`
           : "/api/marketplace-accounts",
         {
-          method: accountForm.marketplace === 'ozon' ? 'POST' : editingAccountId ? "PATCH" : "POST",
+          method: editingAccountId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(accountForm.marketplace === 'ozon' ? {
-            companyId: accountForm.company_id, accountId: editingAccountId ?? undefined,
-            accountName: accountForm.account_name, clientId: accountForm.client_id, apiKey: accountForm.api_key,
-          } : payload),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -214,7 +209,6 @@ export function CompaniesManager() {
   function startEditAccount(companyId: string, account: CompanyWithAccounts["accounts"][number]) {
     setEditingAccountId(account.id);
     setAccountForm({
-      client_id: '',
       company_id: companyId,
       marketplace: account.marketplace,
       account_name: account.account_name,
@@ -465,7 +459,6 @@ export function CompaniesManager() {
             <select
               required
               value={accountForm.marketplace}
-              disabled={!!editingAccountId}
               onChange={(event) =>
                 setAccountForm((prev) => ({
                   ...prev,
@@ -496,12 +489,11 @@ export function CompaniesManager() {
           </label>
 
           <label className="space-y-1.5 text-sm">
-            <span className="font-medium">{accountForm.marketplace === 'ozon' ? 'Ozon Client ID' : 'Seller ID (optional)'}</span>
+            <span className="font-medium">Seller ID (optional)</span>
             <input
-              required={accountForm.marketplace === 'ozon'}
-              value={accountForm.marketplace === 'ozon' ? accountForm.client_id : accountForm.seller_id}
+              value={accountForm.seller_id}
               onChange={(event) =>
-                setAccountForm((prev) => ({ ...prev, [prev.marketplace === 'ozon' ? 'client_id' : 'seller_id']: event.target.value }))
+                setAccountForm((prev) => ({ ...prev, seller_id: event.target.value }))
               }
               className="w-full rounded-xl border border-border bg-background px-3 py-2"
             />
@@ -510,14 +502,14 @@ export function CompaniesManager() {
           <label className="space-y-1.5 text-sm">
             <span className="font-medium">API Key</span>
             <input
+              required={!editingAccountId}
               type="password"
               value={accountForm.api_key}
               onChange={(event) =>
                 setAccountForm((prev) => ({ ...prev, api_key: event.target.value }))
               }
               className="w-full rounded-xl border border-border bg-background px-3 py-2"
-              required={accountForm.marketplace === 'ozon' || !editingAccountId}
-              placeholder={editingAccountId && accountForm.marketplace !== 'ozon' ? "Leave blank to keep current key" : "Paste API key"}
+              placeholder={editingAccountId ? "Leave blank to keep current key" : "Paste API key"}
             />
           </label>
 
@@ -525,7 +517,6 @@ export function CompaniesManager() {
             <input
               type="checkbox"
               checked={accountForm.is_active}
-              disabled={accountForm.marketplace === 'ozon'}
               onChange={(event) =>
                 setAccountForm((prev) => ({ ...prev, is_active: event.target.checked }))
               }
@@ -537,7 +528,6 @@ export function CompaniesManager() {
             <input
               type="checkbox"
               checked={accountForm.is_default}
-              disabled={accountForm.marketplace === 'ozon'}
               onChange={(event) =>
                 setAccountForm((prev) => ({ ...prev, is_default: event.target.checked }))
               }
@@ -549,14 +539,12 @@ export function CompaniesManager() {
             <input
               type="checkbox"
               checked={accountForm.sync_enabled}
-              disabled={accountForm.marketplace === 'ozon'}
               onChange={(event) =>
                 setAccountForm((prev) => ({ ...prev, sync_enabled: event.target.checked }))
               }
             />
             <span>Sync enabled</span>
           </label>
-          {accountForm.marketplace === 'ozon' && <p className="text-xs text-muted-foreground sm:col-span-2">Ozon connects without changing your default account. Source refresh is manual from the Ozon Dashboard; recurring sync is off. Client ID and API key are required for reconnect.</p>}
 
           <div className="flex gap-3 sm:col-span-2">
             <button
@@ -677,7 +665,7 @@ export function CompaniesManager() {
                           </button>
                           <button
                             type="button"
-                            disabled={busyId === account.id || account.marketplace === 'ozon'}
+                            disabled={busyId === account.id}
                             onClick={() => handleSync(account.id)}
                             className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
                           >

@@ -127,7 +127,7 @@ export function CompanyWorkspace({
             onClick={onConnect}
             className="rounded-[var(--radius-control)] bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
           >
-            Connect marketplace
+            Connect Wildberries
           </button>
         }
       >
@@ -182,6 +182,7 @@ export function CompanyWorkspace({
               }}
             />
           ))}
+          <ComingSoonPlatformCard name="Ozon" />
           <ComingSoonPlatformCard name="Lamoda" />
           <ComingSoonPlatformCard name="Shopify" />
         </div>
@@ -221,7 +222,7 @@ export function CompanyWorkspace({
               </li>
             ))}
             {!company.accounts.length ? (
-              <li>No marketplace operations yet. Connect Wildberries or Ozon to begin.</li>
+              <li>No marketplace operations yet. Connect Wildberries to begin.</li>
             ) : null}
           </ul>
         </WorkspaceSummaryCard>

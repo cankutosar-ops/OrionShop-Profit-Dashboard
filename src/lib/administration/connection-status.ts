@@ -35,14 +35,6 @@ export function resolveConnectionDisplayStatus(
 ): ConnectionDisplayStatus {
   if (!account.is_active) return "disconnected";
 
-  // WB finance lifecycle is not an Ozon connection or new-store readiness signal.
-  if (account.marketplace === 'ozon') {
-    if (account.last_sync_status === 'running') return 'synchronizing';
-    if (account.last_sync_status === 'failed') return 'failed';
-    if (account.last_sync_status === 'warning' || account.last_sync_status === 'partial') return 'warning';
-    return account.has_api_key ? 'connected' : 'connecting';
-  }
-
   const life = account.sync_lifecycle_status;
   if (life === "FAILED") return "failed";
   if (life && HISTORICAL.includes(life)) return "historical_backfill";

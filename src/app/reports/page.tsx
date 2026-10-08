@@ -1,8 +1,4 @@
 import Link from "next/link";
-import { createServerClient } from '@/lib/supabase/server';
-import { resolveScopedDateRange } from "@/lib/marketplace-scope";
-import { isScopedOzonAccount } from '@/services/scoped-marketplace-service';
-import { OzonFinanceReport } from '@/components/reporting/ozon-finance-report';
 import { Suspense } from "react";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import { ExportWeeklyBusinessExcelButton } from "@/components/reports/export-business-report-button";
@@ -23,8 +19,6 @@ type PageProps = {
 
 export default async function ReportsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const scope = await resolveScopedDateRange(params);
-  if (await isScopedOzonAccount(await createServerClient(), scope)) return <OzonFinanceReport scope={scope}/>;
   const scopeQuery = scopeParamsToSearchParams(params);
   if (params.category?.trim()) {
     scopeQuery.set(REPORT_FILTER_PARAMS.category, params.category.trim());

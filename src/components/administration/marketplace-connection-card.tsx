@@ -144,15 +144,15 @@ export function MarketplaceConnectionCard({
         >
           Disconnect
         </button>
-        {account.marketplace !== 'ozon' && <Link
+        <Link
           href={`/administration/warehouse?marketplaceAccountId=${account.id}`}
           className="rounded-[var(--radius-control)] border border-border px-2.5 py-1 text-[11px] font-medium hover:bg-card-hover"
         >
           View Warehouse Status
-        </Link>}
+        </Link>
         <button
           type="button"
-          disabled={disabled || account.marketplace === 'ozon'}
+          disabled={disabled}
           className="rounded-[var(--radius-control)] border border-border px-2.5 py-1 text-[11px] font-medium hover:bg-card-hover disabled:opacity-50"
           onClick={() => run(() => onHistoricalBackfill(account.id))}
         >
@@ -160,14 +160,13 @@ export function MarketplaceConnectionCard({
         </button>
         <button
           type="button"
-          disabled={disabled || account.marketplace === 'ozon'}
+          disabled={disabled}
           className="rounded-[var(--radius-control)] border border-border px-2.5 py-1 text-[11px] font-medium hover:bg-card-hover disabled:opacity-50"
           onClick={() => run(() => onIncrementalSync(account.id))}
         >
           Trigger Incremental Sync
         </button>
       </div>
-      {account.marketplace === 'ozon' && <p className="mt-3 text-xs text-muted-foreground">Source refresh is available from the Ozon Dashboard. Recurring sync is off. Empty accruals are expected for a new store.</p>}
     </article>
   );
 }
