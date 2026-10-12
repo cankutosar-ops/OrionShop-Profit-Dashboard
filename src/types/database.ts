@@ -361,6 +361,8 @@ export type WbOrder = {
 };
 
 export type WbSale = {
+  /** Explicit reporting provenance; Excel events are never native WB saleIDs. */
+  data_source?: "WB_API" | "WB_EXCEL";
   id: string;
   marketplace_account_id: string;
   /** WB Statistics saleID. Unique economic event (S… sale, R… return). */
@@ -1130,6 +1132,8 @@ export type WbBalanceMetrics = {
 };
 
 export type OverviewMetrics = ProfitBreakdown & {
+  financeRevenueAvailable?: boolean;
+  historicalSalesRows?: number;
   brandFinanceNotice?: import("@/lib/dashboard-finance-scope").BrandFinanceNotice;
   dailyRevenue: { date: string; revenue: number; profit: number }[];
   costBreakdown: { name: string; value: number; color: string }[];

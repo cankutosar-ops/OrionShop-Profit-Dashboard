@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {buildHistoricalExcelSales,excelEvidenceToReportingSale} from '../src/lib/wildberries/excel-sales-evidence.ts';
+const row={reportId:'12345',sellerId:'250027002',fileSha256:'a'.repeat(64),fields:{'№':'1','Обоснование для оплаты':'Продажа','Тип документа':'Продажа','Кол-во':'1','Дата продажи':'2026-05-15','Код номенклатуры':'123','Srid':'synthetic-sale','Цена розничная с учетом согласованной скидки':'100,50','Вайлдберриз реализовал Товар (Пр)':'80','К перечислению Продавцу за реализованный Товар':'65','Баркод':'synthetic-barcode','Размер':'M','Склад':'synthetic-warehouse'}};
+const products=[{id:'42',nm_id:123}];
+const [event]=buildHistoricalExcelSales([row],products);const reporting=excelEvidenceToReportingSale(event);
+assert.equal(reporting.sale_id,null);assert.equal(reporting.for_pay,undefined);assert.equal(reporting.data_source,'WB_EXCEL');assert.equal(reporting.price_with_disc,100.5);assert.equal(event.finance_payable_raw,65);
+for(const fields of [{'Дата продажи':'2026-02-30'},{'Дата продажи':'2026-07-14'},{'Кол-во':'2'},{'Цена розничная с учетом согласованной скидки':'NaN'},{'Цена розничная с учетом согласованной скидки':'0'},{'Srid':''},{'№':'9007199254740999'},{'Код номенклатуры':'999'}])assert.throws(()=>buildHistoricalExcelSales([{...row,fields:{...row.fields,...fields}}],products));
+assert.throws(()=>buildHistoricalExcelSales([row,row],products),/DUPLICATE/);
+assert.throws(()=>buildHistoricalExcelSales([{...row,sellerId:'other'}],products),/SCOPE/);
+const ret={...row,fields:{...row.fields,'Srid':'synthetic-return','Тип документа':'Возврат','Обоснование для оплаты':'Возврат','К перечислению Продавцу за реализованный Товар':'-65'}};
+const reportingReturn=excelEvidenceToReportingSale(buildHistoricalExcelSales([ret],products)[0]);assert.equal(reportingReturn.is_return,true);assert.equal(reportingReturn.return_date,'2026-05-15');assert.equal(reportingReturn.price_with_disc,100.5);
+console.log('PASS historical Excel sales source, price/date/quantity validation, distinct provenance, returns and duplicate rejection');

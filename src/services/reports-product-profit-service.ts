@@ -48,7 +48,7 @@ export async function getProductProfitReport(
 
   const [orders, sales, finance, ads, costHistory] = await Promise.all([
     fetchOrdersInRange(scope, client, { productIds }),
-    fetchSalesInRange(scope, client, { productIds }),
+    fetchSalesInRange(scope, client, { productIds, includeHistoricalEvidence: true }),
     fetchFinanceInRange(scope, client, { productIds }),
     fetchAdsInRange(scope, client, { productIds, supplierArticles }),
     fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),

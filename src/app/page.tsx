@@ -74,6 +74,8 @@ async function DashboardCoreSection({
       <div className="space-y-8">
         <DashboardProfitSection
           modelB={overview.modelBProfit}
+          financeRevenueAvailable={overview.financeRevenueAvailable ?? false}
+          historicalSalesRows={overview.historicalSalesRows ?? 0}
           brandFinanceNotice={overview.brandFinanceNotice}
           marketplaceFees={overview.marketplaceFeesPresentation}
           quantities={quantities}

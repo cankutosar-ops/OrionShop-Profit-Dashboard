@@ -1,3 +1,4 @@
+import { parseWbSourceSuffix } from "@/lib/finance-category";
 import { cache } from "react";
 import { partitionDashboardFinance, summarizeUnallocatedDashboardFinance } from "@/lib/dashboard-finance-scope";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
@@ -181,7 +182,7 @@ async function fetchScopedDashboardSql(
   const accountRangePromise = scope.brandId
     ? null
     : Promise.all([
-        fetchSalesInRange(scope, client, { columns: DASHBOARD_SALES_COLUMNS }),
+        fetchSalesInRange(scope, client, { columns: DASHBOARD_SALES_COLUMNS, includeHistoricalEvidence: true }),
         fetchFinanceInRange(scope, client, { columns: DASHBOARD_FINANCE_COLUMNS }),
         fetchOrdersInRange(scope, client, { columns: DASHBOARD_ORDER_COLUMNS }),
       ]);
@@ -199,7 +200,7 @@ async function fetchScopedDashboardSql(
 
   const [rangeRows, ads, costHistory] = await Promise.all([
     accountRangePromise ?? Promise.all([
-      fetchSalesInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_SALES_COLUMNS }),
+      fetchSalesInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_SALES_COLUMNS, includeHistoricalEvidence: true }),
       fetchFinanceInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_FINANCE_COLUMNS }),
       fetchOrdersInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_ORDER_COLUMNS }),
     ]),
@@ -436,6 +437,7 @@ async function buildOverviewMetricsFromRaw(
   } catch {
     dashboardTax = { taxPercent: 6, taxCalculationStatus: "SOURCE_UNAVAILABLE" };
   }
+  const historicalSalesRows = raw.sales.filter((sale) => sale.data_source === "WB_EXCEL").length;
   const modelBProfit = measureSync("model_b.calculateModelBNetProfit", "model_b", () =>
     buildModelBProfitMetrics(netSalesResolution, {
       salesForPay,
@@ -452,6 +454,9 @@ async function buildOverviewMetricsFromRaw(
       ...dashboardTax,
     })
   );
+
+  // A financial-report payable is not Sales API forPay. Keep the reconciliation unavailable.
+  if (historicalSalesRows > 0) modelBProfit.marketplaceFeeStatus = "unavailable";
 
   const wbSettlement = options?.skipSettlement
     ? LOADING_SETTLEMENT
@@ -500,6 +505,8 @@ async function buildOverviewMetricsFromRaw(
     /** Commercial Performance Revenue = Finance ppvz_for_pay. */
     ...(scope.brandId ? { brandFinanceNotice: summarizeUnallocatedDashboardFinance(raw.unallocatedFinance ?? []) } : {}),
     revenue: modelBProfit.revenue,
+    financeRevenueAvailable: raw.finance.some((row) => parseWbSourceSuffix(row.source_key, row.wb_source_suffix) === "for_pay"),
+    historicalSalesRows,
     productCost,
     /** Finance commission component; broad fees live in marketplaceFeesPresentation. */
     commission: marketplaceFeesPresentation.commission,

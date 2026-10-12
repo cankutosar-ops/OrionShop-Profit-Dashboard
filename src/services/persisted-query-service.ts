@@ -51,10 +51,10 @@ export async function fetchOrdersInRange(
 export async function fetchSalesInRange(
   scope: ScopedDateRange,
   client?: SupabaseClient,
-  options?: { productIds?: string[]; columns?: string }
+  options?: { productIds?: string[]; columns?: string; includeHistoricalEvidence?: boolean }
 ): Promise<WbSale[]> {
   const supabase = await getClient(client);
-  return fetchAllInDateRange<WbSale>(supabase, "wb_sales", {
+  const filter = {
     column: "sale_date",
     from: scope.from,
     to: scope.to,
@@ -63,7 +63,23 @@ export async function fetchSalesInRange(
     inFilters: options?.productIds
       ? [{ column: "product_id", values: options.productIds }]
       : undefined,
-  });
+  };
+  if (!options?.includeHistoricalEvidence) {
+    return fetchAllInDateRange<WbSale>(supabase, "wb_sales", filter);
+  }
+  // One DB view, native-first identity reconciliation, no live API fallback.
+  try {
+    return await fetchAllInDateRange<WbSale>(supabase, "wb_sales_reporting", {
+      ...filter,
+      selectColumns: options?.columns && !options.columns.includes("*")
+        ? `${options.columns}, data_source` : options?.columns,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/Could not find.*wb_sales_reporting|relation .*wb_sales_reporting.*does not exist/i.test(message)) throw error;
+    // Additive migration is not deployed yet: retain the existing native path.
+    return fetchAllInDateRange<WbSale>(supabase, "wb_sales", filter);
+  }
 }
 
 function mergeFinanceRowsById(rows: WbFinance[]): WbFinance[] {

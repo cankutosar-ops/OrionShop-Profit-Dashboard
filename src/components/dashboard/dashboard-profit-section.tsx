@@ -25,6 +25,8 @@ const SIMULATION_CARD =
   "border-dashed border-amber-500/35 bg-amber-500/[0.04] ring-1 ring-amber-500/20";
 
 type DashboardProfitSectionProps = {
+  financeRevenueAvailable?: boolean;
+  historicalSalesRows?: number;
   brandFinanceNotice?: BrandFinanceNotice;
   modelB: ModelBProfitMetrics;
   marketplaceFees: MarketplaceFeesPresentation;
@@ -66,6 +68,8 @@ function profitVariant(
 }
 
 export function DashboardProfitSection({
+  financeRevenueAvailable,
+  historicalSalesRows = 0,
   brandFinanceNotice,
   modelB,
   marketplaceFees,
@@ -122,6 +126,7 @@ export function DashboardProfitSection({
       title="Commercial Performance"
       description="Gross → returns → net sales → revenue → expenses → profit for the selected date range"
     >
+      {historicalSalesRows > 0 && <p className="text-xs text-muted-foreground">Historical sales and returns are sourced from weekly WB reports. Sales API settlement differences and full order history are not verified for this source.</p>}
       {brandFinanceNotice && (
         <div className="rounded-xl border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
           <p className="font-medium text-foreground">Brand profit before unallocated account costs</p>
@@ -173,8 +178,8 @@ export function DashboardProfitSection({
           />
           <MetricCard
             title="Revenue"
-            value={formatMoneyOrPending(modelB.revenue)}
-            subtitle={`${shareOfEngineSales(modelB.revenue)} of Net Sales`}
+            value={(financeRevenueAvailable ?? revenueReady) ? formatMoney(modelB.revenue) : TEMPORARILY_UNAVAILABLE}
+            subtitle={!revenueReady && financeRevenueAvailable ? "Stored Finance revenue" : `${shareOfEngineSales(modelB.revenue)} of Net Sales`}
             hint="Seller marketplace payable amount for the period — distinct from Gross Sales and Net Sales."
             icon={KPI_ICONS.revenue}
             variant="success"
@@ -182,7 +187,7 @@ export function DashboardProfitSection({
 
           <MetricCard
             title="WB Fee"
-            value={formatMoney(wbFee)}
+            value={modelB.marketplaceFeeStatus === "unavailable" ? TEMPORARILY_UNAVAILABLE : formatMoney(wbFee)}
             subtitle={`${shareOfEngineSales(wbFee)} of Net Sales`}
             hint="Net Sales minus net Sales API forPay for the selected period. Calculated from each persisted sale and return. Already reflected before Revenue and not deducted again from Net Profit."
             icon={KPI_ICONS.commission}

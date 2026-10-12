@@ -54,7 +54,7 @@ export async function getFinanceCategoryReport(
   const productIds = products.map((product) => String(product.id));
   const supplierArticles = products.map((product) => product.supplier_article);
   const [sales, finance, ads, costHistory] = await Promise.all([
-    fetchSalesInRange(scope, client, { productIds }),
+    fetchSalesInRange(scope, client, { productIds, includeHistoricalEvidence: true }),
     fetchFinanceInRange(scope, client, { productIds }),
     fetchAdsInRange(scope, client, { productIds, supplierArticles }),
     fetchCostHistory(scope.marketplaceAccountId, client, { productIds }),
@@ -84,6 +84,7 @@ export async function getFinanceCategoryReport(
     advertising,
     customerPaid: buildNetFinishedPriceFromDb(sales),
   });
+  if (sales.some((sale) => sale.data_source === "WB_EXCEL")) modelBProfit.marketplaceFeeStatus = "unavailable";
   const wbSettlement = await getWbSettlementMetrics(scope, finance, totalLogistics);
   const settlementAvailable = wbSettlement.availability?.available !== false;
   const modelCProfit = settlementAvailable

@@ -23,6 +23,8 @@ let authMode = "ready";
 let authCounter = 0;
 let failPageAuthAt = Infinity;
 let financeMode = "ready";
+let salesMode = "native";
+let fixtureDate = "2026-09-20";
 let snapshotsMode = "ready";
 let disconnected = 0;
 
@@ -40,11 +42,12 @@ const fixture = http.createServer(async (request, response) => {
     return send(fixtureUser);
   }
   if (request.method !== "GET" && request.method !== "HEAD") return send({ message: "Fixture forbids mutations" }, 405);
+  if (table === "wb_sales_reporting" && salesMode !== "historical") return send({ message: "relation public.wb_sales_reporting does not exist" }, 404);
   const accountId = url.searchParams.get("marketplace_account_id")?.slice(3) ?? "1";
   if (table === "wb_finance" && financeMode === "error") return send({ message: "fixture finance unavailable" }, 500);
   if (table.startsWith("warehouse_") && snapshotsMode === "hang") { response.on("close", () => disconnected++); return; }
   if (table === "wb_finance") await delay(10);
-  const date = "2026-09-20";
+  const date = fixtureDate;
   const product = { id: accountId, marketplace_account_id: accountId, supplier_article: `SKU-${accountId}`, nm_id: Number(accountId), name: `Fixture Product ${accountId}`, brand_id: "1", category_id: "1", brand: { id: "1", name: "Fixture Brand" }, category: { id: "1", name: "Fixture Category" } };
   const data = {
     marketplace_accounts: accounts,
@@ -59,6 +62,11 @@ const fixture = http.createServer(async (request, response) => {
     company_tax_profiles: [{ id: "1", company_id: "3", tax_system: "USN", tax_object: "USN_INCOME", tax_rate: 6, effective_from: "2026-01-01", effective_to: null }],
     warehouse_sales_report_snapshot: [], warehouse_account_balance: [],
   };
+  if (salesMode === "empty") { data.wb_sales = []; data.wb_orders = []; }
+  if (salesMode === "historical") {
+    data.wb_sales_reporting = [{ ...data.wb_sales[0], id:"xlsx-sale:999999001:1", sale_id:null, for_pay:null, data_source:"WB_EXCEL" }];
+    data.wb_orders = [];
+  }
   let rows = data[table] ?? [];
   for (const [key, value] of url.searchParams) {
     if (["select", "order", "limit", "offset"].includes(key)) continue;
@@ -118,8 +126,20 @@ try {
   }
   const branded=await load("/?company=3&account=6&brand=1&from=2026-07-10&to=2026-10-07&dateManual=1");
   assert.match(branded.body,/Brand profit before unallocated account costs/);
+  fixtureDate = "2026-05-15";
+  salesMode = "empty";
+  const financeOnly = await load("/?company=3&account=6&from=2026-04-27&to=2026-05-31&dateManual=1");
+  assert.equal(financeOnly.response.status,200);
+  assert.match(financeOnly.body,/Stored Finance revenue/);
+  assert.match(financeOnly.body,/Awaiting sales data/);
+  salesMode = "historical";
+  const historical = await load("/?company=3&account=6&from=2026-04-27&to=2026-05-31&dateManual=1");
+  assert.equal(historical.response.status,200);
+  assert.match(historical.body,/Historical sales and returns are sourced from weekly WB reports/);
+  assert.doesNotMatch(historical.body,/Dashboard could not finish loading/);
+  salesMode = "native";
   for(const route of ["/?company=3&account=1", "/?company=1&account=6"]){const denied=await load(route);assert.match(denied.response.headers.get("location")??denied.body,/access-denied/);}
-  for(const c of calls.filter(c=>["wb_finance","wb_sales","wb_orders","wb_ads"].includes(c.table))){const params=new URLSearchParams(c.query); if (!params.has("marketplace_account_id")) { assert.equal(params.get("limit"),"1", "Only schema probes may be unscoped: " + c.query); } else assert.equal(params.get("marketplace_account_id"),"eq.6");}
+  for(const c of calls.filter(c=>["wb_finance","wb_sales","wb_sales_reporting","wb_orders","wb_ads"].includes(c.table))){const params=new URLSearchParams(c.query); if (!params.has("marketplace_account_id")) { assert.equal(params.get("limit"),"1", "Only schema probes may be unscoped: " + c.query); } else assert.equal(params.get("marketplace_account_id"),"eq.6");}
   console.log(JSON.stringify({status:"PASS",scope:"single company 3, default account 6, no explicit account claim, XLSX Finance facts",environment:"compiled Next application with loopback Auth/DB fixture; no real password login",measurements},null,2));
 } catch (error) {
   console.error(output.slice(-5000));

@@ -40,6 +40,7 @@ const fixture = http.createServer(async (request, response) => {
     return send(fixtureUser);
   }
   if (request.method !== "GET" && request.method !== "HEAD") return send({ message: "Fixture forbids mutations" }, 405);
+  if (table === "wb_sales_reporting") return send({ message: "relation public.wb_sales_reporting does not exist" }, 404);
   const accountId = url.searchParams.get("marketplace_account_id")?.slice(3) ?? "1";
   if (table === "wb_finance" && financeMode === "error") return send({ message: "fixture finance unavailable" }, 500);
   if (table.startsWith("warehouse_") && snapshotsMode === "hang") { response.on("close", () => disconnected++); return; }
