@@ -25,6 +25,7 @@ let failPageAuthAt = Infinity;
 let financeMode = "ready";
 let salesMode = "native";
 let fixtureDate = "2026-09-20";
+let expenseTaxMode = false;
 let snapshotsMode = "ready";
 let disconnected = 0;
 
@@ -59,7 +60,7 @@ const fixture = http.createServer(async (request, response) => {
     wb_finance: Array.from({ length: accountId === "2" ? 40062 : 10 }, (_, i) => ({ id: String(i + 1), marketplace_account_id: accountId, product_id: accountId, operation_date: date, operation_type: "sale", amount: 1, raw_amount: 1, source_key: `xlsx:999999001:${i+1}:for_pay`, finance_category: "FOR_PAY", wb_source_suffix: "for_pay", srid: "s1", nm_id: Number(accountId) })),
     wb_ads: [{ id: "1", marketplace_account_id: accountId, product_id: accountId, campaign_date: date, spend: 2 }],
     product_cost_history: [{ id: "1", product_id: accountId, cost: 10, effective_from: "2026-01-01", effective_to: null, created_at: "2026-01-01T00:00:00Z" }],
-    company_tax_profiles: [{ id: "1", company_id: "3", tax_system: "USN", tax_object: "USN_INCOME", tax_rate: 6, effective_from: "2026-01-01", effective_to: null }],
+    company_tax_profiles: [{ id: "1", company_id: "3", tax_system: "USN", tax_object: expenseTaxMode ? "USN_INCOME_MINUS_EXPENSES" : "USN_INCOME", tax_rate: expenseTaxMode ? 15 : 6, vat_status: expenseTaxMode ? "UNKNOWN" : "EXEMPT", effective_from: "2026-01-01", effective_to: null }],
     warehouse_sales_report_snapshot: [], warehouse_account_balance: [],
   };
   if (salesMode === "empty") { data.wb_sales = []; data.wb_orders = []; }
@@ -126,6 +127,12 @@ try {
   }
   const branded=await load("/?company=3&account=6&brand=1&from=2026-07-10&to=2026-10-07&dateManual=1");
   assert.match(branded.body,/Brand profit before unallocated account costs/);
+  expenseTaxMode = true;
+  const blockedTax = await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1");
+  assert.equal(blockedTax.response.status,200);
+  assert.match(blockedTax.body,/Tax calculation unverified/);
+  assert.match(blockedTax.body,/Operating Profit remains available before tax/);
+  expenseTaxMode = false;
   fixtureDate = "2026-05-15";
   salesMode = "empty";
   const financeOnly = await load("/?company=3&account=6&from=2026-04-27&to=2026-05-31&dateManual=1");

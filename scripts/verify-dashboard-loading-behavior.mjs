@@ -163,6 +163,8 @@ try {
   const dashboard = await getDashboardTaxInputs("1", range.from, range.to);
   assert.equal(dashboard.recognizedExpensesKopeks, detailed.recognizedExpensesKopeks);
   assert.equal(dashboard.recognizedExpensesKopeks, 2500, "purchase deductions remain in the expense regime");
+  assert.equal(dashboard.expensePeriodCalculation.estimatedTaxYtdKopeks, null, "unverified statutory income must not publish a 15% tax estimate");
+  assert.ok(dashboard.expensePeriodReasons.length > 0);
   const financeAccounts = new Set(calls.filter(url => url.pathname.endsWith("/wb_finance")).map(url => url.searchParams.get("marketplace_account_id")));
   assert.deepEqual([...financeAccounts].sort(), ["eq.1", "eq.2"]);
   console.log("PASS tax: income-only reads one profile; expense regime preserves company-wide purchase deductions");
@@ -184,6 +186,7 @@ try {
     wb_finance: Array.from({ length: 40062 }, (_, i) => ({ id: String(i + 1), marketplace_account_id: "2", product_id: "7", nm_id: 7, operation_date: range.from, operation_type: "sale", amount: 1, raw_amount: 1, source_key: `r:${i}:for_pay`, description: "Sale", srid: "s1", finance_category: "FOR_PAY", wb_source_suffix: "for_pay", supplier_oper_name: "Продажа" })),
     wb_ads: [{ id: "1", marketplace_account_id: "2", product_id: "7", campaign_date: range.from, spend: 2 }],
     product_cost_history: [{ id: "1", product_id: "7", cost: 10, effective_from: "2026-01-01", effective_to: null, created_at: "2026-01-01T00:00:00Z" }],
+    company_expenses: [], purchases: [], company_purchase_tax_policies: [], tax_purchase_recognition_events: [], wb_finance_transaction_evidence: [], warehouse_sales_report_snapshot: [],
     company_tax_profiles: [profile],
     marketplace_accounts: { last_successful_sync_at: "2026-09-30T00:00:00Z", last_sync_at: null },
   };
@@ -195,7 +198,8 @@ try {
     const sourceTable = table === "wb_sales_reporting" ? "wb_sales" : table;
     assert.ok(Object.hasOwn(sources, sourceTable), `Unexpected dashboard query: ${table}`);
     if (table === "wb_finance") financeReads++;
-    let data = sources[sourceTable];
+    let data = table === "marketplace_accounts" && url.searchParams.get("select") === "id"
+      ? [{ id: "2" }] : sources[sourceTable];
     if (table === "wb_sales_reporting") data = data.map(row => ({ ...row, data_source: row.data_source ?? "WB_API" }));
     if (!Array.isArray(data)) return Response.json(data);
     const total = data.length;
@@ -217,6 +221,19 @@ try {
   const narrowDashboard = await getDashboardCoreData(scope);
   assert.deepEqual(narrowDashboard, fullDashboard, "projected rows preserve all dashboard totals/charts/products");
   console.log("PASS full dashboard: 40,062 finance rows, one history read, identical full/projected payloads");
+
+  profile.tax_object = "USN_INCOME_MINUS_EXPENSES";
+  profile.tax_rate = 15;
+  profile.vat_status = "UNKNOWN";
+  const blockedTax = await getDashboardCoreData(scope);
+  assert.equal(blockedTax.overview.modelBProfit.taxObject, "USN_INCOME_MINUS_EXPENSES");
+  assert.equal(blockedTax.overview.modelBProfit.taxCalculationStatus, "SOURCE_UNAVAILABLE");
+  assert.ok(blockedTax.overview.modelBProfit.taxReadinessReasons.some(reason => reason.includes("VAT")));
+  assert.equal(blockedTax.overview.modelBProfit.operatingProfit, fullDashboard.overview.modelBProfit.operatingProfit);
+  profile.tax_object = "USN_INCOME";
+  profile.tax_rate = 6;
+  profile.vat_status = "EXEMPT";
+  console.log("PASS expense-tax readiness: statutory evidence/VAT blockers propagate; operating profit and income-only path preserved");
 
   const nativeSales = sources.wb_sales;
   sources.wb_sales = [{ ...nativeSales[0], data_source: "WB_EXCEL", for_pay: null, sale_id: null }];

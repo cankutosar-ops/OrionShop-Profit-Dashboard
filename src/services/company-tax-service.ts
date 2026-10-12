@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { calculateTaxYtd, unverifiedTaxableIncomeProvider, type TaxReadiness } from "@/lib/tax-engine/calculator";
+import { calculateTaxYtd, unverifiedTaxableIncomeProvider, selectedPeriodTaxImpact, type TaxCalculation, type TaxReadiness } from "@/lib/tax-engine/calculator";
 import {
   classifyAdTaxExpense, classifyFinanceTaxExpense, summarizeMarketplaceTaxExpenses,
 } from "@/lib/tax-engine/marketplace-expenses";
@@ -12,16 +12,53 @@ import { summarizeOperatingExpenses } from "@/lib/tax-engine/operating-expenses"
 import { fetchAllInDateRange } from "@/lib/supabase/paginate";
 
 /** The dashboard's income-only estimate needs the profile, not an expense audit. */
-export async function getDashboardTaxInputs(companyId: string, from: string, to: string) {
+export async function getDashboardTaxInputs(companyId: string, from: string, to: string,
+  scope?: { marketplaceAccountId: string; brandId?: string }) {
   const profiles = await listCompanyTaxProfiles(companyId);
   const profile = resolveTaxProfile(profiles, to);
   if (profile?.tax_object !== "USN_INCOME_MINUS_EXPENSES") {
-    return { profile, recognizedExpensesKopeks: 0 };
+    return { profile, recognizedExpensesKopeks: 0, expensePeriodCalculation: undefined as TaxCalculation | undefined,
+      expensePeriodReasons: [] as string[] };
   }
-  // Preserve the existing company-wide, evidence-checked deduction calculation
-  // for income-minus-expenses profiles, including other accounts and purchases.
-  const foundation = await getCompanyTaxFoundation(companyId, from, to);
-  return { profile: foundation.profile, recognizedExpensesKopeks: foundation.recognizedExpensesKopeks };
+  const foundation = await getCompanyTaxFoundation(companyId, from, to).catch(() => null);
+  if (!foundation) return { profile, recognizedExpensesKopeks: 0,
+    expensePeriodCalculation: { readiness: "INCOMPLETE_SOURCE_DATA" as const, taxBaseKopeks: null,
+      calculatedTaxKopeks: null, minimumTaxReferenceKopeks: null, estimatedTaxYtdKopeks: null,
+      annualMinimumApplied: false, warnings: ["Company tax evidence is unavailable."] },
+    expensePeriodReasons: ["Company tax evidence is unavailable."] };
+  const yearStart = `${to.slice(0, 4)}-01-01`;
+  const reasons = [...foundation.warnings];
+  if (foundation.readinessSignals.some(signal => signal !== "READY")) reasons.push("Tax income or deductible expenses require verification.");
+  if (profile.effective_from > yearStart || resolveTaxProfile(profiles, yearStart)?.id !== profile.id ||
+      profiles.some(p => p.id !== profile.id && p.effective_from > yearStart && p.effective_from <= to)) {
+    reasons.push("The effective tax profile does not cover the cumulative tax period.");
+  }
+  if (profile.vat_status === "UNKNOWN") reasons.push("Company VAT treatment is unverified.");
+  if (from.slice(0, 4) !== to.slice(0, 4) || from > to) reasons.push("Select a valid range within one tax year.");
+  if (scope && (scope.brandId || foundation.accountIds.length !== 1 || foundation.accountIds[0] !== scope.marketplaceAccountId)) {
+    reasons.push("Company tax cannot be allocated to a brand or individual account without an explicit allocation policy.");
+  }
+  const blocked = (messages: string[]): TaxCalculation => ({ readiness: "INCOMPLETE_SOURCE_DATA",
+    taxBaseKopeks: null, calculatedTaxKopeks: null, minimumTaxReferenceKopeks: null,
+    estimatedTaxYtdKopeks: null, annualMinimumApplied: false, warnings: messages });
+  let calculation = blocked(reasons);
+  if (reasons.length === 0) {
+    const end = from === yearStart ? foundation : await getCompanyTaxFoundation(companyId, yearStart, to);
+    const priorDate = new Date(`${from}T00:00:00Z`); priorDate.setUTCDate(priorDate.getUTCDate() - 1);
+    const prior = from === yearStart ? null : await getCompanyTaxFoundation(companyId, yearStart, priorDate.toISOString().slice(0, 10));
+    const snapshots = [end, ...(prior ? [prior] : [])];
+    const blockers = snapshots.flatMap(item => item.readinessSignals.filter(signal => signal !== "READY"));
+    const zero: TaxCalculation = { readiness: "READY", taxBaseKopeks: 0, calculatedTaxKopeks: 0,
+      minimumTaxReferenceKopeks: 0, estimatedTaxYtdKopeks: 0, annualMinimumApplied: false, warnings: [] };
+    const impact = blockers.length ? null : selectedPeriodTaxImpact(prior?.calculation ?? zero, end.calculation);
+    if (impact === null || impact < 0) {
+      reasons.push(impact !== null && impact < 0 ? "A negative cumulative tax adjustment requires separate presentation."
+        : "Cumulative tax income or expenses are unverified.");
+      calculation = blocked(reasons);
+    } else calculation = { ...end.calculation, estimatedTaxYtdKopeks: impact };
+  }
+  return { profile: foundation.profile, recognizedExpensesKopeks: foundation.recognizedExpensesKopeks,
+    expensePeriodCalculation: calculation, expensePeriodReasons: reasons };
 }
 
 export async function getCompanyTaxFoundation(companyId: string, from: string, to: string) {

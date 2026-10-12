@@ -393,6 +393,7 @@ async function buildOverviewMetricsFromRaw(
   const financeNetForPay = sumNetForPayFromFinance(raw.finance);
   const acceptance = sumAcceptanceFromFinance(raw.finance);
   const customerPaid = buildNetFinishedPriceFromDb(raw.sales);
+  let taxReadinessReasons: string[] = [];
   let dashboardTax: {
     taxPercent: number;
     taxObject?: ModelBProfitMetrics["taxObject"];
@@ -402,11 +403,13 @@ async function buildOverviewMetricsFromRaw(
     estimatedTaxOverride?: number;
   } = { taxPercent: 6, taxCalculationStatus: "PROFILE_MISSING" };
   try {
-    const foundation = await getDashboardTaxInputs(scope.companyId, scope.from, scope.to);
+    const foundation = await getDashboardTaxInputs(scope.companyId, scope.from, scope.to, scope);
     const profile = foundation.profile;
     if (profile) {
       const deductibleExpenses = foundation.recognizedExpensesKopeks / 100;
-      const calculation = calculateTaxYtd({
+      taxReadinessReasons = foundation.expensePeriodReasons;
+      const calculation = profile.tax_object === "USN_INCOME_MINUS_EXPENSES"
+        ? foundation.expensePeriodCalculation! : calculateTaxYtd({
         profile,
         // Dashboard reporting already uses persisted Sales API finishedPrice as its
         // explicit estimated-tax income source. The Tax workspace keeps its stricter
@@ -454,6 +457,8 @@ async function buildOverviewMetricsFromRaw(
       ...dashboardTax,
     })
   );
+
+  modelBProfit.taxReadinessReasons = taxReadinessReasons;
 
   // A financial-report payable is not Sales API forPay. Keep the reconciliation unavailable.
   if (historicalSalesRows > 0) modelBProfit.marketplaceFeeStatus = "unavailable";

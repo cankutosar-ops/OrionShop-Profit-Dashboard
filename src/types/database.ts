@@ -436,6 +436,7 @@ export type ModelBProfitMetrics = {
   taxObject?: CompanyTaxObject;
   /** Whether the Dashboard tax amount came from the effective Tax Engine profile. */
   taxCalculationStatus?: "READY" | "PROFILE_MISSING" | "SOURCE_UNAVAILABLE";
+  taxReadinessReasons?: string[];
   /** Taxable base used by the Dashboard Tax Engine estimate. */
   taxBase?: number;
   /** Verified deductible expenses used by USN income-minus-expenses. */

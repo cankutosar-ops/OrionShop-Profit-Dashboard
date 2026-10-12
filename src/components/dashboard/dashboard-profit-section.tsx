@@ -80,6 +80,8 @@ export function DashboardProfitSection({
 }: DashboardProfitSectionProps) {
   const emptyValue = "—";
   const revenueReady = isNetSalesReady(modelB.netSalesStatus);
+  const expenseTaxUnverified = modelB.taxObject === "USN_INCOME_MINUS_EXPENSES" && modelB.taxCalculationStatus !== "READY";
+  const afterTaxReady = revenueReady && !expenseTaxUnverified;
 
   const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiCurrency(value));
   const formatRate = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiPercent(value));
@@ -247,18 +249,18 @@ export function DashboardProfitSection({
           />
           <MetricCard
             title="Estimated Tax"
-            value={formatMoneyOrPending(modelB.estimatedTax)}
+            value={expenseTaxUnverified && !isEmptyPeriod ? "Tax calculation unverified" : formatMoneyOrPending(modelB.estimatedTax)}
             subtitle={
-              revenueReady
+              expenseTaxUnverified ? "Income/expense evidence or company tax settings require verification" : revenueReady
                 ? modelB.taxCalculationStatus === "READY"
                   ? modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
-                    ? `${modelB.taxPercent}% of income − verified deductible expenses`
+                    ? `${modelB.taxPercent}% company tax · cumulative period impact`
                     : `${modelB.taxPercent}% of taxable income`
                   : "Tax Engine profile/source unavailable · legacy estimate shown"
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
-            hint={modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
-              ? `Tax Engine: max(0, income − verified deductible expenses) × ${modelB.taxPercent}%. Current base: ${formatMoney(modelB.taxBase ?? 0)}; deductible expenses: ${formatMoney(modelB.taxDeductibleExpenses ?? 0)}.`
+            hint={expenseTaxUnverified ? (modelB.taxReadinessReasons?.join(" ") || "Review company tax income, expenses and effective profile in Tax Engine. No verified tax amount is available.") : modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
+              ? `Tax Engine: max(0, income − verified deductible expenses) × ${modelB.taxPercent}%. Cumulative base: ${formatMoney(modelB.taxBase ?? 0)}; recognized expenses in selected period: ${formatMoney(modelB.taxDeductibleExpenses ?? 0)}.`
               : `Tax Engine: taxable income × ${modelB.taxPercent}%. Dashboard income source is persisted Sales API finishedPrice.`}
             icon={KPI_ICONS.tax}
             {...expenseProps}
@@ -278,23 +280,23 @@ export function DashboardProfitSection({
           />
           <MetricCard
             title="Net Profit"
-            value={formatMoneyOrPending(modelB.finalNetProfit)}
+            value={expenseTaxUnverified && !isEmptyPeriod ? "Tax calculation unverified" : formatMoneyOrPending(modelB.finalNetProfit)}
             subtitle={
-              revenueReady
+              expenseTaxUnverified ? "Operating Profit remains available before tax" : revenueReady
                 ? `${shareOfEngineSales(modelB.finalNetProfit)} of sales · after tax`
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
             hint="Revenue − Product Cost − Logistics − Storage − Acceptance − Penalties − Adjustments − Estimated Tax. Marketplace Fees and Acquiring are not deducted again."
             icon={KPI_ICONS.profit}
             className="ring-1 ring-primary/30"
-            variant={profitVariant(modelB.finalNetProfit, revenueReady, isEmptyPeriod)}
+            variant={profitVariant(modelB.finalNetProfit, afterTaxReady, isEmptyPeriod)}
           />
 
           <MetricCard
             title="Return Profit Impact"
-            value={formatMoneyOrPending(noReturnsScenario.returnProfitImpact)}
+            value={expenseTaxUnverified && !isEmptyPeriod ? "Tax calculation unverified" : formatMoneyOrPending(noReturnsScenario.returnProfitImpact)}
             subtitle={
-              revenueReady
+              afterTaxReady
                 ? "Potential Profit − Net Profit"
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
@@ -304,15 +306,15 @@ export function DashboardProfitSection({
             className={SIMULATION_CARD}
             variant={profitVariant(
               noReturnsScenario.returnProfitImpact,
-              revenueReady,
+              afterTaxReady,
               isEmptyPeriod
             )}
           />
           <MetricCard
             title="Potential Profit (No Returns)"
-            value={formatMoneyOrPending(noReturnsScenario.potentialProfit)}
+            value={expenseTaxUnverified && !isEmptyPeriod ? "Tax calculation unverified" : formatMoneyOrPending(noReturnsScenario.potentialProfit)}
             subtitle={
-              revenueReady ? (
+              afterTaxReady ? (
                 <div className="space-y-0.5">
                   <div>Returned Sales restored; costs and tax unchanged.</div>
                   <div className="tabular-nums text-foreground/80">
@@ -332,7 +334,7 @@ export function DashboardProfitSection({
             className={SIMULATION_CARD}
             variant={profitVariant(
               noReturnsScenario.potentialProfit,
-              revenueReady,
+              afterTaxReady,
               isEmptyPeriod
             )}
           />
