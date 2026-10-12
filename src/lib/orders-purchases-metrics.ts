@@ -6,9 +6,9 @@ function toDateKey(value: string): string {
   return value.slice(0, 10);
 }
 
-/** Active orders only — status must be exactly 'active'. */
+/** Non-cancelled order items include completed legacy rows as well as active rows. */
 function isActiveOrder(order: WbOrder): boolean {
-  return order.status === "active";
+  return order.status !== "cancelled";
 }
 
 function isCancelledOrder(order: WbOrder): boolean {
@@ -53,29 +53,28 @@ export function buildOrdersPurchasesKpis(
 
   const dailyMap = new Map<string, DailyOrdersPurchasesPoint>();
 
-  for (const order of activeOrders) {
+  const emptyPoint = (date: string): DailyOrdersPurchasesPoint => ({ date,
+    totalOrdersCount: 0, totalOrdersAmount: 0, cancelledOrdersCount: 0, cancelledOrdersAmount: 0,
+    ordersCount: 0, ordersAmount: 0, purchasesCount: 0, purchasesAmount: 0 });
+  // Cancellation status belongs to the order-date cohort, not a fabricated cancellation date.
+  for (const order of orders) {
     const date = toDateKey(order.order_date);
-    const point = dailyMap.get(date) ?? {
-      date,
-      ordersCount: 0,
-      ordersAmount: 0,
-      purchasesCount: 0,
-      purchasesAmount: 0,
-    };
-    point.ordersCount += order.quantity;
-    point.ordersAmount += orderLineAmount(order);
+    const point = dailyMap.get(date) ?? emptyPoint(date);
+    point.totalOrdersCount = (point.totalOrdersCount ?? 0) + order.quantity;
+    point.totalOrdersAmount = (point.totalOrdersAmount ?? 0) + orderLineAmount(order);
+    if (isCancelledOrder(order)) {
+      point.cancelledOrdersCount = (point.cancelledOrdersCount ?? 0) + order.quantity;
+      point.cancelledOrdersAmount = (point.cancelledOrdersAmount ?? 0) + orderLineAmount(order);
+    } else {
+      point.ordersCount += order.quantity;
+      point.ordersAmount += orderLineAmount(order);
+    }
     dailyMap.set(date, point);
   }
 
   for (const sale of purchases) {
     const date = toDateKey(sale.sale_date);
-    const point = dailyMap.get(date) ?? {
-      date,
-      ordersCount: 0,
-      ordersAmount: 0,
-      purchasesCount: 0,
-      purchasesAmount: 0,
-    };
+    const point = dailyMap.get(date) ?? emptyPoint(date);
     point.purchasesCount += sale.quantity;
     point.purchasesAmount += sale.revenue;
     dailyMap.set(date, point);
@@ -86,6 +85,7 @@ export function buildOrdersPurchasesKpis(
   );
 
   return {
+    ordersPriceFallbackCount: orders.filter(order => !(Number(order.price_with_disc) > 0)).length,
     ordersValue,
     ordersValueCount,
     ordersCount,

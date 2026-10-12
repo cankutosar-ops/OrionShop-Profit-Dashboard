@@ -125,6 +125,12 @@ try {
     assert.doesNotMatch(result.body,/Dashboard could not finish loading|Showing sample placeholders|NEXT_REDIRECT|:E\{/);
     measurements.push({route,ms:result.ms,status:result.response.status});
   }
+  const orderScreen=await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1");
+  assert.match(orderScreen.body,/Order Performance/);
+  assert.match(orderScreen.body,/Order Amount/);
+  assert.match(orderScreen.body,/Daily orders/);
+  assert.match(orderScreen.body,/Export daily CSV/);
+  assert.match(orderScreen.body,/Non-cancelled Orders/);
   const branded=await load("/?company=3&account=6&brand=1&from=2026-07-10&to=2026-10-07&dateManual=1");
   assert.match(branded.body,/Brand profit before unallocated account costs/);
   expenseTaxMode = true;

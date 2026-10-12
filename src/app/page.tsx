@@ -74,6 +74,7 @@ async function DashboardCoreSection({
       <div className="space-y-8">
         <DashboardProfitSection
           modelB={overview.modelBProfit}
+          orderScope={{companyId:scope.companyId,accountId:scope.marketplaceAccountId,brandId:scope.brandId,from:scope.from,to:scope.to}}
           financeRevenueAvailable={overview.financeRevenueAvailable ?? false}
           historicalSalesRows={overview.historicalSalesRows ?? 0}
           brandFinanceNotice={overview.brandFinanceNotice}
@@ -120,7 +121,7 @@ async function DashboardCoreSection({
       <div className="mt-8 min-w-0">
         <ChartCard
           title="Orders vs Buyout"
-          description="Order and completed-buyout quantities (bars); monetary values (lines)"
+          description="Non-cancelled order items vs completed buyouts; different event-date cohorts and price bases"
         >
           <OrdersPurchasesChartLazy data={kpis.dailyOrdersPurchases} />
         </ChartCard>

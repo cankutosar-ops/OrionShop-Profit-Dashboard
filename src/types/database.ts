@@ -1087,6 +1087,10 @@ export type CategoryProfitability = GroupedProfitability & {
 };
 
 export type DailyOrdersPurchasesPoint = {
+  totalOrdersCount?: number;
+  totalOrdersAmount?: number;
+  cancelledOrdersCount?: number;
+  cancelledOrdersAmount?: number;
   date: string;
   ordersCount: number;
   ordersAmount: number;
@@ -1095,7 +1099,9 @@ export type DailyOrdersPurchasesPoint = {
 };
 
 export type OrdersPurchasesKpis = {
-  /** Sum of price × qty for all orders in range, including cancelled. */
+  /** Rows whose seller-discounted price is absent; existing list-price fallback is used. */
+  ordersPriceFallbackCount?: number;
+  /** Seller-discounted value of all stored order items, including cancelled; list price fallback when absent. */
   ordersValue: number;
   ordersValueCount: number;
   ordersCount: number;

@@ -365,12 +365,9 @@ async function buildOverviewMetricsFromRaw(
   const penalties = financeTotals.penalty;
   const otherExpenses = financeTotals.other + financeTotals.unclassified;
   const dailyRevenue = groupSalesByDate(raw.sales, raw.costHistory, latestCostByProductId);
-  const ordersPurchasesBase = buildOrdersPurchasesKpis(raw.orders, raw.sales);
-  const ordersValueResolution = await resolveOrdersValue(scope, raw.orders);
-  const ordersPurchases = {
-    ...ordersPurchasesBase,
-    ordersValue: ordersValueResolution.ordersValue,
-  };
+  // Count and amount share the stored order-date cohort. last_change_date
+  // describes a later status update and must not remove that order's value.
+  const ordersPurchases = buildOrdersPurchasesKpis(raw.orders, raw.sales);
   const totalLogistics = logistics + returnLogistics;
   const netSalesResolution = await resolveNetSales(scope, raw.sales);
   const categorySummary = summarizeFinanceByCategory(raw.finance);

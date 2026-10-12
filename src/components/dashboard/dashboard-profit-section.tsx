@@ -1,4 +1,5 @@
 "use client";
+import { DashboardOrdersSection } from "@/components/dashboard/dashboard-orders-section";
 
 import type { ReactNode } from "react";
 import type { BrandFinanceNotice } from "@/lib/dashboard-finance-scope";
@@ -25,6 +26,7 @@ const SIMULATION_CARD =
   "border-dashed border-amber-500/35 bg-amber-500/[0.04] ring-1 ring-amber-500/20";
 
 type DashboardProfitSectionProps = {
+  orderScope?: {companyId:string;accountId:string;brandId?:string;from:string;to:string};
   financeRevenueAvailable?: boolean;
   historicalSalesRows?: number;
   brandFinanceNotice?: BrandFinanceNotice;
@@ -68,6 +70,7 @@ function profitVariant(
 }
 
 export function DashboardProfitSection({
+  orderScope,
   financeRevenueAvailable,
   historicalSalesRows = 0,
   brandFinanceNotice,
@@ -128,6 +131,7 @@ export function DashboardProfitSection({
       title="Commercial Performance"
       description="Gross → returns → net sales → revenue → expenses → profit for the selected date range"
     >
+      {orderScope && <DashboardOrdersSection kpis={kpis} scope={orderScope} />}
       {historicalSalesRows > 0 && <p className="text-xs text-muted-foreground">Historical sales and returns are sourced from weekly WB reports. Sales API settlement differences and full order history are not verified for this source.</p>}
       {brandFinanceNotice && (
         <div className="rounded-xl border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground">
@@ -378,7 +382,7 @@ export function DashboardProfitSection({
                       {formatMoney(kpis.ordersValue)}
                     </div>
                     <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Order Value (Total Price)
+                      Order Amount (seller-discounted)
                     </div>
                   </div>
                 )

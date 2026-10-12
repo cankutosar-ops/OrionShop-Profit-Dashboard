@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {buildOrdersPurchasesKpis} from '../src/lib/orders-purchases-metrics.ts';
+import {buildDailyOrdersCsv} from '../src/lib/daily-orders-export.ts';
+const order=(id,status,date='2026-10-11',price=100)=>({id,marketplace_account_id:'6',srid:id,nm_id:1,product_id:'1',order_date:date,price:200,price_with_disc:price,quantity:1,status});
+const k=buildOrdersPurchasesKpis([order('a','active'),order('b','completed'),order('c','cancelled'),order('d','cancelled','2026-10-10',50)],[]);
+assert.equal(k.ordersValue,350);assert.equal(k.ordersValueCount,4);assert.equal(k.ordersCount,2);assert.equal(k.ordersAmount,200);assert.equal(k.cancelledOrdersCount,2);assert.equal(k.cancelledOrdersAmount,150);
+assert.equal(k.dailyOrdersPurchases.length,2);assert.deepEqual(k.dailyOrdersPurchases.map(p=>[p.date,p.totalOrdersCount,p.totalOrdersAmount,p.ordersCount,p.cancelledOrdersCount]),[['2026-10-10',1,50,0,1],['2026-10-11',3,300,2,1]]);
+assert.equal(k.dailyOrdersPurchases.reduce((n,p)=>n+p.totalOrdersAmount,0),k.ordersValue);
+const cancelled=buildOrdersPurchasesKpis([order('x','cancelled')],[]);assert.equal(cancelled.dailyOrdersPurchases.length,1);assert.equal(cancelled.dailyOrdersPurchases[0].ordersCount,0);
+const fallback=buildOrdersPurchasesKpis([order('f','active','2026-10-11',0)],[]);assert.equal(fallback.ordersPriceFallbackCount,1);assert.equal(fallback.ordersValue,200);
+const csv=buildDailyOrdersCsv(k,{companyId:'3',accountId:'6',brandId:'=synthetic()',from:'2026-10-10',to:'2026-10-11'});
+assert.match(csv,/Brand,'=synthetic\(\)/);assert.match(csv,/2026-10-11,3,300,2,200,1,100/);assert.match(csv,/Cancellation basis/);
+const empty=buildOrdersPurchasesKpis([],[]);assert.equal(empty.ordersValueCount,0);assert.equal(empty.dailyOrdersPurchases.length,0);
+console.log('PASS daily orders: all/non-cancelled/cancelled totals, completed rows, cancelled-only day, price fallback, ordered dates, daily reconciliation, source-separated CSV and formula safety');
+
+const updated=buildOrdersPurchasesKpis([{...order('later','active'),last_change_date:'2026-10-12'}],[]);
+assert.equal(updated.ordersValue,100);assert.equal(updated.dailyOrdersPurchases[0].date,'2026-10-11');
+const service=readFileSync(new URL('../src/services/dashboard-service.ts',import.meta.url),'utf8');
+const core=service.slice(service.indexOf('const latestCostByProductId ='),service.indexOf('const totalLogistics ='));
+assert.match(core,/const ordersPurchases = buildOrdersPurchasesKpis\(raw.orders, raw.sales\)/);
+assert.doesNotMatch(core,/resolveOrdersValue/);
+console.log('PASS order-date cohort retained after later status update; core does not overwrite amount with last-change-date subset');
