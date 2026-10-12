@@ -192,9 +192,11 @@ try {
   globalThis.fetch = async (input) => {
     const url = new URL(String(input));
     const table = url.pathname.split("/").at(-1);
-    assert.ok(Object.hasOwn(sources, table), `Unexpected dashboard query: ${table}`);
+    const sourceTable = table === "wb_sales_reporting" ? "wb_sales" : table;
+    assert.ok(Object.hasOwn(sources, sourceTable), `Unexpected dashboard query: ${table}`);
     if (table === "wb_finance") financeReads++;
-    let data = sources[table];
+    let data = sources[sourceTable];
+    if (table === "wb_sales_reporting") data = data.map(row => ({ ...row, data_source: row.data_source ?? "WB_API" }));
     if (!Array.isArray(data)) return Response.json(data);
     const total = data.length;
     const offset = Number(url.searchParams.get("offset") ?? 0);
@@ -215,6 +217,16 @@ try {
   const narrowDashboard = await getDashboardCoreData(scope);
   assert.deepEqual(narrowDashboard, fullDashboard, "projected rows preserve all dashboard totals/charts/products");
   console.log("PASS full dashboard: 40,062 finance rows, one history read, identical full/projected payloads");
+
+  const nativeSales = sources.wb_sales;
+  sources.wb_sales = [{ ...nativeSales[0], data_source: "WB_EXCEL", for_pay: null, sale_id: null }];
+  const historicalDashboard = await getDashboardCoreData(scope);
+  assert.equal(historicalDashboard.overview.historicalSalesRows, 1, "projected reporting view preserves historical provenance");
+  assert.equal(historicalDashboard.overview.financeRevenueAvailable, true);
+  assert.equal(historicalDashboard.overview.modelBProfit.marketplaceFeeStatus, "unavailable", "Excel payable must not impersonate Sales API forPay");
+  assert.equal(historicalDashboard.overview.revenue, fullDashboard.overview.revenue, "Finance Revenue is unchanged by the sales evidence source");
+  sources.wb_sales = nativeSales;
+  console.log("PASS reporting view: native and historical source projection, Finance Revenue, unavailable Sales API reconciliation");
 
   const originalSources = { ...sources };
   for (const table of ["wb_sales", "wb_orders", "wb_finance", "wb_ads"]) sources[table] = [];
