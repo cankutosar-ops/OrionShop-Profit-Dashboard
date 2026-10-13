@@ -90,6 +90,7 @@ function indexByProductId<T extends { product_id: string | null }>(
 }
 
 type WindowAggregates = {
+  categoryCommission: Map<CommissionWindowKey, ReturnType<typeof buildCategoryCommissionTotals>>;
   categoryLogistics: Map<CommissionWindowKey, ReturnType<typeof buildCategoryLogisticsTotals>>;
   categoryFees: Map<CommissionWindowKey, ReturnType<typeof buildCategoryMarketplaceFeesTotals>>;
   categoryStorage: Map<CommissionWindowKey, ReturnType<typeof buildCategoryStorageTotals>>;
@@ -109,6 +110,7 @@ function buildWindowAggregates(
   sales: WbSale[],
   finance: WbFinance[]
 ): WindowAggregates {
+  const categoryCommission=new Map<CommissionWindowKey, ReturnType<typeof buildCategoryCommissionTotals>>();
   const categoryLogistics = new Map<
     CommissionWindowKey,
     ReturnType<typeof buildCategoryLogisticsTotals>
@@ -136,6 +138,7 @@ function buildWindowAggregates(
     const salesByProductId = indexByProductId(windowSales);
     const financeByProductId = indexByProductId(windowFinance);
 
+    categoryCommission.set(window,buildCategoryCommissionTotals(products,salesByProductId));
     categoryLogistics.set(
       window,
       buildCategoryLogisticsTotals(products, salesByProductId, financeByProductId)
@@ -159,7 +162,7 @@ function buildWindowAggregates(
     });
   }
 
-  return { categoryLogistics, categoryFees, categoryStorage, accountBuckets };
+  return { categoryCommission, categoryLogistics, categoryFees, categoryStorage, accountBuckets };
 }
 
 function buildHistoricalWindowTotals(
@@ -211,6 +214,15 @@ function buildHistoricalWindowTotals(
   };
 }
 
+
+async function readPricingFinanceAnchor(scope:ScopedDateRange,productIds:string[],client:Awaited<ReturnType<typeof createServerClient>>):Promise<string>{
+  const base=()=>client.from("wb_finance").select("operation_date").eq("marketplace_account_id",scope.marketplaceAccountId)
+    .gte("operation_date",scope.from).lte("operation_date",scope.to).order("operation_date",{ascending:false}).limit(1);
+  const [linked,account]=await Promise.all([base().in("product_id",productIds),base().is("product_id",null)]);
+  if(linked.error||account.error)throw new Error("Smart Pricing finance date anchor unavailable");
+  return [...(linked.data??[]),...(account.data??[])].map(r=>r.operation_date.slice(0,10)).sort().at(-1)??"";
+}
+
 export async function getSmartPricingInputs(
   scope: ScopedDateRange
 ): Promise<ProductSmartPricingInputs[] | null> {
@@ -225,21 +237,32 @@ export async function getSmartPricingInputs(
   // Respect header Brand Filter (same account/brand scope as Dashboard / Reports).
   const products = await fetchProductsWithRelations(dataScope.marketplaceAccountId, client, {
     brandId: dataScope.brandId,
+    columns:"id,marketplace_account_id,nm_id,supplier_article,name,brand_id,category_id,brand:brands(id,name),category:categories(id,name)",
   });
+  if (!products.length) return [];
   const productIds = products.map((p) => String(p.id));
-  const [costHistory, sales, finance, orders, ads, accountResult, inventoryRows] = await Promise.all([
-    fetchCostHistory(dataScope.marketplaceAccountId, client, { productIds }),
-    fetchSalesInRange(dataScope, client, { productIds }),
+  // Orders and ads only contribute to the existing recent ASP/funnel window.
+  const recentScope = { ...dataScope, from: aspWindowDateFrom(dataScope.to) };
+  const [costHistory, sales, finance, orders, ads, accountResult, inventoryRows, financeAnchor] = await Promise.all([
+    fetchCostHistory(dataScope.marketplaceAccountId, client, { productIds, columns:"id,product_id,cost,effective_from,effective_to,created_at" }),
+    fetchSalesInRange(dataScope, client, { productIds, columns:"id,marketplace_account_id,product_id,nm_id,sale_date,revenue,price_with_disc,for_pay,quantity,is_return" }),
     fetchFinanceInRange(dataScope, client, {
       productIds,
+      // Zero amounts cannot change logistics/storage totals; keep the full date
+      // anchor separately so zero-valued latest facts still determine the window.
+      excludeZeroAmounts:true,
+      // Pricing Finance consumers read only logistics/return logistics/storage.
+      // NULL-category legacy rows still go through the unchanged classifier.
+      pricingCostCategoriesOnly:true,
       // Pricing reads six months: omit raw marketplace payloads, retaining
       // dates and every field consumed by the financial classifiers.
       columns: "id, product_id, nm_id, operation_date, operation_type, amount, raw_amount, source_key, description, srid, finance_category, wb_source_suffix, supplier_oper_name",
     }),
-    fetchOrdersInRange(dataScope, client, { productIds }),
-    fetchAdsInRange(dataScope, client, { productIds }),
+    fetchOrdersInRange(recentScope, client, { productIds, columns:"id,marketplace_account_id,product_id,order_date,quantity,status" }),
+    fetchAdsInRange(recentScope, client, { productIds, columns:"id,marketplace_account_id,product_id,campaign_date,spend" }),
     client.from('marketplace_accounts_public').select('marketplace').eq('id', dataScope.marketplaceAccountId).single(),
     getInventoryForAccount(dataScope.marketplaceAccountId, client),
+    readPricingFinanceAnchor(dataScope,productIds,client),
   ]);
   if (accountResult.error || !accountResult.data) throw new Error('Marketplace account is unavailable');
   const account = accountResult.data;
@@ -250,10 +273,7 @@ export async function getSmartPricingInputs(
   const financeByProductId = indexByProductId<WbFinance>(finance);
   const ordersByProductId = indexByProductId(orders);
   const adsByProductId = indexByProductId(ads);
-  const latestFinanceDate = finance.reduce((latest, row) => {
-    const date = row.operation_date.slice(0, 10);
-    return date > latest && date <= dataScope.to ? date : latest;
-  }, "");
+  const latestFinanceDate = financeAnchor;
   const costScope = { ...dataScope, to: latestFinanceDate || dataScope.to };
   const aggregates = buildWindowAggregates(costScope, products, sales, finance);
   const defaultSettings = DEFAULT_SMART_PRICING_COMMISSION_SETTINGS;
@@ -384,10 +404,7 @@ export async function getSmartPricingInputs(
         commissionReplay.byWindow[window] = {
           productTotals,
           categoryTotals:
-            buildCategoryCommissionTotals(
-              products,
-              indexByProductId(filterSalesByCommissionWindow(sales, costScope, window))
-            ).get(categoryId) ?? {
+            aggregates.categoryCommission.get(window)?.get(categoryId) ?? {
               commission: 0,
               revenue: 0,
               salesForPay: 0,
@@ -472,7 +489,7 @@ export async function getSmartPricingInputs(
 
       return applySmartPricingCommissionSettings(row, defaultSettings);
     })
-    .filter((row) => row.currentStock > 0)
+    .filter((row) => row.currentStock > 0 || row.hasSalesHistory || row.orders > 0 || (row.purchaseCost !== null && row.purchaseCost > 0))
     .sort((a, b) => a.supplierArticle.localeCompare(b.supplierArticle));
 }
 

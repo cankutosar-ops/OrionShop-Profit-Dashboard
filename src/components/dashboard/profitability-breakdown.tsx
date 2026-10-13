@@ -27,6 +27,7 @@ export function ProfitabilityBreakdown({
   isEmptyPeriod = false,
 }: ProfitabilityBreakdownProps) {
   const revenueReady = isNetSalesReady(modelB.netSalesStatus);
+  const wbFeeUnavailable = modelB.marketplaceFeeStatus === "unavailable";
 
   const { breakdown, salesBase } = useMemo(
     () => ({
@@ -88,7 +89,7 @@ export function ProfitabilityBreakdown({
                 <td className="px-6 py-3.5">
                   <div>{line.label}</div>
                   {line.detail && (
-                    <div className="text-xs text-muted-foreground">{line.detail}</div>
+                    <div className="text-xs text-muted-foreground">{line.key === "salesToSettlementDifference" && wbFeeUnavailable ? "Sales API forPay is not verified for this period" : line.detail}</div>
                   )}
                 </td>
                 <td
@@ -99,10 +100,10 @@ export function ProfitabilityBreakdown({
                     line.isTotal && line.amount < 0 && "text-danger"
                   )}
                 >
-                  {formatAmount(line.amount, line.isDeduction)}
+                  {line.key === "salesToSettlementDifference" && wbFeeUnavailable ? "Unavailable for this source" : formatAmount(line.amount, line.isDeduction)}
                 </td>
                 <td className="px-6 py-3.5 text-right text-muted-foreground tabular-nums">
-                  {shareOfBase(line.amount, line.isTotal)}
+                  {line.key === "salesToSettlementDifference" && wbFeeUnavailable ? "—" : shareOfBase(line.amount, line.isTotal)}
                 </td>
               </tr>
             ))}
@@ -148,8 +149,8 @@ export function ProfitabilityBreakdown({
         />
         <FeeItem
           label="WB Fee (Sales API)"
-          value={marketplaceFees.salesToSettlementDifference}
-          note="Net Sales − net Sales API forPay"
+          value={wbFeeUnavailable ? null : marketplaceFees.salesToSettlementDifference}
+          note={wbFeeUnavailable ? "Sales API forPay is not verified for this period" : "Net Sales − net Sales API forPay"}
         />
         </div>
       </details>

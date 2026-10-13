@@ -69,6 +69,8 @@ type RangeFilter = {
   inFilters?: Array<{ column: string; values: Array<string | number> }>;
   /** Restrict to rows where the column value is SQL NULL. */
   isNullFilters?: string[];
+  neqFilters?: Array<{column:string;value:string|number}>;
+  orFilters?: string[];
   orderBy?: { column: string; ascending?: boolean };
 };
 
@@ -104,6 +106,8 @@ export async function fetchAllInDateRange<T>(
     for (const inFilter of filter.inFilters ?? []) {
       query = query.in(inFilter.column, inFilter.values);
     }
+    for (const neqFilter of filter.neqFilters ?? []) query=query.neq(neqFilter.column,neqFilter.value);
+    for (const orFilter of filter.orFilters ?? []) query=query.or(orFilter);
     for (const nullColumn of filter.isNullFilters ?? []) {
       query = query.is(nullColumn, null);
     }

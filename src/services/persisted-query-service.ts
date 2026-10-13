@@ -93,7 +93,7 @@ function mergeFinanceRowsById(rows: WbFinance[]): WbFinance[] {
 export async function fetchFinanceInRange(
   scope: ScopedDateRange,
   client?: SupabaseClient,
-  options?: { productIds?: string[]; columns?: string }
+  options?: { productIds?: string[]; columns?: string; excludeZeroAmounts?: boolean; pricingCostCategoriesOnly?: boolean }
 ): Promise<WbFinance[]> {
   const supabase = await getClient(client);
   const rangeFilter = {
@@ -102,6 +102,8 @@ export async function fetchFinanceInRange(
     to: scope.to,
     marketplaceAccountId: scope.marketplaceAccountId,
     selectColumns: options?.columns,
+    neqFilters: options?.excludeZeroAmounts ? [{column:"amount",value:0}] : undefined,
+    orFilters: options?.pricingCostCategoriesOnly ? ["finance_category.in.(LOGISTICS,RETURN_LOGISTICS,STORAGE),finance_category.is.null"] : undefined,
   };
 
   if (!options?.productIds) {

@@ -98,6 +98,7 @@ export function DashboardProfitSection({
   const displayNetSales = modelB.netSales;
   const wbFee =
     modelB.salesToSettlementDifference ?? modelB.marketplaceFee ?? modelB.commission;
+  const wbFeeUnavailable = modelB.marketplaceFeeStatus === "unavailable";
 
   const shareOfEngineSales = (amount: number) => {
     if (isEmptyPeriod || !revenueReady || modelB.netSales <= 0) return emptyValue;
@@ -193,9 +194,11 @@ export function DashboardProfitSection({
 
           <MetricCard
             title="WB Fee"
-            value={modelB.marketplaceFeeStatus === "unavailable" ? TEMPORARILY_UNAVAILABLE : formatMoney(wbFee)}
-            subtitle={`${shareOfEngineSales(wbFee)} of Net Sales`}
-            hint="Net Sales minus net Sales API forPay for the selected period. Calculated from each persisted sale and return. Already reflected before Revenue and not deducted again from Net Profit."
+            value={wbFeeUnavailable ? "Unavailable for this source" : formatMoney(wbFee)}
+            subtitle={wbFeeUnavailable ? "Sales API forPay is not verified for this period" : `${shareOfEngineSales(wbFee)} of Net Sales`}
+            hint={wbFeeUnavailable
+              ? "WB Fee requires Net Sales minus net Sales API forPay. Weekly report sales do not provide verified Sales API forPay. Finance commission and other fee components remain available in Fee calculation details; they are not a substitute for this reconciliation."
+              : "Net Sales minus net Sales API forPay for the selected period. Calculated from each persisted sale and return. Already reflected before Revenue and not deducted again from Net Profit."}
             icon={KPI_ICONS.commission}
             {...expenseProps}
           />

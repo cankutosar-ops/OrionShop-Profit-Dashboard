@@ -131,6 +131,26 @@ try {
   assert.match(orderScreen.body,/Daily orders/);
   assert.match(orderScreen.body,/Export daily CSV/);
   assert.match(orderScreen.body,/Non-cancelled Orders/);
+  for (const rsc of [false, true]) {
+    const pricing = await load("/analytics/pricing?company=3&account=6", { rsc });
+    assert.equal(pricing.response.status, 200);
+    assert.match(pricing.body, /Smart Pricing/);
+    assert.doesNotMatch(pricing.body, /Smart Pricing could not finish loading|:E\{/);
+    const dashboard = await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1", { rsc });
+    assert.equal(dashboard.response.status, 200);
+    assert.match(dashboard.body, rsc ? /DashboardProfitSection/ : /Commercial Performance/);
+    assert.doesNotMatch(dashboard.body, /Dashboard could not finish loading|:E\{/);
+  }
+  financeMode = "error";
+  const pricingFailure = await load("/analytics/pricing?company=3&account=6", { rsc: true });
+  assert.equal(pricingFailure.response.status, 200);
+  assert.match(pricingFailure.body, /DashboardLoadError/);
+  assert.match(pricingFailure.body, /"pageName":"Smart Pricing"/);
+  assert.doesNotMatch(pricingFailure.body, /:E\{/);
+  financeMode = "ready";
+  const recoveredDashboard = await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1", { rsc: true });
+  assert.match(recoveredDashboard.body, /DashboardProfitSection/);
+  assert.doesNotMatch(recoveredDashboard.body, /Dashboard could not finish loading|:E\{/);
   const branded=await load("/?company=3&account=6&brand=1&from=2026-07-10&to=2026-10-07&dateManual=1");
   assert.match(branded.body,/Brand profit before unallocated account costs/);
   expenseTaxMode = true;
@@ -149,6 +169,13 @@ try {
   const historical = await load("/?company=3&account=6&from=2026-04-27&to=2026-05-31&dateManual=1");
   assert.equal(historical.response.status,200);
   assert.match(historical.body,/Historical sales and returns are sourced from weekly WB reports/);
+  assert.match(historical.body, /Sales API forPay is not verified for this period/);
+  const historicalFeeCard = historical.body.match(/WB Fee<\/[^>]+>[\s\S]*?(?=Product Cost)/)?.[0];
+  assert.ok(historicalFeeCard, "Historical WB Fee card must be rendered");
+  assert.match(historicalFeeCard, /Unavailable for this source/);
+  assert.doesNotMatch(historicalFeeCard, /of Net Sales/, "Unavailable reconciliation must not publish a numeric percentage");
+  assert.match(historical.body, /Finance Fee Components/);
+  assert.match(historical.body, /WB Commission/);
   assert.doesNotMatch(historical.body,/Dashboard could not finish loading/);
   salesMode = "native";
   for(const route of ["/?company=3&account=1", "/?company=1&account=6"]){const denied=await load(route);assert.match(denied.response.headers.get("location")??denied.body,/access-denied/);}
