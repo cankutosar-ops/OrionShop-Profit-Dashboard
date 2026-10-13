@@ -184,7 +184,7 @@ async function fetchScopedDashboardSql(
     ? null
     : Promise.all([
         fetchSalesInRange(scope, client, { columns: DASHBOARD_SALES_COLUMNS, includeHistoricalEvidence: true }),
-        fetchFinanceInRange(scope, client, { columns: DASHBOARD_FINANCE_COLUMNS }),
+        fetchFinanceInRange(scope, client, { columns: DASHBOARD_FINANCE_COLUMNS, compactMetadata: scope.marketplaceAccountId === "6" }),
         fetchOrdersInRange(scope, client, { columns: DASHBOARD_ORDER_COLUMNS }),
       ]);
   // Products may fail before the concurrently started range queries settle.
@@ -202,7 +202,7 @@ async function fetchScopedDashboardSql(
   const [rangeRows, ads, costHistory] = await Promise.all([
     accountRangePromise ?? Promise.all([
       fetchSalesInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_SALES_COLUMNS, includeHistoricalEvidence: true }),
-      fetchFinanceInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_FINANCE_COLUMNS }),
+      fetchFinanceInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_FINANCE_COLUMNS, compactMetadata: scope.marketplaceAccountId === "6" }),
       fetchOrdersInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_ORDER_COLUMNS }),
     ]),
     fetchAdsInRange(scope, client, {

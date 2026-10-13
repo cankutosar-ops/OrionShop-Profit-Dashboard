@@ -18,3 +18,19 @@ export function navigateScope(
 ): void {
   router[mode](href, { scroll: false });
 }
+
+/** A long report is an explicit document navigation, independent of cached Flight transitions. */
+export function navigateDashboardDateRange(
+  router: RouterLike,
+  pathname: string,
+  href: string,
+  from: string,
+  to: string
+): void {
+  const days = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000 + 1;
+  if (pathname === "/" && Number.isFinite(days) && days >= 90 && typeof window !== "undefined") {
+    window.location.assign(href);
+    return;
+  }
+  navigateScope(router, href, "push");
+}

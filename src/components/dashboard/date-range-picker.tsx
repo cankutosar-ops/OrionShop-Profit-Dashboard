@@ -25,7 +25,7 @@ import {
   getAppLanguage,
   getCalendarWeekdayLabels,
 } from "@/lib/app-locale";
-import { navigateScope } from "@/lib/scope-navigation";
+import { navigateDashboardDateRange } from "@/lib/scope-navigation";
 import { SYNC_DATE_PARAM } from "@/lib/marketplace-sync-date";
 import { replaceUrlIfChanged } from "@/lib/dashboard-lifecycle";
 import { cn, formatDate, buildInclusiveDateRange, getDefaultDateRange } from "@/lib/utils";
@@ -238,7 +238,7 @@ export function DateRangePicker() {
     } catch {
       // ignore
     }
-    // Push URL then refresh so Server Components refetch (push alone can leave stale RSC).
+    // One explicit navigation. Long reports bypass the cached Flight transition.
     setApplying(true);
     setLoadWarning(false);
     if (applyTimerRef.current) clearTimeout(applyTimerRef.current);
@@ -249,7 +249,7 @@ export function DateRangePicker() {
       setApplying(false);
       setLoadWarning(true);
     }, 45_000);
-    navigateScope(router, `${pathname}?${params.toString()}`, "push");
+    navigateDashboardDateRange(router, pathname, `${pathname}?${params.toString()}`, normalized.from, normalized.to);
     setOpen(false);
   }
 

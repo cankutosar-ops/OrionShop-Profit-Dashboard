@@ -93,9 +93,31 @@ function mergeFinanceRowsById(rows: WbFinance[]): WbFinance[] {
 export async function fetchFinanceInRange(
   scope: ScopedDateRange,
   client?: SupabaseClient,
-  options?: { productIds?: string[]; columns?: string; excludeZeroAmounts?: boolean; pricingCostCategoriesOnly?: boolean }
+  options?: { productIds?: string[]; columns?: string; excludeZeroAmounts?: boolean; pricingCostCategoriesOnly?: boolean; compactMetadata?: boolean }
 ): Promise<WbFinance[]> {
   const supabase = await getClient(client);
+  if (options?.compactMetadata && options.columns && !options.columns.includes("*")) {
+    // Normalized fields already carry the classification and source suffix.
+    // Avoid repeating audit descriptions/source keys on every component row.
+    // Preserve full legacy evidence only for rows that still require fallback.
+    const columns = options.columns.split(",").map(c => c.trim())
+      .filter(c => c !== "source_key" && c !== "description").join(",");
+    const rows = await fetchFinanceInRange(scope, supabase, { ...options, columns, compactMetadata: false });
+    const legacyIds = rows.filter(row => !row.finance_category || !row.wb_source_suffix?.trim() ||
+      !row.supplier_oper_name?.trim()).map(row => String(row.id));
+    const legacy = new Map<string, WbFinance>();
+    for (let offset = 0; offset < legacyIds.length; offset += 200) {
+      const ids = legacyIds.slice(offset, offset + 200);
+      const full = await fetchAllInDateRange<WbFinance>(supabase, "wb_finance", {
+        column: "operation_date", from: scope.from, to: scope.to,
+        marketplaceAccountId: scope.marketplaceAccountId, selectColumns: options.columns,
+        inFilters: [{ column: "id", values: ids }],
+      });
+      for (const row of full) legacy.set(String(row.id), row);
+      if (ids.some(id => !legacy.has(id))) throw new Error("Incomplete legacy Finance evidence while loading");
+    }
+    return rows.map(row => legacy.get(String(row.id)) ?? row);
+  }
   const rangeFilter = {
     column: "operation_date" as const,
     from: scope.from,

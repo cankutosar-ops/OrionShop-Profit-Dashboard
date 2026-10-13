@@ -56,7 +56,7 @@ export async function fetchDashboardCompanies(): Promise<CompanyWithAccounts[]> 
   }
 
   if (!companiesInflight) {
-    companiesInflight = fetch("/api/companies")
+    companiesInflight = fetch("/api/companies", { signal: AbortSignal.timeout(15_000) })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) {

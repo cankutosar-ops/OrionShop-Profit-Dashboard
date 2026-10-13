@@ -23,6 +23,7 @@ let authMode = "ready";
 let authCounter = 0;
 let failPageAuthAt = Infinity;
 let financeMode = "ready";
+let longFinanceMode = false;
 let salesMode = "native";
 let fixtureDate = "2026-09-20";
 let expenseTaxMode = false;
@@ -62,7 +63,7 @@ const fixture = http.createServer(async (request, response) => {
       product_id:accountId,warehouse_name:'Second FBS',tech_size:'M',sku:'fixture',quantity:3,observed_at:date}],
     wb_sales: [{ id: "1", marketplace_account_id: accountId, srid: "s1", nm_id: Number(accountId), product_id: accountId, sale_date: date, revenue: 100, price_with_disc: 100, for_pay: 80, quantity: 1, is_return: false }],
     wb_orders: [{ id: "1", marketplace_account_id: accountId, product_id: accountId, order_date: date, price: 100, price_with_disc: 100, quantity: 1, status: "completed" }],
-    wb_finance: Array.from({ length: accountId === "2" ? 40062 : 10 }, (_, i) => ({ id: String(i + 1), marketplace_account_id: accountId, product_id: accountId, operation_date: date, operation_type: "sale", amount: 1, raw_amount: 1, source_key: `xlsx:999999001:${i+1}:for_pay`, finance_category: "FOR_PAY", wb_source_suffix: "for_pay", srid: "s1", nm_id: Number(accountId) })),
+    wb_finance: Array.from({ length: accountId === "2" || longFinanceMode ? 40062 : 10 }, (_, i) => ({ id: String(i + 1), marketplace_account_id: accountId, product_id: accountId, operation_date: date, operation_type: "sale", amount: 1, raw_amount: 1, source_key: `xlsx:999999001:${i+1}:for_pay`, finance_category: "FOR_PAY", wb_source_suffix: "for_pay", supplier_oper_name: "Продажа", srid: "s1", nm_id: Number(accountId) })),
     wb_ads: [{ id: "1", marketplace_account_id: accountId, product_id: accountId, campaign_date: date, spend: 2 }],
     product_cost_history: [{ id: "1", product_id: accountId, cost: 10, effective_from: "2026-01-01", effective_to: null, created_at: "2026-01-01T00:00:00Z" }],
     company_tax_profiles: [{ id: "1", company_id: "3", tax_system: "USN", tax_object: expenseTaxMode ? "USN_INCOME_MINUS_EXPENSES" : "USN_INCOME", tax_rate: expenseTaxMode ? 15 : 6, vat_status: expenseTaxMode ? "UNKNOWN" : "EXEMPT", effective_from: "2026-01-01", effective_to: null }],
@@ -136,6 +137,14 @@ try {
   assert.match(orderScreen.body,/Daily orders/);
   assert.match(orderScreen.body,/Export daily CSV/);
   assert.match(orderScreen.body,/Non-cancelled Orders/);
+  longFinanceMode = true;
+  for (const rsc of [false, true]) {
+    const longDashboard = await load('/?company=3&account=6&from=2026-05-13&to=2026-10-13&dateManual=1', { rsc });
+    assert.equal(longDashboard.response.status,200);
+    assert.match(longDashboard.body,rsc ? /DashboardProfitSection/ : /Commercial Performance/);
+    assert.doesNotMatch(longDashboard.body,/Dashboard could not finish loading|:E\{/);
+  }
+  longFinanceMode = false;
   const productScreen = await load('/analytics/products?company=3&account=6&from=2026-09-01&to=2026-09-30');
   assert.equal(productScreen.response.status,200);
   assert.match(productScreen.body,/WB Stock/);
