@@ -8,10 +8,7 @@ import { ProductIntelligenceDrawer } from "@/components/inventory/product-intell
 import { ProductThumbnail } from "@/components/inventory/product-thumbnail";
 import { StockHealthBadge } from "@/components/inventory/stock-health-badge";
 import { WarehouseDistributionPanel } from "@/components/inventory/warehouse-distribution-panel";
-import {
-  downloadInventoryIntelligenceExcel,
-  totalsFromDistribution,
-} from "@/lib/inventory-intelligence-excel";
+import { totalsFromDistribution } from "@/lib/inventory-distribution-totals";
 import type {
   InventoryIntelligenceSkuRow,
   StockHealthStatus,
@@ -184,12 +181,17 @@ export function InventoryIntelligenceTable({
     [selectedProductId, filtered, rows]
   );
 
-  function handleExport() {
-    downloadInventoryIntelligenceExcel(filtered, {
-      asOfDate,
-      rangeFrom,
-      rangeTo,
-    });
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { downloadInventoryIntelligenceExcel } = await import("@/lib/inventory-intelligence-excel");
+      downloadInventoryIntelligenceExcel(filtered, { asOfDate, rangeFrom, rangeTo });
+    } catch {
+      setExportError("Excel could not be generated. Please try again.");
+    } finally { setExporting(false); }
   }
 
   const selectClass =
@@ -199,6 +201,7 @@ export function InventoryIntelligenceTable({
 
   return (
     <div className="space-y-4">
+      {exportError && <p role="alert" className="text-sm text-destructive">{exportError}</p>}
       <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="relative min-w-0 flex-1 sm:max-w-sm">
@@ -283,7 +286,8 @@ export function InventoryIntelligenceTable({
             <button
               type="button"
               onClick={handleExport}
-              disabled={filtered.length === 0}
+
+              disabled={exporting || filtered.length === 0}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium transition-colors",
                 filtered.length === 0
@@ -293,7 +297,7 @@ export function InventoryIntelligenceTable({
               aria-label="Export filtered rows to Excel"
             >
               <Download className="h-4 w-4" />
-              Export Excel
+              {exporting ? "Generating…" : "Export Excel"}
             </button>
           </div>
         </div>

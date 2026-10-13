@@ -195,6 +195,7 @@ try {
   globalThis.fetch = async (input) => {
     const url = new URL(String(input));
     const table = url.pathname.split("/").at(-1);
+    if (table === "orion_finance_period_rows") return Response.json({ code: "PGRST202", message: "function not deployed" }, { status: 404 });
     const sourceTable = table === "wb_sales_reporting" ? "wb_sales" : table;
     assert.ok(Object.hasOwn(sources, sourceTable), `Unexpected dashboard query: ${table}`);
     if (table === "wb_finance") financeReads++;

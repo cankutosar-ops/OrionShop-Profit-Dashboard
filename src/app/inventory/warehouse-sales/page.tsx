@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { Suspense } from "react";
 import { InventoryModuleNav } from "@/components/inventory/inventory-module-nav";
 import { WarehouseSalesAnalyticsTable } from "@/components/inventory/warehouse-sales-analytics-table";
@@ -24,6 +25,10 @@ function TableFallback() {
 }
 
 export default async function WarehouseSalesAnalyticsPage({ searchParams }: PageProps) {
+  return renderDataPage("Warehouse Sales", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const report = await getWarehouseSalesAnalytics(scope, {

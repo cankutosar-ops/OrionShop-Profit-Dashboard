@@ -12,9 +12,6 @@ import {
   isReportExportDocument,
   type ReportExportDocument,
 } from "@/lib/reporting/module/export/export-document";
-import { exportReportExcel } from "@/lib/reporting/module/export/excel-exporter";
-import { exportReportCsv } from "@/lib/reporting/module/export/csv-exporter";
-import { exportReportPdf } from "@/lib/reporting/module/export/pdf-exporter";
 
 const MIME: Record<ReportExportFormat, string> = {
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -67,13 +64,13 @@ export class ReportingExportManager implements ReportExporter {
       let bytes: Uint8Array;
       switch (request.format) {
         case "xlsx":
-          bytes = await exportReportExcel(doc);
+          bytes = await (await import("@/lib/reporting/module/export/excel-exporter")).exportReportExcel(doc);
           break;
         case "csv":
-          bytes = exportReportCsv(doc);
+          bytes = (await import("@/lib/reporting/module/export/csv-exporter")).exportReportCsv(doc);
           break;
         case "pdf":
-          bytes = await exportReportPdf(doc);
+          bytes = await (await import("@/lib/reporting/module/export/pdf-exporter")).exportReportPdf(doc);
           break;
         default:
           return {

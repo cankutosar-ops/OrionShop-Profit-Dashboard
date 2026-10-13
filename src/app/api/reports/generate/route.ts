@@ -1,3 +1,4 @@
+import { withReadBudget } from "@/lib/supabase/read-budget";
 import { parsePeriodPreset, periodPresetLabel } from "@/lib/reports/report-period";
 import { exportReport } from "@/lib/reports/report-engine";
 import { normalizeBrandId, scopeSearchParamsFromUrl } from "@/lib/filter-params";
@@ -25,6 +26,14 @@ export const dynamic = "force-dynamic";
  * Product report → legacy ReportPayload workbook (until product Document sprint).
  */
 export async function GET(request: Request) {
+  try {
+    return await withReadBudget(() => generateReport(request), 40_000, undefined, request.signal);
+  } catch {
+    return Response.json({ error: "Report could not finish loading. Please try again." }, { status: 503 });
+  }
+}
+
+async function generateReport(request: Request) {
   try {
     const authz = await authorizeRequestScope(request, {
       allowDefaultAccount: true,

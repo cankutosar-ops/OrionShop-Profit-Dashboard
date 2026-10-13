@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { Suspense } from "react";
 import { InventoryHistoryWorkspace } from "@/components/inventory/inventory-history-workspace";
 import { InventoryModuleNav } from "@/components/inventory/inventory-module-nav";
@@ -15,6 +16,10 @@ type PageProps = {
 };
 
 export default async function InventoryHistoryPage({ searchParams }: PageProps) {
+  return renderDataPage("Inventory History", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const configured = getSupabaseEnv().isConfigured;

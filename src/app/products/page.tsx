@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { ProfitBarChartLazy } from "@/components/dashboard/dashboard-charts-lazy";
 import { DataBanner } from "@/components/dashboard/data-banner";
@@ -14,6 +15,10 @@ type PageProps = {
 };
 
 export default async function ProductsPage({ searchParams }: PageProps) {
+  return renderDataPage("Products", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const { products, isSampleData, message } = await getDashboardListData(scope);

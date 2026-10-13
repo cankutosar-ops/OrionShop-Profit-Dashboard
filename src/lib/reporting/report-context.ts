@@ -7,11 +7,8 @@ import {
   getCompanyById,
   getMarketplaceAccountSyncState,
 } from "@/services/marketplace-account-service";
-import {
-  getDashboardListData,
-  getOverviewMetrics,
-  getProductProfitability,
-} from "@/services/dashboard-service";
+import { getDashboardData } from "@/services/dashboard-service";
+import { cache } from "react";
 import { getInventoryReport } from "@/services/inventory-report-service";
 import type {
   GroupedProfitability,
@@ -23,6 +20,9 @@ import type {
   SyncStatus,
 } from "@/types/database";
 import type { ReportLocale } from "@/lib/reporting/types";
+
+const loadCompany = cache(getCompanyById);
+const loadSyncState = cache(getMarketplaceAccountSyncState);
 
 const MARKETPLACE_LABELS: Record<string, string> = {
   wildberries: "Wildberries",
@@ -95,13 +95,11 @@ export async function loadReportContext(
   const generatedAt = new Date().toISOString();
   const warnings: string[] = [];
 
-  const [company, syncState, overview, products, listData, inventory] =
+  const [company, syncState, dashboard, inventory] =
     await Promise.all([
-      getCompanyById(scope.companyId),
-      getMarketplaceAccountSyncState(scope.marketplaceAccountId),
-      getOverviewMetrics(scope),
-      getProductProfitability(scope),
-      getDashboardListData(scope),
+      loadCompany(scope.companyId),
+      loadSyncState(scope.marketplaceAccountId),
+      getDashboardData(scope),
       options.skipInventory
         ? Promise.resolve(null)
         : getInventoryReport(scope).catch((err) => {
@@ -112,16 +110,17 @@ export async function loadReportContext(
           }),
     ]);
 
+  const { overview, products, categories, brands, isSampleData } = dashboard;
   const account =
     company?.accounts.find((row) => row.id === scope.marketplaceAccountId) ?? null;
   const marketplaceKey = account?.marketplace ?? "wildberries";
 
   let brandName: string | null = null;
   if (scope.brandId) {
-    brandName = listData.brands.find((b) => b.id === scope.brandId)?.name ?? null;
+    brandName = brands.find((b) => b.id === scope.brandId)?.name ?? null;
   }
 
-  if (listData.isSampleData) {
+  if (isSampleData) {
     warnings.push("sample_data");
   }
   if (overview.modelBProfit.netSalesStatus !== "ready") {
@@ -161,11 +160,11 @@ export async function loadReportContext(
     financialEngine: overview.modelBProfit,
     overview,
     products,
-    categories: listData.categories,
-    brands: listData.brands,
+    categories,
+    brands,
     inventory,
     meta: {
-      isSampleData: listData.isSampleData,
+      isSampleData,
       warnings,
     },
   };

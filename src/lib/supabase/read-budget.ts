@@ -5,7 +5,7 @@ const readBudget = new AsyncLocalStorage<{ signal: AbortSignal; requestId?: stri
 
 export class ReadBudgetExceeded extends Error {
   constructor() {
-    super("Dashboard data loading timed out");
+    super("Data loading timed out");
     this.name = "ReadBudgetExceeded";
   }
 }
@@ -18,10 +18,11 @@ export function getReadBudgetRequestId(): string | undefined {
   return readBudget.getStore()?.requestId;
 }
 
-export async function withReadBudget<T>(operation: () => Promise<T>, timeoutMs: number, requestId?: string): Promise<T> {
+export async function withReadBudget<T>(operation: () => Promise<T>, timeoutMs: number, requestId?: string, externalSignal?: AbortSignal): Promise<T> {
   const controller = new AbortController();
   const parent = getReadBudgetSignal();
-  const signal = parent ? AbortSignal.any([parent, controller.signal]) : controller.signal;
+  const signals = [controller.signal, ...(parent ? [parent] : []), ...(externalSignal ? [externalSignal] : [])];
+  const signal = AbortSignal.any(signals);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let onAbort: () => void = () => {};
   const deadline = new Promise<never>((_, reject) => {

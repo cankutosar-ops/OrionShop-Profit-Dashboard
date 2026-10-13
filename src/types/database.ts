@@ -1952,6 +1952,10 @@ export type Database = {
       };
     };
     Functions: {
+      orion_finance_period_rows: {
+        Args: { p_account_id: string; p_from: string; p_to: string; p_product_ids: string[] | null };
+        Returns: { version: number; accountId: string; from: string; to: string; sourceRows: number; emittedRows: number; rows: WbFinance[] };
+      };
       replace_wb_fbs_current_stocks: {
         Args: { p_account_id: string; p_rows: PublicTables["wb_fbs_current_stocks"]["Row"][] };
         Returns: number;

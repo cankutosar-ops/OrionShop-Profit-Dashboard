@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { ReportShell } from "@/components/reporting/report-shell";
 import { ReportSummaryCards } from "@/components/reporting/report-summary-cards";
 import { ReportEmptyState } from "@/components/reporting/report-empty-state";
@@ -23,6 +24,10 @@ type PageProps = {
 };
 
 export default async function ProductProfitReportPage({ searchParams }: PageProps) {
+  return renderDataPage("Product Profit", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const report = getReportDefinition("product-profit")!;
   const scope = await resolveScopedDateRange(params);

@@ -1,3 +1,4 @@
+import { mapWithConcurrency } from "@/lib/async-map";
 /**
  * Assemble Unified Business Excel model from ReportContext + existing report builders.
  * Any selected date range — presentation only; never recalculates Financial Engine math.
@@ -230,12 +231,11 @@ async function buildPeriodBreakdowns(
   const periodBreakdown: PeriodBreakdownRow[] = [];
   const brandPeriodBreakdown: BrandPeriodBreakdownRow[] = [];
 
-  for (const chunk of chunks) {
-    const subScope = sliceScope(parentScope, chunk.from, chunk.to);
-    const sub = await loadReportContext(subScope, {
-      skipInventory: true,
-      ...options,
-    });
+  const contexts = await mapWithConcurrency(chunks, 2, (chunk) =>
+    loadReportContext(sliceScope(parentScope, chunk.from, chunk.to), { ...options, skipInventory: true })
+  );
+  for (const [index, chunk] of chunks.entries()) {
+    const sub = contexts[index];
     const fe = sub.financialEngine;
     const op = sub.overview.ordersPurchases;
     const qty = sub.overview.quantityMetrics;

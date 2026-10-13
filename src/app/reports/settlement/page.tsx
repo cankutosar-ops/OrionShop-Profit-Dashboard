@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { ReportShell } from "@/components/reporting/report-shell";
 import { ReportSummaryCards } from "@/components/reporting/report-summary-cards";
 import { SettlementLinesTable } from "@/components/reporting/financial-detail-tables";
@@ -27,6 +28,10 @@ type PageProps = {
 };
 
 export default async function SettlementReportPage({ searchParams }: PageProps) {
+  return renderDataPage("Settlement", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const report = getReportDefinition("settlement")!;
   const scope = await resolveScopedDateRange(params);

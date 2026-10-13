@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { Suspense } from "react";
 import { InventoryModuleNav } from "@/components/inventory/inventory-module-nav";
 import { InventoryWorkspace } from "@/components/inventory/inventory-workspace";
@@ -25,6 +26,10 @@ function WorkspaceFallback() {
 }
 
 export default async function InventoryPage({ searchParams }: PageProps) {
+  return renderDataPage("Inventory", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const report = await getInventoryReport(scope);

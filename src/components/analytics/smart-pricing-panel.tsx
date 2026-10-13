@@ -9,6 +9,8 @@ import {
 } from "@/components/analytics/smart-pricing-calc-panel";
 import { SmartPricingExplainDialog } from "@/components/analytics/smart-pricing-explain-dialog";
 import { SortableTh } from "@/components/ui/sortable-th";
+import { usePaginatedRows } from "@/hooks/use-paginated-rows";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
 import {
   buildSmartPricingRow,
@@ -396,6 +398,8 @@ export function SmartPricingPanel({
     () => sortRowsBySpec(filtered, sort, getSortValue),
     [filtered, sort, getSortValue]
   );
+
+  const pagination = usePaginatedRows(sortedFiltered, JSON.stringify([searchParams.toString(), search, brandFilter, categoryFilter, onlyIncreaseOver20, onlyHighVolume, sort]));
 
   const setTestPriceForProduct = useCallback((productId: string, value: number | null) => {
     setTestPriceOverrides((current) => {
@@ -846,7 +850,7 @@ export function SmartPricingPanel({
                   </td>
                 </tr>
               ) : (
-                sortedFiltered.map((row) => (
+                pagination.rows.map((row) => (
                   <PricingRow
                     key={row.productId}
                     row={row}
@@ -868,6 +872,7 @@ export function SmartPricingPanel({
             </tbody>
           </table>
         </div>
+        <TablePagination {...pagination} />
       </div>
 
       <SmartPricingExplainDialog

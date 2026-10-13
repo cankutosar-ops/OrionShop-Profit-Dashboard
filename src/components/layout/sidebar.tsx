@@ -148,7 +148,8 @@ function SidebarNavLinks({
   const [canManageCompany, setCanManageCompany] = useState(false);
   useEffect(() => {
     let active = true;
-    fetch('/api/auth/session').then(r => r.ok ? r.json() : null)
+    const controller = new AbortController();
+    fetch('/api/auth/session', { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]) }).then(r => r.ok ? r.json() : null)
       .then(data => {
         if (!active) return;
         setCanAdmin(data?.permissions?.administration === true);
@@ -159,7 +160,7 @@ function SidebarNavLinks({
         setCanAdmin(false);
         setCanManageCompany(false);
       });
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, []);
   return (
     <>

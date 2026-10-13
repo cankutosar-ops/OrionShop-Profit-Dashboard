@@ -44,7 +44,7 @@ export async function getProductAnalytics(
 
   const client = await createServerClient();
   const [build, stockByProductId, fbsRows] = await Promise.all([
-    getProductProfitabilityBuild(scope, client),
+    getProductProfitabilityBuild(scope),
     getCurrentStockByProductId(scope.marketplaceAccountId),
     readFbsStockRows(scope.marketplaceAccountId, client),
   ]);

@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { ProductAnalyticsTotalsSection } from "@/components/analytics/product-analytics-totals";
 import { ProductAnalyticsV8Table } from "@/components/analytics/product-analytics-v8-table";
 import { ProductAnalyticsV3Table } from "@/components/analytics/product-analytics-v3-table";
@@ -16,6 +17,10 @@ type PageProps = {
 };
 
 export default async function ProductAnalyticsPage({ searchParams }: PageProps) {
+  return renderDataPage("Product Analytics", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const report = await getProductAnalytics(scope);

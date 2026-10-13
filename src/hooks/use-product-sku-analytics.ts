@@ -7,9 +7,12 @@ import type { ProductSkuAnalyticsResponse } from "@/types/database";
 
 async function fetchProductSkuAnalytics(
   productId: string,
-  scopeQuery: string
+  scopeQuery: string,
+  signal: AbortSignal
 ): Promise<ProductSkuAnalyticsResponse> {
-  const response = await fetch(`/api/analytics/products/${productId}/skus?${scopeQuery}`);
+  const response = await fetch(`/api/analytics/products/${productId}/skus?${scopeQuery}`, {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(40_000)]),
+  });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? "Failed to load SKU analytics");
   return data;
@@ -32,7 +35,8 @@ export function useProductSkuAnalytics(
 
   return useQuery({
     queryKey: ["product-sku-analytics", productId, scopeQuery],
-    queryFn: () => fetchProductSkuAnalytics(productId!, scopeQuery),
+    queryFn: ({ signal }) => fetchProductSkuAnalytics(productId!, scopeQuery, signal),
+    retry: false,
     enabled: Boolean(productId && searchParams.get("account") && enabled),
   });
 }

@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { Suspense } from "react";
 import { InventoryIntelligenceTable } from "@/components/inventory/inventory-intelligence-table";
 import { InventoryModuleNav } from "@/components/inventory/inventory-module-nav";
@@ -24,6 +25,10 @@ function TableFallback() {
 }
 
 export default async function InventoryIntelligencePage({ searchParams }: PageProps) {
+  return renderDataPage("Inventory Intelligence", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const report = await getInventoryIntelligence(scope);

@@ -1,6 +1,7 @@
 import { applyOwnerApprovedDashboardTax } from "@/lib/dashboard-owner-tax-estimate";
 import { parseWbSourceSuffix } from "@/lib/finance-category";
 import { cache } from "react";
+import { fetchFinancePeriodRows } from "@/services/finance-period-read-service";
 import { partitionDashboardFinance, summarizeUnallocatedDashboardFinance } from "@/lib/dashboard-finance-scope";
 import { createServerClient, type SupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -57,7 +58,6 @@ import {
 import {
   fetchAdsInRange,
   fetchCostHistory,
-  fetchFinanceInRange,
   fetchOrdersInRange,
   fetchProductsWithRelations,
   fetchSalesInRange,
@@ -126,37 +126,6 @@ const DASHBOARD_SALES_COLUMNS =
 const DASHBOARD_FINANCE_COLUMNS =
   "id, product_id, nm_id, operation_type, amount, raw_amount, source_key, description, srid, finance_category, wb_source_suffix, supplier_oper_name";
 
-async function isDatabaseEmpty(
-  client: SupabaseClient,
-  marketplaceAccountId: string
-): Promise<boolean> {
-  const [sales, finance, ads, products] = await Promise.all([
-    client
-      .from("wb_sales")
-      .select("id", { count: "exact", head: true })
-      .eq("marketplace_account_id", marketplaceAccountId),
-    client
-      .from("wb_finance")
-      .select("id", { count: "exact", head: true })
-      .eq("marketplace_account_id", marketplaceAccountId),
-    // Account-scoped like its siblings: an unfiltered count would report this
-    // account's warehouse as non-empty because a *different* account has ads.
-    client
-      .from("wb_ads")
-      .select("id", { count: "exact", head: true })
-      .eq("marketplace_account_id", marketplaceAccountId),
-    client
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .eq("marketplace_account_id", marketplaceAccountId),
-  ]);
-
-  const total =
-    (sales.count ?? 0) + (finance.count ?? 0) + (ads.count ?? 0) + (products.count ?? 0);
-
-  return total === 0;
-}
-
 async function fetchAccountLastSync(
   client: SupabaseClient,
   marketplaceAccountId: string
@@ -175,6 +144,7 @@ async function fetchScopedDashboardSql(
   scope: ScopedDateRange,
   client?: SupabaseClient
 ): Promise<ScopedDashboardSqlRaw> {
+  client ??= await createServerClient();
   const productsPromise = fetchProductsWithRelations(scope.marketplaceAccountId, client, {
     brandId: scope.brandId,
     columns:
@@ -184,7 +154,7 @@ async function fetchScopedDashboardSql(
     ? null
     : Promise.all([
         fetchSalesInRange(scope, client, { columns: DASHBOARD_SALES_COLUMNS, includeHistoricalEvidence: true }),
-        fetchFinanceInRange(scope, client, { columns: DASHBOARD_FINANCE_COLUMNS, compactMetadata: scope.marketplaceAccountId === "6" }),
+        fetchFinancePeriodRows(scope, client, { columns: DASHBOARD_FINANCE_COLUMNS }),
         fetchOrdersInRange(scope, client, { columns: DASHBOARD_ORDER_COLUMNS }),
       ]);
   // Products may fail before the concurrently started range queries settle.
@@ -202,7 +172,7 @@ async function fetchScopedDashboardSql(
   const [rangeRows, ads, costHistory] = await Promise.all([
     accountRangePromise ?? Promise.all([
       fetchSalesInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_SALES_COLUMNS, includeHistoricalEvidence: true }),
-      fetchFinanceInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_FINANCE_COLUMNS, compactMetadata: scope.marketplaceAccountId === "6" }),
+      fetchFinancePeriodRows(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_FINANCE_COLUMNS }),
       fetchOrdersInRange(scope, client, { productIds: scopedProductIds, columns: DASHBOARD_ORDER_COLUMNS }),
     ]),
     fetchAdsInRange(scope, client, {
@@ -747,81 +717,19 @@ export async function getDashboardListData(scope: ScopedDateRange): Promise<{
   message?: string;
   lastSyncAt?: string | null;
 }> {
-  return measureAsync("server.getDashboardListData", "server", async () => {
-    const env = getSupabaseEnv();
-    if (!env.isConfigured) {
-      const sample = getSampleDashboard(
-        "Supabase is not configured. Copy .env.example to .env.local and add your credentials."
-      );
-      return {
-        products: sample.products,
-        categories: sample.categories,
-        brands: sample.brands,
-        isSampleData: true,
-        message: sample.message,
-      };
-    }
-
-    try {
-      const client = await createServerClient();
-      if (await isDatabaseEmpty(client, scope.marketplaceAccountId)) {
-        const sample = getSampleDashboard(
-          "Database tables are empty. Showing sample data until Wildberries data is synced."
-        );
-        return {
-          products: sample.products,
-          categories: sample.categories,
-          brands: sample.brands,
-          isSampleData: true,
-          message: sample.message,
-        };
-      }
-
-      const sql = await loadSqlForScope(scope);
-      const products = buildProductProfitabilityRows({
-        products: sql.products,
-        orders: sql.orders,
-        sales: sql.sales,
-        finance: sql.finance,
-        ads: sql.ads,
-        costHistory: sql.costHistory,
-      });
-      const overview = await buildOverviewMetricsFromRaw(scope, buildSqlOnlyRaw(sql), {
-        skipSettlement: true,
-      });
-      const { categories, brands } = buildGroupedViews(products, overview.modelBProfit);
-      const lastSyncAt = await fetchAccountLastSync(client, scope.marketplaceAccountId);
-
-      return {
-        products,
-        categories,
-        brands,
-        isSampleData: false,
-        lastSyncAt,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to connect to Supabase";
-      const sample = getSampleDashboard(
-        `Could not load live data: ${message}. Showing sample placeholders.`
-      );
-      return {
-        products: sample.products,
-        categories: sample.categories,
-        brands: sample.brands,
-        isSampleData: true,
-        message: sample.message,
-      };
-    }
-  });
+  const data = await getDashboardCoreData(scope);
+  return {
+    products: data.products, categories: data.categories, brands: data.brands,
+    isSampleData: data.isSampleData, message: data.message, lastSyncAt: data.lastSyncAt,
+  };
 }
 
 /**
  * Loads all dashboard data from Supabase.
- * Falls back to sample placeholders when Supabase is not configured or tables are empty.
+ * A single full snapshot for Reports. Configured live reads fail closed.
  */
 export async function getDashboardData(scope: ScopedDateRange): Promise<DashboardPayload> {
-  return runWithPerfRequest("/", async () =>
+  return withReadBudget(() => Promise.resolve(runWithPerfRequest("/", async () =>
     measureAsync(
       "server.getDashboardData",
       "server",
@@ -836,18 +744,8 @@ export async function getDashboardData(scope: ScopedDateRange): Promise<Dashboar
 
         try {
           const client = await createServerClient();
-          const empty = await measureAsync("server.isDatabaseEmpty", "server", () =>
-            isDatabaseEmpty(client, scope.marketplaceAccountId)
-          );
-
-          if (empty) {
-            return getSampleDashboard(
-              "Database tables are empty. Showing sample data until Wildberries data is synced."
-            );
-          }
-
           const raw = await measureAsync("server.fetchScopedDashboardRaw", "server", () =>
-            fetchScopedDashboardRaw(scope, client)
+            fetchScopedDashboardRaw(scope)
           );
           const overviewStarted = Date.now();
           const [overview, products] = await Promise.all([
@@ -890,12 +788,11 @@ export async function getDashboardData(scope: ScopedDateRange): Promise<Dashboar
           const message =
             error instanceof Error ? error.message : "Failed to connect to Supabase";
 
-          return getSampleDashboard(
-            `Could not load live data: ${message}. Showing sample placeholders.`
-          );
+          console.error("[reports] live data unavailable", message);
+          throw error;
         }
       },
       { account: scope.marketplaceAccountId, from: scope.from, to: scope.to }
     )
-  );
+  )), 45_000);
 }

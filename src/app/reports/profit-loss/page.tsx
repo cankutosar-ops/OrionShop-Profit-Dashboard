@@ -1,3 +1,4 @@
+import { renderDataPage } from "@/lib/render-data-page";
 import { ReportShell } from "@/components/reporting/report-shell";
 import { ReportSummaryCards } from "@/components/reporting/report-summary-cards";
 import { PnLLinesTable, PnLPeriodsTable } from "@/components/reporting/financial-detail-tables";
@@ -23,6 +24,7 @@ import { buildPnLExportDocument } from "@/lib/reporting/module/export/build-expo
 import { MarketplaceFeeStatusNotice } from "@/components/reporting/marketplace-fee-status-notice";
 import { combineMarketplaceFeeStatuses } from "@/lib/marketplace-fee-status";
 import { buildPeriodChunks } from "@/lib/reporting/weekly-business/period-chunks";
+import { mapWithConcurrency } from "@/lib/async-map";
 import type { ScopedDateRange } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -43,8 +45,7 @@ async function loadPeriodBreakdown(
   const chunks = buildPeriodChunks(parentScope);
   if (chunks.length === 0) return { kind: "none", rows: [] };
 
-  const rows: PnLPeriodBreakdownRow[] = [];
-  for (const chunk of chunks) {
+  const rows = await mapWithConcurrency(chunks, 2, async (chunk) => {
     const subScope: ScopedDateRange = {
       ...parentScope,
       from: chunk.from,
@@ -54,20 +55,24 @@ async function loadPeriodBreakdown(
       skipInventory: true,
       periodPresetLabel: periodPresetLabelValue,
     });
-    rows.push(pnlPeriodRowFromModelB(
+    return pnlPeriodRowFromModelB(
       chunk.label,
       chunk.from,
       chunk.to,
       sub.financialEngine,
       sub.overview.marketplaceFeesPresentation
-    ));
-  }
+    );
+  });
 
   const kind = chunks[0]?.kind === "week" ? "week" : "month";
   return { kind, rows };
 }
 
 export default async function ProfitLossReportPage({ searchParams }: PageProps) {
+  return renderDataPage("Profit & Loss", () => loadPage({ searchParams }));
+}
+
+async function loadPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const scope = await resolveScopedDateRange(params);
   const category = parseReportCategory(params);

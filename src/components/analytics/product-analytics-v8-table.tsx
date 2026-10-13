@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Loader2, Search, X } from "lucide-react";
 import { LogisticsBreakdownHint } from "@/components/analytics/logistics-breakdown-hint";
 import { SortableTh } from "@/components/ui/sortable-th";
+import { usePaginatedRows } from "@/hooks/use-paginated-rows";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { useCycleSort } from "@/hooks/use-cycle-sort";
 import { useProductSkuAnalytics } from "@/hooks/use-product-sku-analytics";
 import { sortRowsBySpec, type SortValue } from "@/lib/ui/table-sort";
@@ -345,6 +347,8 @@ export function ProductAnalyticsV8Table({
     return sortRowsBySpec(visible, sort, getMainValue);
   }, [filteredRows, sort, getMainValue, query, profitFilter]);
 
+  const pagination = usePaginatedRows(displayRows, JSON.stringify([searchParams.toString(), rangeFrom, rangeTo, query, profitFilter, sort]));
+
   const deepLinkExpandProductId = useMemo(
     () => resolveDeepLinkExpandProductId(displayRows, productParam, skuParam),
     [displayRows, productParam, skuParam]
@@ -540,7 +544,7 @@ export function ProductAnalyticsV8Table({
                 </td>
               </tr>
             ) : (
-              displayRows.map((row) => {
+              pagination.rows.map((row) => {
                 const productKey = String(row.productId);
                 const isOpen = Boolean(expanded[productKey]);
                 const variant = operationalVariant(row.operationalMarginPercent);
@@ -641,13 +645,13 @@ export function ProductAnalyticsV8Table({
                           : formatPercent(row.operationalMarginPercent)}
                       </td>
                     </tr>
-                    <SkuChildRows
+                    {isOpen && <SkuChildRows
                       productId={productKey}
                       from={rangeFrom}
                       to={rangeTo}
                       isOpen={isOpen}
                       colSpan={parentColSpan}
-                    />
+                    />}
                   </Fragment>
                 );
               })
@@ -655,6 +659,7 @@ export function ProductAnalyticsV8Table({
           </tbody>
         </table>
       </div>
+      <TablePagination {...pagination} />
     </div>
   );
 }

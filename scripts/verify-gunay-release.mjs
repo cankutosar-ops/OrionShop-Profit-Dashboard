@@ -24,6 +24,7 @@ let authCounter = 0;
 let failPageAuthAt = Infinity;
 let financeMode = "ready";
 let longFinanceMode = false;
+let periodMode = "missing";
 let salesMode = "native";
 let fixtureDate = "2026-09-20";
 let expenseTaxMode = false;
@@ -43,9 +44,16 @@ const fixture = http.createServer(async (request, response) => {
     if (request.headers.authorization !== `Bearer ${token}`) return send({ msg: "Invalid session" }, 401);
     return send(fixtureUser);
   }
-  if (request.method !== "GET" && request.method !== "HEAD") return send({ message: "Fixture forbids mutations" }, 405);
+  let periodRequest = null;
+  if (table === "orion_finance_period_rows") {
+    if (periodMode === "missing") return send({ code: "PGRST202", message: "function not deployed" }, 404);
+    if (financeMode === "error") return send({ code: "42501", message: "fixture period unavailable" }, 403);
+    let body = ""; for await (const chunk of request) body += chunk;
+    periodRequest = JSON.parse(body);
+  }
+  if (!periodRequest && request.method !== "GET" && request.method !== "HEAD") return send({ message: "Fixture forbids mutations" }, 405);
   if (table === "wb_sales_reporting" && salesMode !== "historical") return send({ message: "relation public.wb_sales_reporting does not exist" }, 404);
-  const accountId = url.searchParams.get("marketplace_account_id")?.slice(3) ?? "1";
+  const accountId = periodRequest?.p_account_id ?? url.searchParams.get("marketplace_account_id")?.slice(3) ?? "1";
   if (table === "wb_finance" && financeMode === "error") return send({ message: "fixture finance unavailable" }, 500);
   if (table.startsWith("warehouse_") && snapshotsMode === "hang") { response.on("close", () => disconnected++); return; }
   if (table === "wb_finance") await delay(10);
@@ -73,6 +81,13 @@ const fixture = http.createServer(async (request, response) => {
   if (salesMode === "historical") {
     data.wb_sales_reporting = [{ ...data.wb_sales[0], id:"xlsx-sale:999999001:1", sale_id:null, for_pay:null, data_source:"WB_EXCEL" }];
     data.wb_orders = [];
+  }
+  if (periodRequest) {
+    const rows = data.wb_finance.filter(row =>
+      row.operation_date >= periodRequest.p_from && row.operation_date <= periodRequest.p_to &&
+      (periodRequest.p_product_ids == null || row.product_id == null || periodRequest.p_product_ids.includes(String(row.product_id))));
+    return send({ version: 1, accountId, from: periodRequest.p_from, to: periodRequest.p_to,
+      sourceRows: rows.length, emittedRows: rows.length, rows });
   }
   let rows = data[table] ?? [];
   for (const [key, value] of url.searchParams) {
@@ -144,6 +159,15 @@ try {
     assert.match(longDashboard.body,rsc ? /DashboardProfitSection/ : /Commercial Performance/);
     assert.doesNotMatch(longDashboard.body,/Dashboard could not finish loading|:E\{/);
   }
+  periodMode = "ready";
+  for (const rsc of [false, true]) {
+    const startCalls = calls.length;
+    const result = await load('/?company=3&account=6&from=2026-05-13&to=2026-10-13&dateManual=1', { rsc });
+    assert.equal(result.response.status, 200);
+    assert.doesNotMatch(result.body, /could not finish loading|:E\{/);
+    assert.equal(calls.slice(startCalls).filter(c => c.table === "orion_finance_period_rows").length, 1);
+    assert.equal(calls.slice(startCalls).filter(c => c.table === "wb_finance").length, 0);
+  }
   longFinanceMode = false;
   const productScreen = await load('/analytics/products?company=3&account=6&from=2026-09-01&to=2026-09-30');
   assert.equal(productScreen.response.status,200);
@@ -169,6 +193,9 @@ try {
   assert.match(pricingFailure.body, /DashboardLoadError/);
   assert.match(pricingFailure.body, /"pageName":"Smart Pricing"/);
   assert.doesNotMatch(pricingFailure.body, /:E\{/);
+  const productFailure = await load("/analytics/products?company=3&account=6", { rsc: true });
+  assert.match(productFailure.body, /"pageName":"Product Analytics"/);
+  assert.doesNotMatch(productFailure.body, /:E\{/);
   financeMode = "ready";
   const recoveredDashboard = await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1", { rsc: true });
   assert.match(recoveredDashboard.body, /DashboardProfitSection/);

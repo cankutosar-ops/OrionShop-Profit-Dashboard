@@ -9,7 +9,7 @@ assert.equal(fast, "ready", "fast optional data should be returned");
 const started = Date.now();
 await assert.rejects(
   withReadBudget(() => new Promise(() => {}), 25),
-  /data loading timed out/
+  /data loading timed out/i
 );
 assert.ok(Date.now() - started < 250, "deadline must stop a hanging optional segment quickly");
 

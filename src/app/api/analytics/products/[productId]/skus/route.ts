@@ -1,3 +1,4 @@
+import { withReadBudget } from "@/lib/supabase/read-budget";
 import { NextResponse } from "next/server";
 import { normalizeBrandId, scopeSearchParamsFromUrl } from "@/lib/filter-params";
 import { parseDateRange } from "@/lib/utils";
@@ -10,7 +11,15 @@ import type { ScopedDateRange } from "@/types/database";
 
 type RouteParams = { params: Promise<{ productId: string }> };
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, route: RouteParams) {
+  try {
+    return await withReadBudget(() => loadSku(request, route), 35_000, undefined, request.signal);
+  } catch {
+    return NextResponse.json({ error: "SKU analytics could not finish loading. Please try again." }, { status: 503 });
+  }
+}
+
+async function loadSku(request: Request, { params }: RouteParams) {
   const authz = await authorizeRequestScope(request, {
     allowDefaultAccount: true,
     requireMarketplaceAccount: true,
