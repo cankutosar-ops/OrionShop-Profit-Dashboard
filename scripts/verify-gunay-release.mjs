@@ -55,6 +55,11 @@ const fixture = http.createServer(async (request, response) => {
     marketplace_accounts_public: accounts,
     companies: [{ id: "3", name: "Gunay Fixture Company", is_default: true, currency: "RUB" }],
     products: [product],
+    product_variants: [{id:'1',marketplace_account_id:accountId,product_id:accountId,nm_id:Number(accountId),chrt_id:1,tech_size:'M',barcode:'fixture'}],
+    wb_fbs_current_stocks: [{marketplace_account_id:accountId,seller_warehouse_id:1910512,chrt_id:1,
+      product_id:accountId,warehouse_name:'Kazan FBS',tech_size:'M',sku:'fixture',quantity:7,observed_at:date},
+      {marketplace_account_id:accountId,seller_warehouse_id:99,chrt_id:1,
+      product_id:accountId,warehouse_name:'Second FBS',tech_size:'M',sku:'fixture',quantity:3,observed_at:date}],
     wb_sales: [{ id: "1", marketplace_account_id: accountId, srid: "s1", nm_id: Number(accountId), product_id: accountId, sale_date: date, revenue: 100, price_with_disc: 100, for_pay: 80, quantity: 1, is_return: false }],
     wb_orders: [{ id: "1", marketplace_account_id: accountId, product_id: accountId, order_date: date, price: 100, price_with_disc: 100, quantity: 1, status: "completed" }],
     wb_finance: Array.from({ length: accountId === "2" ? 40062 : 10 }, (_, i) => ({ id: String(i + 1), marketplace_account_id: accountId, product_id: accountId, operation_date: date, operation_type: "sale", amount: 1, raw_amount: 1, source_key: `xlsx:999999001:${i+1}:for_pay`, finance_category: "FOR_PAY", wb_source_suffix: "for_pay", srid: "s1", nm_id: Number(accountId) })),
@@ -131,6 +136,14 @@ try {
   assert.match(orderScreen.body,/Daily orders/);
   assert.match(orderScreen.body,/Export daily CSV/);
   assert.match(orderScreen.body,/Non-cancelled Orders/);
+  const productScreen = await load('/analytics/products?company=3&account=6&from=2026-09-01&to=2026-09-30');
+  assert.equal(productScreen.response.status,200);
+  assert.match(productScreen.body,/WB Stock/);
+  assert.match(productScreen.body,/FBS Stock/);
+  assert.match(productScreen.body.replaceAll('\\"','"'),/"fbsStock":10/);
+  const skuScreen=await load('/api/analytics/products/6/skus?company=3&account=6&from=2026-09-01&to=2026-09-30');
+  assert.equal(skuScreen.response.status,200);
+  assert.equal(JSON.parse(skuScreen.body).skus.find(row=>row.size==='M').fbsStock,10);
   for (const rsc of [false, true]) {
     const pricing = await load("/analytics/pricing?company=3&account=6", { rsc });
     assert.equal(pricing.response.status, 200);

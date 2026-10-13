@@ -43,6 +43,7 @@ type MainSortKey =
   | "model"
   | "product"
   | "currentStock"
+  | "fbsStock"
   | "orders"
   | "purchases"
   | "conversion"
@@ -59,6 +60,7 @@ type SkuSortKey =
   | "size"
   | "barcode"
   | "currentStock"
+  | "fbsStock"
   | "orders"
   | "purchases"
   | "conversion"
@@ -75,6 +77,8 @@ function mainSortValue(row: ProductAnalyticsV3Row, key: MainSortKey): SortValue 
       return row.productName;
     case "currentStock":
       return row.currentStock;
+    case "fbsStock":
+      return row.fbsStock ?? Number.NEGATIVE_INFINITY;
     case "orders":
       return row.orders;
     case "purchases":
@@ -108,6 +112,8 @@ function skuSortValue(row: ProductAnalyticsSkuRow, key: SkuSortKey): SortValue {
       return row.barcode ?? "";
     case "currentStock":
       return row.currentStock;
+    case "fbsStock":
+      return row.fbsStock ?? Number.NEGATIVE_INFINITY;
     case "orders":
       return row.orders;
     case "purchases":
@@ -167,7 +173,7 @@ function SkuChildRows({
           )}
           {data && data.skus.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[800px] text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted-foreground">
                     <SortableTh
@@ -185,13 +191,14 @@ function SkuChildRows({
                       className="px-2 py-1.5"
                     />
                     <SortableTh
-                      label="Current Stock"
+                      label="WB Stock"
                       active={isActive("currentStock")}
                       direction={directionFor("currentStock")}
                       onClick={() => onSort("currentStock")}
                       align="right"
                       className="px-2 py-1.5"
                     />
+                    <SortableTh label="FBS Stock" active={isActive("fbsStock")} direction={directionFor("fbsStock")} onClick={()=>onSort("fbsStock")} align="right" className="px-2 py-1.5" />
                     <SortableTh
                       label="Orders"
                       active={isActive("orders")}
@@ -250,6 +257,7 @@ function SkuRow({ sku }: { sku: ProductAnalyticsSkuRow }) {
       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
         {formatNumber(sku.currentStock)}
       </td>
+      <td className="px-2 py-2 text-right tabular-nums" title={sku.fbsStockObservedAt ? `Seller FBS available stock · captured ${sku.fbsStockObservedAt}${sku.fbsStockIncomplete ? ' · WB omitted requested variants' : ''}` : 'FBS stock has not been captured'}>{sku.fbsStock==null ? "—" : `${formatNumber(sku.fbsStock)}${sku.fbsStockIncomplete ? " + ?" : ""}`}</td>
       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
         {formatNumber(sku.orders)}
       </td>
@@ -366,7 +374,7 @@ export function ProductAnalyticsV8Table({
     () => Object.values(expanded).filter(Boolean).length,
     [expanded]
   );
-  const parentColSpan = 14;
+  const parentColSpan = 15;
 
   return (
     <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-border bg-card">
@@ -411,7 +419,7 @@ export function ProductAnalyticsV8Table({
         </div>
       </div>
       <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
-        <table className="w-full min-w-[1080px] text-sm">
+        <table className="w-full min-w-[1180px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
               <th className={cn("px-2 py-2", stickyExpandHeader)} />
@@ -432,13 +440,14 @@ export function ProductAnalyticsV8Table({
                 className="px-3 py-2"
               />
               <SortableTh
-                label="Current Stock"
+                label="WB Stock"
                 active={isActive("currentStock")}
                 direction={directionFor("currentStock")}
                 onClick={() => onSort("currentStock")}
                 align="right"
                 className="px-3 py-2"
               />
+                    <SortableTh label="FBS Stock" active={isActive("fbsStock")} direction={directionFor("fbsStock")} onClick={()=>onSort("fbsStock")} align="right" className="px-3 py-2" />
               <SortableTh
                 label="Orders"
                 active={isActive("orders")}
@@ -573,6 +582,7 @@ export function ProductAnalyticsV8Table({
                           {formatNumber(row.currentStock)}
                         </Link>
                       </td>
+                      <td className="px-3 py-2 text-right tabular-nums" title={row.fbsStockObservedAt ? `Seller FBS available stock · captured ${row.fbsStockObservedAt}${row.fbsStockIncomplete ? ' · WB omitted requested variants' : ''}` : 'FBS stock has not been captured'}>{row.fbsStock==null ? "—" : `${formatNumber(row.fbsStock)}${row.fbsStockIncomplete ? " + ?" : ""}`}</td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         {formatNumber(row.orders)}
                       </td>

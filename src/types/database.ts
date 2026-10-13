@@ -931,6 +931,9 @@ export type ProductAnalyticsV3Row = {
   marketplaceFeesPctOfRevenue: number | null;
   /** Total current stock from inventory cache — links to Inventory page. */
   currentStock: number;
+  fbsStock?: number | null;
+  fbsStockIncomplete?: boolean;
+  fbsStockObservedAt?: string | null;
 };
 
 export type InventoryRecommendation =
@@ -945,6 +948,9 @@ export type ProductAnalyticsSkuRow = {
   size: string;
   barcode: string | null;
   currentStock: number;
+  fbsStock?: number | null;
+  fbsStockIncomplete?: boolean;
+  fbsStockObservedAt?: string | null;
   orders: number;
   purchases: number;
   conversionPercent: number;
@@ -1398,6 +1404,12 @@ type PublicTables = {
     Row: WbStock;
     Insert: Omit<WbStock, "id"> & { id?: string };
     Update: Partial<WbStock>;
+    Relationships: NoRelationships;
+  };
+  wb_fbs_current_stocks: {
+    Row: {marketplace_account_id:string;seller_warehouse_id:number;chrt_id:number;product_id:string;warehouse_name:string;tech_size:string|null;sku:string|null;quantity:number|null;observed_at:string};
+    Insert: PublicTables["wb_fbs_current_stocks"]["Row"];
+    Update: Partial<PublicTables["wb_fbs_current_stocks"]["Row"]>;
     Relationships: NoRelationships;
   };
   wb_current_stocks: {
@@ -1940,6 +1952,10 @@ export type Database = {
       };
     };
     Functions: {
+      replace_wb_fbs_current_stocks: {
+        Args: { p_account_id: string; p_rows: PublicTables["wb_fbs_current_stocks"]["Row"][] };
+        Returns: number;
+      };
       orion_admin_rls_status: {
         Args: Record<string, never>;
         Returns: Array<Record<string, unknown>>;

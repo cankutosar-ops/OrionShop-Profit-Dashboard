@@ -1,3 +1,5 @@
+import {readFbsStockRows} from "@/services/fbs-stock-service";
+import {indexFbsStockByProduct} from "@/lib/wildberries/fbs-stock";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import {
@@ -41,15 +43,20 @@ export async function getProductAnalytics(
   if (!env.isConfigured) return null;
 
   const client = await createServerClient();
-  const [build, stockByProductId] = await Promise.all([
+  const [build, stockByProductId, fbsRows] = await Promise.all([
     getProductProfitabilityBuild(scope, client),
     getCurrentStockByProductId(scope.marketplaceAccountId),
+    readFbsStockRows(scope.marketplaceAccountId, client),
   ]);
   const products = build.rows;
   const all = buildProductAnalyticsRows(products);
+  const fbsByProduct = indexFbsStockByProduct(fbsRows);
   const v3All = buildProductAnalyticsV3Rows(products).map((row) => ({
     ...row,
     currentStock: stockByProductId.get(String(row.productId)) ?? 0,
+    fbsStock: fbsByProduct.get(String(row.productId))?.quantity ?? null,
+    fbsStockIncomplete: fbsByProduct.get(String(row.productId))?.incomplete ?? false,
+    fbsStockObservedAt: fbsByProduct.get(String(row.productId))?.observedAt ?? null,
   }));
   const totals = buildProductAnalyticsTotals(products, {
     unallocatedLogistics: build.logisticsReconciliation.unallocatedLogistics,

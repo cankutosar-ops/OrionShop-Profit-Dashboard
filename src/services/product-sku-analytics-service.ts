@@ -1,3 +1,5 @@
+import {readFbsStockRows} from "@/services/fbs-stock-service";
+import {summarizeFbsStock} from "@/lib/wildberries/fbs-stock";
 import {
   buildSkuDisplayRows,
   collectCatalogVariantGroups,
@@ -87,11 +89,12 @@ export async function getProductSkuAnalytics(
   const product = products.find((p) => String(p.id) === normalizedProductId);
   if (!product) return null;
 
-  const [dbOrders, dbSales, variants, stockRows] = await Promise.all([
+  const [dbOrders, dbSales, variants, stockRows, fbsRows] = await Promise.all([
     fetchOrdersForProduct(normalizedProductId, scope.marketplaceAccountId, scope),
     fetchSalesForProduct(normalizedProductId, scope.marketplaceAccountId, scope),
     fetchVariants(normalizedProductId, scope.marketplaceAccountId),
     fetchStockForProduct(normalizedProductId, scope.marketplaceAccountId, client),
+    readFbsStockRows(scope.marketplaceAccountId,client,normalizedProductId),
   ]);
 
   const barcodeMap = buildBarcodeToTechSizeMap(variants);
@@ -99,7 +102,10 @@ export async function getProductSkuAnalytics(
   const sales = enrichRowsWithTechSize(dbSales, barcodeMap);
 
   const groups = collectCatalogVariantGroups(variants);
-  const skus = buildSkuDisplayRows(groups, orders, sales, stockRows);
+  const skus = buildSkuDisplayRows(groups, orders, sales, stockRows).map(row => {
+    const summary=summarizeFbsStock(fbsRows.filter(s=>s.tech_size===row.size));
+    return {...row,fbsStock:summary.quantity,fbsStockIncomplete:summary.incomplete,fbsStockObservedAt:summary.observedAt};
+  });
   // Same pure funnel builder as Product Analytics / profitability rows — no new math.
   const funnel = buildProductFunnelMetrics(orders, sales);
 
