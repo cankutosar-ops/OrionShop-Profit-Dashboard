@@ -1,5 +1,6 @@
 "use client";
 
+import { dashboardTaxExplanation } from "@/lib/dashboard-owner-tax-estimate";
 import { useMemo } from "react";
 import {
   buildModelBBreakdownLines,
@@ -29,7 +30,7 @@ export function ProfitabilityBreakdown({
 
   const { breakdown, salesBase } = useMemo(
     () => ({
-      breakdown: buildModelBBreakdownLines(modelB),
+      breakdown: buildModelBBreakdownLines(modelB).map(line => line.key === "estimatedTax" && modelB.taxCalculationStatus === "OWNER_APPROVED_ESTIMATE" ? {...line, detail: dashboardTaxExplanation(modelB)} : line),
       salesBase: modelB.revenue,
     }),
     [modelB]

@@ -136,8 +136,8 @@ try {
   expenseTaxMode = true;
   const blockedTax = await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1");
   assert.equal(blockedTax.response.status,200);
-  assert.match(blockedTax.body,/Tax calculation unverified/);
-  assert.match(blockedTax.body,/Operating Profit remains available before tax/);
+  assert.match(blockedTax.body,/owner-approved estimate/);
+  assert.doesNotMatch(blockedTax.body,/Tax calculation unverified/);
   expenseTaxMode = false;
   fixtureDate = "2026-05-15";
   salesMode = "empty";

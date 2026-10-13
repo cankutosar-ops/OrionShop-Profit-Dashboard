@@ -15,6 +15,7 @@ type WbSettlementWidgetProps = {
    */
   estimatedTax?: number;
   taxPercent?: number;
+  taxExplanation?: string;
 };
 
 /**
@@ -27,6 +28,7 @@ export function WbSettlementWidget({
   isEmptyPeriod = false,
   estimatedTax = 0,
   taxPercent = 6,
+  taxExplanation,
 }: WbSettlementWidgetProps) {
   const unavailable = settlement.availability?.available === false;
   const [breakdownOpen, setBreakdownOpen] = useState(false);
@@ -135,8 +137,7 @@ export function WbSettlementWidget({
           </dl>
 
           <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-            Estimated Tax = {taxPercent}% × Σ finishedPrice (Financial Engine — same as
-            Commercial Performance). Wildberries still transfers the full Settlement amount.
+            {taxExplanation ?? `Estimated Tax = ${taxPercent}% × net stored Sales finishedPrice.`} Same tax amount as Commercial Performance. Wildberries still transfers the full Settlement amount.
             Cash After Tax is informational only and is not part of the Settlement calculation.
           </p>
 

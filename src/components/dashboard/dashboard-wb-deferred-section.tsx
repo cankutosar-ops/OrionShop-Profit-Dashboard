@@ -35,6 +35,7 @@ type DashboardWbSectionProps = {
   ordersValueCount: number;
   estimatedTax?: number;
   taxPercent?: number;
+  taxExplanation?: string;
 };
 
 /** Pure presentation for the page-level parallel data load. */
@@ -45,6 +46,7 @@ export function DashboardWbSection({
   ordersValueCount,
   estimatedTax = 0,
   taxPercent = 6,
+  taxExplanation,
 }: DashboardWbSectionProps) {
   const emptyValue = "—";
   const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiCurrency(value));
@@ -82,7 +84,7 @@ export function DashboardWbSection({
           <MetricCard title="Wallet Balance" value={wbBalanceValue} subtitle={wbBalanceSubtitle} icon={KPI_ICONS.wallet} variant={isEmptyPeriod || wbBalance.current === null ? "default" : wbBalance.current > 0 ? "success" : "default"} />
         </div>
       </KpiSection>
-      <WbSettlementWidget settlement={strip.wbSettlement} isEmptyPeriod={isEmptyPeriod} estimatedTax={estimatedTax} taxPercent={taxPercent} />
+      <WbSettlementWidget settlement={strip.wbSettlement} isEmptyPeriod={isEmptyPeriod} estimatedTax={estimatedTax} taxPercent={taxPercent} taxExplanation={taxExplanation} />
     </div>
   );
 }
@@ -95,6 +97,7 @@ export async function DashboardWbDeferredSection({
   ordersValueCount,
   estimatedTax = 0,
   taxPercent = 6,
+  taxExplanation,
 }: {
   scope: ScopedDateRange;
   isEmptyPeriod: boolean;
@@ -104,9 +107,10 @@ export async function DashboardWbDeferredSection({
   /** Financial Engine Estimated Tax (finishedPrice base) for the same range. */
   estimatedTax?: number;
   taxPercent?: number;
+  taxExplanation?: string;
 }) {
   const strip = await loadDashboardWbStrip(scope);
-  return <DashboardWbSection strip={strip} isEmptyPeriod={isEmptyPeriod} totalOrdersCount={totalOrdersCount} ordersCount={ordersCount} ordersValueCount={ordersValueCount} estimatedTax={estimatedTax} taxPercent={taxPercent} />;
+  return <DashboardWbSection strip={strip} isEmptyPeriod={isEmptyPeriod} totalOrdersCount={totalOrdersCount} ordersCount={ordersCount} ordersValueCount={ordersValueCount} estimatedTax={estimatedTax} taxPercent={taxPercent} taxExplanation={taxExplanation} />;
 }
 
 export function DashboardWbSectionFallback() {

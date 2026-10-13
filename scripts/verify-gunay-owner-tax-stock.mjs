@@ -1,0 +1,51 @@
+import {readFileSync} from "node:fs";
+import assert from "node:assert/strict";
+import {applyOwnerApprovedDashboardTax,dashboardTaxExplanation} from "../src/lib/dashboard-owner-tax-estimate.ts";
+import {mapCompleteStock} from "../src/lib/wildberries/complete-stock.ts";
+import {currentStockSource} from "../src/services/current-stock-repository.ts";
+const scope={companyId:"3",marketplaceAccountId:"6",from:"2026-08-31",to:"2026-10-04"};
+const model={operatingProfit:445800,sellerPayout:445800,customerPaid:903574.72,estimatedTax:135536.208,taxPercent:15,taxObject:"USN_INCOME_MINUS_EXPENSES",taxCalculationStatus:"SOURCE_UNAVAILABLE",netSalesStatus:"ready"};
+const result=applyOwnerApprovedDashboardTax(scope,model);
+assert.equal(result.estimatedTax,66870);assert.equal(result.finalNetProfit,378930);assert.equal(result.afterTaxPayout,378930);
+assert.equal(result.customerPaid,model.customerPaid);assert.match(dashboardTaxExplanation(result),/not a statutory tax return/);
+assert.equal(applyOwnerApprovedDashboardTax({...scope,companyId:"1"},model),model);
+assert.equal(applyOwnerApprovedDashboardTax({...scope,marketplaceAccountId:"1"},model),model);
+assert.equal(applyOwnerApprovedDashboardTax(scope,{...model,taxPercent:6}).estimatedTax,model.estimatedTax);
+assert.equal(applyOwnerApprovedDashboardTax(scope,{...model,operatingProfit:-50}).estimatedTax,0);
+const items=[{nmId:1,chrtId:11,warehouseId:-999999,quantity:5},{nmId:1,chrtId:12,warehouseId:-999999,quantity:2},{nmId:1,chrtId:11,warehouseId:20,warehouseName:"WB depot",quantity:3}];
+const rows=mapCompleteStock(items);
+assert.equal(rows.length,3);assert.equal(rows.reduce((n,r)=>n+r.quantity,0),10);
+assert.deepEqual(rows.map(r=>r.externalVariantId),["11","12","11"]);
+assert.throws(()=>mapCompleteStock([...items,items[0]]),/Duplicate stock identity/);
+assert.throws(()=>mapCompleteStock([{...items[0],quantity:-1}]),/Invalid stock number/);
+process.env.ORION_CURRENT_STOCK_SOURCE="legacy";
+assert.equal(currentStockSource("6"),"canonical");assert.equal(currentStockSource("1"),"legacy");assert.equal(currentStockSource("2"),"legacy");assert.equal(currentStockSource(),"legacy");
+console.log("PASS owner-approved tax arithmetic/scoping/loss, stock size/warehouse validation, account-specific read policy and default unchanged");
+
+const service=readFileSync(new URL('../src/services/company-tax-service.ts',import.meta.url),'utf8');
+assert.ok(service.indexOf('companyId === "3" && scope?.marketplaceAccountId === "6"')<service.indexOf('const foundation = await getCompanyTaxFoundation'));
+console.log('PASS owner estimate avoids redundant company expense audit before dashboard display');
+
+process.env.NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54329";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY="isolated-public";
+process.env.SUPABASE_SERVICE_ROLE_KEY="isolated-service";
+const savedFetch=globalThis.fetch;const calls=[];
+globalThis.fetch=async input=>{const url=String(input instanceof Request?input.url:input);calls.push(url);
+  assert.match(url,/company_tax_profiles/);assert.match(url,/company_id=eq.3/);
+  return Response.json([{id:"1",company_id:"3",tax_object:"USN_INCOME_MINUS_EXPENSES",tax_rate:15,effective_from:"2026-09-30",effective_to:null,vat_status:"UNKNOWN"}]);};
+try {const {getDashboardTaxInputs}=await import('../src/services/company-tax-service.ts');
+ const tax=await getDashboardTaxInputs("3","2026-09-01","2026-10-11",{marketplaceAccountId:"6"});
+ assert.equal(tax.profile.tax_rate,15);assert.equal(calls.length,1);
+ assert.equal(tax.profile.vat_status,"UNKNOWN");
+ console.log("PASS actual Dashboard tax provider reads only effective profile; no Finance/Purchases/expense scan and no VAT evidence fabricated");
+} finally{globalThis.fetch=savedFetch;}
+
+const {WildberriesWarehouseEntityUpsert}=await import('../src/lib/marketplace-adapters/wildberries/entity-upsert.ts');
+let written;
+const fake={from(table){assert.equal(table,'product_variants');return {select(){return this},eq(_c,a){assert.equal(a,'6');return this},not(){return this},order(){return this},async range(){return {data:[],error:null}}}},async rpc(name,args){assert.equal(name,'replace_wb_current_stocks_verified');assert.equal(args.p_account_id,'6');written=args.p_rows;return {data:args.p_rows.length,error:null}}};
+const upsert=new WildberriesWarehouseEntityUpsert('6',()=>fake);
+const refreshed=await upsert.upsertStocks({marketplaceType:'wildberries',marketplaceAccountId:'6',companyId:'3'},rows);
+assert.equal(refreshed.upserted,3);assert.deepEqual(written.map(r=>r.chrt_id),[11,12,11]);
+await assert.rejects(upsert.upsertStocks({marketplaceType:'wildberries',marketplaceAccountId:'1'},rows),/account mismatch/);
+await assert.rejects(upsert.upsertStocks({marketplaceType:'wildberries',marketplaceAccountId:'6'},[]),/Empty stock/);
+console.log('PASS manual stock producer refreshes the selected current source atomically; empty/wrong account fails closed');

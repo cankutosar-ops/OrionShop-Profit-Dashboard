@@ -1,3 +1,4 @@
+import { persistCanonicalCurrentStocks } from "@/lib/marketplace-adapters/wildberries/canonical-stock";
 /**
  * Sprint 10.2 — Wildberries durable upsert (idempotent) for historical backfill.
  * Persists into existing project tables with upsert conflict keys.
@@ -324,7 +325,13 @@ export class WildberriesWarehouseEntityUpsert implements WarehouseEntityUpsertPo
       throw new Error("Stock upsert refused: marketplace account mismatch");
     }
     const supabase = this.adminClient();
-    // Canonical replacement belongs exclusively to the complete current-stock task.
+    // The WB stock adapter returns one fully captured Analytics page (done=true).
+    // Günay's explicitly selected source must be refreshed by the same manual sync.
+    if (this.marketplaceAccountId === "6") {
+      const count = await persistCanonicalCurrentStocks(this.marketplaceAccountId, items, supabase);
+      return { ...result, upserted: count, updated: count };
+    }
+    // Other accounts keep the existing legacy ingestion path.
     const batch: Array<Omit<WbStock, "id">> = [];
     const syncedAt = new Date().toISOString();
 

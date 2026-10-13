@@ -20,6 +20,16 @@ export async function getDashboardTaxInputs(companyId: string, from: string, to:
     return { profile, recognizedExpensesKopeks: 0, expensePeriodCalculation: undefined as TaxCalculation | undefined,
       expensePeriodReasons: [] as string[] };
   }
+  // Explicit Günay management-estimate approval (2026-10-13). Its base comes
+  // from the already-loaded dashboard Operating Profit, so do not re-audit
+  // the full company expense ledger on every dashboard navigation.
+  if (companyId === "3" && scope?.marketplaceAccountId === "6" && profile.tax_rate === 15) {
+    return { profile, recognizedExpensesKopeks: 0,
+      expensePeriodCalculation: { readiness: "INCOMPLETE_SOURCE_DATA" as const, taxBaseKopeks: null,
+        calculatedTaxKopeks: null, minimumTaxReferenceKopeks: null, estimatedTaxYtdKopeks: null,
+        annualMinimumApplied: false, warnings: ["Owner-approved Dashboard management estimate; statutory evidence remains separate."] },
+      expensePeriodReasons: ["Owner-approved Dashboard management estimate; statutory evidence remains separate."] };
+  }
   const foundation = await getCompanyTaxFoundation(companyId, from, to).catch(() => null);
   if (!foundation) return { profile, recognizedExpensesKopeks: 0,
     expensePeriodCalculation: { readiness: "INCOMPLETE_SOURCE_DATA" as const, taxBaseKopeks: null,

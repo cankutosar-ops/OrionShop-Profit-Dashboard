@@ -1,3 +1,4 @@
+import { syncCanonicalCurrentStock } from "@/lib/marketplace-adapters/wildberries/current-stock-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminClient } from "@/lib/supabase/admin";
 import { fetchAllRows } from "@/lib/supabase/paginate";
@@ -1174,6 +1175,13 @@ export class WbSyncService {
     try {
       timer?.startPhase("stock_fetch");
       syncLog("stock", "Wildberries API START: fetchStocks");
+      // Günay uses Analytics variant identity; Statistics stocks is no longer available.
+      if (this.marketplaceAccountId === "6") {
+        const count = await syncCanonicalCurrentStock(this.marketplaceAccountId, Date.now() + 120_000);
+        result.recordsProcessed = count;
+        result.recordsInserted = count;
+        return result;
+      }
       const rows = await this.client.fetchStocks();
       timer?.endPhase("stock_fetch");
       syncLog("stock", "Wildberries API END: fetchStocks", { rowCount: rows.length });

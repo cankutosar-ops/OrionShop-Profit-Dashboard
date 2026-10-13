@@ -4,7 +4,11 @@ import type { WbStock } from "@/types/database";
 
 export type CurrentStockSource = "legacy" | "canonical";
 
-export function currentStockSource(): CurrentStockSource {
+export function currentStockSource(accountId?: string): CurrentStockSource {
+  // Owner-requested bootstrap for Günay: both old stock stores were empty.
+  // Analytics nm/chrt grain avoids choosing between multiple catalog barcodes.
+  // Other accounts retain the existing explicit release switch.
+  if (String(accountId) === "6") return "canonical";
   const value = process.env.ORION_CURRENT_STOCK_SOURCE || "legacy";
   if (value !== "legacy" && value !== "canonical") {
     throw new Error(`Invalid ORION_CURRENT_STOCK_SOURCE: ${value}`);
@@ -72,7 +76,7 @@ export async function readCurrentStockRows(
   client: SupabaseClient,
   productId?: string
 ): Promise<WbStock[]> {
-  if (currentStockSource() === "canonical") {
+  if (currentStockSource(accountId) === "canonical") {
     const rows = await canonicalRows(accountId, client);
     return productId ? rows.filter((row) => String(row.product_id) === productId) : rows;
   }
@@ -87,7 +91,7 @@ export async function readCurrentStockExtent(
   accountId: string,
   client: SupabaseClient
 ): Promise<{ earliestDate: string | null; latestDate: string | null; recordCount: number }> {
-  const canonical = currentStockSource() === "canonical";
+  const canonical = currentStockSource(accountId) === "canonical";
   const table = canonical ? "wb_current_stocks" : "wb_stock";
   const column = canonical ? "observed_at" : "last_synced_at";
   const base = () => client.from(table).select(column).eq("marketplace_account_id", accountId);
@@ -105,7 +109,7 @@ export async function readCurrentStockExtent(
 }
 
 export async function readCurrentStockWarehouseNames(accountId: string, client: SupabaseClient): Promise<string[]> {
-  const canonical = currentStockSource() === "canonical";
+  const canonical = currentStockSource(accountId) === "canonical";
   const table = canonical ? "wb_current_stocks" : "wb_stock";
   const column = canonical ? "warehouse_name" : "warehouse";
   const names = new Set<string>();

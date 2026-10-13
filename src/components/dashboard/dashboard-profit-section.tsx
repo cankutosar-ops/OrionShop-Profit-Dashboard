@@ -83,7 +83,7 @@ export function DashboardProfitSection({
 }: DashboardProfitSectionProps) {
   const emptyValue = "—";
   const revenueReady = isNetSalesReady(modelB.netSalesStatus);
-  const expenseTaxUnverified = modelB.taxObject === "USN_INCOME_MINUS_EXPENSES" && modelB.taxCalculationStatus !== "READY";
+  const expenseTaxUnverified = modelB.taxObject === "USN_INCOME_MINUS_EXPENSES" && modelB.taxCalculationStatus !== "READY" && modelB.taxCalculationStatus !== "OWNER_APPROVED_ESTIMATE";
   const afterTaxReady = revenueReady && !expenseTaxUnverified;
 
   const formatMoney = (value: number) => (isEmptyPeriod ? emptyValue : formatKpiCurrency(value));
@@ -255,7 +255,7 @@ export function DashboardProfitSection({
             title="Estimated Tax"
             value={expenseTaxUnverified && !isEmptyPeriod ? "Tax calculation unverified" : formatMoneyOrPending(modelB.estimatedTax)}
             subtitle={
-              expenseTaxUnverified ? "Income/expense evidence or company tax settings require verification" : revenueReady
+              modelB.taxCalculationStatus === "OWNER_APPROVED_ESTIMATE" ? `${modelB.taxPercent}% of positive Operating Profit · owner-approved estimate` : expenseTaxUnverified ? "Income/expense evidence or company tax settings require verification" : revenueReady
                 ? modelB.taxCalculationStatus === "READY"
                   ? modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
                     ? `${modelB.taxPercent}% company tax · cumulative period impact`
@@ -263,7 +263,7 @@ export function DashboardProfitSection({
                   : "Tax Engine profile/source unavailable · legacy estimate shown"
                 : sanitizeUnavailableReason(undefined, "Awaiting revenue data")
             }
-            hint={expenseTaxUnverified ? (modelB.taxReadinessReasons?.join(" ") || "Review company tax income, expenses and effective profile in Tax Engine. No verified tax amount is available.") : modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
+            hint={modelB.taxCalculationStatus === "OWNER_APPROVED_ESTIMATE" ? `Owner-approved management estimate: max(0, Operating Profit) × ${modelB.taxPercent}%. Not a statutory tax return.` : expenseTaxUnverified ? (modelB.taxReadinessReasons?.join(" ") || "Review company tax income, expenses and effective profile in Tax Engine. No verified tax amount is available.") : modelB.taxObject === "USN_INCOME_MINUS_EXPENSES"
               ? `Tax Engine: max(0, income − verified deductible expenses) × ${modelB.taxPercent}%. Cumulative base: ${formatMoney(modelB.taxBase ?? 0)}; recognized expenses in selected period: ${formatMoney(modelB.taxDeductibleExpenses ?? 0)}.`
               : `Tax Engine: taxable income × ${modelB.taxPercent}%. Dashboard income source is persisted Sales API finishedPrice.`}
             icon={KPI_ICONS.tax}

@@ -1,3 +1,4 @@
+import { dashboardTaxExplanation } from "@/lib/dashboard-owner-tax-estimate";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
   CostBreakdownChartLazy,
@@ -93,6 +94,7 @@ async function DashboardCoreSection({
           ordersValueCount={kpis.ordersValueCount}
           estimatedTax={overview.modelBProfit.estimatedTax}
           taxPercent={overview.modelBProfit.taxPercent}
+          taxExplanation={dashboardTaxExplanation(overview.modelBProfit)}
         />
       </div>
 

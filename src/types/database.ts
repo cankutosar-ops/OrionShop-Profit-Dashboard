@@ -435,7 +435,7 @@ export type ModelBProfitMetrics = {
   /** Tax Engine regime selected by the effective company profile. */
   taxObject?: CompanyTaxObject;
   /** Whether the Dashboard tax amount came from the effective Tax Engine profile. */
-  taxCalculationStatus?: "READY" | "PROFILE_MISSING" | "SOURCE_UNAVAILABLE";
+  taxCalculationStatus?: "READY" | "OWNER_APPROVED_ESTIMATE" | "PROFILE_MISSING" | "SOURCE_UNAVAILABLE";
   taxReadinessReasons?: string[];
   /** Taxable base used by the Dashboard Tax Engine estimate. */
   taxBase?: number;

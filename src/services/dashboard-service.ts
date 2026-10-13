@@ -1,3 +1,4 @@
+import { applyOwnerApprovedDashboardTax } from "@/lib/dashboard-owner-tax-estimate";
 import { parseWbSourceSuffix } from "@/lib/finance-category";
 import { cache } from "react";
 import { partitionDashboardFinance, summarizeUnallocatedDashboardFinance } from "@/lib/dashboard-finance-scope";
@@ -438,7 +439,7 @@ async function buildOverviewMetricsFromRaw(
     dashboardTax = { taxPercent: 6, taxCalculationStatus: "SOURCE_UNAVAILABLE" };
   }
   const historicalSalesRows = raw.sales.filter((sale) => sale.data_source === "WB_EXCEL").length;
-  const modelBProfit = measureSync("model_b.calculateModelBNetProfit", "model_b", () =>
+  let modelBProfit = measureSync("model_b.calculateModelBNetProfit", "model_b", () =>
     buildModelBProfitMetrics(netSalesResolution, {
       salesForPay,
       financeNetForPay,
@@ -456,6 +457,7 @@ async function buildOverviewMetricsFromRaw(
   );
 
   modelBProfit.taxReadinessReasons = taxReadinessReasons;
+  modelBProfit = applyOwnerApprovedDashboardTax(scope, modelBProfit);
 
   // A financial-report payable is not Sales API forPay. Keep the reconciliation unavailable.
   if (historicalSalesRows > 0) modelBProfit.marketplaceFeeStatus = "unavailable";
