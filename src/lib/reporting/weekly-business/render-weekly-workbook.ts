@@ -292,7 +292,7 @@ function buildExecutiveSheet(
     { label: "Penalties", value: fe.penalties, numFmt: NUM_FMT.currency },
     { label: "Other", value: fe.adjustments, numFmt: NUM_FMT.currency },
     { label: "Product Cost", value: fe.productCost, numFmt: NUM_FMT.currency },
-    { label: "Advertising", value: fe.advertising, numFmt: NUM_FMT.currency },
+    { label: "Advertising (additional deduction)", value: fe.advertising, numFmt: NUM_FMT.currency },
     { label: "Estimated Tax", value: fe.estimatedTax, numFmt: NUM_FMT.currency },
     { label: "Net Profit", value: fe.finalNetProfit, numFmt: NUM_FMT.currency },
     {

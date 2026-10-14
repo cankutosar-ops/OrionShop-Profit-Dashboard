@@ -80,7 +80,7 @@ function linesFromAmounts(params: {
     { id: "penalties", label: "Penalties", amount: params.penalties },
     { id: "adjustments", label: "Adjustments", amount: params.adjustments },
     { id: "productCost", label: "Product Cost", amount: params.productCost },
-    { id: "advertising", label: "Advertising", amount: params.advertising },
+    { id: "advertising", label: "Advertising (additional deduction)", amount: params.advertising },
     { id: "estimatedTax", label: "Estimated Tax", amount: params.estimatedTax },
     {
       id: "operatingProfit",

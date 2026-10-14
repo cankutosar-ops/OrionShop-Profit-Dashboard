@@ -43,11 +43,11 @@ async function loadPage({ searchParams }: PageProps) {
     }));
 
   const adCostChartData = products
-    .filter((p) => p.advertising > 0)
+    .filter((p) => (p.advertisingCampaignSpend ?? p.advertising) > 0)
     .slice(0, 15)
     .map((p) => ({
       label: p.modelCode,
-      value: p.advertising,
+      value: p.advertisingCampaignSpend ?? p.advertising,
     }));
 
   return (
@@ -87,8 +87,8 @@ async function loadPage({ searchParams }: PageProps) {
         </ChartCard>
 
         <ChartCard
-          title="Advertising Cost by Supplier Article"
-          description="Ad spend distribution across products"
+          title="Campaign Spend by Supplier Article"
+          description="Informational campaign statistics; billed advertising is included once in Finance Adjustments"
         >
           <ProfitBarChartLazy data={adCostChartData} valueLabel="Ad Spend" colorIndex={3} />
         </ChartCard>

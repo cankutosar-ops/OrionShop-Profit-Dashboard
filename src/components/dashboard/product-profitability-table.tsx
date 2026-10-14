@@ -40,7 +40,7 @@ function sortValue(row: ProductProfitability, key: SortKey): SortValue {
     case "marketplaceFees":
       return row.marketplaceFees;
     case "advertising":
-      return row.advertising;
+      return row.advertisingCampaignSpend ?? row.advertising;
     case "returnRate":
       return row.returnRate;
   }
@@ -119,7 +119,7 @@ export function ProductProfitabilityTable({
                 className="px-6 py-3"
               />
               <SortableTh
-                label="Ad Cost"
+                label="Campaign Spend (info)"
                 active={isActive("advertising")}
                 direction={directionFor("advertising")}
                 onClick={() => onSort("advertising")}
@@ -168,7 +168,7 @@ export function ProductProfitabilityTable({
                   <td className="px-6 py-3.5 text-right text-muted-foreground">
                     <MarketplaceFeeValue value={formatCurrency(product.marketplaceFees)} status={product.marketplaceFeeStatus} />
                   </td>
-                  <td className="px-6 py-3.5 text-right">{formatCurrency(product.advertising)}</td>
+                  <td className="px-6 py-3.5 text-right">{formatCurrency(product.advertisingCampaignSpend ?? product.advertising)}</td>
                   <td
                     className={cn(
                       "px-6 py-3.5 text-right",

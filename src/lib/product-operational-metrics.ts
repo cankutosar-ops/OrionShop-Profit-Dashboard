@@ -71,7 +71,7 @@ export function buildProductOperationalMetrics(
     purchaseLogistics: product.purchaseLogistics,
     excludedLogistics: product.excludedLogistics,
     returnLogistics: product.returnLogistics,
-    marketing: product.advertising,
+    marketing: product.advertisingCampaignSpend ?? product.advertising,
     marketplaceFees: product.marketplaceFees,
     otherMarketplaceCosts: calculateOtherMarketplaceCosts(product),
     operationalProfit,

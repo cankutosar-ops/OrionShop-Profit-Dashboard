@@ -21,6 +21,7 @@ import {
   persistFinanceTransactionEvidence,
 } from "@/lib/tax-engine/finance-transaction-evidence";
 import { syncLog } from "./sync-log";
+import { assertFinanceApiReportOwnership } from "./finance-source-ownership";
 import { yieldEventLoop } from "./sync-runtime";
 import { getActiveSyncTimer } from "./sync-timer";
 import {
@@ -152,6 +153,13 @@ async function batchUpsertFinance(
 ): Promise<{ dbRequests: number; errors: string[] }> {
   let dbRequests = 0;
   const errors: string[] = [];
+
+  try {
+    await assertFinanceApiReportOwnership(supabase, rows);
+  } catch (error) {
+    // No partial persistence, transaction evidence or cursor progress on overlap.
+    return { dbRequests: 0, errors: [error instanceof Error ? error.message : "Finance source conflict"] };
+  }
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows

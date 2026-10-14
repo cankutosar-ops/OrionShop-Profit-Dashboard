@@ -170,11 +170,12 @@ export function WbSettlementWidget({
                     <dd
                       className={cn(
                         "font-medium tabular-nums",
-                        row.negative && "text-danger"
+                        row.negative && row.value > 0 && "text-danger",
+                        row.negative && row.value < 0 && "text-success"
                       )}
                     >
                       {row.negative
-                        ? `−${formatCurrency(row.value)}`
+                        ? `${row.value < 0 ? "+" : ""}${formatCurrency(-row.value)}`
                         : formatCurrency(row.value)}
                     </dd>
                   </div>

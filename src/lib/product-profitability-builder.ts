@@ -28,6 +28,7 @@ import {
 } from "@/lib/wb-settlement";
 import { parseWbSourceSuffix } from "@/lib/finance-category";
 import { calculateSalesToSettlementDifference } from "@/lib/marketplace-fees";
+import { resolveWbAdvertisingCost } from "@/lib/wb-advertising-cost-policy";
 import type {
   ProductCostHistory,
   ProductProfitability,
@@ -168,7 +169,8 @@ export function buildProductProfitabilityResult(
       const productCost = computeProductCost(productSales, [], latestCostByProductId);
       const financeTotals = rollupCategoriesToProfitBuckets(financeForBreakdown);
       const categorySummary = summarizeFinanceByCategory(financeForBreakdown);
-      const advertising = productAds.reduce((sum, ad) => sum + ad.spend, 0);
+      const advertisingCost = resolveWbAdvertisingCost(productAds);
+      const advertising = advertisingCost.additionalProfitDeduction;
       const feeParts = buildProductMarketplaceFeeParts(financeForBreakdown);
       const totalLogistics = financeTotals.logistics + financeTotals.return_logistics;
       const unitLogisticsCost = calculateUnitLogisticsCost(financeTotals.logistics, netUnits);
@@ -200,6 +202,7 @@ export function buildProductProfitabilityResult(
         returnLogistics: financeTotals.return_logistics,
         storage: financeTotals.storage,
         advertising,
+        advertisingCampaignSpend: advertisingCost.campaignSpend,
         penalties: financeTotals.penalty,
         /** Account adjustments attributable to this product; fee components stay in marketplaceFees. */
         otherExpenses: feeParts.accountAdjustments,

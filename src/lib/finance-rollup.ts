@@ -48,6 +48,20 @@ function zeroCategorySummary(): FinanceCategorySummary {
   };
 }
 
+/**
+ * Deductions are already signed by WB: positive charge, negative credit/refund.
+ * raw_amount repairs older magnitude-normalized imports without rewriting data.
+ * Other Finance components keep their established magnitude convention.
+ */
+export function financeProfitAmount(row: WbFinance, category = effectiveFinanceCategory(row)): number {
+  if (category === "ADJUSTMENT") {
+    return row.raw_amount != null && Number.isFinite(Number(row.raw_amount))
+      ? Number(row.raw_amount)
+      : Number(row.amount);
+  }
+  return Math.abs(Number(row.amount));
+}
+
 /** Sum finance rows by persisted (or transitional) normalized category. */
 export function summarizeFinanceByCategory(finance: WbFinance[]): FinanceCategorySummary {
   const summary = zeroCategorySummary();
@@ -57,7 +71,7 @@ export function summarizeFinanceByCategory(finance: WbFinance[]): FinanceCategor
       continue;
     }
     const category = effectiveFinanceCategory(row);
-    summary[category] += Math.abs(Number(row.amount));
+    summary[category] += financeProfitAmount(row, category);
   }
 
   return summary;
@@ -76,7 +90,7 @@ export function buildProductMarketplaceFeeParts(finance: WbFinance[]): ProductMa
 
   for (const row of finance) {
     const category = effectiveFinanceCategory(row);
-    const amount = Math.abs(Number(row.amount));
+    const amount = financeProfitAmount(row);
 
     if (category === "COMPENSATION") {
       reimbursements += amount;
@@ -114,7 +128,7 @@ export function rollupCategoriesToProfitBuckets(finance: WbFinance[]): FinanceEx
       continue;
     }
     const opType = profitOperationTypeForRow(row);
-    const amount = Math.abs(Number(row.amount));
+    const amount = financeProfitAmount(row);
 
     if (FINANCE_OPERATION_TYPES.includes(opType)) {
       byType[opType] += amount;
@@ -138,7 +152,7 @@ export function sumFinanceByType(
         row.operation_type === type &&
         !isInactiveFinanceEvidenceCategory(effectiveFinanceCategory(row))
     )
-    .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
+    .reduce((sum, row) => sum + financeProfitAmount(row), 0);
 }
 
 /** Marketplace Fees presentation from persisted categories — single business rule. */

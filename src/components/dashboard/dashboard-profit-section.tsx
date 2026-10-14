@@ -241,10 +241,11 @@ export function DashboardProfitSection({
           <MetricCard
             title="Adjustments"
             value={formatMoney(modelB.adjustments)}
-            subtitle={`${shareOfEngineSales(modelB.adjustments)} of sales`}
-            hint="Finance adjustments for the selected period (includes advertising and other marketplace holds)."
+            subtitle={`${shareOfEngineSales(modelB.adjustments)} of sales${modelB.adjustments < 0 ? " · Net credit" : ""}`}
+            hint="Finance deductions net of credits and refunds. Includes billed advertising, subscriptions and other WB holds. Campaign statistics are informational and are not deducted again."
             icon={KPI_ICONS.adjustments}
             {...expenseProps}
+            valueClassName={modelB.adjustments < 0 ? "text-success" : EXPENSE_VALUE}
           />
           <MetricCard
             title="Acquiring"

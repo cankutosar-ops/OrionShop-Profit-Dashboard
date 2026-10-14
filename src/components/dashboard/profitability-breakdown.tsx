@@ -46,8 +46,8 @@ export function ProfitabilityBreakdown({
 
   const formatAmount = (amount: number, isDeduction?: boolean) => {
     if (isEmptyPeriod || !revenueReady) return "—";
-    const prefix = isDeduction ? "−" : "";
-    return `${prefix}${formatCurrency(amount)}`;
+    const impact = isDeduction ? -amount : amount;
+    return `${isDeduction && amount < 0 ? "+" : ""}${formatCurrency(impact)}`;
   };
 
   return (
@@ -95,7 +95,8 @@ export function ProfitabilityBreakdown({
                 <td
                   className={cn(
                     "px-6 py-3.5 text-right font-medium tabular-nums",
-                    line.isDeduction && "text-danger",
+                    line.isDeduction && line.amount > 0 && "text-danger",
+                    line.isDeduction && line.amount < 0 && "text-success",
                     line.isTotal && line.amount >= 0 && "text-success",
                     line.isTotal && line.amount < 0 && "text-danger"
                   )}

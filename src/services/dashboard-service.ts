@@ -20,6 +20,7 @@ import {
 } from "@/lib/dimension-profitability";
 import { buildMarketplaceFeesPresentation } from "@/lib/marketplace-fees-presentation";
 import { buildModelBProfitMetrics } from "@/lib/financial-engine";
+import { resolveWbAdvertisingCost } from "@/lib/wb-advertising-cost-policy";
 import { buildModelCProfitMetrics } from "@/lib/profit-engine-model-c";
 import { summarizeFinanceByCategory } from "@/lib/finance-rollup";
 import {
@@ -328,7 +329,8 @@ async function buildOverviewMetricsFromRaw(
   const salesMetrics = aggregateSalesMetrics(raw.sales);
   const productCost = computeProductCost(raw.sales, raw.costHistory, latestCostByProductId);
   const financeTotals = rollupCategoriesToProfitBuckets(raw.finance);
-  const advertising = raw.ads.reduce((sum, ad) => sum + ad.spend, 0);
+  const advertisingCost = resolveWbAdvertisingCost(raw.ads);
+  const advertising = advertisingCost.additionalProfitDeduction;
   const commission = financeTotals.commission;
   const logistics = financeTotals.logistics;
   const returnLogistics = financeTotals.return_logistics;
@@ -488,6 +490,7 @@ async function buildOverviewMetricsFromRaw(
     returnLogistics,
     storage,
     advertising,
+    advertisingCampaignSpend: advertisingCost.campaignSpend,
     penalties,
     otherExpenses,
     /** Net Profit after tax (V4). */

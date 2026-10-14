@@ -154,7 +154,7 @@ function buildFinanceLine(
     supplierOperName,
   });
   const operationType = categoryToOperationType(financeCategory);
-  const normalizedAmount = suffix === "for_pay" ? amount : Math.abs(amount);
+  const normalizedAmount = suffix === "for_pay" || financeCategory === "ADJUSTMENT" ? amount : Math.abs(amount);
 
   return {
     product_id: productId,
@@ -164,7 +164,9 @@ function buildFinanceLine(
     amount: normalizedAmount,
     raw_amount: amount,
     source_key: sourceKey,
-    description: null,
+    description: suffix === "deduction" && row.bonus_type_name?.trim()
+      ? JSON.stringify({ source: "WB_FINANCE", chargeReason: row.bonus_type_name.trim() })
+      : null,
     srid: row.srid ?? null,
     finance_category: financeCategory,
     wb_source_suffix: suffix,

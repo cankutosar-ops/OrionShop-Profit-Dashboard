@@ -109,6 +109,8 @@ function ProductAnalyticsOperationalSection({ totals }: { totals: ProductAnalyti
         <MetricCard
           size="compact"
           title="Marketing"
+          subtitle="Campaign spend · Informational"
+          hint="WB campaign statistics. Billed advertising is included once in Finance Adjustments; campaign spend is not deducted again."
           value={formatKpiCurrency(totals.marketing)}
           icon={KPI_ICONS.advertising}
         />

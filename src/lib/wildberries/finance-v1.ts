@@ -53,6 +53,7 @@ export type WbFinanceV1DetailedRow = {
   saleDt?: string;
   orderDt?: string;
   sellerOperName?: string;
+  bonusTypeName?: string;
   docTypeName?: string;
   retailPrice?: string | number | null;
   retailPriceWithDisc?: string | number | null;
@@ -417,6 +418,7 @@ export function normalizeFinanceV1DetailedRow(
     sale_dt: row.saleDt,
     order_dt: row.orderDt,
     supplier_oper_name: row.sellerOperName,
+    bonus_type_name: row.bonusTypeName,
     doc_type_name: row.docTypeName,
     quantity: asFiniteNumber(row.quantity),
     retail_price: parseFinanceV1Money(row.retailPrice),

@@ -172,7 +172,7 @@ export function buildProductAnalyticsTotals(
       acc.purchases += product.purchases;
       acc.cancelled += product.cancelled;
       acc.commission += product.commission;
-      acc.marketing += product.advertising;
+      acc.marketing += product.advertisingCampaignSpend ?? product.advertising;
       acc.totalLogistics += calculateTotalLogistics(product);
       acc.otherMarketplaceCosts += calculateOtherMarketplaceCosts(product);
       acc.operationalProfit += calculateOperationalProfit(product);

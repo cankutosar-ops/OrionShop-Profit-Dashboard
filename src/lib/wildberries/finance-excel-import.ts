@@ -46,8 +46,8 @@ export function buildWbExcelReportPlan(rows:PreparedExcelRow[],accountId:number,
    const signed=suffix==='for_pay'?(isReturn?-Math.abs(raw):Math.abs(raw)):raw;
    const category=resolveFinanceCategory({wbFieldSuffix:suffix,supplierOperName:op});
    lines.push({marketplace_account_id:String(accountId),product_id:productId??null,nm_id:nm&&nm!=='0'?Number(nm):null,
-    operation_date:date,operation_type:categoryToOperationType(category),amount:suffix==='for_pay'?signed:Math.abs(signed),raw_amount:signed,
-    source_key:`xlsx:${r.reportId}:${r.sourceOrdinal}:${suffix}`,description:JSON.stringify({source:'WB_EXCEL',fileSha256:r.fileSha256,dateBasis:'SOURCE_SALE_DATE'}),
+    operation_date:date,operation_type:categoryToOperationType(category),amount:suffix==='for_pay'||category==='ADJUSTMENT'?signed:Math.abs(signed),raw_amount:signed,
+    source_key:`xlsx:${r.reportId}:${r.sourceOrdinal}:${suffix}`,description:JSON.stringify({source:'WB_EXCEL',fileSha256:r.fileSha256,dateBasis:'SOURCE_SALE_DATE',chargeReason:f['Виды логистики, штрафов и корректировок ВВ']||f['Виды доставок, штрафов и корректировок ВВ']||undefined}),
     srid:f.Srid?.trim()||null,finance_category:category,wb_source_suffix:suffix,supplier_oper_name:op,finance_nature:null,
     realizationreport_id:Number(r.reportId),rrd_id:null,rr_dt:null});
   }

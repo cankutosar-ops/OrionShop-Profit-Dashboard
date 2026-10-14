@@ -830,7 +830,9 @@ export type ProductProfitability = ProfitBreakdown & {
   /** Net Sales − Sales API forPay; reconciliation only. */
   salesToSettlementDifference?: number;
   marketplaceFeeStatus?: import("@/lib/marketplace-fee-status").MarketplaceFeeStatus;
-  /** Account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
+  /** Campaign statistics only; never a second Finance expense. */
+  advertisingCampaignSpend?: number;
+  /** Signed account-level ADJUSTMENT deductions — separate from Marketplace Fees KPI. */
   accountAdjustments: number;
   /** COMPENSATION reimbursements — separate from Marketplace Fees KPI. */
   reimbursements: number;
@@ -1145,6 +1147,8 @@ export type WbBalanceMetrics = {
 };
 
 export type OverviewMetrics = ProfitBreakdown & {
+  /** Campaign statistics only; WB billed advertising belongs to Finance Adjustments. */
+  advertisingCampaignSpend?: number;
   financeRevenueAvailable?: boolean;
   historicalSalesRows?: number;
   brandFinanceNotice?: import("@/lib/dashboard-finance-scope").BrandFinanceNotice;
@@ -1165,6 +1169,16 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  wb_finance_excel_imports: {
+    Row: {
+      marketplace_account_id: string; report_id: number; file_sha256: string;
+      source_row_count: number; finance_line_count: number; event_date_from: string;
+      event_date_to: string; date_basis: string; payload_hash: string; imported_at: string;
+    };
+    Insert: never;
+    Update: never;
+    Relationships: NoRelationships;
+  };
   wb_fbs_order_warehouse_evidence: {
     Row: { marketplace_account_id: string; rid: string; assembly_order_id: number; seller_warehouse_id: number;
       nm_id: number; chrt_id: number; created_at: string; observed_at: string };
