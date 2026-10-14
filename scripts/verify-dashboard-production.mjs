@@ -39,6 +39,12 @@ const fixture = http.createServer(async (request, response) => {
     if (request.headers.authorization !== `Bearer ${token}`) return send({ msg: "Invalid session" }, 401);
     return send(fixtureUser);
   }
+  // The period read model is a read-only RPC transported over POST. This
+  // fixture deliberately exercises the pre-migration pagination fallback;
+  // all real mutation endpoints must remain forbidden.
+  if (url.pathname === "/rest/v1/rpc/orion_finance_period_rows" && request.method === "POST") {
+    return send({ code: "PGRST202", message: "function not deployed" }, 404);
+  }
   if (request.method !== "GET" && request.method !== "HEAD") return send({ message: "Fixture forbids mutations" }, 405);
   if (table === "wb_sales_reporting") return send({ message: "relation public.wb_sales_reporting does not exist" }, 404);
   const accountId = url.searchParams.get("marketplace_account_id")?.slice(3) ?? "1";
@@ -119,6 +125,8 @@ try {
     assert.equal(page.response.status, 200);
     assert.match(page.body, /Sales &amp; Profit Trend/);
     assert.doesNotMatch(page.body, /Showing sample placeholders|NEXT_REDIRECT/);
+    assert.equal(calls.filter(call => call.table === "orion_finance_period_rows").length, 1,
+      "Missing read-only period RPC must fall back once to paginated Finance");
     const financeReads = calls.filter(call => call.table === "wb_finance");
     assert.equal(financeReads.length, account === 2 ? 41 : 1, "Core and optional strip must share one SQL load inside React rendering");
     assert.ok(financeReads.every(call => call.query.includes(`marketplace_account_id=eq.${account}`)));
