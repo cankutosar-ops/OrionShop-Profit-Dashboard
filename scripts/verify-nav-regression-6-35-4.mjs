@@ -21,14 +21,17 @@ const page = read("src/app/page.tsx");
 if (scopeNav.includes("router.refresh()") || switchCtx.includes("router.refresh()")) {
   fails.push("scope navigation must not duplicate the render with a refresh");
 }
-if (/location.assign|setTimeout/.test(scopeNav)) {
-  fails.push("scope navigation must not interrupt legitimate slow loads");
+// Ordinary scope switches stay in App Router. Long Dashboard reports have a
+// separate, explicit document navigation; no timer may interrupt either path.
+const ordinaryScopeNav = scopeNav.match(/export function navigateScope\([\s\S]*?\n\}/)?.[0];
+if (!ordinaryScopeNav || /location\.assign/.test(ordinaryScopeNav) || /setTimeout/.test(scopeNav)) {
+  fails.push("ordinary scope navigation must not hard-reload or interrupt slow loads with a timer");
 }
 if (!tenant.includes("navigateScope")) {
   fails.push("tenant-selectors must use navigateScope");
 }
-if (!dates.includes("navigateScope")) {
-  fails.push("date-range-picker must use navigateScope");
+if (!dates.includes("navigateDashboardDateRange")) {
+  fails.push("date-range-picker must use the bounded Dashboard date navigation helper");
 }
 if (!lifecycle.includes("navigateScope")) {
   fails.push("replaceUrlIfChanged must use navigateScope");

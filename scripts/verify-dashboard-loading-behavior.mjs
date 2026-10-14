@@ -8,7 +8,7 @@ import { withReadBudget, ReadBudgetExceeded, getReadBudgetSignal } from "../src/
 import { getDashboardTaxInputs, getCompanyTaxFoundation } from "../src/services/company-tax-service.ts";
 import { calculateWbRemuneration } from "../src/lib/marketplace-fees.ts";
 import { getDashboardCoreData } from "../src/services/dashboard-service.ts";
-import { navigateScope } from "../src/lib/scope-navigation.ts";
+import { navigateScope, navigateDashboardDateRange } from "../src/lib/scope-navigation.ts";
 
 // No credentials/network required: exercise real Supabase query builders and
 // service functions against a deterministic PostgREST transport fixture.
@@ -99,6 +99,48 @@ assert.deepEqual(navigations, [
   ["push", "/?company=1&account=2", { scroll: false }],
   ["replace", "/?company=1&account=2&from=2026-09-01", { scroll: false }],
 ]);
+// The performance fix deliberately uses document navigation for >=90-day
+// Dashboard reports. It must start exactly once on selection, never on a timer,
+// and ordinary ranges, other pages and server execution stay in App Router.
+const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+const originalSetTimeout = globalThis.setTimeout;
+const documentNavigations = [];
+try {
+  Object.defineProperty(globalThis, "window", { configurable: true, writable: true,
+    value: { location: { assign: href => documentNavigations.push(href) } } });
+  globalThis.setTimeout = () => assert.fail("navigation must not schedule a fallback reload");
+  const from = "2026-07-01";
+  const endDate = days => new Date(Date.parse(`${from}T00:00:00Z`) + (days - 1) * 86400000).toISOString().slice(0, 10);
+  for (const days of [29, 89, 90, 180]) {
+    navigations.length = 0;
+    documentNavigations.length = 0;
+    const href = `/?company=3&account=6&from=${from}&to=${endDate(days)}`;
+    navigateDashboardDateRange(router, "/", href, from, endDate(days));
+    assert.deepEqual(navigations, days < 90 ? [["push", href, { scroll: false }]] : []);
+    assert.deepEqual(documentNavigations, days >= 90 ? [href] : []);
+  }
+  for (const [pathname, start, end] of [["/reports/profit-loss", from, endDate(180)], ["/", "invalid", "invalid"]]) {
+    navigations.length = 0;
+    documentNavigations.length = 0;
+    const href = `${pathname}?company=3&account=6&from=${start}&to=${end}`;
+    navigateDashboardDateRange(router, pathname, href, start, end);
+    assert.deepEqual(navigations, [["push", href, { scroll: false }]]);
+    assert.deepEqual(documentNavigations, []);
+  }
+  delete globalThis.window;
+  navigations.length = 0;
+  documentNavigations.length = 0;
+  const serverHref = `/?company=3&account=6&from=${from}&to=${endDate(180)}`;
+  navigateDashboardDateRange(router, "/", serverHref, from, endDate(180));
+  assert.deepEqual(navigations, [["push", serverHref, { scroll: false }]]);
+  assert.deepEqual(documentNavigations, []);
+} finally {
+  globalThis.setTimeout = originalSetTimeout;
+  if (originalWindow) Object.defineProperty(globalThis, "window", originalWindow);
+  else delete globalThis.window;
+}
+console.log("PASS date navigation: 89/90-day boundary, 180-day reports, other routes, invalid dates, server fallback, no timers/duplicate loads");
+
 for (const path of ["layout/sidebar", "administration/admin-sidebar"]) {
   const source = await readFile(new URL(`../src/components/${path}.tsx`, import.meta.url), "utf8");
   assert.doesNotMatch(source, /prefetch(?:\s|=\{true\})/);
