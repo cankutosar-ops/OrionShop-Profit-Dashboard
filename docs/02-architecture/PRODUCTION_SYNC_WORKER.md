@@ -372,3 +372,8 @@ The exact `awaiting_publication` kernel code is an external publishing delay;
 the explicit Reports timing gate is a temporary warning. Neither fails the
 worker or creates a retry storm. Evidence-read failures, permission failures and
 real 429/network failures remain visible failures.
+
+The explicit inventory task is the sole snapshot owner in a headless worker.
+Orders, Sales and Finance completion must not launch the web sync's background
+inventory backup. Web/manual sync retains that backup. This prevents repeated
+Analytics stock reads (and 429s) inside one commercial-plus-inventory tick.

@@ -456,7 +456,8 @@ export async function runBlockingDashboardSync(
 
     }
 
-    if (result.lastSyncStatus !== "failed") {
+    // The headless worker owns inventory in its explicit task; do not start a competing background capture.
+    if (result.lastSyncStatus !== "failed" && !request.headless) {
 
       scheduleDailyInventorySnapshot(request.marketplaceAccountId);
 

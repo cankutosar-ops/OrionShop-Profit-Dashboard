@@ -44,4 +44,9 @@ const service = readFileSync("src/services/dashboard-sync-service.ts", "utf8");
 assert.match(service, /allowsVerifiedHeadlessFinance/);
 assert.match(service, /if \(!request\.headless\) scheduleAccountLifecycle/);
 assert.match(readFileSync("src/services/commercial-continuity-service.ts", "utf8"), /headless: true/);
+// Prevent the actual production double-capture regression: every commercial
+// entity is headless, while the explicit inventory task remains the sole owner.
+const job = readFileSync("src/services/sync-job-service.ts", "utf8");
+const blocking = job.slice(job.indexOf("export async function runBlockingDashboardSync"));
+assert.match(blocking, /if \(result\.lastSyncStatus !== "failed" && !request\.headless\) \{\s*scheduleDailyInventorySnapshot/);
 console.log("PASS worker Finance continuity: publication waits/cooldowns are non-failures; real HTTP/evidence failures remain failures; headless resume requires persisted same-account publication proof; web/new-account lifecycle gates preserved. No DB/API writes.");
