@@ -16,8 +16,11 @@ import {
 import { runAdsWorkerTask, type AdsTaskDeps } from "./ads-task";
 import { runCurrentStockWorkerTask, type CurrentStockTaskDeps } from "./current-stock-task";
 
+import { runFinancePublicationWorkerTask, type PublicationTaskDeps } from "./finance-publication-task";
+
 /** Fakes injected by offline verification. Production leaves this undefined. */
 export type WorkerTaskDeps = {
+  financePublication?: Partial<PublicationTaskDeps>;
   commercial?: Partial<CommercialTaskDeps>;
   inventory?: Partial<InventoryTaskDeps>;
   financeCatchup?: Partial<FinanceCatchupTaskDeps>;
@@ -43,6 +46,7 @@ export type WorkerTaskRunner = (
 ) => Promise<WorkerAccountTaskResult[]>;
 
 export const WORKER_TASK_RUNNERS: Record<SyncWorkerTask, WorkerTaskRunner> = {
+  "finance-publication": (ctx) => runFinancePublicationWorkerTask({ accountIds: ctx.accountIds, force: ctx.force, deadlineMs: ctx.deadlineMs, logger: ctx.logger, deps: ctx.deps?.financePublication }),
   "current-stock": (ctx) => runCurrentStockWorkerTask({ accountIds: ctx.accountIds,
     deadlineMs: ctx.deadlineMs, logger: ctx.logger, deps: ctx.deps?.currentStock }),
   commercial: (ctx) =>

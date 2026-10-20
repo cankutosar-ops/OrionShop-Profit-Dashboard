@@ -540,17 +540,17 @@ console.log("\n--- 6/7. Workflow contract ---");
     } else {
       check("7  workflow YAML parses", typeof doc === "object", "valid YAML");
       check(
-        "7  scheduled runs require explicit release opt-in; manual acceptance stays available",
-        doc.jobs?.sync?.if === "github.event_name != 'schedule' || vars.SYNC_WORKER_SCHEDULE_ENABLED == 'true'",
-        "missing/false schedule variable holds automatic production writes"
+        "7  disabled schedules fail visibly before sync; emergency stop stays available",
+        doc.jobs?.sync?.if === undefined && doc.jobs.sync.steps.some(s => s.run?.includes("check-worker-schedule.mjs")),
+        "missing/false schedule variable fails the policy step before any WB requests"
       );
 
       // `on` is parsed as the boolean true by YAML 1.1 — read both spellings.
       const on = doc.on ?? doc[true];
       const crons = (on?.schedule ?? []).map((s) => s.cron);
       check(
-        "7  schedule is daily at 00:20 UTC",
-        crons.length === 1 && crons[0] === "20 0 * * *",
+        "7  schedule checks every four hours",
+        crons.length === 1 && crons[0] === "20 */4 * * *",
         crons.join(", ") || "no schedule"
       );
       check(

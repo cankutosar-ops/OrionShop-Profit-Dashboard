@@ -9,13 +9,13 @@ name: Sync Worker
 
 on:
   schedule:
-    # Daily at 00:20 UTC / 03:20 Moscow. Manual user sync remains available.
+    # Check every four hours; entity due times and Reports pacing remain durable.
     # Offset from the top of the hour to avoid WB's peak cron traffic.
-    - cron: "20 0 * * *"
+    - cron: "20 */4 * * *"
   workflow_dispatch:
     inputs:
       tasks:
-        description: "Tasks: commercial,inventory,current-stock,finance-catchup,ads. Acceptance: one task only."
+        description: "Tasks: finance-publication,commercial,inventory,current-stock,finance-catchup,ads. Acceptance: one task only."
         required: false
         default: "commercial"
       accounts:
@@ -46,14 +46,14 @@ permissions:
 jobs:
   sync:
     name: Bounded sync tick
-    # First release must pass a manual acceptance run before scheduling starts.
-    # An absent variable fails closed; manual dispatch remains an explicit action.
-    if: github.event_name != 'schedule' || vars.SYNC_WORKER_SCHEDULE_ENABLED == 'true'
+    # The explicit stop is checked in a failing step, never a silent skipped job.
     runs-on: ubuntu-latest
     # Worker budget is 25 min; this is the hard backstop if a kernel wedges.
     timeout-minutes: 35
 
     env:
+      SYNC_WORKER_SCHEDULE_ENABLED: ${{ vars.SYNC_WORKER_SCHEDULE_ENABLED }}
+      WORKER_ACCOUNT_IDS: ${{ github.event.inputs.accounts || vars.SYNC_WORKER_ACCOUNT_IDS }}
       # Server-only. None of these are ever echoed: the worker redacts known
       # secret values and token-shaped strings before writing any log line.
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -92,6 +92,9 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Check scheduled sync policy
+        run: node scripts/check-worker-schedule.mjs
+
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
@@ -105,12 +108,12 @@ jobs:
         id: worker
         run: |
           npx --no-install tsx scripts/run-sync-worker.mjs \
-            --tasks "${{ github.event.inputs.tasks || 'commercial,inventory' }}" \
+            --tasks "${{ github.event.inputs.tasks || 'finance-publication,commercial,inventory' }}" \
             --trigger "${{ github.event_name }}" \
             --budget-ms 1500000 \
             --no-dotenv \
             --finance-wakes "${{ github.event.inputs.finance_wakes || '4' }}" \
-            ${{ github.event.inputs.accounts && format('--accounts "{0}"', github.event.inputs.accounts) || '' }} \
+            --accounts "$WORKER_ACCOUNT_IDS" \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }} \
             --print-summary
 

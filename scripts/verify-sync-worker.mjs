@@ -190,7 +190,7 @@ console.log("--- Static structure ---");
   );
   check(
     "H  worker does not call its own HTTP API",
-    !/fetch\(\s*[`"']https?:\/\/localhost|\/api\//.test(workerSrc),
+    !/fetch\(\s*[`"'](?:https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\/|\/api\/)/.test(workerSrc),
     "direct module calls only, no self-HTTP"
   );
 
@@ -249,8 +249,8 @@ console.log("\n--- GitHub Actions workflow ---");
     const y = read(".github/workflows/sync-worker.yml");
     check("workflow runs on a schedule", /on:[\s\S]*schedule:/.test(y), "cron trigger present");
     check(
-      "workflow retains the approved daily schedule",
-      /cron:\s*["']20\s+0\s+\*\s+\*\s+\*["']/.test(y),
+      "workflow checks every four hours",
+      /cron:\s*["']20\s+\*\/4\s+\*\s+\*\s+\*["']/.test(y),
       (y.match(/cron:\s*["'][^"']+["']/) ?? ["?"])[0]
     );
     check(

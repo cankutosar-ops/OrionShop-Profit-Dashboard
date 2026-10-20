@@ -42,6 +42,7 @@ jobs:
       - name: Marketplace and finance release regressions
         run: |
           npm run verify:wb-finance-cost-ownership
+          npm run verify:sync-schedule
           node --import tsx scripts/verify-dashboard-brand-finance.mjs
           node --import tsx scripts/verify-finance-2026-weekly-backfill.mjs
           node --import tsx scripts/verify-finance-excel-import.mjs

@@ -1,5 +1,5 @@
 import {readFbsStockRows} from "@/services/fbs-stock-service";
-import {indexFbsStockByProduct} from "@/lib/wildberries/fbs-stock";
+import {indexFbsStockByProduct} from "@/lib/wildberries/fbs-stock-summary";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import {

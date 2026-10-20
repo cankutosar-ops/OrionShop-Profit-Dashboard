@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@/lib/supabase/server";
-import type { FbsStockRow } from "@/lib/wildberries/fbs-stock";
+import type { FbsStockRow } from "@/lib/wildberries/fbs-stock-summary";
 export async function readFbsStockRows(accountId:string,client:SupabaseClient,productId?:string):Promise<FbsStockRow[]>{
  const rows:FbsStockRow[]=[];
  for(let offset=0;;offset+=1000){let q=client.from("wb_fbs_current_stocks").select("*").eq("marketplace_account_id",accountId);if(productId)q=q.eq("product_id",productId);

@@ -1,5 +1,5 @@
 import {readFbsStockRows} from "@/services/fbs-stock-service";
-import {summarizeFbsStock} from "@/lib/wildberries/fbs-stock";
+import {summarizeFbsStock} from "@/lib/wildberries/fbs-stock-summary";
 import {
   buildSkuDisplayRows,
   collectCatalogVariantGroups,

@@ -9,6 +9,7 @@
 
 /** Tasks the worker knows how to run. */
 export const SYNC_WORKER_TASKS = [
+  "finance-publication",
   "commercial",
   "inventory",
   "finance-catchup",

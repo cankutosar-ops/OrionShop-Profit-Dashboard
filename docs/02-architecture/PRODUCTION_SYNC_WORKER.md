@@ -124,7 +124,7 @@ not a broken data plane.
 
 ## Scheduling
 
-GitHub Actions, daily at `00:20 UTC` / `03:20 Moscow`. Configured in
+GitHub Actions, every four hours at minute 20 UTC (`20 */4 * * *`). Configured in
 `.github/workflows/sync-worker.yml`. User-triggered dashboard sync remains available.
 
 Two safeguards prevent overlap:
@@ -154,7 +154,7 @@ Set these as GitHub Actions repository **variables** and match the corresponding
 values on the active web host before relying on scheduled finance:
 
 Release activation is separately controlled by `SYNC_WORKER_SCHEDULE_ENABLED`.
-Absent or `false` skips scheduled jobs; set it to `true` only after the approved
+Absent or `false` fails the schedule policy step visibly before any WB request; set it to `true` only after the approved
 bounded manual acceptance run. Manual `workflow_dispatch` remains available and
 requires operator authorization. This variable is worker-only, not a web setting.
 
@@ -219,7 +219,7 @@ any point; all progress lives in Supabase:
 | Account lock | `marketplace_accounts.sync_lock_expires_at` |
 | Inventory snapshots | `historical_inventory_snapshots` |
 
-No new lock table was added. Existing protection is sufficient for a daily
+No new lock table was added. Existing protection is sufficient for a bounded
 single-runner schedule: the Actions concurrency group serialises runs, and inside
 a run `assertSyncNotRunning` plus the finance state lock prevent double
 execution.
@@ -338,3 +338,25 @@ the account's plan, which are not derivable from this repository — check
 high, the lever is the cron frequency: every three hours cuts it to a third
 without changing worker behaviour, because each tick resumes from the durable
 cursor.
+
+### Scheduled publication evidence and account scope
+
+The scheduled workflow runs `finance-publication,commercial,inventory` for the
+explicit `SYNC_WORKER_ACCOUNT_IDS` repository variable (currently `1,2,6`).
+The duplicate empty Gunay connection is not an additional WB seller and is not
+part of that production scope. Manual dispatch may supply a different explicit
+account scope.
+
+`finance-publication` reads one bounded Reports V1 list page covering the recent
+21 days, at most once per 12 hours per account. It writes only publication
+snapshots. It shares the Finance atomic lease and durable Reports pacing gate;
+it reserves at least 70 seconds before another Reports request, honors server
+429 cooldowns, never retries inline and does not change detail cursors or
+completed periods. Fresh publication snapshots require no WB call. A full
+1000-row page is rejected as incomplete rather than publishing partial evidence.
+
+Scheduled execution fails loudly if its activation flag or account scope is
+missing. Push/deployment success is not proof of ingestion: verify the workflow
+result, per-account entities, stored data dates, publication evidence, Finance
+cursor and released leases after activation. The emergency stop remains
+available; disabling it prevents writes but now produces a failed workflow.
