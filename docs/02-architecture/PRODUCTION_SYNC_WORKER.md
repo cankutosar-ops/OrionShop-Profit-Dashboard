@@ -323,19 +323,19 @@ HTTP" means.
 
 ## Cost
 
-Daily runs are about 30/month. Billable minutes are rounded up per job.
+Four-hour runs are about 180/month. Billable minutes are rounded up per job.
 
 | Case | Minutes per run | Per month |
 |---|---|---|
-| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~4 | ~120 |
-| Worker uses its full 25-minute budget | ~28 | ~840 |
-| Job hits the 35-minute timeout every run | 35 | ~1,050 |
+| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~4 | ~720 |
+| Worker uses its full 25-minute budget | ~28 | ~5,040 |
+| Job hits the 35-minute timeout every run | 35 | ~6,300 |
 
 Assumptions: `ubuntu-latest` standard runner, ~3 minutes of setup overhead per
 run, no matrix. Whether these fit at no cost depends on repository visibility and
 the account's plan, which are not derivable from this repository — check
 **Settings → Billing** before enabling the schedule. If the typical figure is too
-high, the lever is the cron frequency: every three hours cuts it to a third
+high, the lever is the cron frequency: every eight hours halves the four-hour cadence
 without changing worker behaviour, because each tick resumes from the durable
 cursor.
 
@@ -360,3 +360,15 @@ missing. Push/deployment success is not proof of ingestion: verify the workflow
 result, per-account entities, stored data dates, publication evidence, Finance
 cursor and released leases after activation. The emergency stop remains
 available; disabling it prevents writes but now produces a failed workflow.
+
+Headless commercial sync never schedules Next.js `after()` lifecycle callbacks.
+If historical onboarding is FAILED/PARTIAL but an incremental chain already
+has a completed period with persisted same-account WB publication proof, the
+worker can resume that existing chain. This does not promote historical
+onboarding, infer publication from calendar dates or permit a new/unverified
+account. The web/manual onboarding gate remains unchanged.
+
+The exact `awaiting_publication` kernel code is an external publishing delay;
+the explicit Reports timing gate is a temporary warning. Neither fails the
+worker or creates a retry storm. Evidence-read failures, permission failures and
+real 429/network failures remain visible failures.

@@ -1,3 +1,4 @@
+import { allowsVerifiedHeadlessFinance } from "@/lib/finance-incremental/permission";
 import type { WbSyncEntity, WbSyncResult } from "@/lib/wildberries/api-client";
 import { createWbSyncService } from "@/lib/wildberries/sync-service";
 import { syncLog } from "@/lib/wildberries/sync-log";
@@ -23,6 +24,8 @@ export type DashboardSyncRequest = {
   dateFrom: string;
   dateTo: string;
   entities?: WbSyncEntity[];
+  /** Worker owns onboarding directly and must never invoke request-scoped after(). */
+  headless?: boolean;
   /** When true, lifecycle markers were already set by the background scheduler. */
   skipLifecycle?: boolean;
   /** Sync trigger for audit (default manual). */
@@ -101,12 +104,13 @@ export async function executeDashboardSync(
       const lifecycle = await getAccountLifecycleState(marketplaceAccountId);
       const lifecycleStatus = lifecycle?.sync_lifecycle_status ?? null;
       const incrementalAllowed =
-        !lifecycle?.schemaAvailable || allowsIncrementalFinanceSync(lifecycleStatus);
+        !lifecycle?.schemaAvailable || allowsIncrementalFinanceSync(lifecycleStatus) ||
+        await allowsVerifiedHeadlessFinance({ accountId: marketplaceAccountId, headless: request.headless });
 
       if (!incrementalAllowed) {
         // Manual sync is also a recovery entry point for interrupted new-account
         // onboarding. The scheduler is idempotent within this process.
-        scheduleAccountLifecycle(marketplaceAccountId);
+        if (!request.headless) scheduleAccountLifecycle(marketplaceAccountId);
         syncLog("dashboard-sync", "finance incremental blocked — historical backfill incomplete", {
           marketplaceAccountId,
           lifecycleStatus,

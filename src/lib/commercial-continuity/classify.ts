@@ -12,7 +12,7 @@ export function classifyCommercialError(message: string | null | undefined): {
   if (!text) {
     return { status: "failed", failureClass: "unknown" };
   }
-  if (/\b429\b|too many requests|rate.?limit/.test(text)) {
+  if (/finance_http_429|\b429\b|too many requests|rate.?limit/.test(text)) {
     return { status: "rate_limited", failureClass: "rate_limited" };
   }
   if (/\b403\b|forbidden|permission|unauthorized|api key/.test(text)) {

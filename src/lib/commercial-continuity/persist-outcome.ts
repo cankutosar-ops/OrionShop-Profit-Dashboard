@@ -197,3 +197,14 @@ export async function releaseStaleCommercialEntityRunningIfNeeded(
   }
   return released;
 }
+
+/** Only explicit Finance kernel wait codes are non-errors; DB/API failures stay visible. */
+export function resolveFinanceKernelWait(entity: CommercialSyncEntity, error: string | null):
+  { status: CommercialEntityStatus; error: string } | null {
+  if (entity !== "finance") return null;
+  if (error === "awaiting_publication") return { status: "external_delay", error };
+  if (error?.startsWith("reports_timing_gate:") && Number.isFinite(Date.parse(error.slice("reports_timing_gate:".length)))) {
+    return { status: "warning", error };
+  }
+  return null;
+}

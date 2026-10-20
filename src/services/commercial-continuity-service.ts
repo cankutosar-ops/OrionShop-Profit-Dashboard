@@ -16,6 +16,7 @@ import {
   markCommercialEntityRunning,
   persistCommercialEntityOutcome,
   resolveFinanceExternalDelay,
+  resolveFinanceKernelWait,
 } from "@/lib/commercial-continuity/persist-outcome";
 import {
   COMMERCIAL_SYNC_ENTITIES,
@@ -241,6 +242,7 @@ async function syncOneEntity(input: {
         dateTo: input.dateTo,
         entities: [input.entity],
         trigger: syncTrigger,
+        headless: true,
       },
       { commercialBounded: true, skipCommercialStateRecord: true }
     );
@@ -254,6 +256,9 @@ async function syncOneEntity(input: {
       input.marketplaceAccountId,
       input.entity
     );
+
+    const kernelWait = resolveFinanceKernelWait(input.entity, errorText);
+    if (kernelWait) return { ...kernelWait, latestDataDate, rowsUpserted };
 
     if (errorText) {
       const classified = classifyCommercialError(String(errorText));

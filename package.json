@@ -159,7 +159,8 @@
     "verify:dashboard-brand-finance": "node --import tsx scripts/verify-dashboard-brand-finance.mjs",
     "verify:gunay-release": "node scripts/verify-gunay-release.mjs",
     "verify:wb-finance-cost-ownership": "node --import tsx scripts/verify-wb-finance-cost-ownership.mjs",
-    "verify:sync-schedule": "node --import tsx scripts/verify-sync-schedule.mjs"
+    "verify:sync-schedule": "node --import tsx scripts/verify-sync-schedule.mjs",
+    "verify:worker-finance-continuity": "node --import tsx scripts/verify-worker-finance-continuity.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
