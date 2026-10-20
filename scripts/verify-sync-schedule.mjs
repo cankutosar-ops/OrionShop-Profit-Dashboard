@@ -13,11 +13,26 @@ validateWorkerSchedule({ eventName: "schedule", enabled: "true", accounts: "1,2,
 validateWorkerSchedule({ eventName: "workflow_dispatch", enabled: "false", accounts: "6" });
 const workflow = load(readFileSync(".github/workflows/sync-worker.yml", "utf8"));
 assert.equal(workflow.jobs.sync.if, undefined, "A disabled schedule must fail visibly instead of skipping the job");
-assert.equal((workflow.on ?? workflow[true]).schedule[0].cron, "20 */4 * * *");
+assert.equal((workflow.on ?? workflow[true]).schedule[0].cron, "59 20 * * *");
 const steps = workflow.jobs.sync.steps;
 const gate = steps.findIndex(step => step.run?.includes("check-worker-schedule.mjs"));
 assert.ok(gate >= 0 && gate < steps.findIndex(step => step.run?.includes("npm ci")), "Stop/configuration validation runs before installation or sync");
-assert.match(steps.find(step => step.id === "worker").run, /finance-publication,commercial,inventory/);
+const publication = steps.findIndex(step => step.id === "publication");
+const pacing = steps.findIndex(step => step.run === "sleep 75");
+const ingestion = steps.findIndex(step => step.id === "worker");
+assert.ok(publication >= 0 && publication < pacing && pacing < ingestion);
+assert.equal(steps[publication].if, "github.event_name == 'schedule'");
+assert.equal(steps[pacing].if, "github.event_name == 'schedule'");
+assert.equal(steps[publication]["continue-on-error"], true);
+assert.match(steps[publication].run, /--tasks finance-publication/);
+assert.match(steps[ingestion].run, /'commercial,inventory'/);
+assert.ok(steps.some(step => step.if === "always() && steps.publication.outcome == 'failure'" && step.run === "exit 10"));
+const budgets = [...steps[publication].run.matchAll(/--budget-ms (\d+)/g), ...steps[ingestion].run.matchAll(/--budget-ms (\d+)/g)].map(match => Number(match[1]));
+assert.equal(budgets.length, 2);
+assert.ok(budgets.reduce((sum, budget) => sum + budget, 75000) + 180000 < workflow.jobs.sync["timeout-minutes"] * 60000);
+const manualRoute = readFileSync("src/app/api/sync/route.ts", "utf8");
+assert.match(manualRoute, /scheduleBackgroundDashboardSync\(syncRequest\)/);
+assert.doesNotMatch(manualRoute, /SYNC_WORKER_SCHEDULE_ENABLED|check-worker-schedule|20:59|23:59/);
 assert.match(workflow.jobs.sync.env.WORKER_ACCOUNT_IDS, /SYNC_WORKER_ACCOUNT_IDS/);
 assert.equal(workflow.concurrency["cancel-in-progress"], false);
 
@@ -80,4 +95,4 @@ assert.ok(isolated.result.slice(1).every(result => result.outcome === "success")
 assert.equal(isolated.saved.length, 2);
 const lost = await fixture({ ids: ["1"], stealLease: true });
 assert.equal(lost.saved.length, 0); assert.equal(lost.result[0].outcome, "retryable_failure");
-console.log("PASS scheduled sync: visible disabled gate, explicit account scope, four-hour cadence, bounded V1 publication refresh, 70s pacing, 429/no retries, fencing, unchanged Finance cursor/periods and company isolation. No DB/API writes.");
+console.log("PASS scheduled sync: visible disabled gate, explicit account scope, daily 23:59 Moscow cadence with publication/pacing/ingestion stages, bounded V1 publication refresh, 70s pacing, 429/no retries, fencing, unchanged Finance cursor/periods and company isolation. No DB/API writes.");

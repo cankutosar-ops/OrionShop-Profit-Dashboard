@@ -9,9 +9,8 @@ name: Sync Worker
 
 on:
   schedule:
-    # Check every four hours; entity due times and Reports pacing remain durable.
-    # Offset from the top of the hour to avoid WB's peak cron traffic.
-    - cron: "20 */4 * * *"
+    # Once daily at 23:59 Europe/Moscow (UTC+3). GitHub schedules use UTC.
+    - cron: "59 20 * * *"
   workflow_dispatch:
     inputs:
       tasks:
@@ -104,11 +103,27 @@ jobs:
       - name: Worker preflight
         run: npx --no-install tsx scripts/verify-worker-production-readiness.mjs
 
+      # One daily job: refresh publication evidence, respect the shared Reports
+      # pacing gate, then ingest detail. Longer WB cooldowns still defer safely.
+      - name: Refresh daily Finance publication
+        id: publication
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        run: |
+          npx --no-install tsx scripts/run-sync-worker.mjs \
+            --tasks finance-publication --trigger schedule \
+            --budget-ms 120000 --no-dotenv \
+            --accounts "$WORKER_ACCOUNT_IDS" --print-summary
+
+      - name: Respect Reports pacing before daily ingestion
+        if: github.event_name == 'schedule'
+        run: sleep 75
+
       - name: Run sync worker
         id: worker
         run: |
           npx --no-install tsx scripts/run-sync-worker.mjs \
-            --tasks "${{ github.event.inputs.tasks || 'finance-publication,commercial,inventory' }}" \
+            --tasks "${{ github.event.inputs.tasks || 'commercial,inventory' }}" \
             --trigger "${{ github.event_name }}" \
             --budget-ms 1500000 \
             --no-dotenv \
@@ -116,6 +131,10 @@ jobs:
             --accounts "$WORKER_ACCOUNT_IDS" \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }} \
             --print-summary
+
+      - name: Surface publication failure after independent ingestion
+        if: always() && steps.publication.outcome == 'failure'
+        run: exit 10
 
       - name: Classify outcome
         # Exit 10 means a retryable failure with durable state intact. Surface it

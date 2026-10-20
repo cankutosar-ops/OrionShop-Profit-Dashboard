@@ -1,11 +1,10 @@
 import { createSupabaseFinanceIncrementalStateStore, type FinanceIncrementalStateStore } from "./state";
 
 /** Resume an already verified incremental chain without promoting historical onboarding. */
-export async function allowsVerifiedHeadlessFinance(input: {
-  accountId: string; headless?: boolean;
+export async function allowsVerifiedFinanceResume(input: {
+  accountId: string;
   readState?: FinanceIncrementalStateStore["read"];
 }): Promise<boolean> {
-  if (!input.headless) return false;
   const read = input.readState ?? createSupabaseFinanceIncrementalStateStore().read;
   const state = await read(input.accountId);
   if (String(state.marketplaceAccountId) !== input.accountId) return false;

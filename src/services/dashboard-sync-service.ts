@@ -1,4 +1,4 @@
-import { allowsVerifiedHeadlessFinance } from "@/lib/finance-incremental/permission";
+import { allowsVerifiedFinanceResume } from "@/lib/finance-incremental/permission";
 import type { WbSyncEntity, WbSyncResult } from "@/lib/wildberries/api-client";
 import { createWbSyncService } from "@/lib/wildberries/sync-service";
 import { syncLog } from "@/lib/wildberries/sync-log";
@@ -105,7 +105,7 @@ export async function executeDashboardSync(
       const lifecycleStatus = lifecycle?.sync_lifecycle_status ?? null;
       const incrementalAllowed =
         !lifecycle?.schemaAvailable || allowsIncrementalFinanceSync(lifecycleStatus) ||
-        await allowsVerifiedHeadlessFinance({ accountId: marketplaceAccountId, headless: request.headless });
+        await allowsVerifiedFinanceResume({ accountId: marketplaceAccountId });
 
       if (!incrementalAllowed) {
         // Manual sync is also a recovery entry point for interrupted new-account

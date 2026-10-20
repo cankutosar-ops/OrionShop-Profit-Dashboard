@@ -124,7 +124,7 @@ not a broken data plane.
 
 ## Scheduling
 
-GitHub Actions, every four hours at minute 20 UTC (`20 */4 * * *`). Configured in
+GitHub Actions, once daily at 23:59 Europe/Moscow / 20:59 UTC (`59 20 * * *`). Configured in
 `.github/workflows/sync-worker.yml`. User-triggered dashboard sync remains available.
 
 Two safeguards prevent overlap:
@@ -323,25 +323,25 @@ HTTP" means.
 
 ## Cost
 
-Four-hour runs are about 180/month. Billable minutes are rounded up per job.
+Daily runs are about 30/month. Billable minutes are rounded up per job.
 
 | Case | Minutes per run | Per month |
 |---|---|---|
-| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~4 | ~720 |
-| Worker uses its full 25-minute budget | ~28 | ~5,040 |
-| Job hits the 35-minute timeout every run | 35 | ~6,300 |
+| Typical tick (checkout, `npm ci` cached, preflight, little work due) | ~6 | ~180 |
+| Worker uses its full 25-minute budget | ~31 | ~930 |
+| Job hits the 35-minute timeout every run | 35 | ~1,050 |
 
-Assumptions: `ubuntu-latest` standard runner, ~3 minutes of setup overhead per
-run, no matrix. Whether these fit at no cost depends on repository visibility and
+Assumptions: `ubuntu-latest` standard runner, ~3 minutes of setup overhead plus a bounded publication phase and 75-second
+pacing wait per run, no matrix. Whether these fit at no cost depends on repository visibility and
 the account's plan, which are not derivable from this repository — check
-**Settings → Billing** before enabling the schedule. If the typical figure is too
-high, the lever is the cron frequency: every eight hours halves the four-hour cadence
-without changing worker behaviour, because each tick resumes from the durable
-cursor.
+**Settings → Billing** before enabling the schedule. The daily cadence is a product requirement; each tick resumes from the durable
+cursor. GitHub may delay a scheduled job, so 23:59 is the requested start time,
+not a guaranteed completion time.
 
 ### Scheduled publication evidence and account scope
 
-The scheduled workflow runs `finance-publication,commercial,inventory` for the
+The single daily workflow first runs `finance-publication`, waits 75 seconds,
+then runs `commercial,inventory` for the
 explicit `SYNC_WORKER_ACCOUNT_IDS` repository variable (currently `1,2,6`).
 The duplicate empty Gunay connection is not an additional WB seller and is not
 part of that production scope. Manual dispatch may supply a different explicit
@@ -364,9 +364,12 @@ available; disabling it prevents writes but now produces a failed workflow.
 Headless commercial sync never schedules Next.js `after()` lifecycle callbacks.
 If historical onboarding is FAILED/PARTIAL but an incremental chain already
 has a completed period with persisted same-account WB publication proof, the
-worker can resume that existing chain. This does not promote historical
+worker or manual Dashboard Sync can resume that existing chain. This does not promote historical
 onboarding, infer publication from calendar dates or permit a new/unverified
-account. The web/manual onboarding gate remains unchanged.
+account. Manual Dashboard Sync is independent of the daily schedule and its
+activation flag; existing leases and WB rate limits still apply. Publication
+refresh failures are surfaced after independent commercial ingestion runs;
+longer server cooldowns are never bypassed or retried inline.
 
 The exact `awaiting_publication` kernel code is an external publishing delay;
 the explicit Reports timing gate is a temporary warning. Neither fails the

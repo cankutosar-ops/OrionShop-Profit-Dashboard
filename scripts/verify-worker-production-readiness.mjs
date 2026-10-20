@@ -549,8 +549,8 @@ console.log("\n--- 6/7. Workflow contract ---");
       const on = doc.on ?? doc[true];
       const crons = (on?.schedule ?? []).map((s) => s.cron);
       check(
-        "7  schedule checks every four hours",
-        crons.length === 1 && crons[0] === "20 */4 * * *",
+        "7  schedule runs daily at 23:59 Moscow",
+        crons.length === 1 && crons[0] === "59 20 * * *",
         crons.join(", ") || "no schedule"
       );
       check(
