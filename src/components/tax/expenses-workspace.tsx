@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RecurringExpensePanel } from "@/components/dashboard/recurring-expense-panel";
 import { useEffect, useState } from "react";
 import { COMPANY_EXPENSE_RULES, companyExpenseRule } from "@/lib/tax-engine/category-rules";
 import type { CompanyExpense, CompanyExpenseCategory, CompanyWithAccounts } from "@/types/database";
@@ -184,6 +185,11 @@ export function ExpensesWorkspace() {
         <label className="text-sm">From<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="block rounded-xl border border-border bg-background px-3 py-2" /></label>
         <label className="text-sm">To<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="block rounded-xl border border-border bg-background px-3 py-2" /></label>
       </div>
+      {company?.accounts?.filter(account => account.is_active).map(account =>
+        <div key={account.id}>
+          <p className="mb-2 text-sm font-medium">{account.account_name}</p>
+          <RecurringExpensePanel companyId={companyId} accountId={account.id} from={from} to={to} />
+        </div>)}
       {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
       <nav className="flex flex-wrap gap-2" aria-label="Expense sections">
         {([ ["purchases", "Purchases"], ["operating", "Operating Expenses"], ["marketplace", "Marketplace Expenses"] ] as const).map(([key, label]) =>

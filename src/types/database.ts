@@ -1169,6 +1169,12 @@ export type OverviewMetrics = ProfitBreakdown & {
 type NoRelationships = [];
 
 type PublicTables = {
+  company_recurring_expenses: {
+    Row: import("@/lib/recurring-expenses").RecurringExpenseRule & { created_by: string; created_at: string };
+    Insert: Omit<import("@/lib/recurring-expenses").RecurringExpenseRule, "id"> & { id?: string; created_by: string };
+    Update: { end_date?: string | null; description?: string };
+    Relationships: NoRelationships;
+  };
   wb_finance_excel_imports: {
     Row: {
       marketplace_account_id: string; report_id: number; file_sha256: string;

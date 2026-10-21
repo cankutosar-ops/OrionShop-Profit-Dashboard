@@ -62,6 +62,9 @@ const fixture = http.createServer(async (request, response) => {
   const data = {
     marketplace_accounts: accounts,
     marketplace_accounts_public: accounts,
+    company_recurring_expenses: [["a","ACCOUNTING",20000],["b","PAYROLL",40000],["c","OTHER",5000]].map(([id,category,monthly_amount]) => ({
+      id,category,monthly_amount,description:category,company_id:"3",marketplace_account_id:"6",start_date:"2026-09-01",end_date:null,
+    })),
     companies: [{ id: "3", name: "Gunay Fixture Company", is_default: true, currency: "RUB" }],
     products: [product],
     product_variants: [{id:'1',marketplace_account_id:accountId,product_id:accountId,nm_id:Number(accountId),chrt_id:1,tech_size:'M',barcode:'fixture'}],
@@ -140,6 +143,51 @@ try {
   let ready = false;
   for (let i=0; i<200; i++) { try { await fetch(baseUrl + "/favicon.ico"); ready=true; break; } catch { await delay(100); } }
   assert.ok(ready, "Compiled server must start");
+  await load("/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1");
+  const fixed = await load("/api/expenses/recurring?companyId=3&accountId=6&from=2026-09-01&to=2026-09-30");
+  assert.equal(fixed.response.status,200);
+  assert.equal(JSON.parse(fixed.body).totalKopeks,6500000);
+  assert.equal(JSON.parse(fixed.body).lines.length,3);
+  const deniedFixed = await load("/api/expenses/recurring?companyId=2&accountId=6&from=2026-09-01&to=2026-09-30");
+  assert.equal(deniedFixed.response.status,403);
+  const invalidFixed = await load("/api/expenses/recurring?companyId=3&accountId=6&from=2026-02-30&to=2026-09-30");
+  assert.equal(invalidFixed.response.status,400);
+  for (const call of calls.filter(call=>call.table==="company_recurring_expenses")) {
+    const params=new URLSearchParams(call.query);
+    assert.equal(params.get("company_id"),"eq.3");
+    assert.equal(params.get("marketplace_account_id"),"eq.6");
+  }
+  if (process.env.VERIFY_RECURRING_UI === "1") {
+    const {chromium}=await import("playwright");
+    const browser=await chromium.launch({headless:true});
+    try {
+      const context=await browser.newContext({viewport:{width:1440,height:1000}});
+      await context.addCookies([cookie,...browserCookies.values()].map(pair=>{
+        const split=pair.indexOf("=");return {name:pair.slice(0,split),value:pair.slice(split+1),url:baseUrl};
+      }));
+      const page=await context.newPage();
+      await page.goto(baseUrl+"/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1");
+      const panel=page.getByRole("region",{name:"Fixed expenses and profit"});
+      await panel.getByText("Fixed expenses in selected period",{exact:true}).waitFor({timeout:20000});
+      assert.match((await panel.innerText()).replace(/\s/g,""),/65000/);
+      await panel.locator("summary").click();
+      assert.equal(await panel.locator("li").count(),3);
+      const dir=process.env.RECURRING_UI_SCREENSHOT_DIR;
+      if(dir) await page.screenshot({path:dir+"/recurring-expenses-desktop.png",fullPage:false});
+      await page.setViewportSize({width:390,height:844});
+      const box=await panel.boundingBox();
+      assert.ok(box && box.x>=0 && box.x+box.width<=391,"Fixed expense panel must fit a mobile viewport");
+      if(dir) await panel.screenshot({path:dir+"/recurring-expenses-mobile.png"});
+      await page.goto(baseUrl+"/?company=3&account=6&brand=1&from=2026-09-01&to=2026-09-30&dateManual=1");
+      await panel.getByText(/Account costs are not allocated to individual brands/).waitFor({timeout:20000});
+      await page.route("**/api/expenses/recurring?**",route=>route.fulfill({status:503,json:{error:"Fixture outage"}}));
+      await page.goto(baseUrl+"/?company=3&account=6&from=2026-09-01&to=2026-09-30&dateManual=1");
+      await panel.getByRole("alert").waitFor({timeout:20000});
+      assert.doesNotMatch(await panel.innerText(),/65000|Fixed expenses in selected period/);
+      console.log("PASS recurring expense desktop/mobile UI, brand scope and failure state");
+    } finally {await browser.close();}
+  }
+
   for(const route of ["/?company=3&account=6&from=2026-07-10&to=2026-10-07&dateManual=1", "/?company=3&account=6&brand=1&from=2026-07-10&to=2026-10-07&dateManual=1", "/reports/profit-loss?company=3&account=6&from=2026-07-10&to=2026-10-07", "/reports/settlement?company=3&account=6&from=2026-07-10&to=2026-10-07", "/inventory/warehouse-sales?company=3&account=6&from=2026-07-10&to=2026-10-07", "/api/companies"]) {
     const result=await load(route);
     assert.equal(result.response.status,200,route + " redirect=" + result.response.headers.get("location"));

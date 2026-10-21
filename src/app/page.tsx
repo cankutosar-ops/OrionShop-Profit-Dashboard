@@ -1,3 +1,4 @@
+import { RecurringExpensePanel } from "@/components/dashboard/recurring-expense-panel";
 import { dashboardTaxExplanation } from "@/lib/dashboard-owner-tax-estimate";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import {
@@ -84,6 +85,16 @@ async function DashboardCoreSection({
           kpis={kpis}
           totalOrdersCount={totalOrdersCount}
           isEmptyPeriod={Boolean(isEmptyPeriod)}
+        />
+
+        <RecurringExpensePanel
+          companyId={scope.companyId} accountId={scope.marketplaceAccountId}
+          from={scope.from} to={scope.to} brandId={scope.brandId}
+          netProfit={overview.modelBProfit.finalNetProfit}
+          profitReady={!isEmptyPeriod && overview.modelBProfit.netSalesStatus === "ready" &&
+            (overview.modelBProfit.taxObject !== "USN_INCOME_MINUS_EXPENSES" ||
+              overview.modelBProfit.taxCalculationStatus === "READY" ||
+              overview.modelBProfit.taxCalculationStatus === "OWNER_APPROVED_ESTIMATE")}
         />
 
         <DashboardWbSection

@@ -44,6 +44,7 @@ jobs:
           npm run verify:wb-finance-cost-ownership
           npm run verify:sync-schedule
           npm run verify:worker-finance-continuity
+          node --import tsx scripts/verify-recurring-expenses.mjs
           node --import tsx scripts/verify-dashboard-brand-finance.mjs
           node --import tsx scripts/verify-finance-2026-weekly-backfill.mjs
           node --import tsx scripts/verify-finance-excel-import.mjs
