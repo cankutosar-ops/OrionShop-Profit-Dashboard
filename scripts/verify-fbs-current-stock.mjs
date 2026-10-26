@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import {createClient} from '@supabase/supabase-js';
-import {captureFbsStocks,parseFbsStocks,summarizeFbsStock,indexFbsStockByProduct} from '../src/lib/wildberries/fbs-stock.ts';
+import {captureFbsStocks,parseFbsStocks,summarizeFbsStock,indexFbsStockByProduct,fbsRequestNotBefore} from '../src/lib/wildberries/fbs-stock.ts';
 import {readFbsStockRows} from '../src/services/fbs-stock-service.ts';
 
 const warehouse={id:1910512,name:'Kazan FBS',officeId:1,deliveryType:1,isDeleting:false,isProcessing:false};
 const variants=[{chrt_id:1,product_id:'10',tech_size:'M'},{chrt_id:1,product_id:'10',tech_size:'M'},
   {chrt_id:2,product_id:'10',tech_size:'L'},{chrt_id:3,product_id:'11',tech_size:'0'}];
+assert.equal(fbsRequestNotBefore(new Headers(),1000,1100),1250);
+assert.equal(fbsRequestNotBefore(new Headers({'X-Ratelimit-Limit':'2','X-Ratelimit-Remaining':'1'}),1000,1100),31100);
+assert.equal(fbsRequestNotBefore(new Headers({'X-Ratelimit-Limit':'2','X-Ratelimit-Remaining':'0','X-Ratelimit-Reset':'38','X-Ratelimit-Retry':'18'}),1000,1100),39100);
+assert.equal(fbsRequestNotBefore(new Headers({'X-Ratelimit-Limit':'invalid'}),1000,1100),1250);
 const originalFetch=globalThis.fetch;
 let requests=[];
 try {

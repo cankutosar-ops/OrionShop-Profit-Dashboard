@@ -21,6 +21,27 @@ export function parseFbsStocks(raw: unknown, requested: number[]) {
   return result;
 }
 
+/** WB may impose a much lower per-seller limit than the endpoint default. */
+export function fbsRequestNotBefore(headers: Headers, requestedAt: number, respondedAt: number): number {
+  const number = (name: string) => {
+    const raw = headers.get(name);
+    if (raw == null || raw === "") return null;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  };
+  const limit = number("X-Ratelimit-Limit");
+  // Seller limits on this inventory endpoint are per minute. Keep a margin;
+  // the default 300/minute remains bounded even when headers are absent.
+  const spacing = limit && limit > 0 ? Math.max(250, Math.ceil(60000 / limit) + 100) : 250;
+  let next = requestedAt + spacing;
+  if (number("X-Ratelimit-Remaining") === 0) {
+    const reset = number("X-Ratelimit-Reset"), retry = number("X-Ratelimit-Retry");
+    if (reset !== null) next = Math.max(next, respondedAt + reset * 1000);
+    if (retry !== null) next = Math.max(next, respondedAt + retry * 1000);
+  }
+  return next;
+}
+
 /** Complete bounded capture. POST is a WB read; never updates seller inventory. */
 export async function captureFbsStocks(accountId: string, token: string,
   warehouses: WbSellerWarehouse[], variants: FbsVariant[], signal?: AbortSignal): Promise<FbsStockRow[]> {
@@ -50,19 +71,27 @@ export async function captureFbsStocks(accountId: string, token: string,
   const rows: FbsStockRow[] = [];
   const observed = new Date().toISOString();
   const captureDeadline = AbortSignal.any([AbortSignal.timeout(120000), ...(signal ? [signal] : [])]);
+  let nextRequestAt = 0;
   for (const warehouse of active) {
     const values = new Map<number, { amount: number; sku: string | null }>();
     for (let offset = 0; offset < ids.length; offset += 1000) {
       captureDeadline.throwIfAborted();
       const batch = ids.slice(offset, offset + 1000);
+      // Pacing between distinct pages, never a retry of an unsuccessful page.
+      while (Date.now() < nextRequestAt) {
+        captureDeadline.throwIfAborted();
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000, nextRequestAt - Date.now())));
+      }
+      captureDeadline.throwIfAborted();
+      const requestedAt = Date.now();
       const response = await fetch(`https://marketplace-api.wildberries.ru/api/v3/stocks/${warehouse.id}`, {
         method: "POST", headers: { Authorization: token, "Content-Type": "application/json" },
         body: JSON.stringify({ chrtIds: batch }), redirect: "error",
         signal: AbortSignal.any([captureDeadline, AbortSignal.timeout(20000)]),
       });
+      nextRequestAt = fbsRequestNotBefore(response.headers, requestedAt, Date.now());
       if (!response.ok) throw new Error(`WB FBS inventory HTTP ${response.status}`);
       for (const [id, value] of parseFbsStocks(await response.json(), batch)) values.set(id, value);
-      await new Promise(resolve => setTimeout(resolve, 250));
     }
     for (const id of ids) {
       const product = products.get(id)!;
