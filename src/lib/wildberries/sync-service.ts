@@ -1,3 +1,4 @@
+import { syncFbsCurrentStock } from "@/services/fbs-stock-sync-service";
 import { syncCanonicalCurrentStock } from "@/lib/marketplace-adapters/wildberries/current-stock-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminClient } from "@/lib/supabase/admin";
@@ -1179,6 +1180,10 @@ export class WbSyncService {
     const timer = getActiveSyncTimer();
 
     syncLog("stock", "START");
+    // Independent FBS facts; never mix them into WB warehouse quantities.
+    // A failed FBS capture remains visible, while FBW still gets a chance to sync.
+    try { await syncFbsCurrentStock(this.marketplaceAccountId, { force: true }); }
+    catch (error) { result.errors.push(error instanceof Error ? error.message : "FBS stock sync failed"); }
 
     try {
       timer?.startPhase("stock_fetch");

@@ -23,7 +23,7 @@ export function parseFbsStocks(raw: unknown, requested: number[]) {
 
 /** Complete bounded capture. POST is a WB read; never updates seller inventory. */
 export async function captureFbsStocks(accountId: string, token: string,
-  warehouses: WbSellerWarehouse[], variants: FbsVariant[]): Promise<FbsStockRow[]> {
+  warehouses: WbSellerWarehouse[], variants: FbsVariant[], signal?: AbortSignal): Promise<FbsStockRow[]> {
   if (!/^[1-9]\d*$/.test(accountId) || !token.trim()) throw new Error("Invalid FBS capture account/credential");
   const byChrt = new Map<number, FbsVariant[]>();
   for (const variant of variants) {
@@ -49,7 +49,7 @@ export async function captureFbsStocks(accountId: string, token: string,
   }
   const rows: FbsStockRow[] = [];
   const observed = new Date().toISOString();
-  const captureDeadline = AbortSignal.timeout(120000);
+  const captureDeadline = AbortSignal.any([AbortSignal.timeout(120000), ...(signal ? [signal] : [])]);
   for (const warehouse of active) {
     const values = new Map<number, { amount: number; sku: string | null }>();
     for (let offset = 0; offset < ids.length; offset += 1000) {

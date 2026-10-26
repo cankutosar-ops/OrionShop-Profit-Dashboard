@@ -4,12 +4,13 @@
  */
 
 export type RequiredColumnCheck = {
-  table: "wb_orders" | "wb_sales";
+  table: "wb_orders" | "wb_sales" | "wb_fbs_current_stocks";
   column: string;
   expectedMigration: string;
 };
 
 export const REQUIRED_SCHEMA_COLUMNS: RequiredColumnCheck[] = [
+  { table: "wb_fbs_current_stocks", column: "quantity", expectedMigration: "20261013112007" },
   {
     table: "wb_orders",
     column: "price_with_disc",

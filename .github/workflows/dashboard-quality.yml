@@ -52,6 +52,8 @@ jobs:
           node --import tsx scripts/verify-warehouse-sales-reconciliation.mjs
           node --import tsx scripts/verify-warehouse-sales-export.mjs
           node --import tsx scripts/verify-fbs-warehouse-attribution.mjs
+          node --import tsx scripts/verify-fbs-current-stock.mjs
+          node --import tsx scripts/verify-fbs-sync-wiring.mjs
       - name: Production build
         run: npm run build
       - name: Compiled app, middleware and HTTP failure paths

@@ -20,6 +20,7 @@ import { WbApiClient } from "@/lib/wildberries/api-client";
 import { syncLog } from "@/lib/wildberries/sync-log";
 import type { WbWarehouseStockItem } from "@/lib/wildberries/types";
 import { getMarketplaceAccountForSync } from "@/services/marketplace-account-service";
+import { syncFbsCurrentStock } from "@/services/fbs-stock-sync-service";
 import { updateWarehouseEntityState } from "@/services/warehouse-entity-sync-state-service";
 import {
   finishWarehouseImportAudit,
@@ -391,6 +392,9 @@ export async function captureDailyInventorySnapshot(params: {
     }
 
     const upserted = await replaceSnapshotDay(accountId, snapshotDate, rows);
+    // Daily worker and manual snapshot paths share this bounded FBS capture.
+    // Fresh manual-sync captures are reused by the snapshot backup.
+    await syncFbsCurrentStock(accountId, { apiKey: account.apiKey });
 
     let missingDatesDetected: string[] = [];
     const gapsFilled: string[] = [];
