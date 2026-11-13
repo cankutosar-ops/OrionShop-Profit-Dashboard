@@ -2,7 +2,7 @@ import {
   resolveAdaptiveHistoricalCosts,
   type HistoricalCostBucket,
 } from "@/lib/smart-pricing-historical-costs";
-import { splitExpectedLogistics, totalHistoricalLogistics, weightedHistoricalLogistics } from "@/lib/smart-pricing-logistics";
+import { hasLeadingLogisticsGap, splitExpectedLogistics, totalHistoricalLogistics, weightedHistoricalLogistics } from "@/lib/smart-pricing-logistics";
 import type {
   CommissionWindowKey,
   ProductSmartPricingInputs,
@@ -42,6 +42,11 @@ export const DEFAULT_SMART_PRICING_COMMISSION_SETTINGS: SmartPricingCommissionSe
 };
 
 export const COMMISSION_WINDOW_KEYS: CommissionWindowKey[] = ["30", "60", "90", "180", "range"];
+
+/** Short samples need more evidence; longer SKU windows retain the configurable floor. */
+export function minimumProductSalesForWindow(settings: SmartPricingCommissionSettings, window: string): number {
+  return window === "30" ? Math.max(50, settings.minProductSales) : settings.minProductSales;
+}
 
 export function commissionWindowDateFrom(scopeTo: string, window: CommissionWindowKey): string {
   const material = materializeWindowKeyForFilter(window);
@@ -93,15 +98,15 @@ export function resolveCostWindowForSettings(
   // Source hierarchy wins over recency: a sufficient SKU 60d sample beats
   // category 30d. Within a source, choose the shortest sufficient window.
   for (const source of ["productLogistics", "categoryLogistics"] as const) {
-    const min = source === "productLogistics" ? settings.minProductSales : settings.minCategorySales;
     for (const window of ["30", "60", "90"] as const) {
+      const min = source === "productLogistics" ? minimumProductSalesForWindow(settings, window) : settings.minCategorySales;
       const totals = input.historicalReplay.byWindow[window][source];
-      if (totals.unitsSold >= min && totalHistoricalLogistics(totals) > 0 && weightedHistoricalLogistics(totals) !== null) return window;
+      if (!hasLeadingLogisticsGap(totals) && totals.unitsSold >= min && totalHistoricalLogistics(totals) > 0 && weightedHistoricalLogistics(totals) !== null) return window;
     }
   }
   for (const window of ["30", "60", "90"] as const) {
     const totals = input.historicalReplay.byWindow[window].accountLogistics;
-    if (totalHistoricalLogistics(totals) > 0 && weightedHistoricalLogistics(totals) !== null) return window;
+    if (!hasLeadingLogisticsGap(totals) && totalHistoricalLogistics(totals) > 0 && weightedHistoricalLogistics(totals) !== null) return window;
   }
   return "90";
 }
@@ -144,8 +149,8 @@ export function applySmartPricingCommissionSettings(
     product: buckets.product,
     category: buckets.category,
     account: buckets.account,
-    minProductSales: settings.minProductSales,
-    minCategorySales: settings.minCategorySales,
+    minProductSales: hasLeadingLogisticsGap(buckets.product.logistics) ? Infinity : minimumProductSalesForWindow(settings, costWindow),
+    minCategorySales: hasLeadingLogisticsGap(buckets.category.logistics) ? Infinity : settings.minCategorySales,
   });
   const selectedLogistics = resolved.resolutionSource === "PRODUCT_HISTORY"
     ? buckets.product.logistics
@@ -153,14 +158,28 @@ export function applySmartPricingCommissionSettings(
       ? buckets.category.logistics
       : buckets.account.logistics;
   const split = splitExpectedLogistics(selectedLogistics);
-  const recent = weightedHistoricalLogistics(input.historicalReplay.byWindow["30"].productLogistics);
-  const long = weightedHistoricalLogistics(input.historicalReplay.byWindow["90"].productLogistics);
+  const recentTotals = input.historicalReplay.byWindow["30"].productLogistics;
+  const longTotals = input.historicalReplay.byWindow["90"].productLogistics;
+  const recent = hasLeadingLogisticsGap(recentTotals) ? null : weightedHistoricalLogistics(recentTotals);
+  const long = hasLeadingLogisticsGap(longTotals) ? null : weightedHistoricalLogistics(longTotals);
 
   return {
     ...input,
     resolutionSource: resolved.resolutionSource,
     historicalLogistics: resolved.historicalLogistics,
     costWindowDays: Number(costWindow) as 30 | 60 | 90 | 180,
+    costWindowFrom: input.costAsOfDate ? lookbackDateFrom(input.costAsOfDate, Number(costWindow)) : undefined,
+    costSampleReturnedUnits: selectedLogistics.unitsReturned ?? 0,
+    costFirstLogisticsDate: selectedLogistics.firstLogisticsDate,
+    costLastLogisticsDate: selectedLogistics.lastLogisticsDate,
+    costEvidenceWarning: hasLeadingLogisticsGap(selectedLogistics)
+      ? "Sales precede observed logistics by more than 7 days; price recommendation unavailable."
+      : undefined,
+    recentProductLogistics: recent,
+    recentProductSales: recentTotals.unitsSold,
+    recentProductReturns: recentTotals.unitsReturned ?? 0,
+    recentSelectedLogisticsVariancePercent: resolved.resolutionSource === "PRODUCT_HISTORY" && recent !== null && resolved.historicalLogistics > 0
+      ? ((recent - resolved.historicalLogistics) / resolved.historicalLogistics) * 100 : null,
     expectedBaseLogistics: split.base,
     expectedReturnBurden: split.returnBurden,
     expectedReturnRatePercent: selectedLogistics.unitsSold > 0

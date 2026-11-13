@@ -19,7 +19,27 @@ export type HistoricalLogisticsTotals = {
   unitsSold: number;
   /** Return events in the same window; used to price one net successful unit. */
   unitsReturned?: number;
+  /** Observed row boundaries, not a claim of complete WB publication coverage. */
+  firstSaleDate?: string;
+  firstLogisticsDate?: string;
+  lastLogisticsDate?: string;
 };
+
+export function mergeLogisticsEvidence(a: HistoricalLogisticsTotals, b: HistoricalLogisticsTotals) {
+  const first = (x?: string, y?: string) => [x, y].filter(Boolean).sort()[0];
+  const last = (x?: string, y?: string) => [x, y].filter(Boolean).sort().at(-1);
+  return {
+    firstSaleDate: first(a.firstSaleDate, b.firstSaleDate),
+    firstLogisticsDate: first(a.firstLogisticsDate, b.firstLogisticsDate),
+    lastLogisticsDate: last(a.lastLogisticsDate, b.lastLogisticsDate),
+  };
+}
+
+/** Allow a weekly reporting lag, but do not dilute costs with an older uncovered sales tail. */
+export function hasLeadingLogisticsGap(totals: HistoricalLogisticsTotals): boolean {
+  if (!totals.firstSaleDate || !totals.firstLogisticsDate) return false;
+  return Date.parse(totals.firstLogisticsDate) - Date.parse(totals.firstSaleDate) > 7 * 86400000;
+}
 
 export type LogisticsTotals = HistoricalLogisticsTotals;
 
@@ -53,12 +73,18 @@ export function sumProductHistoricalLogisticsMetrics(
   const unitsSold = completed.reduce((sum, row) => sum + row.quantity, 0);
   const unitsReturned = sales.filter((row) => row.is_return)
     .reduce((sum, row) => sum + row.quantity, 0);
+  const logisticsDates = finance.filter((row) =>
+    rowMatchesFinanceCategory(row, "LOGISTICS", "RETURN_LOGISTICS") && Number(row.amount) !== 0
+  ).map((row) => row.operation_date.slice(0, 10)).sort();
 
   return {
     outboundLogistics: sumOutboundLogistics(finance),
     rebillLogistics: sumRebillLogistics(finance),
     unitsSold,
     unitsReturned,
+    firstSaleDate: completed.map((row) => row.sale_date.slice(0, 10)).sort()[0],
+    firstLogisticsDate: logisticsDates[0],
+    lastLogisticsDate: logisticsDates.at(-1),
   };
 }
 
@@ -117,6 +143,7 @@ export function buildCategoryLogisticsTotals(
     };
 
     byCategory.set(categoryId, {
+      ...mergeLogisticsEvidence(existing, metrics),
       outboundLogistics: existing.outboundLogistics + metrics.outboundLogistics,
       rebillLogistics: existing.rebillLogistics + metrics.rebillLogistics,
       unitsSold: existing.unitsSold + metrics.unitsSold,
@@ -147,6 +174,7 @@ export function buildAccountLogisticsTotals(
     );
 
     totals.outboundLogistics += metrics.outboundLogistics;
+    Object.assign(totals, mergeLogisticsEvidence(totals, metrics));
     totals.rebillLogistics += metrics.rebillLogistics;
     totals.unitsSold += metrics.unitsSold;
     totals.unitsReturned = (totals.unitsReturned ?? 0) + (metrics.unitsReturned ?? 0);

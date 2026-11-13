@@ -248,6 +248,7 @@ function solverInputsFromProduct(
   inputs: ProductSmartPricingInputs
 ): SmartPricingSolverInputs | null {
   if (
+    inputs.costEvidenceWarning ||
     inputs.purchaseCost === null ||
     !Number.isFinite(inputs.purchaseCost) ||
     inputs.purchaseCost < 0
@@ -302,14 +303,14 @@ export function buildSmartPricingRow(
 ): SmartPricingComputedRow {
   const solver = solverInputsFromProduct(inputs);
   const effectiveMarketingPercent = resolveEffectiveMarketingPercent(marketingPercent, inputs.recentAdvertisingPercent);
-  const hasPurchaseCost = solver !== null;
+  const hasPurchaseCost = inputs.purchaseCost !== null && Number.isFinite(inputs.purchaseCost) && inputs.purchaseCost >= 0;
 
   const priceFor = (margin: number) =>
     solver ? solveRecommendedPrice(solver, margin, effectiveMarketingPercent, taxPercent) : null;
 
   const priceFor15 = priceFor(15);
   const priceFor20 = priceFor(20);
-  const targetPrice = hasPurchaseCost
+  const targetPrice = solver
     ? solveRecommendedPrice(solver, targetNetProfitPercent, effectiveMarketingPercent, taxPercent)
     : null;
 

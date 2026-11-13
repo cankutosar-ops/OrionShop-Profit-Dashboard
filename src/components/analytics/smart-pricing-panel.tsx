@@ -8,6 +8,7 @@ import {
   SmartPricingCostBreakdownDetail,
 } from "@/components/analytics/smart-pricing-calc-panel";
 import { SmartPricingExplainDialog } from "@/components/analytics/smart-pricing-explain-dialog";
+import { SmartPricingCostEvidence } from "@/components/analytics/smart-pricing-cost-evidence";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { usePaginatedRows } from "@/hooks/use-paginated-rows";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -591,7 +592,7 @@ export function SmartPricingPanel({
           {settingsOpen ? (
             <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-3">
               <label className="space-y-1.5">
-                <span className={labelClass}>Minimum Product Sales</span>
+                <span className={labelClass}>Minimum Product Sales (60–180d)</span>
                 <input
                   type="number"
                   min={1}
@@ -606,6 +607,7 @@ export function SmartPricingPanel({
                   }
                   className={fieldClass}
                 />
+                <span className="block text-[11px] text-muted-foreground">30d requires at least 50 sales. Own SKU history is preferred before category fallback.</span>
               </label>
               <label className="space-y-1.5">
                 <span className={labelClass}>Minimum Category Sales</span>
@@ -725,7 +727,7 @@ export function SmartPricingPanel({
                   }}
                 />
                 <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Expected Logistics</th>
-                <th className="whitespace-nowrap px-2 py-2 text-right font-medium">Return Burden</th>
+                <th className="whitespace-nowrap px-2 py-2 text-right font-medium" title="Return allocation is already included in Expected Logistics; it is not an additional deduction.">Return Share (included)</th>
                 <th className="whitespace-nowrap px-2 py-2 text-left font-medium">Cost Source</th>
                 <SortableTh
                   label="Final Margin"
@@ -1076,8 +1078,8 @@ function PricingRow({
         />
       </td>
       <td className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">{formatCurrency(row.historicalLogistics)}</td>
-      <td className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums">{formatCurrency(row.expectedReturnBurden ?? 0)}</td>
-      <td className="whitespace-nowrap px-2 py-1.5 text-xs">{row.resolutionSource === "PRODUCT_HISTORY" ? "SKU" : row.resolutionSource === "CATEGORY_HISTORY" ? "Category" : "Account"} {row.costWindowDays ?? 90}d</td>
+      <td className="whitespace-nowrap px-2 py-1.5 text-right tabular-nums" title="Included in Expected Logistics. Do not add this amount again.">{formatCurrency(row.expectedReturnBurden ?? 0)}</td>
+      <td className="px-2 py-1.5"><SmartPricingCostEvidence row={row} /></td>
       <td
         className={cn(
           "px-1.5 py-1.5 text-right tabular-nums",

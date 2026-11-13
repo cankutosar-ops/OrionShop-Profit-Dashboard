@@ -37,6 +37,7 @@ export function buildSolverInputsFromRow(
   row: SmartPricingComputedRow
 ): SmartPricingSolverInputs | null {
   if (
+    row.costEvidenceWarning ||
     row.purchaseCost === null ||
     !Number.isFinite(row.purchaseCost) ||
     row.purchaseCost < 0

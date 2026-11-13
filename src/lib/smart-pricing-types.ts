@@ -56,6 +56,15 @@ export type ProductSmartPricingInputs = {
   /** Window and source used for the default forward-cost estimate. */
   costWindowDays?: 30 | 60 | 90 | 180;
   costAsOfDate?: string;
+  costWindowFrom?: string;
+  costSampleReturnedUnits?: number;
+  costFirstLogisticsDate?: string;
+  costLastLogisticsDate?: string;
+  costEvidenceWarning?: string;
+  recentProductLogistics?: number | null;
+  recentProductSales?: number;
+  recentProductReturns?: number;
+  recentSelectedLogisticsVariancePercent?: number | null;
   expectedBaseLogistics?: number;
   expectedReturnBurden?: number;
   expectedReturnRatePercent?: number;

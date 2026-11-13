@@ -16,6 +16,8 @@ const replay = { historicalReplay: { byWindow: {
 } } };
 assert.equal(resolveCostWindowForSettings(replay, settings), '60');
 replay.historicalReplay.byWindow['30'].productLogistics.unitsSold = 25;
+assert.equal(resolveCostWindowForSettings(replay, settings), '60');
+replay.historicalReplay.byWindow['30'].productLogistics.unitsSold = 50;
 assert.equal(resolveCostWindowForSettings(replay, settings), '30');
 replay.historicalReplay.byWindow['30'].productLogistics.outboundLogistics = 0;
 assert.equal(resolveCostWindowForSettings(replay, settings), '60'); // uncharged recent sales are not sufficient evidence
@@ -49,7 +51,7 @@ for (const item of fixtures) {
     const input = { historicalReplay: { marketplace: 'wildberries', byWindow: { '30': bucket, '60': bucket, '90': bucket } } };
     const resolved = applySmartPricingCommissionSettings(input, settings);
     assert.equal(resolved.resolutionSource, 'PRODUCT_HISTORY');
-    assert.equal(resolved.costWindowDays, 30);
+    assert.equal(resolved.costWindowDays, 60);
     assert.ok(Math.abs(resolved.historicalLogistics - item.logistics / (item.gross - item.returns)) < 0.01);
     assert.ok(Math.abs(resolved.marketplaceFeesPercent - item.fee) < 0.01);
     assert.ok(Math.abs(resolved.expectedReturnBurden - cost.returnBurden) < 0.01);
